@@ -284,6 +284,130 @@ class TestLiveHostRealms(unittest.TestCase):
         finally:
             rx.close()
 
+    def test_two_process_listen_and_connect_cli(self) -> None:
+        import subprocess
+        import sys
+        import tempfile
+        from pathlib import Path
+
+        repo_root = str(Path(__file__).resolve().parents[1])
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp_dir = Path(tmp)
+
+            # 1) 2-process PURE-METAMORPHIC transfer
+            offer1 = tmp_dir / "offer1.json"
+            in1 = tmp_dir / "in1.bin"
+            out1 = tmp_dir / "out1.bin"
+            p1 = ("2-PROC-METAMORPHIC-" + os.urandom(300).hex()).encode("utf-8")
+            in1.write_bytes(p1)
+
+            rx_proc = subprocess.Popen(
+                [
+                    sys.executable,
+                    "-m",
+                    "chimera_tp",
+                    "listen",
+                    "--offer-file",
+                    str(offer1),
+                    "--out-file",
+                    str(out1),
+                    "--timeout",
+                    "15",
+                ],
+                cwd=repo_root,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+            try:
+                tx_proc = subprocess.run(
+                    [
+                        sys.executable,
+                        "-m",
+                        "chimera_tp",
+                        "connect",
+                        "--offer-file",
+                        str(offer1),
+                        "--file",
+                        str(in1),
+                        "--mode",
+                        "metamorphic",
+                        "--profile",
+                        "turbo",
+                    ],
+                    cwd=repo_root,
+                    capture_output=True,
+                    text=True,
+                    timeout=15,
+                    check=False,
+                )
+                rx_out, rx_err = rx_proc.communicate(timeout=15)
+                self.assertEqual(tx_proc.returncode, 0, msg=tx_proc.stderr or tx_proc.stdout)
+                self.assertEqual(rx_proc.returncode, 0, msg=rx_err or rx_out)
+                self.assertEqual(out1.read_bytes(), p1)
+            finally:
+                if rx_proc.poll() is None:
+                    rx_proc.kill()
+
+            # 2) 2-process HOLOGRAPHIC-SPLIT with 25% jumbo drop
+            offer2 = tmp_dir / "offer2.json"
+            in2 = tmp_dir / "in2.bin"
+            out2 = tmp_dir / "out2.bin"
+            p2 = (b"2PROC-HOLO-" + os.urandom(24)) * (128 * 1024 // 35 + 1)
+            p2 = p2[: 128 * 1024]
+            in2.write_bytes(p2)
+
+            rx_proc2 = subprocess.Popen(
+                [
+                    sys.executable,
+                    "-m",
+                    "chimera_tp",
+                    "listen",
+                    "--offer-file",
+                    str(offer2),
+                    "--out-file",
+                    str(out2),
+                    "--timeout",
+                    "15",
+                ],
+                cwd=repo_root,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+            )
+            try:
+                tx_proc2 = subprocess.run(
+                    [
+                        sys.executable,
+                        "-m",
+                        "chimera_tp",
+                        "connect",
+                        "--offer-file",
+                        str(offer2),
+                        "--file",
+                        str(in2),
+                        "--mode",
+                        "holographic",
+                        "--jumbo-drop",
+                        "0.25",
+                    ],
+                    cwd=repo_root,
+                    capture_output=True,
+                    text=True,
+                    timeout=15,
+                    check=False,
+                )
+                rx_out2, rx_err2 = rx_proc2.communicate(timeout=15)
+                self.assertEqual(tx_proc2.returncode, 0, msg=tx_proc2.stderr or tx_proc2.stdout)
+                self.assertEqual(rx_proc2.returncode, 0, msg=rx_err2 or rx_out2)
+                self.assertEqual(
+                    hashlib.sha256(out2.read_bytes()).hexdigest(),
+                    hashlib.sha256(p2).hexdigest(),
+                )
+            finally:
+                if rx_proc2.poll() is None:
+                    rx_proc2.kill()
+
 
 if __name__ == "__main__":
     unittest.main()

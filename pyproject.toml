@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "chimera-tp"
-version = "0.2.0"
+version = "0.5.0"
 description = "CHIMERA-TP: Multi-realm polymorphic transport protocol over GF(256) RLNC for Windows network stack research"
 readme = "README.md"
 license = { text = "MIT" }

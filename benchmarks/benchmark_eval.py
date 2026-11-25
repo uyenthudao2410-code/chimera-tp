@@ -210,9 +210,18 @@ def _safe_chimera_metamorphic(
     payload: bytes,
     fault: FaultProfile,
     timeout_s: float = 12.0,
+    profile: str = "balanced",
+    parallel: bool = True,
 ) -> dict[str, Any]:
     try:
-        rec, rep = tx.send_metamorphic(rx, payload, fault=fault, timeout_s=timeout_s)
+        rec, rep = tx.send_metamorphic(
+            rx,
+            payload,
+            fault=fault,
+            timeout_s=timeout_s,
+            profile=profile,
+            parallel=parallel,
+        )
         d = rep.to_dict()
         d["verified_equal"] = bool(rep.success and rep.sha256_match and rec == payload)
         total_wire = sum(st.get("wire_total_bytes_est", 0) for st in rep.per_lane_stats.values())
@@ -494,13 +503,17 @@ def suite_scaling(rx: ChimeraReceiver, tx: ChimeraSender) -> list[dict[str, Any]
     print("\n=== SUITE 3: PAYLOAD SIZE SCALING ===")
     results: list[dict[str, Any]] = []
 
-    for sz in [0, 1, 64, 512, 2048, 4096]:
+    for sz in [0, 1, 64, 512, 2048, 4096, 16384]:
         payload = os.urandom(sz) if sz >= 64 else (b"A" * sz)
-        rep = _safe_chimera_metamorphic(rx, tx, payload, FaultProfile(), timeout_s=15.0)
+        prof = "turbo" if sz >= 16384 else "balanced"
+        rep = _safe_chimera_metamorphic(
+            rx, tx, payload, FaultProfile(), timeout_s=15.0, profile=prof, parallel=True
+        )
         row = {
             "mode": "PURE-METAMORPHIC",
             "payload_bytes": sz,
             "k_blocks": rep.get("k_blocks", 0),
+            "profile": prof,
             "success": rep["verified_equal"],
             "sha256_match": rep["sha256_match"],
             "elapsed_ms": rep["elapsed_ms"],
@@ -511,13 +524,13 @@ def suite_scaling(rx: ChimeraReceiver, tx: ChimeraSender) -> list[dict[str, Any]
         }
         results.append(row)
         print(
-            f"  METAMORPHIC {sz:>8,} B | ok={str(row['success']):<5} k={row['k_blocks']:>3} "
+            f"  METAMORPHIC {sz:>8,} B ({prof:<8}) | ok={str(row['success']):<5} k={row['k_blocks']:>4} "
             f"{row['elapsed_ms']:>8.2f}ms {row['effective_kbps']:>8.2f} kbps"
         )
 
-    for sz in [16384, 262144, 1048576, 4194304]:
+    for sz in [16384, 262144, 1048576, 4194304, 8388608]:
         payload = _make_semi_structured_payload(sz)
-        rep = _safe_chimera_holographic(rx, tx, payload, FaultProfile(), timeout_s=20.0)
+        rep = _safe_chimera_holographic(rx, tx, payload, FaultProfile(), timeout_s=25.0)
         row = {
             "mode": "HOLOGRAPHIC-SPLIT",
             "payload_bytes": sz,
@@ -532,11 +545,65 @@ def suite_scaling(rx: ChimeraReceiver, tx: ChimeraSender) -> list[dict[str, Any]
         }
         results.append(row)
         print(
-            f"  HOLOGRAPHIC {sz:>8,} B | ok={str(row['success']):<5} chunks={row['jumbo_chunks']:>2} "
+            f"  HOLOGRAPHIC {sz:>8,} B | ok={str(row['success']):<5} chunks={row['jumbo_chunks']:>3} "
             f"{row['elapsed_ms']:>8.2f}ms {row['effective_kbps']/1000:>7.2f} Mbps "
             f"ent={row['holo_entropy']} {row['error']}"
         )
     return results
+
+
+def suite_v05_upgrades(rx: ChimeraReceiver, tx: ChimeraSender) -> dict[str, Any]:
+    print("\n=== SUITE 6 (v0.5.0): PROFILE/PARALLEL MATRIX & 25% JUMBO FEC/NACK ===")
+    p2k = os.urandom(2048)
+    matrix: list[dict[str, Any]] = []
+    for label, prof, par in [
+        ("balanced_seq", "balanced", False),
+        ("balanced_par", "balanced", True),
+        ("stealth_par", "stealth", True),
+        ("turbo_par", "turbo", True),
+    ]:
+        rep = _safe_chimera_metamorphic(
+            rx, tx, p2k, FaultProfile(), timeout_s=15.0, profile=prof, parallel=par
+        )
+        row = {
+            "label": label,
+            "profile": prof,
+            "parallel": par,
+            "success": rep["verified_equal"],
+            "elapsed_ms": rep["elapsed_ms"],
+            "effective_kbps": rep["effective_kbps"],
+            "wire_total_bytes_est": rep["wire_total_bytes_est"],
+            "wire_amplification": rep["wire_amplification"],
+            "k_blocks": rep.get("k_blocks", 0),
+        }
+        matrix.append(row)
+        print(
+            f"  {label:<14} ok={str(row['success']):<5} {row['elapsed_ms']:>7.2f}ms "
+            f"{row['effective_kbps']:>7.1f} kbps | wire={row['wire_total_bytes_est']:>7,}B "
+            f"({row['wire_amplification']}x)"
+        )
+
+    p1m = _make_semi_structured_payload(1024 * 1024)
+    holo_drop = _safe_chimera_holographic(
+        rx, tx, p1m, FaultProfile(jumbo_drop_rate=0.25), timeout_s=20.0
+    )
+    holo_res = {
+        "payload_bytes": len(p1m),
+        "jumbo_drop_rate": 0.25,
+        "success": holo_drop["verified_equal"],
+        "sha256_match": holo_drop["sha256_match"],
+        "elapsed_ms": holo_drop["elapsed_ms"],
+        "effective_kbps": holo_drop["effective_kbps"],
+        "jumbo_chunks": holo_drop.get("jumbo_chunks", 0),
+        "jumbo_fec_recoveries": holo_drop.get("jumbo_fec_recoveries", 0),
+        "jumbo_nack_retransmits": holo_drop.get("jumbo_nack_retransmits", 0),
+    }
+    print(
+        f"  Holo 25% drop  ok={str(holo_res['success']):<5} {holo_res['elapsed_ms']:>7.2f}ms "
+        f"{holo_res['effective_kbps']/1000:>6.2f} Mbps | FEC={holo_res['jumbo_fec_recoveries']} "
+        f"NACK={holo_res['jumbo_nack_retransmits']}"
+    )
+    return {"profile_parallel_matrix_2k": matrix, "holographic_25pct_jumbo_drop": holo_res}
 
 
 def suite_soak(
@@ -697,6 +764,7 @@ def run_eval(out_path: Path | None = None) -> dict[str, Any]:
         drop_sweep = suite_drop_sweep(rx, tx)
         scaling = suite_scaling(rx, tx)
         soak = suite_soak(env, rx, tx)
+        v05 = suite_v05_upgrades(rx, tx)
     finally:
         rx.close()
 
@@ -714,6 +782,7 @@ def run_eval(out_path: Path | None = None) -> dict[str, Any]:
         "suite_drop_sweep": drop_sweep,
         "suite_scaling": scaling,
         "suite_soak": soak,
+        "suite_v05_upgrades": v05,
         "suite_audit": audit,
     }
     target = out_path or Path("chimera_eval.json")

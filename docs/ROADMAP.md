@@ -1,14 +1,15 @@
 # Lộ trình nghiên cứu tiếp theo (CHIMERA-TP Roadmap)
 
-1. **FEC/Selective-NACK cho `LO_V6_JUMBO`**
-   - Bổ sung parity chunks (5–10% XOR/RLNC theo lô siêu khung) hoặc Selective NACK qua kênh điều khiển `::1` để `HOLOGRAPHIC-SPLIT` chịu được mất gói ở kích thước hàng chục MB.
+## Đã hoàn thành (v0.2.0 &rarr; v0.5.0)
+- [x] **v0.3.0**: CRC-32 từng mảnh, XOR Stripe FEC (4:1) và Selective NACK ARQ (`JCHK`/`JNCK`/`JOK!`) cho `LO_V6_JUMBO`.
+- [x] **v0.4.0**: Phát song song theo từng lane (1 worker thread + bounded queue/lane) và 3 profile lập lịch (`balanced`, `stealth`, `turbo`).
+- [x] **v0.5.0-alpha**: Multi-generation Segmented RLNC + `GACK` cho độ phức tạp tuyến tính $O(K)$, mở rộng `PURE-METAMORPHIC` lên `16 KiB+` dữ liệu không nén.
+- [x] **v0.5.0**: Chế độ 2 tiến trình độc lập (`chimera-tp listen` / `chimera-tp connect`).
 
-2. **Phát song song & Lập lịch nhận biết chi phí (Bandwidth-Aware Chaos)**
-   - Chuyển từ phát tuần tự từng giọt sang worker pool song song cho các kênh nhiều gói (`GHOST_127`, `HYPERV_MCAST`, `WSL_PERMUTE`).
-   - Thêm trọng số chi phí phóng đại (amplification-aware weights) trong `ChaosLaneScheduler` để chọn giữa chế độ *Tàng hình tối đa* (`GHOST_127`/`LAN_LENGTH`/`TS_V6_CHORD`) và *Hiệu năng/Tiết kiệm băng thông* (`TS_V4_1280`/`ICMP_REFLECT`).
-
-3. **Thử nghiệm 2 máy thật (Cross-Host over Tailscale & LAN)**
-   - Tách `ChimeraReceiver` và `ChimeraSender` qua cặp peer Tailscale (`TS_V4_1280` + `TS_V6_CHORD`) và hai máy cùng mạng LAN (`LAN_LENGTH`), bổ sung cơ chế trao đổi Offer qua kênh Out-of-Band / DNS TXT hoặc QUIC.
-
-4. **Tăng tốc nhân GF(256) & khử Gauss bằng Rust / C Extension**
-   - Chuyển `RLNCEncoder`/`RLNCDecoder` sang extension C/Rust (PyO3 hoặc `ctypes`) dùng SIMD (`PSHUFB`) để mở rộng giới hạn `PURE-METAMORPHIC` từ vài KiB lên hàng trăm KiB.
+## Bước nghiên cứu tiếp theo (v0.6.0+)
+1. **Thử nghiệm liên máy (Cross-Host over Tailscale & LAN)**
+   - Triển khai cặp `listen`/`connect` qua hai máy thật trên Tailscale (`TS_V4_1280` + `TS_V6_CHORD`) và LAN (`LAN_LENGTH`), tự động vô hiệu hóa các lane loopback nội bộ khi địa chỉ offer khác host.
+2. **Tăng tốc OTP Keystream & GF(256) bằng Rust / C Extension**
+   - Chuyển `chaotic_keystream` và phép nhân/khử ma trận $GF(2^8)$ sang SIMD (`PSHUFB` / AES-NI) để đẩy `HOLOGRAPHIC-SPLIT` từ `~85 Mbps` lên ngang mức giới hạn bộ nhớ loopback.
+3. **Trao đổi Offer bảo mật (Signed Out-of-Band Offer)**
+   - Ký số JSON `offer` bằng khóa phiên dùng một lần hoặc QR/DNS TXT record thay cho file cục bộ.

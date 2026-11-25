@@ -86,6 +86,7 @@ class _SessionDecoderState:
         reply_addr: tuple[str, int],
         start_ts: float,
         baseline_rx: dict[str, tuple[int, int, int]] | None = None,
+        is_capsule: bool = False,
     ) -> None:
         self.transfer_id = transfer_id
         self.decoder = decoder
@@ -96,6 +97,7 @@ class _SessionDecoderState:
         self.reply_addr = reply_addr
         self.start_ts = start_ts
         self.baseline_rx = baseline_rx or {}
+        self.is_capsule = is_capsule
         self.rank_timeline: list[dict[str, Any]] = []
         self.done_event = threading.Event()
         self.recovered_payload: bytes = b""
@@ -138,6 +140,7 @@ class ChimeraReceiver:
         self._holo_capsules: dict[int, bytes] = {}
         self._holo_recovered: dict[int, tuple[bytes, str, bool]] = {}
         self._holo_events: dict[int, threading.Event] = {}
+        self._incoming_queue: queue.Queue[tuple[int, bytes, bool, str]] = queue.Queue()
 
     def start(self) -> dict[str, Any]:
         """Bind sockets across all available realms and return the session offer."""
@@ -282,6 +285,7 @@ class ChimeraReceiver:
                 reply_addr=reply_addr,
                 start_ts=time.perf_counter(),
                 baseline_rx=baseline,
+                is_capsule=bool(msg.get("is_capsule", False)),
             )
             self._active_session = sess
             self._completed_sessions.pop(tid, None)
@@ -341,7 +345,16 @@ class ChimeraReceiver:
                 self._completed_sessions[sess.transfer_id] = sess
                 tid_solved = sess.transfer_id
                 reply_addr = sess.reply_addr
-                capsule_bytes = recovered
+                capsule_bytes = recovered if sess.is_capsule else None
+                if not sess.is_capsule:
+                    self._incoming_queue.put(
+                        (
+                            sess.transfer_id,
+                            recovered,
+                            sess.sha256_match,
+                            "PURE-METAMORPHIC",
+                        )
+                    )
                 rx_lane_delta: dict[str, dict[str, Any]] = {}
                 for lid, lane in self._lanes.items():
                     bp, bd, be = sess.baseline_rx.get(lid, (0, 0, 0))
@@ -368,12 +381,10 @@ class ChimeraReceiver:
                 }
 
         if capsule_bytes is not None and len(capsule_bytes) == 72:
-            # Check if this corresponds to a holographic superframe transfer
             cap_tid, _ = struct.unpack("!II", capsule_bytes[:8])
             with self._lock:
-                if cap_tid in self._holo_events or cap_tid in self._holo_blobs:
-                    self._holo_capsules[cap_tid] = capsule_bytes
-                    self._try_finish_holographic(cap_tid)
+                self._holo_capsules[cap_tid] = capsule_bytes
+                self._try_finish_holographic(cap_tid)
 
         if gack_gid is not None and reply_addr is not None and self._ctrl_sock is not None:
             gack_pkt = b"GACK" + struct.pack("!IH", tid_solved, gack_gid)
@@ -407,6 +418,8 @@ class ChimeraReceiver:
             self._try_finish_holographic(transfer_id)
 
     def _try_finish_holographic(self, transfer_id: int) -> None:
+        if transfer_id in self._holo_recovered:
+            return
         blob = self._holo_blobs.get(transfer_id)
         capsule = self._holo_capsules.get(transfer_id)
         if blob is None or capsule is None:
@@ -422,13 +435,22 @@ class ChimeraReceiver:
         stream_seed = hashlib.blake2b(holo_key + topo_bytes, digest_size=32).digest()
         recovered = xor_bytes(blob, chaotic_keystream(stream_seed, len(blob)))[:orig_len]
         actual_sha = hashlib.sha256(recovered).hexdigest()
-        self._holo_recovered[transfer_id] = (
-            recovered,
-            actual_sha,
-            actual_sha == expected_sha,
-        )
+        sha_ok = actual_sha == expected_sha
+        self._holo_recovered[transfer_id] = (recovered, actual_sha, sha_ok)
+        self._incoming_queue.put((transfer_id, recovered, sha_ok, "HOLOGRAPHIC-SPLIT"))
         ev = self._holo_events.setdefault(transfer_id, threading.Event())
         ev.set()
+
+    def wait_next_transfer(
+        self, timeout_s: float = 30.0
+    ) -> tuple[int, bytes, bool, str]:
+        """Block until the next complete transfer arrives (used by standalone `listen`)."""
+        try:
+            return self._incoming_queue.get(timeout=timeout_s)
+        except queue.Empty as exc:
+            raise TimeoutError(
+                f"No transfer completed within {timeout_s:.1f}s"
+            ) from exc
 
     def register_holographic_waiter(self, transfer_id: int) -> threading.Event:
         with self._lock:
@@ -495,6 +517,7 @@ class ChimeraSender:
         timeout_s: float,
         profile: str = "balanced",
         parallel: bool = True,
+        is_capsule: bool = False,
     ) -> tuple[int, TransferReport]:
         fault = fault or FaultProfile()
         tid = self._next_transfer_id()
@@ -546,6 +569,7 @@ class ChimeraSender:
             "compressed": compress,
             "expected_sha256": expected_sha,
             "rlnc_seed_hex": rlnc_seed.hex(),
+            "is_capsule": is_capsule,
         }
         start_pkt = b"STRT" + json.dumps(start_msg, separators=(",", ":")).encode("utf-8")
 
@@ -860,6 +884,7 @@ class ChimeraSender:
                 timeout_s=timeout_s,
                 profile=profile,
                 parallel=parallel,
+                is_capsule=True,
             )
             if not cap_report.success:
                 cap_report.payload_bytes = len(payload)
