@@ -22,10 +22,11 @@ from .hyper_wire import (
     _disable_connreset,
     _family_for_ip,
 )
+from .merkle_sync import sanitize_workspace_id, unpack_merkle_patch
 from .native import WormholeChannel, cpu_caps, has_native
 
 _BEAM_REQ_HDR = struct.Struct("!4sHH")  # magic="BMQ1", reply_port(u16), est_loss_bps(u16)
-_BEAM_PAYLOAD_HDR = struct.Struct("!BBHH")  # kind(1=file,2=dir), reserved, name_len, commit_port
+_BEAM_PAYLOAD_HDR = struct.Struct("!BBHH")  # kind(1=file,2=dir,3=merkle), reserved, name_len, commit_port
 
 
 @dataclass
@@ -57,10 +58,13 @@ class BeamServer:
         vault_dir: Path | None = None,
         out_dir: Path = Path("chimera_received"),
         est_loss: float = 0.0,
+        merkle_root: Path | None = None,
     ) -> None:
         self.bind_ip = bind_ip
         self.out_dir = Path(out_dir)
         self.out_dir.mkdir(parents=True, exist_ok=True)
+        self.merkle_root = Path(merkle_root) if merkle_root is not None else (self.out_dir / "merkle_workspaces")
+        self.merkle_root.mkdir(parents=True, exist_ok=True)
         self.vault = DnaVault(vault_dir=vault_dir)
         self.codec = DnaCodec()
         self.est_loss = est_loss
@@ -175,19 +179,27 @@ class BeamServer:
                 self.vault.save()
 
                 files_written: list[str] = []
+                merkle_meta: dict[str, Any] = {}
                 if kind == 2:
                     files_written = unpack_directory(
                         raw, self.out_dir / rel_name if rel_name else self.out_dir
                     )
+                    kind_str = "dir"
+                elif kind == 3:
+                    ws_id = sanitize_workspace_id(rel_name)
+                    merkle_meta = unpack_merkle_patch(raw, self.merkle_root / ws_id)
+                    files_written = list(merkle_meta.get("written", []))
+                    kind_str = "merkle"
                 else:
                     target_file = (self.out_dir / (rel_name or f"beam_{sid}.bin")).resolve()
                     target_file.parent.mkdir(parents=True, exist_ok=True)
                     target_file.write_bytes(raw)
                     files_written = [target_file.name]
+                    kind_str = "file"
 
                 rec = {
                     "stream_id": sid,
-                    "kind": "dir" if kind == 2 else "file",
+                    "kind": kind_str,
                     "name": rel_name,
                     "raw_bytes": len(raw),
                     "dna_wire_bytes": len(recipe),
@@ -195,6 +207,9 @@ class BeamServer:
                     "files": files_written,
                     "dna_stats": dstats.to_dict(),
                 }
+                if merkle_meta:
+                    rec["root_hash"] = merkle_meta.get("root_hash", "")
+                    rec["deleted"] = merkle_meta.get("deleted", [])
                 with self._lock:
                     self._completed.append(rec)
                     self._cv.notify_all()
@@ -232,28 +247,19 @@ class BeamServer:
             pass
 
 
-def beam_send(
+def _beam_send_raw(
     target_ctrl_addr: tuple[str, int],
-    source_path: Path,
+    kind: int,
+    rel_name: str,
+    raw: bytes,
     vault_dir: Path | None = None,
     est_loss: float = 0.0,
     pace_mbps: float | None = None,
     stream_id: int = 1,
     timeout_s: float = 25.0,
 ) -> BeamReport:
-    """Sync a file or entire directory using Zero-Byte DNA Vault + Silicon GFNI Wire."""
+    """Shared handshake + DNA Vault + GFNI HyperWire payload transfer helper."""
     t0 = time.perf_counter()
-    source_path = Path(source_path).resolve()
-    if source_path.is_dir():
-        kind = 2
-        rel_name = ""
-        raw = pack_directory(source_path)
-    elif source_path.is_file():
-        kind = 1
-        rel_name = source_path.name
-        raw = source_path.read_bytes()
-    else:
-        raise FileNotFoundError(f"Source path not found: {source_path}")
 
     # Handshake to fetch receiver's DNA sketch (dual-stack + UDP firewall punch)
     fam = _family_for_ip(target_ctrl_addr[0])
@@ -317,9 +323,10 @@ def beam_send(
         ctrl_sock.close()
     elapsed_ms = (time.perf_counter() - t0) * 1000.0
     eff_mbps = (len(raw) * 8.0) / max(elapsed_ms * 1000.0, 0.001)
+    kind_name = "merkle" if kind == 3 else ("dir" if kind == 2 else "file")
     return BeamReport(
         target=f"{target_ctrl_addr[0]}:{target_ctrl_addr[1]}",
-        kind="dir" if kind == 2 else "file",
+        kind=kind_name,
         raw_bytes=len(raw),
         dna_wire_bytes=len(recipe),
         udp_wire_bytes=wrep.wire_bytes_sent,
@@ -330,6 +337,64 @@ def beam_send(
         dna_stats=dstats.to_dict(),
         wire_report=wrep.to_dict(),
         sha256=hashlib.sha256(raw).hexdigest(),
+    )
+
+
+def beam_send(
+    target_ctrl_addr: tuple[str, int],
+    source_path: Path,
+    vault_dir: Path | None = None,
+    est_loss: float = 0.0,
+    pace_mbps: float | None = None,
+    stream_id: int = 1,
+    timeout_s: float = 25.0,
+) -> BeamReport:
+    """Sync a file or entire directory using Zero-Byte DNA Vault + Silicon GFNI Wire."""
+    source_path = Path(source_path).resolve()
+    if source_path.is_dir():
+        kind = 2
+        rel_name = ""
+        raw = pack_directory(source_path)
+    elif source_path.is_file():
+        kind = 1
+        rel_name = source_path.name
+        raw = source_path.read_bytes()
+    else:
+        raise FileNotFoundError(f"Source path not found: {source_path}")
+    return _beam_send_raw(
+        target_ctrl_addr=target_ctrl_addr,
+        kind=kind,
+        rel_name=rel_name,
+        raw=raw,
+        vault_dir=vault_dir,
+        est_loss=est_loss,
+        pace_mbps=pace_mbps,
+        stream_id=stream_id,
+        timeout_s=timeout_s,
+    )
+
+
+def beam_send_merkle_patch(
+    target_ctrl_addr: tuple[str, int],
+    workspace_id: str,
+    patch_bytes: bytes,
+    vault_dir: Path | None = None,
+    est_loss: float = 0.0,
+    pace_mbps: float | None = None,
+    stream_id: int = 1,
+    timeout_s: float = 25.0,
+) -> BeamReport:
+    """Send a sparse b'CHMRK1' Merkle delta patch over DNA Vault + GFNI Wire."""
+    return _beam_send_raw(
+        target_ctrl_addr=target_ctrl_addr,
+        kind=3,
+        rel_name=sanitize_workspace_id(workspace_id),
+        raw=patch_bytes,
+        vault_dir=vault_dir,
+        est_loss=est_loss,
+        pace_mbps=pace_mbps,
+        stream_id=stream_id,
+        timeout_s=timeout_s,
     )
 
 
@@ -346,10 +411,21 @@ class ChimeraFabric:
     @staticmethod
     def capabilities() -> dict[str, Any]:
         return {
-            "version": "2.0.0",
+            "version": "3.0.0",
             "hardware": cpu_caps(),
             "wormhole_available": has_native(),
-            "modes": ["wormhole-shm", "dna-beam", "gfni-wire", "hedged-rpc", "active-pipe", "exotic-v05"],
+            "modes": [
+                "wormhole-shm",
+                "dna-beam",
+                "merkle-beam",
+                "telepathy",
+                "gfni-wire",
+                "immortal-multipath",
+                "hedged-rpc",
+                "active-pipe",
+                "fluid-pushdown",
+                "exotic-v05",
+            ],
         }
 
     def send_smart(

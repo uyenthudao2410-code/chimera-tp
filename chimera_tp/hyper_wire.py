@@ -149,6 +149,7 @@ class HyperWireReceiver:
         self._thread: threading.Thread | None = None
         self._sessions: dict[int, _RxSession] = {}
         self._completed: dict[int, tuple[bytes, int]] = {}
+        self._stream_wire_rx: dict[int, int] = {}
         self._done_cv = threading.Condition(self._lock)
 
     def punch(self, peer_addr: tuple[str, int]) -> None:
@@ -167,6 +168,11 @@ class HyperWireReceiver:
         with self._lock:
             self._sessions.pop(stream_id, None)
             self._completed.pop(stream_id, None)
+            self._stream_wire_rx.pop(stream_id, None)
+
+    def pop_stream_wire_bytes(self, stream_id: int) -> int:
+        with self._lock:
+            return self._stream_wire_rx.pop(stream_id, 0)
 
     def wait_stream(
         self, stream_id: int, timeout_s: float = 20.0
@@ -227,7 +233,7 @@ class HyperWireReceiver:
                 parsed = _unpack_frame(pkt)
                 if parsed is None:
                     continue
-                self._handle_frame(addr, *parsed)
+                self._handle_frame(addr, *parsed, pkt_len=len(pkt))
 
             now = time.perf_counter()
             if (now - last_nack_scan) >= 0.015:
@@ -246,6 +252,7 @@ class HyperWireReceiver:
         orig_len: int,
         k: int,
         body: bytes,
+        pkt_len: int = 0,
     ) -> None:
         now = time.perf_counter()
 
@@ -271,10 +278,12 @@ class HyperWireReceiver:
                 sess = _RxSession(stream_id=stream_id, orig_len=orig_len, peer_addr=addr)
                 self._sessions[stream_id] = sess
             sess.peer_addr = addr
+            sess.wire_bytes_rx += pkt_len
 
             # Handle 0-byte empty payload cleanly
             if orig_len == 0:
                 self._completed[stream_id] = (b"", 0)
+                self._stream_wire_rx[stream_id] = sess.wire_bytes_rx
                 self._done_cv.notify_all()
                 self._send_ctrl(addr, _PTYPE_FIN_ACK, stream_id, 0, 0, 0, 1, b"")
                 return
@@ -361,6 +370,7 @@ class HyperWireReceiver:
                             raw.extend(blk)
                     out_bytes = bytes(raw[:orig_len])
                     self._completed[stream_id] = (out_bytes, sess.gfni_solves)
+                    self._stream_wire_rx[stream_id] = sess.wire_bytes_rx
                     self._done_cv.notify_all()
                     self._send_ctrl(
                         addr,
@@ -480,6 +490,7 @@ class _RxSession:
     max_sys_seq: int = -1
     loss_ewma: float = 0.0
     gfni_solves: int = 0
+    wire_bytes_rx: int = 0
     generations: dict[int, _RxGeneration] = None  # type: ignore[assignment]
 
     def __post_init__(self) -> None:
@@ -974,3 +985,606 @@ class HedgedRpcClient:
                 sock.close()
             except OSError:
                 pass
+
+
+# ---------------------------------------------------------------------------
+# Breakthrough #8: Immortal Stateless Multi-Path RLNC Striping
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class ImmortalReport:
+    bytes_transferred: int
+    wire_bytes_sent: int
+    wire_bytes_rx: int
+    elapsed_ms: float
+    throughput_mbps: float
+    lanes_total: int
+    lanes_killed: int
+    lane_tx_counts: list[int]
+    lane_rx_counts: list[int]
+    gfni_solves: int
+    reconnects: int
+    survived_blackout: bool
+    sha256_match: bool
+    sha256: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+
+@dataclass
+class _ImmortalRxSession:
+    stream_id: int
+    orig_len: int
+    lane_peers: dict[int, tuple[socket.socket, tuple[Any, ...], float]]
+    lane_rx_counts: dict[int, int]
+    total_gens: int = 0
+    solved_count: int = 0
+    seen_sys_seqs: int = 0
+    max_sys_seq: int = -1
+    loss_ewma: float = 0.0
+    gfni_solves: int = 0
+    wire_bytes_rx: int = 0
+    generations: dict[int, _RxGeneration] = None  # type: ignore[assignment]
+
+    def __post_init__(self) -> None:
+        if self.generations is None:
+            self.generations = {}
+
+    def seed_for_gen(self, gen_id: int) -> bytes:
+        return hashlib.blake2s(
+            struct.pack("!BII", self.stream_id, self.orig_len, gen_id),
+            digest_size=16,
+        ).digest()
+
+
+class ImmortalMultiPathReceiver:
+    """Binds multiple IPv4/IPv6 UDP sockets into ONE shared RLNC session & matrix solver."""
+
+    def __init__(
+        self,
+        bind_addrs: list[tuple[str, int]],
+        gen_k: int = DEFAULT_GEN_K,
+        sym_size: int = SYM_SIZE,
+    ) -> None:
+        if not bind_addrs:
+            raise ValueError("ImmortalMultiPathReceiver requires at least one bind address")
+        self._gen_k = gen_k
+        self._sym_size = sym_size
+        self._socks: list[socket.socket] = []
+        self.addrs: list[tuple[str, int]] = []
+        for ip, port in bind_addrs:
+            fam = _family_for_ip(ip)
+            s = socket.socket(fam, socket.SOCK_DGRAM)
+            _disable_connreset(s)
+            try:
+                s.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 8 * 1024 * 1024)
+                s.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 8 * 1024 * 1024)
+            except OSError:
+                pass
+            s.bind((ip, port))
+            s.settimeout(0.015)
+            self._socks.append(s)
+            self.addrs.append(s.getsockname()[:2])
+
+        self._lock = threading.Lock()
+        self._stop = threading.Event()
+        self._threads: list[threading.Thread] = []
+        self._sessions: dict[int, _ImmortalRxSession] = {}
+        self._completed: dict[int, tuple[bytes, dict[str, Any]]] = {}
+        self._recent_stats: dict[int, dict[str, Any]] = {}
+        self._done_cv = threading.Condition(self._lock)
+
+    def start(self) -> "ImmortalMultiPathReceiver":
+        for idx, sock in enumerate(self._socks):
+            th = threading.Thread(target=self._rx_loop, args=(idx, sock), daemon=True)
+            th.start()
+            self._threads.append(th)
+        th_scan = threading.Thread(target=self._nack_loop, daemon=True)
+        th_scan.start()
+        self._threads.append(th_scan)
+        return self
+
+    def get_recent_stats(self, stream_id: int) -> dict[str, Any] | None:
+        with self._lock:
+            st = self._recent_stats.get(stream_id)
+            return dict(st) if st is not None else None
+
+    def wait_stream_stats(
+        self, stream_id: int, timeout_s: float = 20.0
+    ) -> tuple[bytes, dict[str, Any]]:
+        deadline = time.perf_counter() + timeout_s
+        with self._lock:
+            while stream_id not in self._completed:
+                rem = deadline - time.perf_counter()
+                if rem <= 0:
+                    raise TimeoutError(f"ImmortalMultiPath stream {stream_id} timed out")
+                self._done_cv.wait(timeout=min(rem, 0.05))
+            payload, meta = self._completed.pop(stream_id)
+            self._sessions.pop(stream_id, None)
+            return payload, meta
+
+    def wait_any_stats(self, timeout_s: float = 1.0) -> tuple[int, bytes, dict[str, Any]]:
+        deadline = time.perf_counter() + timeout_s
+        with self._lock:
+            while not self._completed:
+                rem = deadline - time.perf_counter()
+                if rem <= 0:
+                    raise TimeoutError("ImmortalMultiPath timed out")
+                self._done_cv.wait(timeout=min(rem, 0.05))
+            sid = next(iter(self._completed))
+            payload, meta = self._completed.pop(sid)
+            self._sessions.pop(sid, None)
+            return sid, payload, meta
+
+    @staticmethod
+    def _broadcast_ctrl(
+        lane_peers: list[tuple[socket.socket, tuple[Any, ...]]],
+        ptype: int,
+        stream_id: int,
+        gen_id: int,
+        sym_id: int,
+        orig_len: int,
+        k: int,
+        body: bytes,
+    ) -> None:
+        pkt = _pack_frame(ptype, stream_id, gen_id, sym_id, orig_len, k, body)
+        for sock, addr in lane_peers:
+            try:
+                sock.sendto(pkt, addr)
+            except OSError:
+                pass
+
+    def _rx_loop(self, lane_idx: int, sock: socket.socket) -> None:
+        while not self._stop.is_set():
+            try:
+                pkt, addr = sock.recvfrom(65535)
+            except (socket.timeout, ConnectionResetError):
+                continue
+            except OSError:
+                break
+            parsed = _unpack_frame(pkt)
+            if parsed is None:
+                continue
+            self._handle_frame(lane_idx, sock, addr, *parsed, pkt_len=len(pkt))
+
+    def _nack_loop(self) -> None:
+        while not self._stop.wait(timeout=0.018):
+            now = time.perf_counter()
+            nacks: list[tuple[list[tuple[socket.socket, tuple[Any, ...]]], int, int, int, int, int, int, bytes]] = []
+            with self._lock:
+                for sid, sess in list(self._sessions.items()):
+                    if sid in self._completed or sess.orig_len == 0:
+                        continue
+                    peers = [(s, a) for s, a, _ in sess.lane_peers.values()]
+                    if not peers:
+                        continue
+                    for gid, gen in sess.generations.items():
+                        if gen.solved:
+                            continue
+                        if (now - gen.last_rx_at) >= 0.030 and (now - gen.last_nack_at) >= 0.040:
+                            gen.last_nack_at = now
+                            deficit = max(1, gen.k - gen.unique_count)
+                            loss_bps = min(9000, int(sess.loss_ewma * 10000))
+                            nacks.append(
+                                (peers, _PTYPE_GEN_NEED, sid, gid, deficit, sess.orig_len, gen.k, struct.pack("<H", loss_bps))
+                            )
+            for item in nacks:
+                self._broadcast_ctrl(*item)
+
+    def _handle_frame(
+        self,
+        lane_idx: int,
+        sock: socket.socket,
+        addr: tuple[Any, ...],
+        ptype: int,
+        stream_id: int,
+        gen_id: int,
+        sym_id: int,
+        orig_len: int,
+        k: int,
+        body: bytes,
+        pkt_len: int,
+    ) -> None:
+        if ptype not in (_PTYPE_SYS, _PTYPE_FEC):
+            return
+        now = time.perf_counter()
+        ctrl_out: list[tuple[list[tuple[socket.socket, tuple[Any, ...]]], int, int, int, int, int, int, bytes]] = []
+
+        with self._lock:
+            if stream_id in self._completed:
+                self._broadcast_ctrl([(sock, addr)], _PTYPE_FIN_ACK, stream_id, gen_id, 0, orig_len, k, b"")
+                return
+
+            sess = self._sessions.get(stream_id)
+            if sess is None or sess.orig_len != orig_len:
+                sess = _ImmortalRxSession(
+                    stream_id=stream_id,
+                    orig_len=orig_len,
+                    lane_peers={},
+                    lane_rx_counts={i: 0 for i in range(len(self._socks))},
+                )
+                self._sessions[stream_id] = sess
+
+            sess.lane_peers[lane_idx] = (sock, addr, now)
+            sess.lane_rx_counts[lane_idx] = sess.lane_rx_counts.get(lane_idx, 0) + 1
+            sess.wire_bytes_rx += pkt_len
+            all_peers = [(s, a) for s, a, _ in sess.lane_peers.values()]
+
+            if orig_len == 0:
+                meta = {
+                    "stream_id": stream_id,
+                    "bytes": 0,
+                    "wire_bytes_rx": sess.wire_bytes_rx,
+                    "lane_rx_counts": [sess.lane_rx_counts.get(i, 0) for i in range(len(self._socks))],
+                    "gfni_solves": 0,
+                    "sha256": hashlib.sha256(b"").hexdigest(),
+                }
+                self._recent_stats[stream_id] = meta
+                self._completed[stream_id] = (b"", meta)
+                self._done_cv.notify_all()
+                ctrl_out.append((all_peers, _PTYPE_FIN_ACK, stream_id, 0, 0, 0, 1, b""))
+            else:
+                if sess.total_gens == 0:
+                    gen_bytes = self._gen_k * self._sym_size
+                    sess.total_gens = max(1, (orig_len + gen_bytes - 1) // gen_bytes)
+
+                if ptype == _PTYPE_SYS and sym_id < k:
+                    seq_num = gen_id * self._gen_k + sym_id
+                    sess.seen_sys_seqs += 1
+                    if seq_num > sess.max_sys_seq:
+                        sess.max_sys_seq = seq_num
+                    if sess.max_sys_seq >= 15:
+                        raw_loss = max(0.0, 1.0 - (sess.seen_sys_seqs / float(sess.max_sys_seq + 1)))
+                        sess.loss_ewma = 0.4 * raw_loss + 0.6 * sess.loss_ewma
+
+                gen = sess.generations.get(gen_id)
+                if gen is None:
+                    gen = _RxGeneration(gen_id=gen_id, k=k, sym_size=len(body), created_at=now)
+                    sess.generations[gen_id] = gen
+                    for prev_gid, prev_gen in sess.generations.items():
+                        if prev_gid < gen_id and not prev_gen.solved and (now - prev_gen.last_nack_at) >= 0.04:
+                            prev_gen.last_nack_at = now
+                            deficit = max(1, prev_gen.k - prev_gen.unique_count)
+                            loss_bps = min(9000, int(sess.loss_ewma * 10000))
+                            ctrl_out.append(
+                                (
+                                    all_peers,
+                                    _PTYPE_GEN_NEED,
+                                    stream_id,
+                                    prev_gid,
+                                    deficit,
+                                    orig_len,
+                                    prev_gen.k,
+                                    struct.pack("<H", loss_bps),
+                                )
+                            )
+
+                if not gen.solved:
+                    gen.last_rx_at = now
+                    if ptype == _PTYPE_SYS:
+                        if sym_id not in gen.sys_blocks and sym_id < k:
+                            gen.sys_blocks[sym_id] = body
+                    else:
+                        if sym_id not in gen.fec_blocks:
+                            gen.fec_blocks[sym_id] = body
+
+                    just_solved = False
+                    if len(gen.sys_blocks) == gen.k:
+                        gen.solved_blocks = [gen.sys_blocks[i] for i in range(gen.k)]
+                        gen.solved = True
+                        just_solved = True
+                    elif len(gen.sys_blocks) + len(gen.fec_blocks) >= gen.k:
+                        recovered = self._try_gfni_solve(sess.seed_for_gen(gen_id), gen)
+                        if recovered is not None:
+                            gen.solved_blocks = recovered
+                            gen.solved = True
+                            sess.gfni_solves += 1
+                            just_solved = True
+
+                    if just_solved:
+                        sess.solved_count += 1
+                        loss_bps = min(9000, int(sess.loss_ewma * 10000))
+                        ctrl_out.append(
+                            (
+                                all_peers,
+                                _PTYPE_GEN_ACK,
+                                stream_id,
+                                gen_id,
+                                sess.solved_count,
+                                orig_len,
+                                gen.k,
+                                struct.pack("<H", loss_bps),
+                            )
+                        )
+                        if sess.solved_count == sess.total_gens:
+                            raw = bytearray()
+                            for gid in range(sess.total_gens):
+                                for blk in sess.generations[gid].solved_blocks:
+                                    raw.extend(blk)
+                            out_bytes = bytes(raw[:orig_len])
+                            meta = {
+                                "stream_id": stream_id,
+                                "bytes": len(out_bytes),
+                                "wire_bytes_rx": sess.wire_bytes_rx,
+                                "lane_rx_counts": [
+                                    sess.lane_rx_counts.get(i, 0) for i in range(len(self._socks))
+                                ],
+                                "gfni_solves": sess.gfni_solves,
+                                "sha256": hashlib.sha256(out_bytes).hexdigest(),
+                            }
+                            if len(self._recent_stats) >= 64:
+                                oldest = next(iter(self._recent_stats))
+                                self._recent_stats.pop(oldest, None)
+                            self._recent_stats[stream_id] = meta
+                            self._completed[stream_id] = (out_bytes, meta)
+                            self._done_cv.notify_all()
+                            ctrl_out.append(
+                                (
+                                    all_peers,
+                                    _PTYPE_FIN_ACK,
+                                    stream_id,
+                                    gen_id,
+                                    sess.solved_count,
+                                    orig_len,
+                                    gen.k,
+                                    struct.pack("<H", loss_bps),
+                                )
+                            )
+
+        for item in ctrl_out:
+            self._broadcast_ctrl(*item)
+
+    @staticmethod
+    def _try_gfni_solve(g_seed: bytes, gen: "_RxGeneration") -> list[bytes] | None:
+        k = gen.k
+        sym_size = gen.sym_size
+        cand_coeffs: list[bytes] = []
+        cand_blocks: list[bytes] = []
+        for sid in sorted(gen.sys_blocks.keys()):
+            row = bytearray(k)
+            row[sid] = 1
+            cand_coeffs.append(bytes(row))
+            cand_blocks.append(gen.sys_blocks[sid])
+        for fid in sorted(gen.fec_blocks.keys()):
+            cand_coeffs.append(bytes(coeff_vector(g_seed, fid, k)))
+            cand_blocks.append(gen.fec_blocks[fid])
+        chosen = select_independent_rows(cand_coeffs, k)
+        if chosen is None:
+            return None
+        coeffs_flat = b"".join(cand_coeffs[i] for i in chosen)
+        coded_flat = b"".join(cand_blocks[i] for i in chosen)
+        try:
+            decoded_flat = gf256_decode_matrix(coded_flat, coeffs_flat, k, sym_size)
+        except ValueError:
+            return None
+        return [decoded_flat[i * sym_size : (i + 1) * sym_size] for i in range(k)]
+
+    def close(self) -> None:
+        self._stop.set()
+        for t in self._threads:
+            t.join(timeout=1.0)
+        for s in self._socks:
+            try:
+                s.close()
+            except OSError:
+                pass
+
+
+class ImmortalMultiPathSender:
+    """Stateless multi-path RLNC striping across IPv4/IPv6 with 0-reconnect lane-cut survival."""
+
+    def __init__(
+        self,
+        targets: list[tuple[str, int]],
+        gen_k: int = DEFAULT_GEN_K,
+        sym_size: int = SYM_SIZE,
+        max_inflight_gens: int = 24,
+        initial_loss_hint: float = 0.03,
+    ) -> None:
+        if not targets:
+            raise ValueError("ImmortalMultiPathSender requires at least one target")
+        self.targets = list(targets)
+        self.gen_k = gen_k
+        self.sym_size = sym_size
+        self.max_inflight_gens = max_inflight_gens
+        self.initial_loss_hint = max(0.0, min(0.6, float(initial_loss_hint)))
+
+    def send_stream(
+        self,
+        payload: bytes,
+        stream_id: int = 1,
+        timeout_s: float = 20.0,
+        chaos_kill_lane: int | None = None,
+        chaos_kill_after_gens: int = 1,
+    ) -> ImmortalReport:
+        t0 = time.perf_counter()
+        orig_len = len(payload)
+        socks: list[socket.socket] = []
+        for ip, _ in self.targets:
+            fam = _family_for_ip(ip)
+            s = socket.socket(fam, socket.SOCK_DGRAM)
+            _disable_connreset(s)
+            try:
+                s.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 4 * 1024 * 1024)
+                s.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 4 * 1024 * 1024)
+            except OSError:
+                pass
+            s.bind(_bind_any(fam))
+            s.setblocking(False)
+            socks.append(s)
+
+        alive_lanes = list(range(len(socks)))
+        lane_tx_counts = [0] * len(socks)
+        lanes_killed = 0
+        wire_bytes = 0
+        est_loss = self.initial_loss_hint
+
+        with WinTimerScope():
+            try:
+                for idx in alive_lanes:
+                    try:
+                        socks[idx].sendto(b"CHP0", self.targets[idx])
+                    except OSError:
+                        pass
+
+                gen_bytes = self.gen_k * self.sym_size
+                total_gens = max(1, (orig_len + gen_bytes - 1) // gen_bytes) if orig_len > 0 else 1
+                gens_blocks: list[bytes] = []
+                gens_k: list[int] = []
+                if orig_len == 0:
+                    gens_blocks.append(b"")
+                    gens_k.append(1)
+                else:
+                    mv = memoryview(payload)
+                    for gid in range(total_gens):
+                        chunk = bytes(mv[gid * gen_bytes : (gid + 1) * gen_bytes])
+                        gk = max(1, (len(chunk) + self.sym_size - 1) // self.sym_size)
+                        pad_len = gk * self.sym_size - len(chunk)
+                        if pad_len:
+                            chunk = chunk + (b"\x00" * pad_len)
+                        gens_blocks.append(chunk)
+                        gens_k.append(gk)
+
+                acked_gens: set[int] = set()
+                sent_gens: set[int] = set()
+                next_sym_id: dict[int, int] = {gid: gens_k[gid] for gid in range(total_gens)}
+                last_tx_time: dict[int, float] = {}
+                next_gen_to_send = 0
+                fin_acked = False
+                deadline = t0 + timeout_s
+                pkt_seq = 0
+                chaos_done = False
+
+                def g_seed(gid: int) -> bytes:
+                    return hashlib.blake2s(
+                        struct.pack("!BII", stream_id, orig_len, gid),
+                        digest_size=16,
+                    ).digest()
+
+                def emit_rr(pkt_bytes: bytes) -> None:
+                    nonlocal wire_bytes, pkt_seq
+                    lane = alive_lanes[pkt_seq % len(alive_lanes)]
+                    pkt_seq += 1
+                    try:
+                        socks[lane].sendto(pkt_bytes, self.targets[lane])
+                    except OSError:
+                        pass
+                    lane_tx_counts[lane] += 1
+                    wire_bytes += len(pkt_bytes)
+
+                def emit_coded(gid: int, count: int) -> None:
+                    gk = gens_k[gid]
+                    flat = gens_blocks[gid]
+                    seed = g_seed(gid)
+                    fid_base = next_sym_id[gid]
+                    for j in range(count):
+                        fid = fid_base + j
+                        coeffs = bytes(coeff_vector(seed, fid, gk))
+                        coded_blk = gf256_encode_block(flat, coeffs, gk, self.sym_size)
+                        emit_rr(_pack_frame(_PTYPE_FEC, stream_id, gid, fid, orig_len, gk, coded_blk))
+                    next_sym_id[gid] += count
+                    last_tx_time[gid] = time.perf_counter()
+
+                def send_gen(gid: int) -> None:
+                    if orig_len == 0:
+                        emit_rr(_pack_frame(_PTYPE_SYS, stream_id, 0, 0, 0, 1, b""))
+                        sent_gens.add(gid)
+                        last_tx_time[gid] = time.perf_counter()
+                        return
+                    gk = gens_k[gid]
+                    flat = gens_blocks[gid]
+                    fmv = memoryview(flat)
+                    for sid in range(gk):
+                        blk = bytes(fmv[sid * self.sym_size : (sid + 1) * self.sym_size])
+                        emit_rr(_pack_frame(_PTYPE_SYS, stream_id, gid, sid, orig_len, gk, blk))
+                    n_rep = HyperWireSender._proactive_repairs(gk, est_loss)
+                    if n_rep > 0:
+                        emit_coded(gid, n_rep)
+                    sent_gens.add(gid)
+                    last_tx_time[gid] = time.perf_counter()
+
+                def poll_all_socks() -> list[bytes]:
+                    out: list[bytes] = []
+                    for lane in alive_lanes:
+                        s = socks[lane]
+                        while True:
+                            try:
+                                data, _ = s.recvfrom(4096)
+                                out.append(data)
+                            except (BlockingIOError, socket.timeout, ConnectionResetError, OSError):
+                                break
+                    return out
+
+                while not fin_acked and len(acked_gens) < total_gens and time.perf_counter() < deadline:
+                    inflight = len(sent_gens) - len(acked_gens)
+                    while next_gen_to_send < total_gens and inflight < self.max_inflight_gens:
+                        send_gen(next_gen_to_send)
+                        next_gen_to_send += 1
+                        inflight += 1
+                        if (
+                            chaos_kill_lane is not None
+                            and not chaos_done
+                            and len(alive_lanes) > 1
+                            and chaos_kill_lane in alive_lanes
+                            and next_gen_to_send >= chaos_kill_after_gens
+                        ):
+                            alive_lanes.remove(chaos_kill_lane)
+                            lanes_killed += 1
+                            chaos_done = True
+                            est_loss = max(est_loss, 0.05)
+
+                    progressed = False
+                    for ctrl in poll_all_socks():
+                        parsed = _unpack_frame(ctrl)
+                        if parsed is None:
+                            continue
+                        ptype, sid_rx, gid_rx, meta_sym, _, _, _ = parsed
+                        if sid_rx != stream_id:
+                            continue
+                        progressed = True
+                        if ptype == _PTYPE_FIN_ACK:
+                            fin_acked = True
+                            break
+                        if ptype == _PTYPE_GEN_ACK:
+                            acked_gens.add(gid_rx)
+                        elif ptype == _PTYPE_GEN_NEED:
+                            now = time.perf_counter()
+                            if gid_rx not in acked_gens and (now - last_tx_time.get(gid_rx, 0.0)) >= 0.03:
+                                emit_coded(gid_rx, max(1, meta_sym + 1))
+
+                    if fin_acked or len(acked_gens) == total_gens:
+                        break
+                    if not progressed:
+                        now = time.perf_counter()
+                        for gid in range(next_gen_to_send):
+                            if gid not in acked_gens and (now - last_tx_time.get(gid, 0.0)) >= 0.08:
+                                emit_coded(gid, 2)
+                                break
+                        time.sleep(0.002)
+
+                elapsed_ms = (time.perf_counter() - t0) * 1000.0
+                success = fin_acked or len(acked_gens) == total_gens
+                return ImmortalReport(
+                    bytes_transferred=orig_len,
+                    wire_bytes_sent=wire_bytes,
+                    wire_bytes_rx=wire_bytes,
+                    elapsed_ms=round(elapsed_ms, 2),
+                    throughput_mbps=round((orig_len * 8.0) / max(elapsed_ms * 1000.0, 0.001), 3),
+                    lanes_total=len(socks),
+                    lanes_killed=lanes_killed,
+                    lane_tx_counts=lane_tx_counts,
+                    lane_rx_counts=[],
+                    gfni_solves=0,
+                    reconnects=0,
+                    survived_blackout=bool(success and lanes_killed > 0),
+                    sha256_match=success,
+                    sha256=hashlib.sha256(payload).hexdigest(),
+                )
+            finally:
+                for s in socks:
+                    try:
+                        s.close()
+                    except OSError:
+                        pass
