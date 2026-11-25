@@ -267,6 +267,23 @@ class TestLiveHostRealms(unittest.TestCase):
         finally:
             rx.close()
 
+    def test_segmented_rlnc_16kb_incompressible(self) -> None:
+        rx = ChimeraReceiver(self.env, droplet_size=20)
+        offer = rx.start()
+        try:
+            tx = ChimeraSender(self.env, offer)
+            payload = os.urandom(16384)
+            recovered, report = tx.send_metamorphic(
+                rx, payload, FaultProfile(), timeout_s=10.0, profile="turbo", parallel=True
+            )
+            self.assertTrue(report.success)
+            self.assertTrue(report.sha256_match)
+            self.assertEqual(recovered, payload)
+            self.assertGreater(report.k_blocks, 1000)
+            self.assertLess(report.elapsed_ms, 4000.0)
+        finally:
+            rx.close()
+
 
 if __name__ == "__main__":
     unittest.main()

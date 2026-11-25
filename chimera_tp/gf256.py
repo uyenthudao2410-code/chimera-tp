@@ -395,6 +395,141 @@ class RLNCDecoder:
         return [bytes(rows[i][1]) for i in range(self.k)]
 
 
+class SegmentedRLNCEncoder:
+    """Multi-generation RLNC encoder bounding Gaussian elimination to O(gen_size^3)."""
+
+    def __init__(
+        self, blocks: list[bytes], seed: bytes, gen_size: int = 32
+    ) -> None:
+        if not blocks:
+            raise ValueError("SegmentedRLNCEncoder requires at least one block")
+        self.blocks = blocks
+        self.k = len(blocks)
+        self.block_size = len(blocks[0])
+        self.seed = seed
+        self.gen_size = max(1, min(gen_size, self.k))
+        self.num_gens = (self.k + self.gen_size - 1) // self.gen_size
+        if self.num_gens > 64:
+            self.gen_size = (self.k + 63) // 64
+            self.num_gens = (self.k + self.gen_size - 1) // self.gen_size
+
+        self.encoders: list[RLNCEncoder] = []
+        if self.num_gens == 1:
+            self.encoders.append(RLNCEncoder(blocks, seed))
+        else:
+            for g in range(self.num_gens):
+                sub = blocks[g * self.gen_size : (g + 1) * self.gen_size]
+                g_seed = hashlib.blake2s(
+                    seed + struct.pack("!H", g), digest_size=16
+                ).digest()
+                self.encoders.append(RLNCEncoder(sub, g_seed))
+
+    def generate_droplet(self, gen_id: int, local_id: int) -> bytes:
+        """Generate a wire droplet for `gen_id`, preserving 16-bit header compatibility."""
+        if self.num_gens == 1:
+            return self.encoders[0].generate_droplet(local_id & 0xFFFF)
+        enc = self.encoders[gen_id]
+        lid10 = local_id & 0x3FF
+        coeffs = coeff_vector(enc.seed, lid10, enc.k)
+        acc_int = 0
+        for c, blk in zip(coeffs, enc.blocks):
+            if c == 0:
+                continue
+            scaled = blk if c == 1 else blk.translate(MUL_BYTES[c])
+            acc_int ^= int.from_bytes(scaled, "little")
+        acc = acc_int.to_bytes(enc.block_size, "little")
+        wire_id = ((gen_id & 0x3F) << 10) | lid10
+        body = struct.pack("!H", wire_id) + acc
+        crc = crc16_ccitt(self.seed + body)
+        return body + struct.pack("!H", crc)
+
+
+class SegmentedRLNCDecoder:
+    """Multi-generation incremental GF(256) decoder matching SegmentedRLNCEncoder."""
+
+    def __init__(
+        self, k: int, block_size: int, seed: bytes, gen_size: int = 32
+    ) -> None:
+        self.k = k
+        self.block_size = block_size
+        self.seed = seed
+        self.gen_size = max(1, min(gen_size, k))
+        self.num_gens = (k + self.gen_size - 1) // self.gen_size
+        self.decoders: list[RLNCDecoder] = []
+        if self.num_gens == 1:
+            self.decoders.append(RLNCDecoder(k=k, block_size=block_size, seed=seed))
+        else:
+            for g in range(self.num_gens):
+                gk = min(self.gen_size, k - g * self.gen_size)
+                g_seed = hashlib.blake2s(
+                    seed + struct.pack("!H", g), digest_size=16
+                ).digest()
+                self.decoders.append(RLNCDecoder(k=gk, block_size=block_size, seed=g_seed))
+        self._completed_gens: set[int] = set()
+        self.crc_drops = 0
+
+    @property
+    def rank(self) -> int:
+        return sum(d.rank for d in self.decoders)
+
+    def is_complete(self) -> bool:
+        return len(self._completed_gens) == self.num_gens
+
+    def add_droplet_with_gen(
+        self, droplet_bytes: bytes
+    ) -> tuple[bool, bool, int, int, bool]:
+        """Verify CRC, reduce within target generation, and return completion flags."""
+        if self.num_gens == 1:
+            crc_ok, innovative, r = self.decoders[0].add_droplet(droplet_bytes)
+            self.crc_drops = self.decoders[0].crc_drops
+            just_done = False
+            if self.decoders[0].is_complete() and 0 not in self._completed_gens:
+                self._completed_gens.add(0)
+                just_done = True
+            return crc_ok, innovative, r, 0, just_done
+
+        expected_len = 2 + self.block_size + 2
+        if len(droplet_bytes) != expected_len:
+            self.crc_drops += 1
+            return False, False, self.rank, 0, False
+        body = droplet_bytes[:-2]
+        recv_crc = struct.unpack("!H", droplet_bytes[-2:])[0]
+        if crc16_ccitt(self.seed + body) != recv_crc:
+            self.crc_drops += 1
+            return False, False, self.rank, 0, False
+
+        wire_id = struct.unpack("!H", body[:2])[0]
+        gen_id = (wire_id >> 10) & 0x3F
+        local_id = wire_id & 0x3FF
+        if gen_id >= self.num_gens:
+            self.crc_drops += 1
+            return False, False, self.rank, 0, False
+
+        dec = self.decoders[gen_id]
+        if dec.is_complete():
+            return True, False, self.rank, gen_id, False
+
+        # Re-encode local body with generation seed for RLNCDecoder.add_droplet
+        local_body = struct.pack("!H", local_id) + body[2:]
+        local_crc = crc16_ccitt(dec.seed + local_body)
+        crc_ok, innovative, _ = dec.add_droplet(local_body + struct.pack("!H", local_crc))
+        just_done = False
+        if dec.is_complete() and gen_id not in self._completed_gens:
+            self._completed_gens.add(gen_id)
+            just_done = True
+        return crc_ok, innovative, self.rank, gen_id, just_done
+
+    def solve(self) -> list[bytes]:
+        if not self.is_complete():
+            raise RuntimeError(
+                f"Cannot solve incomplete segmented matrix: {len(self._completed_gens)}/{self.num_gens} gens"
+            )
+        out: list[bytes] = []
+        for dec in self.decoders:
+            out.extend(dec.solve())
+        return out
+
+
 def shannon_entropy(data: bytes) -> float:
     """Compute Shannon entropy in bits per byte (max 8.0)."""
     if not data:

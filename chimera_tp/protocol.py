@@ -19,6 +19,8 @@ from .gf256 import (
     ChaosLaneScheduler,
     RLNCDecoder,
     RLNCEncoder,
+    SegmentedRLNCDecoder,
+    SegmentedRLNCEncoder,
     chaotic_keystream,
     shannon_entropy,
     xor_bytes,
@@ -76,7 +78,7 @@ class _SessionDecoderState:
     def __init__(
         self,
         transfer_id: int,
-        decoder: RLNCDecoder,
+        decoder: SegmentedRLNCDecoder,
         orig_len: int,
         compressed_len: int,
         compressed: bool,
@@ -256,8 +258,9 @@ class ChimeraReceiver:
         tid = int(msg["transfer_id"])
         k = int(msg["k"])
         block_size = int(msg["block_size"])
+        gen_size = int(msg.get("gen_size", k))
         seed = bytes.fromhex(msg["rlnc_seed_hex"])
-        dec = RLNCDecoder(k=k, block_size=block_size, seed=seed)
+        dec = SegmentedRLNCDecoder(k=k, block_size=block_size, seed=seed, gen_size=gen_size)
         for lane in self._lanes.values():
             lane.reset_state()
         with self._lock:
@@ -290,6 +293,7 @@ class ChimeraReceiver:
         self, lane_id: str, droplet: bytes, rx_ts: float
     ) -> None:
         solved_payload: dict[str, Any] | None = None
+        gack_gid: int | None = None
         reply_addr: tuple[str, int] | None = None
         tid_solved: int = 0
         capsule_bytes: bytes | None = None
@@ -298,7 +302,13 @@ class ChimeraReceiver:
             sess = self._active_session
             if sess is None or sess.done_event.is_set():
                 return
-            crc_ok, innovative, rank = sess.decoder.add_droplet(droplet)
+            crc_ok, innovative, rank, gid, gen_just_done = sess.decoder.add_droplet_with_gen(
+                droplet
+            )
+            if gen_just_done and not sess.decoder.is_complete():
+                gack_gid = gid
+                reply_addr = sess.reply_addr
+                tid_solved = sess.transfer_id
             sess.droplets_received += 1
             if innovative:
                 sess.innovative_droplets += 1
@@ -340,6 +350,12 @@ class ChimeraReceiver:
                     st["droplets_recv"] = max(0, lane.stats.droplets_recv - bd)
                     st["reconstruct_errors"] = max(0, lane.stats.reconstruct_errors - be)
                     rx_lane_delta[lid] = st
+                tl = sess.rank_timeline
+                if len(tl) > 120:
+                    step = (len(tl) - 1) / 119.0
+                    sampled_tl = [tl[int(round(i * step))] for i in range(120)]
+                else:
+                    sampled_tl = tl
                 solved_payload = {
                     "transfer_id": sess.transfer_id,
                     "sha256_match": sess.sha256_match,
@@ -347,7 +363,7 @@ class ChimeraReceiver:
                     "droplets_received": sess.droplets_received,
                     "innovative_droplets": sess.innovative_droplets,
                     "crc_drops": sess.decoder.crc_drops,
-                    "rank_timeline": sess.rank_timeline,
+                    "rank_timeline": sampled_tl,
                     "rx_lane_stats": rx_lane_delta,
                 }
 
@@ -358,6 +374,14 @@ class ChimeraReceiver:
                 if cap_tid in self._holo_events or cap_tid in self._holo_blobs:
                     self._holo_capsules[cap_tid] = capsule_bytes
                     self._try_finish_holographic(cap_tid)
+
+        if gack_gid is not None and reply_addr is not None and self._ctrl_sock is not None:
+            gack_pkt = b"GACK" + struct.pack("!IH", tid_solved, gack_gid)
+            for _ in range(2):
+                try:
+                    self._ctrl_sock.sendto(gack_pkt, reply_addr)
+                except OSError:
+                    break
 
         if solved_payload is not None and reply_addr is not None and self._ctrl_sock is not None:
             wire = b"SOLV" + json.dumps(solved_payload, separators=(",", ":")).encode("utf-8")
@@ -484,7 +508,7 @@ class ChimeraSender:
             padded[i * self.block_size : (i + 1) * self.block_size] for i in range(k)
         ]
         rlnc_seed = os.urandom(16)
-        encoder = RLNCEncoder(blocks, rlnc_seed)
+        encoder = SegmentedRLNCEncoder(blocks, rlnc_seed, gen_size=32)
 
         # Build sender-side lane instances for all offered lanes not killed
         offered_lanes = list(self.offer["lanes"].keys())
@@ -514,6 +538,8 @@ class ChimeraSender:
         start_msg = {
             "transfer_id": tid,
             "k": k,
+            "gen_size": encoder.gen_size,
+            "num_gens": encoder.num_gens,
             "block_size": self.block_size,
             "orig_len": len(payload),
             "compressed_len": compressed_len,
@@ -575,13 +601,46 @@ class ChimeraSender:
             deadline = t_start + timeout_s
             droplet_id = 0
             lane_tags: dict[str, int] = {lid: 0 for lid in active_lanes}
+            pending_gens: list[int] = list(range(encoder.num_gens))
+            gen_local_ids: dict[int, int] = {g: 0 for g in pending_gens}
+            rr_idx = 0
+
+            def _next_droplet_bytes() -> bytes:
+                nonlocal rr_idx
+                if not pending_gens:
+                    return encoder.generate_droplet(0, droplet_id)
+                gid = pending_gens[rr_idx % len(pending_gens)]
+                rr_idx += 1
+                lid_val = gen_local_ids[gid]
+                gen_local_ids[gid] = lid_val + 1
+                return encoder.generate_droplet(gid, lid_val)
+
+            def _drain_ctrl(timeout_poll: float) -> None:
+                nonlocal solved_data
+                r, _, _ = select.select([ctrl], [], [], timeout_poll)
+                if not r:
+                    return
+                while True:
+                    try:
+                        pkt, _ = ctrl.recvfrom(65535)
+                    except BlockingIOError:
+                        break
+                    if pkt[:4] == b"SOLV":
+                        parsed = json.loads(pkt[4:].decode("utf-8"))
+                        if int(parsed["transfer_id"]) == tid:
+                            solved_data = parsed
+                            break
+                    elif pkt[:4] == b"GACK" and len(pkt) >= 10:
+                        gtid, ggid = struct.unpack("!IH", pkt[4:10])
+                        if gtid == tid and ggid in pending_gens and len(pending_gens) > 1:
+                            pending_gens.remove(ggid)
 
             while time.perf_counter() < deadline and solved_data is None:
                 if parallel:
                     ready_lanes = [lid for lid, q in lane_queues.items() if not q.full()]
                     if ready_lanes:
                         lid = scheduler.next_lane(eligible_lanes=ready_lanes)
-                        droplet = encoder.generate_droplet(droplet_id)
+                        droplet = _next_droplet_bytes()
                         try:
                             lane_queues[lid].put_nowait(droplet)
                             droplet_id += 1
@@ -596,37 +655,17 @@ class ChimeraSender:
                     ftag = lane_tags[lid]
                     lane_tags[lid] += 1
 
-                    droplet = encoder.generate_droplet(droplet_id)
+                    droplet = _next_droplet_bytes()
                     lane.send_droplet(ep, droplet, ftag, fault=fault)
                     droplet_id += 1
 
-                # Check non-blocking control socket for SOLV ACK
-                r, _, _ = select.select([ctrl], [], [], 0.0)
-                if r:
-                    while True:
-                        try:
-                            pkt, _ = ctrl.recvfrom(65535)
-                        except BlockingIOError:
-                            break
-                        if pkt[:4] == b"SOLV":
-                            parsed = json.loads(pkt[4:].decode("utf-8"))
-                            if int(parsed["transfer_id"]) == tid:
-                                solved_data = parsed
-                                break
-
+                _drain_ctrl(0.0)
                 if solved_data is not None:
                     break
 
                 # Yield gently once k droplets are dispatched so receiver finishes cleanly
                 if droplet_id >= k:
-                    r, _, _ = select.select([ctrl], [], [], 0.0015)
-                    if r:
-                        pkt, _ = ctrl.recvfrom(65535)
-                        if pkt[:4] == b"SOLV":
-                            parsed = json.loads(pkt[4:].decode("utf-8"))
-                            if int(parsed["transfer_id"]) == tid:
-                                solved_data = parsed
-                                break
+                    _drain_ctrl(0.0015)
                 elif not parallel and droplet_id % 4 == 0:
                     time.sleep(0.0004)
 
