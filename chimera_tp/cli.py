@@ -64,6 +64,17 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         help="Invert 100% of random noise payload bytes on LAN_LENGTH",
     )
+    p_send.add_argument(
+        "--profile",
+        choices=("balanced", "stealth", "turbo"),
+        default="balanced",
+        help="Chaos scheduler profile",
+    )
+    p_send.add_argument(
+        "--sequential",
+        action="store_true",
+        help="Disable per-lane parallel TX workers",
+    )
 
     args = parser.parse_args(argv)
 
@@ -104,9 +115,21 @@ def main(argv: list[str] | None = None) -> int:
         try:
             tx = ChimeraSender(env, offer)
             if args.mode == "holographic":
-                recovered, report = tx.send_holographic(rx, payload, fault)
+                recovered, report = tx.send_holographic(
+                    rx,
+                    payload,
+                    fault,
+                    profile=args.profile,
+                    parallel=not args.sequential,
+                )
             else:
-                recovered, report = tx.send_metamorphic(rx, payload, fault)
+                recovered, report = tx.send_metamorphic(
+                    rx,
+                    payload,
+                    fault,
+                    profile=args.profile,
+                    parallel=not args.sequential,
+                )
             ok = report.success and recovered == payload
             print(
                 json.dumps(

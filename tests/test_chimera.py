@@ -226,6 +226,47 @@ class TestLiveHostRealms(unittest.TestCase):
         finally:
             rx.close()
 
+    def test_parallel_dispatch_and_profiles_turbo_stealth(self) -> None:
+        rx = ChimeraReceiver(self.env, droplet_size=20)
+        offer = rx.start()
+        try:
+            tx = ChimeraSender(self.env, offer)
+            payload = os.urandom(640)
+
+            rec_seq, rep_seq = tx.send_metamorphic(
+                rx, payload, FaultProfile(), profile="balanced", parallel=False
+            )
+            self.assertTrue(rep_seq.success)
+            self.assertEqual(rec_seq, payload)
+
+            rec_bal, rep_bal = tx.send_metamorphic(
+                rx, payload, FaultProfile(), profile="balanced", parallel=True
+            )
+            self.assertTrue(rep_bal.success)
+            self.assertEqual(rec_bal, payload)
+
+            rec_stl, rep_stl = tx.send_metamorphic(
+                rx, payload, FaultProfile(), profile="stealth", parallel=True
+            )
+            self.assertTrue(rep_stl.success)
+            self.assertEqual(rec_stl, payload)
+
+            rec_trb, rep_trb = tx.send_metamorphic(
+                rx, payload, FaultProfile(), profile="turbo", parallel=True
+            )
+            self.assertTrue(rep_trb.success)
+            self.assertEqual(rec_trb, payload)
+
+            stl_wire = sum(
+                st.get("wire_total_bytes_est", 0) for st in rep_stl.per_lane_stats.values()
+            )
+            trb_wire = sum(
+                st.get("wire_total_bytes_est", 0) for st in rep_trb.per_lane_stats.values()
+            )
+            self.assertLess(trb_wire, stl_wire)
+        finally:
+            rx.close()
+
 
 if __name__ == "__main__":
     unittest.main()

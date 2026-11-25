@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import queue
 import select
 import socket
 import struct
@@ -61,6 +62,8 @@ class TransferReport:
     jumbo_chunks: int = 0
     jumbo_fec_recoveries: int = 0
     jumbo_nack_retransmits: int = 0
+    profile: str = "balanced"
+    parallel: bool = True
     rank_timeline: list[dict[str, Any]] = field(default_factory=list)
     per_lane_stats: dict[str, dict[str, Any]] = field(default_factory=dict)
     error: str = ""
@@ -466,6 +469,8 @@ class ChimeraSender:
         compress: bool,
         mode_label: str,
         timeout_s: float,
+        profile: str = "balanced",
+        parallel: bool = True,
     ) -> tuple[int, TransferReport]:
         fault = fault or FaultProfile()
         tid = self._next_transfer_id()
@@ -497,7 +502,7 @@ class ChimeraSender:
             )
             for lid in active_lanes
         }
-        scheduler = ChaosLaneScheduler(active_lanes, rlnc_seed)
+        scheduler = ChaosLaneScheduler(active_lanes, rlnc_seed, profile=profile)
 
         # Open sender-side ::1 control socket
         ctrl = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
@@ -520,6 +525,25 @@ class ChimeraSender:
 
         solved_data: dict[str, Any] | None = None
         ready = False
+        tx_stop = threading.Event()
+        lane_queues: dict[str, queue.Queue[bytes | None]] = {}
+        workers: list[threading.Thread] = []
+
+        def _lane_worker(
+            lane: AlienLane, ep: Any, q: queue.Queue[bytes | None]
+        ) -> None:
+            ftag = 0
+            while not tx_stop.is_set():
+                try:
+                    item = q.get(timeout=0.02)
+                except queue.Empty:
+                    continue
+                if item is None:
+                    break
+                if not tx_stop.is_set():
+                    lane.send_droplet(ep, item, ftag, fault=fault)
+                    ftag += 1
+
         try:
             # Wait for RDY! handshake
             rdy_deadline = time.perf_counter() + 2.0
@@ -534,21 +558,47 @@ class ChimeraSender:
             if not ready:
                 raise TimeoutError("Receiver did not acknowledge STRT handshake")
 
+            if parallel:
+                for lid in active_lanes:
+                    q: queue.Queue[bytes | None] = queue.Queue(maxsize=2)
+                    lane_queues[lid] = q
+                    t = threading.Thread(
+                        target=_lane_worker,
+                        args=(tx_lanes[lid], self.offer["lanes"][lid], q),
+                        name=f"tx-{lid}",
+                        daemon=True,
+                    )
+                    t.start()
+                    workers.append(t)
+
             t_start = time.perf_counter()
             deadline = t_start + timeout_s
             droplet_id = 0
             lane_tags: dict[str, int] = {lid: 0 for lid in active_lanes}
 
             while time.perf_counter() < deadline and solved_data is None:
-                lid = scheduler.next_lane()
-                lane = tx_lanes[lid]
-                ep = self.offer["lanes"][lid]
-                ftag = lane_tags[lid]
-                lane_tags[lid] += 1
+                if parallel:
+                    ready_lanes = [lid for lid, q in lane_queues.items() if not q.full()]
+                    if ready_lanes:
+                        lid = scheduler.next_lane(eligible_lanes=ready_lanes)
+                        droplet = encoder.generate_droplet(droplet_id)
+                        try:
+                            lane_queues[lid].put_nowait(droplet)
+                            droplet_id += 1
+                        except queue.Full:
+                            pass
+                    else:
+                        time.sleep(0.0005)
+                else:
+                    lid = scheduler.next_lane()
+                    lane = tx_lanes[lid]
+                    ep = self.offer["lanes"][lid]
+                    ftag = lane_tags[lid]
+                    lane_tags[lid] += 1
 
-                droplet = encoder.generate_droplet(droplet_id)
-                lane.send_droplet(ep, droplet, ftag, fault=fault)
-                droplet_id += 1
+                    droplet = encoder.generate_droplet(droplet_id)
+                    lane.send_droplet(ep, droplet, ftag, fault=fault)
+                    droplet_id += 1
 
                 # Check non-blocking control socket for SOLV ACK
                 r, _, _ = select.select([ctrl], [], [], 0.0)
@@ -567,9 +617,9 @@ class ChimeraSender:
                 if solved_data is not None:
                     break
 
-                # Give receiver thread a short yield after sending k droplets or in bursts
+                # Yield gently once k droplets are dispatched so receiver finishes cleanly
                 if droplet_id >= k:
-                    r, _, _ = select.select([ctrl], [], [], 0.002)
+                    r, _, _ = select.select([ctrl], [], [], 0.0015)
                     if r:
                         pkt, _ = ctrl.recvfrom(65535)
                         if pkt[:4] == b"SOLV":
@@ -577,12 +627,11 @@ class ChimeraSender:
                             if int(parsed["transfer_id"]) == tid:
                                 solved_data = parsed
                                 break
-                elif droplet_id % 4 == 0:
-                    time.sleep(0.0005)
+                elif not parallel and droplet_id % 4 == 0:
+                    time.sleep(0.0004)
 
             elapsed_ms = (time.perf_counter() - t_start) * 1000.0
             if solved_data is None:
-                # Drain up to 0.5s for late SOLV
                 wait_end = time.perf_counter() + 0.5
                 while time.perf_counter() < wait_end and solved_data is None:
                     r, _, _ = select.select([ctrl], [], [], 0.02)
@@ -593,6 +642,20 @@ class ChimeraSender:
                             if int(parsed["transfer_id"]) == tid:
                                 solved_data = parsed
                                 break
+
+            tx_stop.set()
+            for q in lane_queues.values():
+                while True:
+                    try:
+                        q.get_nowait()
+                    except queue.Empty:
+                        break
+                try:
+                    q.put_nowait(None)
+                except queue.Full:
+                    pass
+            for w in workers:
+                w.join(timeout=0.5)
 
             merged_stats: dict[str, dict[str, Any]] = {}
             rx_stats = solved_data.get("rx_lane_stats", {}) if solved_data else {}
@@ -631,6 +694,8 @@ class ChimeraSender:
                     packet_drop_rate=fault.packet_drop_rate,
                     corrupt_lan_noise=fault.corrupt_lan_noise,
                     topology_fingerprint=self.env.topology_fingerprint,
+                    profile=profile,
+                    parallel=parallel,
                     per_lane_stats=merged_stats,
                     error="Timed out waiting for SOLV ACK",
                 )
@@ -658,21 +723,39 @@ class ChimeraSender:
                 packet_drop_rate=fault.packet_drop_rate,
                 corrupt_lan_noise=fault.corrupt_lan_noise,
                 topology_fingerprint=self.env.topology_fingerprint,
+                profile=profile,
+                parallel=parallel,
                 rank_timeline=list(solved_data.get("rank_timeline", [])),
                 per_lane_stats=merged_stats,
             )
             return tid, report
         finally:
+            tx_stop.set()
+            for q in lane_queues.values():
+                while True:
+                    try:
+                        q.get_nowait()
+                    except queue.Empty:
+                        break
+                try:
+                    q.put_nowait(None)
+                except queue.Full:
+                    pass
+            for w in workers:
+                if w.is_alive():
+                    w.join(timeout=0.5)
             ctrl.close()
             for lane in tx_lanes.values():
                 lane.close()
 
     def send_metamorphic(
         self,
-        receiver: ChimeraReceiver,
+        receiver: ChimeraReceiver | None,
         payload: bytes,
         fault: FaultProfile | None = None,
         timeout_s: float = 12.0,
+        profile: str = "balanced",
+        parallel: bool = True,
     ) -> tuple[bytes, TransferReport]:
         """Transmit `payload` strictly via PURE-METAMORPHIC multi-realm RLNC droplets."""
         tid, report = self._send_metamorphic_core(
@@ -681,8 +764,14 @@ class ChimeraSender:
             compress=True,
             mode_label="PURE-METAMORPHIC",
             timeout_s=timeout_s,
+            profile=profile,
+            parallel=parallel,
         )
-        recovered = receiver.get_recovered_payload(tid) if report.success else b""
+        recovered = (
+            receiver.get_recovered_payload(tid)
+            if (receiver is not None and report.success)
+            else b""
+        )
         return recovered, report
 
     def send_holographic(
@@ -691,6 +780,8 @@ class ChimeraSender:
         payload: bytes,
         fault: FaultProfile | None = None,
         timeout_s: float = 15.0,
+        profile: str = "balanced",
+        parallel: bool = True,
     ) -> tuple[bytes, TransferReport]:
         """Transmit bulk OTP-masked 58 KiB superframes over ::1 and key capsule via 7 alien lanes."""
         if self.offer.get("jumbo") is None:
@@ -728,6 +819,8 @@ class ChimeraSender:
                 compress=False,
                 mode_label="HOLOGRAPHIC-SPLIT",
                 timeout_s=timeout_s,
+                profile=profile,
+                parallel=parallel,
             )
             if not cap_report.success:
                 cap_report.payload_bytes = len(payload)

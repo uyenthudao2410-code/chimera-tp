@@ -163,12 +163,39 @@ def coeff_vector(seed: bytes, droplet_id: int, k: int) -> list[int]:
 
 
 class ChaosLaneScheduler:
-    """Logistic-map chaotic lane hopper with rolling-window lane coverage guarantee."""
+    """Logistic-map chaotic lane hopper with balanced/stealth/turbo profiles."""
 
-    def __init__(self, active_lanes: Iterable[str], seed: bytes) -> None:
+    _PROFILE_WEIGHTS: dict[str, dict[str, int]] = {
+        "balanced": {},
+        "stealth": {
+            "GHOST_127": 4,
+            "LAN_LENGTH": 3,
+            "TS_V6_CHORD": 3,
+            "HYPERV_MCAST": 3,
+            "WSL_PERMUTE": 3,
+            "TS_V4_1280": 1,
+            "ICMP_REFLECT": 1,
+        },
+        "turbo": {
+            "TS_V4_1280": 8,
+            "ICMP_REFLECT": 8,
+            "GHOST_127": 2,
+            "LAN_LENGTH": 1,
+            "TS_V6_CHORD": 1,
+            "HYPERV_MCAST": 1,
+            "WSL_PERMUTE": 1,
+        },
+    }
+
+    def __init__(
+        self, active_lanes: Iterable[str], seed: bytes, profile: str = "balanced"
+    ) -> None:
         self._lanes = list(active_lanes)
         if not self._lanes:
             raise ValueError("ChaosLaneScheduler requires at least one active lane")
+        if profile not in self._PROFILE_WEIGHTS:
+            raise ValueError(f"Unknown chaos profile: {profile}")
+        self.profile = profile
         h = int.from_bytes(hashlib.blake2s(seed, digest_size=8).digest(), "big")
         # Map initial state cleanly into (0.11, 0.89), avoiding 0.25/0.5/0.75 points
         self._x = 0.11 + 0.78 * ((h & 0xFFFFFFFFFFFF) / float(1 << 48))
@@ -177,6 +204,15 @@ class ChaosLaneScheduler:
         self._step = 0
         self._seed = seed
         self._seen_in_window: set[str] = set()
+        self._ring: list[str] = []
+        self._rebuild_ring()
+
+    def _rebuild_ring(self) -> None:
+        weights = self._PROFILE_WEIGHTS[self.profile]
+        ring: list[str] = []
+        for lid in self._lanes:
+            ring.extend([lid] * max(1, int(weights.get(lid, 1))))
+        self._ring = ring
 
     @property
     def active_lanes(self) -> list[str]:
@@ -186,9 +222,9 @@ class ChaosLaneScheduler:
         if lane_id in self._lanes and len(self._lanes) > 1:
             self._lanes.remove(lane_id)
             self._seen_in_window.discard(lane_id)
+            self._rebuild_ring()
 
-    def next_lane(self) -> str:
-        """Select the next transport lane via chaotic logistic dynamics + coverage guard."""
+    def _advance_chaos(self) -> float:
         self._step += 1
         self._x = 3.99 * self._x * (1.0 - self._x)
         if self._x <= 1e-5 or self._x >= 1.0 - 1e-5 or abs(self._x - 0.74937343) < 1e-6:
@@ -196,20 +232,38 @@ class ChaosLaneScheduler:
                 self._seed + struct.pack("!Q", self._step), digest_size=8
             ).digest()
             self._x = 0.13 + 0.74 * (int.from_bytes(reseed, "big") / float(1 << 64))
+        return self._x
 
-        n = len(self._lanes)
-        idx = min(n - 1, int(self._x * n))
-        candidate = self._lanes[idx]
+    def next_lane(self, eligible_lanes: Iterable[str] | None = None) -> str:
+        """Select the next transport lane via chaotic logistic dynamics and active profile."""
+        x = self._advance_chaos()
+        if eligible_lanes is None:
+            pool = self._ring
+            active = self._lanes
+        else:
+            allowed = set(eligible_lanes)
+            active = [lid for lid in self._lanes if lid in allowed]
+            if not active:
+                active = self._lanes
+                pool = self._ring
+            else:
+                pool = [lid for lid in self._ring if lid in allowed]
 
-        # Guarantee every active lane participates within every n-step window
-        missing = [lid for lid in self._lanes if lid not in self._seen_in_window]
-        if missing and candidate in self._seen_in_window and len(self._seen_in_window) >= max(1, n - len(missing)):
-            m_idx = int(self._x * len(missing)) % len(missing)
-            candidate = missing[m_idx]
+        candidate = pool[min(len(pool) - 1, int(x * len(pool)))]
 
-        self._seen_in_window.add(candidate)
-        if len(self._seen_in_window) >= n:
-            self._seen_in_window.clear()
+        # In balanced mode, guarantee every active lane participates within every n-step window
+        if self.profile == "balanced":
+            n = len(active)
+            missing = [lid for lid in active if lid not in self._seen_in_window]
+            if (
+                missing
+                and candidate in self._seen_in_window
+                and len(self._seen_in_window) >= max(1, n - len(missing))
+            ):
+                candidate = missing[int(x * len(missing)) % len(missing)]
+            self._seen_in_window.add(candidate)
+            if len(self._seen_in_window) >= n:
+                self._seen_in_window.clear()
         return candidate
 
 
