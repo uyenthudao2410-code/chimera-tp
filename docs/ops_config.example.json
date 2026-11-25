@@ -9,9 +9,11 @@
   "warp_port": 9705,
   "immortal_v4_port": 9706,
   "immortal_v6_port": 9707,
+  "nat_punch_port": 9708,
+  "edge_proxy_port": 9788,
   "peer_name": "remote-peer",
   "peer_ipv4": "100.64.0.2",
-  "peer_ipv6": "fd7a:115c:a1e0::2",
+  "peer_ipv6": "fd00:1234::2",
   "peer_beam_port": 9700,
   "peer_rpc_v4_port": 9702,
   "peer_rpc_v6_port": 9703,
@@ -22,5 +24,26 @@
   "active_profile": "auto-darwin",
   "daily_time": "08:00",
   "watched_query_file": "@synthetic",
-  "allowed_query_roots": []
+  "allowed_query_roots": [],
+  "edge_targets": {
+    "chimera": {
+      "url": "http://127.0.0.1:9780",
+      "prefetch": ["/api/status", "/api/health"],
+      "label": "CHIMERA Cockpit"
+    },
+    "radar": {
+      "url": "http://127.0.0.1:8787",
+      "prefetch": [],
+      "label": "Radar Dashboard"
+    },
+    "tqouta": {
+      "url": "http://127.0.0.1:12504",
+      "prefetch": [],
+      "label": "Tqouta Admin"
+    }
+  },
+  "search_roots": [],
+  "sentinel_interval_s": 300,
+  "sentinel_webhook_url": "",
+  "backup_targets": []
 }

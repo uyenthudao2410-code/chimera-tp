@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "chimera-tp"
-version = "3.0.0"
-description = "CHIMERA-HYPER v3.0: Zero-Weight HyperGrid (Merkle 0-RTT Sync, Fluid Pushdown, Telepathic Dict, Immortal Multi-Path & Contextual Autopilot)"
+version = "4.0.0"
+description = "CHIMERA-HYPER v4.0: Zero-Weight HyperOS (Birthday-Paradox NAT Buster, Universal HTTP Warp-Edge Proxy, Sentinel Watchdog, FTS5 Code Search & Holographic GF256 Backup)"
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.11"

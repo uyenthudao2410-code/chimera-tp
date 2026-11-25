@@ -12,13 +12,20 @@
 - Darwinian UCB1 Bandit + SQLite persistent telemetry + 24/7 Mission-Control Cockpit & Daily Schedulers
 
 ## Completed — `v3.0.0 ZERO-WEIGHT HYPERGRID`
-- **Merkle Directory DNA Sync + Shadow Stat Index (`merkle_sync.py`)**: `< 2 ms` unchanged scan, 0-RTT no-op when clean, sparse `CHMRK1` patch transport.
-- **Fluid Pushdown Compute `AQ02` (`active_pipe.py`)**: Remote `log_analytics`, `multi_grep`, strict read-only `sqlite_query`, and `remote_digest` executing right next to peer storage.
-- **Telepathic Domain Dictionary + Lossless Line Folding (`telepathy.py`)**: Tail-weighted 32 KiB `zlib` `zdict` + `CHLF1` byte-safe token folding achieving up to `99.93%` wire reduction.
-- **Immortal Stateless Multi-Path RLNC (`hyper_wire.py`)**: IPv4+IPv6 packet striping into a unified solver surviving complete lane loss with `0` reconnects.
-- **Contextual 24h Link-Weather & Zero-Weight Guard (`autopilot.py`, `dashboard.py`)**: Time-of-day UCB1 bucketing, clean-window sync recommendations, and `< 20 MB` desktop RSS verification.
+- Merkle Directory DNA Sync + Shadow Stat Index (`merkle_sync.py`)
+- Fluid Pushdown Compute `AQ02` (`active_pipe.py`)
+- Telepathic Domain Dictionary + Lossless Line Folding (`telepathy.py`)
+- Immortal Stateless Multi-Path RLNC (`hyper_wire.py`)
+- Contextual 24h Link-Weather & Zero-Weight Guard (`autopilot.py`, `dashboard.py`)
 
-## Next Horizons — `v3.1+`
-1. **Ed25519 Signed Capability Tokens**: Bind per-operator cryptographic signatures onto `AQ02` query plans and `CHMRK1` workspace sync requests for multi-peer team topologies.
-2. **ARM64 NEON (`PMULL` / `VTBL`) Core**: Native shared library build target for ARM64 single-board servers and Apple Silicon laptops.
-3. **Bi-Directional Workspace Three-Way Merge**: Interactive conflict resolver on top of `ShadowMerkleIndex` for concurrent multi-host code editing.
+## Completed — `v4.0.0 ZERO-WEIGHT HYPEROS`
+- **Birthday-Paradox STUN NAT Buster (`nat_buster.py`)**: RFC 5389 NAT classifier + coordinated multi-socket UDP hole-punching achieving **`5.20 ms` direct P2P RTT (`42.84x` faster)** across `SYMMETRIC -> EASY` NATs with clean Tailscale fallback.
+- **Universal HTTP Warp-Edge Proxy + Speculative Prefetch (`edge_proxy.py`)**: Loopback-guarded server gateway + Windows `:9788` local proxy delivering **`-78.23%` wire** and **`19.08 ms` 0-RTT prefetched API hits**.
+- **CHIMERA-SENTINEL Watchdog (`sentinel.py`)**: Autonomous service probes, disk/RAM health, and baseline-tracked log error spike detection with diagnostic hints & webhooks.
+- **0-Download SQLite FTS5 + Merkle Search (`code_search.py`)**: Fair 20-repo (`1,943` files, `31.8 MB` DB) server-side BM25 search returning hits in **`2.16–5.30 ms`** with `0 MB` Windows RAM.
+- **Holographic GF(256) `(K=2, N=3)` Backup (`holo_backup.py`)**: CSPRNG-masked native GF(256) shard splitting (`~7.67 bits/B` single-shard entropy), automatic peer shard replication, and bit-exact `3.40 ms` 2-of-3 recovery.
+
+## Next Horizons — `v4.1+`
+1. **HyperWire UDP Carrier for `EdgeGateway`**: Pipe `/api/edge/fetch` frames directly over punched `5 ms` Direct P2P UDP sockets instead of Tailscale TCP HTTP.
+2. **Ed25519 Signed Capability Tokens**: Bind per-operator cryptographic signatures onto `AQ02`, `EdgeGateway`, and `CHSH1` peer shard requests for multi-peer team topologies.
+3. **ARM64 NEON (`PMULL` / `VTBL`) Core**: Native shared library build target for ARM64 single-board servers and Apple Silicon machines.

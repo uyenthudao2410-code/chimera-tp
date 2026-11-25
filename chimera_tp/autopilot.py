@@ -223,6 +223,31 @@ class OpsConfig:
     daily_time: str = "08:00"
     watched_query_file: str = "@synthetic"
     allowed_query_roots: list[str] = field(default_factory=list)
+    nat_punch_port: int = 9708
+    edge_proxy_port: int = -1
+    edge_targets: dict[str, dict[str, Any]] = field(
+        default_factory=lambda: {
+            "chimera": {
+                "url": "http://127.0.0.1:9780",
+                "prefetch": ["/api/status", "/api/health"],
+                "label": "CHIMERA Cockpit",
+            },
+            "radar": {
+                "url": "http://127.0.0.1:8787",
+                "prefetch": [],
+                "label": "Radar Dashboard",
+            },
+            "tqouta": {
+                "url": "http://127.0.0.1:12504",
+                "prefetch": [],
+                "label": "Tqouta Admin",
+            },
+        }
+    )
+    search_roots: list[str] = field(default_factory=list)
+    sentinel_interval_s: int = 300
+    sentinel_webhook_url: str = ""
+    backup_targets: list[str] = field(default_factory=list)
 
     def __post_init__(self) -> None:
         if not self.node_name:
@@ -1355,7 +1380,7 @@ def format_cluster_markdown_report(status_payload: dict[str, Any]) -> str:
     now_str = datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")
 
     lines: list[str] = [
-        f"# CHIMERA-HYPER v{status_payload.get('version', '3.0.0')} — Báo Cáo Đánh Giá Cụm",
+        f"# CHIMERA-HYPER v{status_payload.get('version', '4.0.0')} — Báo Cáo Đánh Giá Cụm",
         "",
         f"- **Thời điểm xuất:** `{now_str}`",
         f"- **Xếp hạng cụm:** **{verdict.get('grade', 'N/A')}** (Sức khỏe TB: `{verdict.get('avg_health_score', 0)}/100`, Zero-Weight: `{verdict.get('zero_weight_ok', True)}`)",
@@ -1415,6 +1440,34 @@ def format_cluster_markdown_report(status_payload: dict[str, Any]) -> str:
             lines.append(
                 f"- `{w['bucket']}`: `{w['samples']}` mẫu | RTT `{w['ema_rtt_ms']} ms` | WAN `{w['ema_wan_speedup']}x` | Genome tốt nhất: `{w['best_genome']}`"
             )
+
+    sent = status_payload.get("sentinel") or {}
+    cs = status_payload.get("code_search") or {}
+    edge = status_payload.get("edge") or {}
+    bks = status_payload.get("holo_backups") or []
+    nat_last = status_payload.get("nat_last") or {}
+    lines.extend(["", "## 4. CHIMERA-HYPER v4.0 Zero-Weight HyperOS", ""])
+    if sent:
+        lines.append(
+            f"- **Sentinel:** `{sent.get('status', 'PENDING')}` | Cảnh báo gần nhất: `{sent.get('alert_count', 0)}` | Scan lúc `{sent.get('ts_local', '-')}`"
+        )
+    if cs:
+        lines.append(
+            f"- **Code Search FTS5:** `{cs.get('indexed_files', 0)}` files / `{cs.get('repos_count', 0)}` repos (`{cs.get('db_size_kb', 0)} KB` SQLite WAL)"
+        )
+    if edge:
+        gw = edge.get("gateway", {}) or {}
+        lines.append(
+            f"- **Edge Accelerator:** `{gw.get('requests', 0)}` reqs | Giảm dây `{gw.get('saved_pct', 0)}%` | Prefetch items `{gw.get('prefetched_items', 0)}`"
+        )
+    if bks:
+        lines.append(
+            f"- **Holographic GF(256) (2/3) Backups:** `{len(bks)}` snapshots"
+        )
+    if nat_last:
+        lines.append(
+            f"- **NAT Buster lần cuối:** `{nat_last.get('fallback_mode', '-')}` | {nat_last.get('diagnosis', '')}"
+        )
     return "\n".join(lines) + "\n"
 
 
@@ -1488,7 +1541,7 @@ def run_daily_autopilot(
     now_utc = datetime.now(timezone.utc).isoformat(timespec="seconds")
     now_local = datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S")
     summary = {
-        "version": "3.0.0",
+        "version": "4.0.0",
         "node_name": config.node_name,
         "role": config.role,
         "ts_utc": now_utc,

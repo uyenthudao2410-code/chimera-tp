@@ -1,4 +1,4 @@
-"""Command-line interface for CHIMERA-HYPER v3.0 (plus v1.0 & v0.5.0 exotic modes)."""
+"""Command-line interface for CHIMERA-HYPER v4.0 (plus v1.0-v3.0 and v0.5.0 exotic modes)."""
 
 from __future__ import annotations
 
@@ -9,16 +9,22 @@ import os
 import signal
 import sys
 import time
+import urllib.request
 from pathlib import Path
 
 from .active_pipe import ActivePipeEngine, ComputePlan, remote_active_query
 from .autopilot import OpsConfig, TelemetryStore, default_ops_dir, run_daily_autopilot
+from .code_search import CodeSearchIndex
 from .dashboard import ChimeraDaemon
+from .edge_proxy import LocalEdgeProxy
 from .fabric import BeamServer, ChimeraFabric, beam_send
+from .holo_backup import create_holo_backup, list_holo_backups, restore_holo_backup
 from .merkle_sync import merkle_beam_sync
+from .nat_buster import attempt_direct_punch, discover_nat_profile
 from .native import WormholeChannel
 from .probe import probe_environment
 from .protocol import ChimeraReceiver, ChimeraSender, FaultProfile
+from .sentinel import SentinelEngine
 from .telepathy import TelepathicStore, benchmark_compression, train_domain_dictionary
 from .warp import WarpClient, WarpServer
 
@@ -101,7 +107,7 @@ def main(argv: list[str] | None = None) -> int:
     _configure_utf8()
     parser = argparse.ArgumentParser(
         prog="chimera-tp",
-        description="CHIMERA-HYPER v3.0: Zero-Weight HyperGrid + Silicon GFNI/AVX2 Transport + Multi-Realm Suite",
+        description="CHIMERA-HYPER v4.0: Zero-Weight HyperOS + Silicon GFNI/AVX2 Transport + Multi-Realm Suite",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -213,6 +219,40 @@ def main(argv: list[str] | None = None) -> int:
 
     p_tb = sub.add_parser("telepathy-bench", help="Benchmark Telepathic dictionary vs raw and plain zlib")
     p_tb.add_argument("--file", required=True, help="Sample log, code, or JSON file")
+
+    # ---- CHIMERA-HYPER v4.0 HyperOS Subcommands ----
+    p_nat = sub.add_parser("nat-bust", help="STUN NAT profile and Birthday-Paradox P2P UDP punch")
+    p_nat.add_argument("--peer-http", default="", help="Peer HTTP base URL")
+    p_nat.add_argument("--sockets", type=int, default=192, help="UDP sockets to open during punch")
+    p_nat.add_argument("--spray", type=int, default=900, help="Candidate port spray count on responder")
+    p_nat.add_argument("--profile-only", action="store_true", help="Only inspect local STUN NAT profile")
+    p_nat.add_argument("--local-test", action="store_true", help="Run loopback punch test")
+
+    p_ep = sub.add_parser("edge-proxy", help="Run Zero-Weight local HTTP Warp-Edge Proxy with 0-RTT prefetch")
+    p_ep.add_argument("--listen", default="127.0.0.1:9788", help="Local HTTP listen HOST:PORT")
+    p_ep.add_argument("--peer-http", required=True, help="Peer CHIMERA EdgeGateway base URL")
+
+    p_sent = sub.add_parser("sentinel", help="Run CHIMERA-SENTINEL health and log spike monitor")
+    p_sent.add_argument("--ops-dir", default="", help="Override ops directory")
+    p_sent.add_argument("--scan", action="store_true", help="Execute a fresh Sentinel scan now")
+
+    p_srch = sub.add_parser("search", help="Zero-download SQLite FTS5 BM25 code and log search")
+    p_srch.add_argument("query", nargs="?", default="", help="Search terms")
+    p_srch.add_argument("--reindex", action="store_true", help="Incrementally update index via Merkle stat cache")
+    p_srch.add_argument("--root", action="append", default=[], help="Root directories to index locally")
+    p_srch.add_argument("--peer-http", default="", help="Remote CHIMERA HTTP base URL")
+    p_srch.add_argument("--repo", default="", help="Optional repo filter")
+    p_srch.add_argument("--limit", type=int, default=10, help="Maximum search hits")
+    p_srch.add_argument("--ops-dir", default="", help="Override ops directory")
+
+    p_hb = sub.add_parser("holo-backup", help="Holographic GF(256) (K=2, N=3) secret-shared backup")
+    p_hb.add_argument("action", choices=("create", "restore", "list"), help="Backup operation")
+    p_hb.add_argument("--path", action="append", default=[], help="Source file or directory for create")
+    p_hb.add_argument("--shard", action="append", default=[], help="Shard file path (need 2) for restore")
+    p_hb.add_argument("--out-dir", default="", help="Restore output directory")
+    p_hb.add_argument("--backup-id", default="", help="Optional backup identifier")
+    p_hb.add_argument("--peer-http", default="", help="Optional peer HTTP URL to sync Shard 1")
+    p_hb.add_argument("--ops-dir", default="", help="Override ops directory")
 
     # ---- Legacy Research Subcommands (v0.5.0 Multi-Realm Exotic Lanes) ----
     p_probe = sub.add_parser("probe", help="Probe hardware capabilities & Windows network realms")
@@ -462,7 +502,7 @@ def main(argv: list[str] | None = None) -> int:
             config=cfg, ops_dir=ops_dir, auto_seed_on_empty=not bool(args.no_seed)
         ).start()
         print(
-            f"CHIMERA-HYPER v2.0 Daemon listening at http://{daemon.http_addr[0]}:{daemon.http_addr[1]}",
+            f"CHIMERA-HYPER v4.0 Daemon listening at http://{daemon.http_addr[0]}:{daemon.http_addr[1]}",
             flush=True,
         )
         try:
@@ -519,6 +559,115 @@ def main(argv: list[str] | None = None) -> int:
         rep = benchmark_compression(raw[split:] if len(raw) > split else raw, d)
         print(json.dumps(rep, indent=2, ensure_ascii=False))
         return 0 if rep["lossless_ok"] else 1
+
+    if args.command == "nat-bust":
+        if args.profile_only or not args.peer_http:
+            print(json.dumps(discover_nat_profile(), indent=2, ensure_ascii=False))
+            return 0
+        res = attempt_direct_punch(
+            peer_http_base=args.peer_http,
+            num_sockets=int(args.sockets),
+            spray_count=int(args.spray),
+            local_test_mode=bool(args.local_test),
+        )
+        print(json.dumps(res, indent=2, ensure_ascii=False))
+        return 0
+
+    if args.command == "edge-proxy":
+        host, port = _parse_host_port(args.listen)
+        stop_ev = False
+
+        def _sig_ep(_s: int, _f: object) -> None:
+            nonlocal stop_ev
+            stop_ev = True
+
+        signal.signal(signal.SIGINT, _sig_ep)
+        proxy = LocalEdgeProxy(
+            listen_host=host,
+            listen_port=port,
+            peer_http_base=args.peer_http,
+            telepathy_store=TelepathicStore(default_ops_dir() / "dicts"),
+        ).start()
+        print(f"CHIMERA v4.0 LocalEdgeProxy listening at http://{proxy.addr[0]}:{proxy.addr[1]}", flush=True)
+        try:
+            while not stop_ev:
+                time.sleep(0.5)
+        finally:
+            proxy.close()
+        return 0
+
+    if args.command == "sentinel":
+        ops_dir = Path(args.ops_dir) if args.ops_dir else default_ops_dir()
+        cfg = OpsConfig.load(ops_dir)
+        eng = SentinelEngine(ops_dir)
+        try:
+            out = eng.scan(cfg) if args.scan else eng.latest_status()
+            print(json.dumps(out, indent=2, ensure_ascii=False))
+            return 0
+        finally:
+            eng.close()
+
+    if args.command == "search":
+        if args.peer_http:
+            base = args.peer_http.rstrip("/")
+            if args.reindex:
+                req = urllib.request.Request(
+                    f"{base}/api/search/reindex",
+                    data=b"{}",
+                    headers={"Content-Type": "application/json"},
+                    method="POST",
+                )
+                with urllib.request.urlopen(req, timeout=30.0) as resp:
+                    print(resp.read().decode("utf-8"))
+                return 0
+            req = urllib.request.Request(
+                f"{base}/api/search",
+                data=json.dumps(
+                    {"query": args.query, "repo": args.repo, "limit": int(args.limit)}
+                ).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=10.0) as resp:
+                print(resp.read().decode("utf-8"))
+            return 0
+
+        ops_dir = Path(args.ops_dir) if args.ops_dir else default_ops_dir()
+        cfg = OpsConfig.load(ops_dir)
+        idx = CodeSearchIndex(ops_dir / "code_index.db")
+        try:
+            if args.reindex:
+                roots = [Path(r) for r in args.root] if args.root else [Path(r) for r in (cfg.search_roots or cfg.allowed_query_roots)]
+                print(json.dumps(idx.incremental_index(roots), indent=2, ensure_ascii=False))
+                return 0
+            res = idx.search(args.query, limit=int(args.limit), repo=args.repo) if args.query else idx.stats()
+            print(json.dumps(res, indent=2, ensure_ascii=False))
+            return 0
+        finally:
+            idx.close()
+
+    if args.command == "holo-backup":
+        ops_dir = Path(args.ops_dir) if args.ops_dir else default_ops_dir()
+        broot = ops_dir / "holo_backups"
+        if args.action == "list":
+            print(json.dumps({"backups": list_holo_backups(broot)}, indent=2, ensure_ascii=False))
+            return 0
+        if args.action == "create":
+            cfg = OpsConfig.load(ops_dir)
+            targets = [Path(p) for p in args.path] if args.path else [Path(p) for p in (cfg.backup_targets or [ops_dir / "config.json"])]
+            rep = create_holo_backup(
+                paths=targets,
+                backup_root=broot,
+                backup_id=args.backup_id,
+                peer_http_base=args.peer_http,
+            )
+            print(json.dumps(rep, indent=2, ensure_ascii=False))
+            return 0 if rep.get("ok") else 1
+        if args.action == "restore":
+            out_dir = Path(args.out_dir) if args.out_dir else (broot / "restored" / (args.backup_id or "cli_restore"))
+            rep = restore_holo_backup([Path(s) for s in args.shard], out_dir=out_dir)
+            print(json.dumps(rep, indent=2, ensure_ascii=False))
+            return 0 if rep.get("sha256_match") else 1
 
     if args.command == "demo":
         from .demo import run_demo

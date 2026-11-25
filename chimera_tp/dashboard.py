@@ -1,7 +1,8 @@
-"""24/7 CHIMERA-HYPER v3.0 Zero-Weight Mission-Control Daemon, Scheduler & Web Cockpit."""
+"""24/7 CHIMERA-HYPER v4.0 Zero-Weight HyperOS Daemon, Scheduler & Web Cockpit."""
 
 from __future__ import annotations
 
+import base64
 import gzip
 import hashlib
 import http.server
@@ -32,7 +33,16 @@ from .autopilot import (
     prepare_merkle_demo_workspace,
     run_daily_autopilot,
 )
+from .code_search import CodeSearchIndex
+from .edge_proxy import EdgeGateway, LocalEdgeProxy, edge_fetch_remote
 from .fabric import BeamServer, beam_send
+from .holo_backup import (
+    create_holo_backup,
+    list_holo_backups,
+    restore_holo_backup,
+    sanitize_backup_id,
+    store_received_shard,
+)
 from .hyper_wire import HedgedRpcServer, ImmortalMultiPathReceiver, ImmortalMultiPathSender
 from .merkle_sync import (
     ShadowMerkleIndex,
@@ -40,9 +50,11 @@ from .merkle_sync import (
     merkle_beam_sync,
     sanitize_workspace_id,
 )
+from .nat_buster import NatPunchResponder, attempt_direct_punch, discover_nat_profile
 from .native import cpu_caps
 from .probe import probe_environment
 from .protocol import ChimeraReceiver, ChimeraSender, FaultProfile
+from .sentinel import SentinelEngine
 from .telepathy import DomainDictionary, TelepathicStore, train_domain_dictionary
 from .warp import WarpServer
 
@@ -51,7 +63,7 @@ _DASHBOARD_HTML = r"""<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CHIMERA-HYPER v3.0 Zero-Weight HyperGrid</title>
+<title>CHIMERA-HYPER v4.0 Zero-Weight HyperOS</title>
 <style>
   :root {
     --bg: #0b0f17;
@@ -121,7 +133,7 @@ _DASHBOARD_HTML = r"""<!doctype html>
   <div class="topbar">
     <div class="brand">
       <h1>
-        CHIMERA-HYPER v3.0 Zero-Weight
+        CHIMERA-HYPER v4.0 Zero-Weight HyperOS
         <span class="badge" id="node-badge">...</span>
         <span class="badge ok" id="zw-badge">RAM -- MB</span>
         <span class="badge ok" id="sched-badge">DAILY ...</span>
@@ -138,19 +150,51 @@ _DASHBOARD_HTML = r"""<!doctype html>
       <button class="primary" id="btn-run" onclick="triggerRun()">&#9654; Chạy đánh giá ngay</button>
       <button onclick="openMarkdownReport()">&#128196; Báo cáo (.md)</button>
       <button onclick="forceRefresh()">&#8635; Làm mới</button>
-      <button onclick="triggerMerkle()">&#127795; Merkle 0-RTT Sync</button>
-      <button onclick="triggerImmortal()">&#128293; Immortal Cắt IPv4</button>
-      <button onclick="triggerBeam()">&#9889; DNA Beam</button>
+      <button onclick="triggerNatBust()">&#128640; NAT Buster</button>
+      <button onclick="triggerEdgeTest()">&#9889; Edge Warp</button>
+      <button onclick="triggerHoloBackup()">&#128272; Holo GF256</button>
+      <button onclick="triggerMerkle()">&#127795; Merkle Sync</button>
+      <button onclick="triggerImmortal()">&#128293; Immortal</button>
     </div>
   </div>
 
   <div class="card">
     <div class="card-title">
-      <span>Tailscale Cluster Hub — Sức Khỏe Toàn Cụm &amp; Đánh Giá Đồng Bộ (24/7 trên Hub)</span>
+      <span>Tailscale Cluster Hub — Sức Khỏe Toàn Cụm &amp; HyperOS Action Console</span>
       <span class="badge ok" id="cluster-grade">HẠNG: ...</span>
     </div>
     <div class="kpi-sub" id="cluster-highlights" style="margin-bottom:10px;">Đang nạp báo cáo từ các node trong mạng Tailscale...</div>
     <div class="grid-2" id="cluster-nodes"></div>
+    <div class="log-box" id="v4-console" style="margin-top:10px;max-height:130px;display:none;"></div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title">
+        <span>0-Download Instant Search (SQLite FTS5 + Merkle)</span>
+        <span class="meta-line" id="search-meta">0 files</span>
+      </div>
+      <div class="query-bar">
+        <input id="search-q" value="ERROR" placeholder="Tìm trong toàn bộ code &amp; log (vd: HyperWire, V_Finance)...">
+        <input id="search-repo" value="" placeholder="Repo (tùy chọn)" style="max-width:140px;">
+        <button class="primary" onclick="triggerSearch()">&#128269; Tìm</button>
+        <button onclick="triggerReindex()">&#128260; Reindex</button>
+      </div>
+      <div class="log-box" id="search-out">Nhập từ khóa để tìm BM25 trên svhome mà không tốn RAM Windows.</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">
+        <span>CHIMERA-SENTINEL — Watchdog Tự Hành &amp; Dịch Vụ</span>
+        <span class="badge ok" id="sentinel-badge">...</span>
+      </div>
+      <div class="controls" style="justify-content:space-between;margin-bottom:8px;">
+        <div class="meta-line" id="sentinel-res">Đang chờ quét dịch vụ, đĩa &amp; log...</div>
+        <button onclick="triggerSentinel()">&#128737; Quét Sentinel</button>
+      </div>
+      <div id="sentinel-svcs" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;"></div>
+      <div class="log-box" id="sentinel-out" style="max-height:150px;">Chưa có cảnh báo.</div>
+    </div>
   </div>
 
   <div class="grid-4">
@@ -379,6 +423,100 @@ function renderState(st) {
 
   const evs = (db.events || []).map(e => `[${e.ts_local}] [${e.level}] [${e.category}] ${e.message}`).join('\n');
   document.getElementById('events-box').textContent = evs || 'No events recorded yet.';
+
+  const cs = st.code_search || {};
+  document.getElementById('search-meta').textContent =
+    `${cs.indexed_files || 0} files / ${cs.repos_count || 0} repos (${cs.db_size_kb || 0} KB)`;
+
+  const sent = st.sentinel || {};
+  const sb = document.getElementById('sentinel-badge');
+  const sStat = sent.status || 'PENDING';
+  sb.textContent = `SENTINEL: ${sStat}`;
+  sb.className = 'badge ' + (sStat === 'OK' ? 'ok' : 'warn');
+  const sRes = sent.resources || {};
+  document.getElementById('sentinel-res').textContent =
+    sRes.disk_free_gb !== undefined
+      ? `Disk trống: ${sRes.disk_free_gb}/${sRes.disk_total_gb}GB (${sRes.disk_free_pct}%) | Scan: ${sent.ts_local || '-'}`
+      : 'Bấm "Quét Sentinel" để kiểm tra toàn hệ thống.';
+  document.getElementById('sentinel-svcs').innerHTML = (sent.services || []).map(s =>
+    `<span class="badge ${s.up ? 'ok' : 'warn'}">${s.app_id}: ${s.up ? 'UP ' + s.latency_ms + 'ms' : 'DOWN'}</span>`
+  ).join('');
+  const sAlerts = sent.alerts || sent.recent_alerts || [];
+  document.getElementById('sentinel-out').textContent = sAlerts.length
+    ? sAlerts.slice(0, 6).map(a => `[${a.severity}] ${a.title}\n  ${a.detail}\n  Gợi ý: ${a.diagnosis}`).join('\n---\n')
+    : 'Hệ thống khỏe mạnh — chưa ghi nhận cảnh báo bất thường.';
+}
+
+function logV4(msg) {
+  const el = document.getElementById('v4-console');
+  el.style.display = 'block';
+  el.textContent = msg;
+}
+
+async function triggerSearch() {
+  const q = document.getElementById('search-q').value || '';
+  const repo = document.getElementById('search-repo').value || '';
+  const out = document.getElementById('search-out');
+  out.textContent = 'Đang tìm BM25 FTS5...';
+  try {
+    const r = await api('/api/search', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ query: q, repo, limit: 10 })
+    });
+    document.getElementById('search-meta').textContent = `${r.indexed_files} files • ${r.elapsed_ms}ms`;
+    out.textContent = r.hits && r.hits.length
+      ? `Tìm thấy ${r.total_hits} kết quả (${r.elapsed_ms}ms):\n` +
+        r.hits.map(h => `[${h.repo}] ${h.rel_path} (score=${h.score})\n  ${h.snippet}`).join('\n')
+      : `Không có kết quả cho "${q}" (${r.elapsed_ms}ms).`;
+  } catch (e) { out.textContent = 'Lỗi: ' + e.message; }
+}
+
+async function triggerReindex() {
+  const out = document.getElementById('search-out');
+  out.textContent = 'Đang cập nhật Merkle FTS5 index...';
+  try {
+    const r = await api('/api/search/reindex', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
+    out.textContent = `Reindex OK: ${r.total_files} files | updated=${r.updated} skipped=${r.skipped_unchanged} removed=${r.removed} DB=${r.db_size_kb}KB trong ${r.elapsed_ms}ms`;
+    await forceRefresh();
+  } catch (e) { out.textContent = 'Lỗi: ' + e.message; }
+}
+
+async function triggerSentinel() {
+  try {
+    const r = await api('/api/sentinel/scan', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
+    logV4(`Sentinel [${r.status}] trong ${r.elapsed_ms}ms | Cảnh báo=${r.alert_count} | Dịch vụ=${(r.services||[]).length}`);
+    await forceRefresh();
+  } catch (e) { logV4('Sentinel lỗi: ' + e.message); }
+}
+
+async function triggerNatBust() {
+  logV4('Đang chạy STUN + Birthday-Paradox NAT Buster...');
+  try {
+    const r = await api('/api/nat/bust', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
+    logV4(`NAT Buster: punched=${r.punched} mode=${r.fallback_mode} | LocalNAT=${(r.local_nat||{}).nat_type} | TailscaleRTT=${r.tailscale_rtt_ms}ms | DirectRTT=${r.direct_rtt_p50_ms}ms | ${r.diagnosis}`);
+    await forceRefresh();
+  } catch (e) { logV4('NAT Buster lỗi: ' + e.message); }
+}
+
+async function triggerEdgeTest() {
+  logV4('Đang test Universal Warp-Edge Gateway + Speculative Prefetch...');
+  try {
+    const r = await api('/api/edge/fetch', {
+      method: 'POST', headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ app_id: 'chimera', path: '/', allow_prefetch: true })
+    });
+    logV4(`Edge Gateway [${r.app_id}]: raw=${r.raw_bytes}B -> wire=${r.wire_bytes}B (-${r.saved_vs_raw_pct}%, ${r.mode_name}) | Prefetched=${Object.keys(r.prefetched||{}).length} endpoints trong ${r.server_exec_ms}ms`);
+    await forceRefresh();
+  } catch (e) { logV4('Edge lỗi: ' + e.message); }
+}
+
+async function triggerHoloBackup() {
+  logV4('Đang tạo Holographic GF(256) (K=2, N=3) Backup...');
+  try {
+    const r = await api('/api/backup/create', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
+    logV4(`Holo Backup [${r.backup_id}]: files=${(r.files||[]).length} raw=${r.raw_bytes}B -> shard=${r.shard_bytes}B | Entropy=[${(r.entropies||[]).join(', ')}] | PeerSynced=${r.peer_synced} | SHA=${(r.orig_sha256||'').slice(0,16)}... (${r.elapsed_ms}ms)`);
+    await forceRefresh();
+  } catch (e) { logV4('Holo Backup lỗi: ' + e.message); }
 }
 
 async function refresh() {
@@ -498,28 +636,56 @@ class ChimeraDaemon:
         self.telepathy_store = TelepathicStore(self.ops_dir / "dicts")
         self.merkle_root = self.ops_dir / "merkle_workspaces"
         self.merkle_root.mkdir(parents=True, exist_ok=True)
+        self.backup_root = self.ops_dir / "holo_backups"
+        self.backup_root.mkdir(parents=True, exist_ok=True)
         self.auto_seed_on_empty = auto_seed_on_empty
 
+        self.nat_responder = NatPunchResponder()
+        self.edge_gateway = EdgeGateway(
+            targets=self.config.edge_targets, telepathy_store=self.telepathy_store
+        )
+        self.sentinel = SentinelEngine(ops_dir=self.ops_dir)
+        self.code_search = CodeSearchIndex(self.ops_dir / "code_index.db")
+
         self._run_lock = threading.Lock()
+        self._ephemeral_mode = int(self.config.beam_port) == 0 and int(self.config.query_port) == 0
         self._status_cache_lock = threading.Lock()
         self._status_cache_ts: float = 0.0
         self._status_cache_data: tuple[dict[str, Any], bytes, str] | None = None
+        self._last_nat_result: dict[str, Any] | None = None
         self._stop = threading.Event()
         self._beam_srv: BeamServer | None = None
         self._rpc_srv: HedgedRpcServer | None = None
         self._query_srv: ActiveQueryServer | None = None
         self._immortal_rx: ImmortalMultiPathReceiver | None = None
         self._warp_srv: WarpServer | None = None
+        self._local_edge_proxy: LocalEdgeProxy | None = None
         self._httpd: _ThreadingControlServer | None = None
         self._threads: list[threading.Thread] = []
         self.http_addr: tuple[str, int] = ("127.0.0.1", 0)
 
     def _allowed_roots(self) -> list[Path]:
-        roots = [Path(p) for p in self.config.allowed_query_roots]
-        roots.append(self.ops_dir)
+        roots = [Path(p).resolve() for p in self.config.allowed_query_roots]
+        roots.append(self.ops_dir.resolve())
         if self.config.watched_query_file and self.config.watched_query_file != "@synthetic":
-            roots.append(Path(self.config.watched_query_file).parent)
+            roots.append(Path(self.config.watched_query_file).resolve().parent)
+        for p in self.config.search_roots:
+            roots.append(Path(p).resolve())
+        for p in self.config.backup_targets:
+            roots.append(Path(p).resolve())
         return roots
+
+    def _assert_path_allowed(self, raw_path: str) -> Path:
+        cand = Path(raw_path).resolve()
+        allowed = self._allowed_roots()
+        if not any(cand == r or r in cand.parents for r in allowed):
+            raise PermissionError(f"Path outside allowed roots: {cand}")
+        return cand
+
+    def peer_http_base(self) -> str:
+        if self.config.peer_ipv4:
+            return f"http://{self.config.peer_ipv4}:{self.config.peer_dashboard_port}"
+        return f"http://127.0.0.1:{self.http_addr[1]}"
 
     def start(self) -> "ChimeraDaemon":
         ephemeral_mode = int(self.config.beam_port) == 0 and int(self.config.query_port) == 0
@@ -666,13 +832,73 @@ class ChimeraDaemon:
                         200,
                         {
                             "ok": True,
-                            "version": "3.0.0",
+                            "version": "4.0.0",
                             "node_name": daemon_ref.config.node_name,
                             "role": daemon_ref.config.role,
                             "hardware": cpu_caps(),
                             "zero_weight": get_zero_weight_status(),
                         },
                     )
+                    return
+                if parsed.path == "/api/nat/profile":
+                    self._send_json(200, discover_nat_profile())
+                    return
+                if parsed.path == "/api/nat/session":
+                    qs = urllib.parse.parse_qs(parsed.query)
+                    tok = qs.get("token", [""])[0]
+                    st = daemon_ref.nat_responder.get_session(tok)
+                    self._send_json(200 if st else 404, st or {"error": "Session not found"})
+                    return
+                if parsed.path == "/api/edge/stats":
+                    self._send_json(200, daemon_ref.edge_stats())
+                    return
+                if parsed.path == "/api/sentinel/status":
+                    if (
+                        daemon_ref.config.role == "controller"
+                        and daemon_ref.config.peer_ipv4
+                        and "local=1" not in parsed.query
+                    ):
+                        try:
+                            rem = _http_get_json(f"{daemon_ref.peer_http_base()}/api/sentinel/status", timeout_s=4.0)
+                            self._send_json(200, rem)
+                            return
+                        except Exception:
+                            pass
+                    self._send_json(200, daemon_ref.sentinel.latest_status())
+                    return
+                if parsed.path == "/api/search/stats":
+                    if (
+                        daemon_ref.code_search.stats().get("indexed_files", 0) == 0
+                        and daemon_ref.config.peer_ipv4
+                        and "local=1" not in parsed.query
+                    ):
+                        try:
+                            rem = _http_get_json(f"{daemon_ref.peer_http_base()}/api/search/stats", timeout_s=4.0)
+                            self._send_json(200, rem)
+                            return
+                        except Exception:
+                            pass
+                    self._send_json(200, daemon_ref.code_search.stats())
+                    return
+                if parsed.path == "/api/backup/list":
+                    self._send_json(200, {"backups": list_holo_backups(daemon_ref.backup_root)})
+                    return
+                if parsed.path == "/api/backup/shard":
+                    qs = urllib.parse.parse_qs(parsed.query)
+                    bid = sanitize_workspace_id(qs.get("backup_id", [""])[0])
+                    idx_s = qs.get("idx", ["1"])[0]
+                    if idx_s not in ("0", "1", "2"):
+                        self._send_json(400, {"error": "Invalid shard idx"})
+                        return
+                    bdir = (daemon_ref.backup_root / bid).resolve()
+                    if daemon_ref.backup_root.resolve() not in bdir.parents:
+                        self._send_json(403, {"error": "Invalid backup_id"})
+                        return
+                    cand = bdir / ("export_shard_2.chshard" if idx_s == "2" and (bdir / "export_shard_2.chshard").is_file() else f"shard_{idx_s}.chshard")
+                    if not cand.is_file():
+                        self._send_json(404, {"error": "Shard not found"})
+                        return
+                    self._send_bytes(200, "application/octet-stream", cand.read_bytes())
                     return
                 if parsed.path == "/api/status":
                     _, raw_json, etag = daemon_ref.get_cached_status()
@@ -708,7 +934,7 @@ class ChimeraDaemon:
                         200,
                         {
                             "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
-                            "version": "3.0.0",
+                            "version": "4.0.0",
                             "cluster": st_payload.get("cluster", {}),
                             "status": st_payload,
                         },
@@ -1129,6 +1355,237 @@ class ChimeraDaemon:
                         self._send_json(500, {"error": str(exc)})
                     return
 
+                if parsed.path == "/api/nat/punch-offer":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        self._send_json(200, daemon_ref.nat_responder.start_session(body))
+                    except Exception as exc:
+                        self._send_json(400, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/nat/bust":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        peer_base = str(body.get("peer_http") or daemon_ref.peer_http_base())
+                        local_tm = bool(body.get("local_test_mode", not bool(daemon_ref.config.peer_ipv4)))
+                        n_sock = int(body.get("num_sockets", 192 if not local_tm else 16))
+                        spray = int(body.get("spray_count", 900 if not local_tm else 64))
+                        res = attempt_direct_punch(
+                            peer_http_base=peer_base,
+                            num_sockets=n_sock,
+                            spray_count=spray,
+                            timeout_s=float(body.get("timeout_s", 3.5 if not local_tm else 1.5)),
+                            local_test_mode=local_tm,
+                        )
+                        daemon_ref._last_nat_result = res
+                        daemon_ref.store.log_event(
+                            "INFO", "NAT_BUSTER", f"mode={res['fallback_mode']} {res['diagnosis']}"
+                        )
+                        daemon_ref.invalidate_status_cache()
+                        self._send_json(200, res)
+                    except Exception as exc:
+                        self._send_json(500, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/edge/fetch":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        res = daemon_ref.edge_gateway.fetch(
+                            app_id=str(body.get("app_id", "chimera")),
+                            path=str(body.get("path", "/")),
+                            query=str(body.get("query", "")),
+                            method=str(body.get("method", "GET")),
+                            body_b64=str(body.get("body_b64", "")),
+                            content_type=str(body.get("content_type", "")),
+                            allow_prefetch=bool(body.get("allow_prefetch", True)),
+                            known_dict_ids=list(body.get("known_dict_ids", [])),
+                        )
+                        self._send_json(200, res)
+                    except PermissionError as pe:
+                        self._send_json(403, {"error": str(pe)})
+                    except KeyError as ke:
+                        self._send_json(404, {"error": str(ke)})
+                    except Exception as exc:
+                        self._send_json(400, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/sentinel/scan":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        if (
+                            daemon_ref.config.role == "controller"
+                            and daemon_ref.config.peer_ipv4
+                            and not bool(body.get("local_only", False))
+                        ):
+                            rem = _http_post_json(
+                                f"{daemon_ref.peer_http_base()}/api/sentinel/scan",
+                                {"local_only": True},
+                                timeout_s=12.0,
+                            )
+                            self._send_json(200, rem)
+                            return
+                        rep = daemon_ref.sentinel.scan(daemon_ref.config)
+                        daemon_ref.store.log_event(
+                            "WARN" if rep["alert_count"] else "INFO",
+                            "SENTINEL",
+                            f"status={rep['status']} alerts={rep['alert_count']} logs={len(rep['logs_scanned'])} ({rep['elapsed_ms']}ms)",
+                        )
+                        daemon_ref.invalidate_status_cache()
+                        self._send_json(200, rep)
+                    except Exception as exc:
+                        self._send_json(500, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/search/reindex":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        if (
+                            not body.get("roots")
+                            and not daemon_ref.config.search_roots
+                            and daemon_ref.config.role == "controller"
+                            and daemon_ref.config.peer_ipv4
+                            and not bool(body.get("local_only", False))
+                        ):
+                            rem = _http_post_json(
+                                f"{daemon_ref.peer_http_base()}/api/search/reindex",
+                                {"local_only": True},
+                                timeout_s=30.0,
+                            )
+                            self._send_json(200, rem)
+                            return
+                        raw_roots = body.get("roots")
+                        if raw_roots:
+                            roots = [daemon_ref._assert_path_allowed(str(r)) for r in raw_roots]
+                        elif daemon_ref.config.search_roots:
+                            roots = [Path(p) for p in daemon_ref.config.search_roots]
+                        else:
+                            roots = [Path(p) for p in daemon_ref.config.allowed_query_roots] or [daemon_ref.ops_dir]
+                        rep = daemon_ref.code_search.incremental_index(roots)
+                        daemon_ref.store.log_event(
+                            "INFO",
+                            "CODE_SEARCH",
+                            f"Indexed {rep['total_files']} files (updated={rep['updated']}, skipped={rep['skipped_unchanged']}) in {rep['elapsed_ms']}ms",
+                        )
+                        daemon_ref.invalidate_status_cache()
+                        self._send_json(200, rep)
+                    except PermissionError as pe:
+                        self._send_json(403, {"error": str(pe)})
+                    except Exception as exc:
+                        self._send_json(400, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/search":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        if (
+                            daemon_ref.code_search.stats().get("indexed_files", 0) == 0
+                            and daemon_ref.config.peer_ipv4
+                            and not bool(body.get("local_only", False))
+                        ):
+                            rem = _http_post_json(
+                                f"{daemon_ref.peer_http_base()}/api/search",
+                                {
+                                    "query": body.get("query", ""),
+                                    "limit": body.get("limit", 10),
+                                    "repo": body.get("repo", ""),
+                                    "local_only": True,
+                                },
+                                timeout_s=8.0,
+                            )
+                            self._send_json(200, rem)
+                            return
+                        res = daemon_ref.code_search.search(
+                            query=str(body.get("query", "")),
+                            limit=int(body.get("limit", 10)),
+                            repo=str(body.get("repo", "")),
+                        )
+                        self._send_json(200, res)
+                    except Exception as exc:
+                        self._send_json(400, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/backup/store-shard":
+                    try:
+                        ct = (self.headers.get("Content-Type") or "").lower()
+                        raw_body = self._read_body()
+                        if "application/json" in ct or raw_body.lstrip().startswith(b"{"):
+                            obj = json.loads(raw_body.decode("utf-8"))
+                            shard_bytes = base64.b64decode(str(obj["shard_b64"]).encode("ascii"))
+                        else:
+                            shard_bytes = raw_body
+                        ack = store_received_shard(shard_bytes, daemon_ref.backup_root)
+                        daemon_ref.store.log_event(
+                            "INFO",
+                            "HOLO_BACKUP",
+                            f"Stored remote shard #{ack['shard_idx']} for {ack['backup_id']} ({ack['bytes']}B)",
+                        )
+                        daemon_ref.invalidate_status_cache()
+                        self._send_json(200, ack)
+                    except Exception as exc:
+                        self._send_json(400, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/backup/create":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        raw_paths = body.get("paths")
+                        if raw_paths:
+                            targets = [daemon_ref._assert_path_allowed(str(p)) for p in raw_paths]
+                        elif daemon_ref.config.backup_targets:
+                            targets = [Path(p) for p in daemon_ref.config.backup_targets if Path(p).exists()]
+                        else:
+                            cfg_file = daemon_ref.ops_dir / "config.json"
+                            if not cfg_file.exists():
+                                daemon_ref.config.save(daemon_ref.ops_dir)
+                            targets = [cfg_file]
+                        peer_base = (
+                            daemon_ref.peer_http_base()
+                            if (daemon_ref.config.peer_ipv4 and not bool(body.get("no_sync", False)))
+                            else ""
+                        )
+                        rep = create_holo_backup(
+                            paths=targets,
+                            backup_root=daemon_ref.backup_root,
+                            backup_id=str(body.get("backup_id", "")),
+                            peer_http_base=peer_base,
+                        )
+                        daemon_ref.store.log_event(
+                            "INFO",
+                            "HOLO_BACKUP",
+                            f"Created (2,3) GF256 {rep['backup_id']} raw={rep['raw_bytes']}B shard={rep['shard_bytes']}B peer_synced={rep['peer_synced']}",
+                        )
+                        daemon_ref.invalidate_status_cache()
+                        self._send_json(200, rep)
+                    except PermissionError as pe:
+                        self._send_json(403, {"error": str(pe)})
+                    except Exception as exc:
+                        self._send_json(400, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/backup/restore":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        broot = daemon_ref.backup_root.resolve()
+                        shards_raw = body.get("shard_paths", [])
+                        if len(shards_raw) < 2:
+                            self._send_json(400, {"error": "Provide at least 2 shard_paths"})
+                            return
+                        shard_paths: list[Path] = []
+                        for sp in shards_raw:
+                            cand = Path(str(sp)).resolve()
+                            if broot not in cand.parents or not cand.is_file():
+                                raise PermissionError(f"Invalid shard path outside backup_root: {sp}")
+                            shard_paths.append(cand)
+                        bid = sanitize_backup_id(str(body.get("backup_id", shard_paths[0].parent.name)))
+                        out_dir = daemon_ref.backup_root / "restored" / bid
+                        rep = restore_holo_backup(shard_paths, out_dir=out_dir)
+                        self._send_json(200, rep)
+                    except PermissionError as pe:
+                        self._send_json(403, {"error": str(pe)})
+                    except Exception as exc:
+                        self._send_json(400, {"error": str(exc)})
+                    return
+
                 self._send_json(404, {"error": "Not found"})
 
             def log_message(self, *_args: object) -> None:
@@ -1145,6 +1602,17 @@ class ChimeraDaemon:
             ).start()
             self.config.warp_port = self._warp_srv.udp_addr[1]
 
+        if int(self.config.edge_proxy_port) >= 0:
+            proxy_peer = self.peer_http_base()
+            self._local_edge_proxy = LocalEdgeProxy(
+                listen_host="127.0.0.1",
+                listen_port=int(self.config.edge_proxy_port),
+                peer_http_base=proxy_peer,
+                targets=self.config.edge_targets,
+                telepathy_store=self.telepathy_store,
+            ).start()
+            self.config.edge_proxy_port = self._local_edge_proxy.addr[1]
+
         t_http = threading.Thread(target=self._httpd.serve_forever, daemon=True)
         t_sched = threading.Thread(target=self._scheduler_loop, daemon=True)
         t_http.start()
@@ -1154,9 +1622,15 @@ class ChimeraDaemon:
         self.store.log_event(
             "INFO",
             "DAEMON",
-            f"v3.0 Started on http://{self.http_addr[0]}:{self.http_addr[1]} | RAM={zw['daemon_ram_mb']}MB | Beam={self.config.beam_port} Query={self.config.query_port} Immortal={self.config.immortal_v4_port}/{self.config.immortal_v6_port}",
+            f"v4.0 Started on http://{self.http_addr[0]}:{self.http_addr[1]} | RAM={zw['daemon_ram_mb']}MB | Beam={self.config.beam_port} Query={self.config.query_port} EdgeProxy={self.config.edge_proxy_port}",
         )
         return self
+
+    def edge_stats(self) -> dict[str, Any]:
+        return {
+            "gateway": self.edge_gateway.stats(),
+            "local_proxy": self._local_edge_proxy.stats() if self._local_edge_proxy is not None else None,
+        }
 
     def invalidate_status_cache(self) -> None:
         with self._status_cache_lock:
@@ -1179,7 +1653,7 @@ class ChimeraDaemon:
 
     def status_payload(self) -> dict[str, Any]:
         return {
-            "version": "3.0.0",
+            "version": "4.0.0",
             "config": self.config.to_dict(),
             "hardware": cpu_caps(),
             "zero_weight": get_zero_weight_status(),
@@ -1187,6 +1661,11 @@ class ChimeraDaemon:
             "today_daily_done": self.store.has_daily_run_today(),
             "telemetry": self.store.get_dashboard_state(limit=30),
             "cluster": self.store.get_cluster_overview(limit=30),
+            "sentinel": self.sentinel.latest_status(),
+            "code_search": self.code_search.stats(),
+            "edge": self.edge_stats(),
+            "holo_backups": list_holo_backups(self.backup_root)[:8],
+            "nat_last": self._last_nat_result,
         }
 
     def run_cycle(self, trigger: str = "manual") -> dict[str, Any]:
@@ -1206,16 +1685,37 @@ class ChimeraDaemon:
                 except Exception:
                     pass
 
+        is_persistent = not self._ephemeral_mode
+        last_sentinel = 0.0
+        if is_persistent and (self.config.role == "server" or self.config.search_roots):
+            try:
+                if self.config.search_roots:
+                    self.code_search.incremental_index([Path(p) for p in self.config.search_roots])
+                if self.config.role == "server":
+                    self.sentinel.scan(self.config)
+                    last_sentinel = time.monotonic()
+                self.invalidate_status_cache()
+            except Exception as exc:
+                self.store.log_event("ERROR", "HYPEROS_INIT", str(exc))
+
+        sent_iv = max(60, int(getattr(self.config, "sentinel_interval_s", 300)))
         while not self._stop.wait(timeout=30.0):
             try:
                 now_hm = datetime.now().astimezone().strftime("%H:%M")
                 if now_hm >= self.config.daily_time and not self.store.has_daily_run_today():
                     self.run_cycle(trigger="daemon_daily")
+                if is_persistent and self.config.role == "server":
+                    if (time.monotonic() - last_sentinel) >= sent_iv:
+                        self.sentinel.scan(self.config)
+                        last_sentinel = time.monotonic()
+                        self.invalidate_status_cache()
             except Exception as exc:
                 self.store.log_event("ERROR", "SCHEDULER", str(exc))
 
     def close(self) -> None:
         self._stop.set()
+        if self._local_edge_proxy is not None:
+            self._local_edge_proxy.close()
         if self._httpd is not None:
             self._httpd.shutdown()
             self._httpd.server_close()
@@ -1228,4 +1728,6 @@ class ChimeraDaemon:
         ):
             if srv is not None:
                 srv.close()
+        self.sentinel.close()
+        self.code_search.close()
         self.store.close()

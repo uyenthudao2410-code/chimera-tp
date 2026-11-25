@@ -1,48 +1,50 @@
-# Evaluation — CHIMERA-HYPER v3.0.0 Zero-Weight HyperGrid Results
+# Evaluation — CHIMERA-HYPER v4.0.0 Live Cluster Results
 
-All cross-host telemetry below was recorded live on the two-node cluster over a real Tailscale WAN path (`~109.08 ms` median RTT) running `CHIMERA-HYPER v3.0.0` daemons on both machines.
+All cross-host telemetry below was measured live across the two-node cluster (`Windows 11 i5-11400 Rust GFNI` ↔ `Ubuntu Linux i5-4300U C11 AVX2, Python 3.14.4`) running `CHIMERA-HYPER v4.0.0` 24/7 daemons over Tailscale.
 
 ## 1. Automated Verification Suites (Verified After Final Edits)
 
-- **Windows (`python -m unittest discover -s tests -v`)**: **29 / 29 PASS** (`test_chimera`, `test_hyper`, `test_v2_autopilot`, `test_v3_hypergrid`).
-- **Linux (`python3 -m unittest tests/test_hyper.py tests/test_v2_autopilot.py tests/test_v3_hypergrid.py -v`, Python 3.14.4 + C11 AVX2)**: **18 / 18 PASS in `13.831s`**.
+- **Windows (`python -m unittest discover -s tests -v`)**: **36 / 36 PASS in `57.919s`** (`0` failures, `0` skipped).
+- **Linux (`python3 -m unittest discover -s tests -v`)**: **36 / 36 PASS in `27.749s`** (`0` failures, `0` skipped).
 
-## 2. Zero-Weight Memory Footprint (Windows Desktop Guardrail)
+## 2. Zero-Weight Memory Footprint (Windows + Linux Daemons)
 
-| Process / Node | Measured Daemon RSS | Host Free RAM | Host Total RAM | Budget Status |
-| :--- | :---: | :---: | :---: | :--- |
-| **Windows Controller (`win-desktop`)** | **`18.43 MB`** (peak during run: `19.21 MB`) | `10.72 GB` | `30.85 GB` | Zero lag (`< 80 MB` budget) |
-| **Linux Server Peer (`server-peer`)** | **`42.88 MB`** (baseline `31.15 MB`) | `6.62 GB` | `10.61 GB` | Within budget (`< 80 MB`) |
+| Node / Process | Measured Idle `VmRSS` / Working Set | Budget (`80 MB`) | Services Hosted |
+| :--- | :---: | :---: | :--- |
+| **Windows Controller (`pythonw` `:9780` + `:9788`)** | **`10.74 MB`** idle (`27.91 MB` right after heavy eval) | PASS (`13.4%` used) | Cockpit, Beam, RPC, Query, Immortal, Warp, LocalEdgeProxy |
+| **Linux Server Hub (`systemd` `:9780` / TS `:9781`)** | **`45.10 MB`** (`57.62 MB` peak during Sentinel scan) | PASS (`56.4%` used) | Cluster Hub, EdgeGateway, Sentinel, FTS5 Index (`1,943` files), Holo Store |
 
-## 3. Telepathic Compression & Fluid Pushdown Benchmarks (Live WAN)
+## 3. Verified Live `v4.0` HyperOS Results
 
-All remote queries executed against real server artifacts over UDP `:9704` (`AQ02` + `CHTC1`) from Windows to Linux:
+### Breakthrough #1 — Birthday-Paradox NAT Buster
+- Path tested: Windows (`SYMMETRIC` NAT, staggered STUN mappings across `stun.cloudflare.com:3478` vs `stun.l.google.com:19302`) ↔ Linux (`EASY` NAT).
+- Execution: `192` UDP sockets opened, **`1` punch wave** (`1,148.86 ms` total coordination + probe).
+- Result: **`DIRECT_P2P_PIERCED`** — direct UDP P2P RTT **`5.20 ms`** (samples `[4.79, 5.15, 5.20, 5.45, 5.21] ms`) vs **`222.76 ms`** baseline Tailscale HTTP control RTT (**`42.84x` faster**).
 
-| Operator & Target | Raw Size | Compressed Payload | Wire Bytes | Wire Saved | Latency / Notes |
-| :--- | :---: | :---: | :---: | :---: | :--- |
-| **`filter_lines` (`ERROR`, prod log)** | `1,699,190 B` | **`13,444 B`** (`telepathic_fold_zdict` vs `15,118 B` plain zlib) | **`14,400 B`** | **`99.15%`** | **`194.89 ms`** total vs `1,852.18 ms` TCP (**9.50x speedup**; `37x` less wire than v2.0 `538.5 KB`) |
-| **`log_analytics` (prod log)** | `1,699,190 B` | **`863 B`** (`telepathic_zdict` vs `957 B` plain zlib; `3,975 B` JSON) | **`1,200 B`** | **`99.93%`** | **`405.44 ms`**, collapsed `23,991` lines into `31` templates (`server_exec=292.37 ms`) |
-| **`multi_grep` (`chimera_tp/` tree)** | `485,251 B` | `201 B` (`465 B` matches) | **`1,200 B`** | **`99.75%`** | **`119.34 ms`** total (`10.61 ms` remote tree scan, `7` matches) |
-| **`sqlite_query` (remote `telemetry.db`)** | `40,960 B` | `275 B` (`516 B` JSON) | **`1,200 B`** | **`97.07%`** | **`114.93 ms`** total (`1.12 ms` RO SQLite execution, `P0=113.68 ms`) |
+### Breakthrough #2 — Universal HTTP Warp-Edge Proxy (`127.0.0.1:9788`)
+- Fetched 3 independent Linux services from Windows through `LocalEdgeProxy` -> `EdgeGateway`:
+  - `radar`: `82,994 B` decoded (`TELEPATHY-TELEPATHIC_ZDICT`, `486.53 ms`)
+  - `tqouta`: `615,640 B` decoded (`TELEPATHY-TELEPATHIC_FOLD_ZDICT`, `1,207.14 ms`)
+  - `chimera`: `51,434 B` decoded (`TELEPATHY-TELEPATHIC_FOLD_ZDICT`, `439.80 ms`)
+  - Immediate follow-up `GET /chimera/api/status`: **`21,691 B` served with `X-Chimera-Edge: PREFETCH-HIT-0RTT` in `19.08 ms`**.
+- Aggregate wire efficiency: **`750,068 B -> 163,281 B`** (**`-78.23%` bandwidth saved**).
 
-## 4. Merkle Directory 0-RTT Sync & Incremental DNA Beam
+### Breakthrough #3 — CHIMERA-SENTINEL Watchdog
+- Probed all `3` configured Linux apps (`chimera` `1.52 ms`, `radar` `1.45 ms`, `tqouta` `6.52 ms` — all `UP HTTP 200`).
+- Checked host disk (`42.57 GB / 108.81 GB` = `39.1%` free) and scanned `12` recent `.log` files (`787.59 ms`), flagging a real `[55x] MAIL_FAIL_502` error burst in production email sync logs.
 
-- **Merkle 16-file Workspace (`152,071 B`, `1` file mutated = `164 B`):**
-  - Shadow index scan: **`1.96 ms`** (re-hashed only `1` file out of `16`, skipping `15` disk reads).
-  - Sparse wire payload (`dna_wire=200 B`): **`4,800 B` UDP wire** (`96.84%` reduction), `verified_root_match=true`.
-  - Immediate 2nd sync pass (`second_pass_noop=true`): **`0 B` payload**, root verification in **`244.66 ms`**.
-- **1 MiB Binary Delta (`beam`):** **`38,400 B`** UDP wire (**`96.90%` saved**) in `279.18 ms` vs `1,276.76 ms` TCP HTTP (`4.57x` speedup).
+### Breakthrough #4 — 0-Download SQLite FTS5 + Merkle Search
+- Indexed **all `20` workspace repositories (`1,943` files)** on Linux in a compact **`32,528 KB` (`31.77 MB`)** WAL database (`max_file_bytes=48 KiB`, `max_files_per_repo=250`).
+- Incremental Merkle verification (`skipped_unchanged = 1,943`): **`384–386 ms`** with zero file reads.
+- Cross-host search queries over Tailscale HTTPS:
+  - `"HyperWireReceiver"`: `5` ranked hits (`chimera-tp/...`) in **`2.16 ms`**
+  - `"V_Finance"`: `5` ranked hits (`auto-pull.log`, `HR/AGENTS.md`, `auto-pull.sh`) in **`4.37 ms`**
+  - `"radar"`: `5` ranked hits (`radar_dashboard/...`) in **`5.30 ms`**
 
-## 5. Immortal Multi-Path Mid-Stream Blackout Test (Real Tailscale IPv4 + IPv6)
+### Breakthrough #5 — Holographic GF(256) `(K=2, N=3)` Backup
+- Packed live controller `config.json` (`1,402 B` raw -> `638 B` compressed -> `960 B` per shard) in `258.56 ms` (`peer_synced=true` shipping `shard_1.chshard` to Linux).
+- Observed single-shard Shannon entropies: **`[7.6773, 7.6731, 7.6712]` bits/byte**.
+- Simulated total loss of `shard_0.chshard`: fetched `shard_1` back from Linux and restored `(shard_1 + export_shard_2)` with **`sha256_match=true` in `3.40 ms`**.
 
-- Payload: `131,072 B` striped concurrently across Tailscale IPv4 (`:9706`) and IPv6 (`:9707`) with `chaos_kill_lane=0` executed after Generation 1.
-- Observed TX packet split: **`[18, 170]`** (`18` IPv4 packets before lane cut, `170` packets carried over IPv6).
-- Observed peer RX packet split: **`[8, 120]`** (`peer_sha256_match=true`).
-- Reconnects triggered: **`0`** | Total completion including chaos cut: **`251.19 ms`** (`survived_blackout=true`).
-
-## 6. Silicon Core, SHM Ring & Lossy WAN Summary (`v3.0` Run)
-
-- **Windows GFNI (`1 MiB` matrix):** `1.02 ms` vs Python LUT `73.39 ms` (**`71.83x`**).
-- **Zero-Copy Shared Memory Ring (`16 MiB`):** **`8.28 Gbps`** (`16.22 ms`) vs TCP loopback `6.27 Gbps`.
-- **WAN 5% Loss Emulation (`512 KiB`):** `137.92 ms` (`30.41 Mbps`, 13 GFNI solves) vs TCP `4,492.68 ms` (`0.934 Mbps`) = **`32.57x` speedup**.
-- **Contextual Link-Weather Active Winner (`AFTERNOON`):** `G4_LOW_JITTER_V6` (`reward=8.292`).
+### Foundation & HyperGrid Telemetry (`v4.0.0` Autopilot Cycle)
+- Cluster health score: **`100 / 100`** | Simulated 5% WAN drop speedup: **`29.94x`** | 1 MiB DNA Beam: **`3.72x` (`-95.36%` wire)** | Fluid Log Query: **`7.04x` (`-99.15%` wire)** | Merkle 16-file Sync: **`-96.84%` wire** | Immortal IPv4 Cut: **`true`** | Tailscale HTTPS SSR HTML: **`14,487 B` gzipped in `442.93 ms`**.
