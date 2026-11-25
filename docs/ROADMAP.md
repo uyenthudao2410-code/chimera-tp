@@ -5,17 +5,20 @@
 - HyperWire sliding-window RLNC + XOR obfuscation
 - FastCDC + Odess SuperFeature delta engine (DNA Beam)
 - Active Pipe compute-in-flight filter with P0 preview streaming
-- Full local benchmark & HTML visualization report
 
-## Completed — `v2.0.0 AUTOPILOT` (Cross-Platform & Autonomous Ops)
-- **Linux C11 AVX2 Silicon Core (`native/chimera_core_c`)**: `VPSHUFB` split-nibble GF(256), bit-identical FastCDC/Odess, and POSIX `/dev/shm` lock-free SPSC Wormhole.
-- **Cross-Host Tailscale Dual-Stack Transport**: MTU-safe (`1180 B`) symbol framing, `AF_INET`/`AF_INET6` hedged RPC, single-port UDP NAT/firewall feedback routing, and bidirectional DNA Beam + Active Query servers.
-- **Autonomous Daily Control Loop (`autopilot.py`)**: SQLite-backed run telemetry, regression/fallback anomaly detection, and 5-genome **Darwinian UCB1 Bandit** self-tuning.
-- **24/7 Mission-Control Cockpit (`dashboard.py`)**: Web dashboard + REST API + built-in daily scheduler + OS-level triggers (`Task Scheduler` & `systemd --user`).
+## Completed — `v2.0.0 AUTOPILOT`
+- Linux C11 AVX2 `VPSHUFB` core + POSIX `/dev/shm` lock-free ring (bit-identical with Windows Rust core)
+- Cross-host Tailscale IPv4+IPv6 dual-stack transport & single-port UDP firewall/NAT feedback routing
+- Darwinian UCB1 Bandit + SQLite persistent telemetry + 24/7 Mission-Control Cockpit & Daily Schedulers
 
-## Next Horizons — `v2.1+`
-1. **Cross-Chunk Dictionary Compression (Zstd Trained Dicts)**: Train per-repo / per-log-stream Zstd dictionaries across `Odess` buckets to push Active Query wire reduction from `68%` toward `85%+` on repetitive log streams.
-2. **Adaptive Congestion & RTT Estimator (Kalman Loss Tracking)**: Feed live moving-window packet loss and jitter from `HyperWire` directly into `loss_hint` mid-stream rather than per-run genome selection alone.
-3. **Directory-Tree Merkle Beam (`beam-sync`)**: Extend `BeamServer` from single blobs to hierarchical Merkle trees for sub-second cross-host workspace synchronization over high-RTT VPN links.
-4. **ARM64 NEON (`PMULL` / `VTBL`) Core**: Port `native/chimera_core_c` to `aarch64` NEON (`vmull_p8` / `vqtbl1q_u8`) for Raspberry Pi / Apple Silicon edge nodes.
-5. **Signed Cluster Mesh Auth**: HMAC-SHA256 / Ed25519 challenge-response framing on daemon control endpoints so cockpit management remains hardened even on untrusted LANs.
+## Completed — `v3.0.0 ZERO-WEIGHT HYPERGRID`
+- **Merkle Directory DNA Sync + Shadow Stat Index (`merkle_sync.py`)**: `< 2 ms` unchanged scan, 0-RTT no-op when clean, sparse `CHMRK1` patch transport.
+- **Fluid Pushdown Compute `AQ02` (`active_pipe.py`)**: Remote `log_analytics`, `multi_grep`, strict read-only `sqlite_query`, and `remote_digest` executing right next to peer storage.
+- **Telepathic Domain Dictionary + Lossless Line Folding (`telepathy.py`)**: Tail-weighted 32 KiB `zlib` `zdict` + `CHLF1` byte-safe token folding achieving up to `99.93%` wire reduction.
+- **Immortal Stateless Multi-Path RLNC (`hyper_wire.py`)**: IPv4+IPv6 packet striping into a unified solver surviving complete lane loss with `0` reconnects.
+- **Contextual 24h Link-Weather & Zero-Weight Guard (`autopilot.py`, `dashboard.py`)**: Time-of-day UCB1 bucketing, clean-window sync recommendations, and `< 20 MB` desktop RSS verification.
+
+## Next Horizons — `v3.1+`
+1. **Ed25519 Signed Capability Tokens**: Bind per-operator cryptographic signatures onto `AQ02` query plans and `CHMRK1` workspace sync requests for multi-peer team topologies.
+2. **ARM64 NEON (`PMULL` / `VTBL`) Core**: Native shared library build target for ARM64 single-board servers and Apple Silicon laptops.
+3. **Bi-Directional Workspace Three-Way Merge**: Interactive conflict resolver on top of `ShadowMerkleIndex` for concurrent multi-host code editing.

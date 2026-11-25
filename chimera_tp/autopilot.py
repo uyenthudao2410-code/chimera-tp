@@ -1,7 +1,8 @@
-"""CHIMERA-HYPER v2.0 Autopilot: Darwinian UCB1 Genome Auto-Tuner, SQLite Store & Live Suite."""
+"""CHIMERA-HYPER v3.0 Autopilot: Contextual 24h Link-Weather UCB1 Bandit & Zero-Weight Guard."""
 
 from __future__ import annotations
 
+import ctypes
 import hashlib
 import json
 import math
@@ -32,9 +33,17 @@ from .hyper_wire import (
     HedgedRpcClient,
     HyperWireReceiver,
     HyperWireSender,
+    ImmortalMultiPathSender,
 )
 from .impairment import ImpairedUdpBridge, transfer_tcp_cubic_over_udp
+from .merkle_sync import merkle_beam_sync
 from .native import WormholeChannel, cpu_caps, gf256_decode_matrix, gf256_encode_block, has_native
+from .telepathy import (
+    DomainDictionary,
+    TelepathicStore,
+    benchmark_compression,
+    train_domain_dictionary,
+)
 
 GENOMES: dict[str, dict[str, Any]] = {
     "G0_BALANCED": {
@@ -80,6 +89,108 @@ GENOMES: dict[str, dict[str, Any]] = {
 }
 
 VALID_PROFILES = ("auto-darwin", "max-speed", "lossy-armor", "exotic-v05")
+TIME_BUCKETS = ("NIGHT_CLEAN", "MORNING", "AFTERNOON", "PEAK_EVENING")
+
+
+def time_bucket_for_hour(hour: int | None = None) -> str:
+    h = datetime.now().astimezone().hour if hour is None else int(hour) % 24
+    if h < 7:
+        return "NIGHT_CLEAN"
+    if h < 12:
+        return "MORNING"
+    if h < 19:
+        return "AFTERNOON"
+    return "PEAK_EVENING"
+
+
+def _bucket_from_ts(ts_local: str) -> str:
+    try:
+        dt = datetime.strptime(ts_local[:19], "%Y-%m-%d %H:%M:%S")
+        return time_bucket_for_hour(dt.hour)
+    except Exception:
+        return time_bucket_for_hour()
+
+
+def get_zero_weight_status(budget_mb: float = 80.0) -> dict[str, Any]:
+    """Read current process RSS & host free RAM using pure OS APIs (zero heavy deps)."""
+    rss_mb = 0.0
+    free_gb = 0.0
+    total_gb = 0.0
+
+    if os.name == "nt":
+        try:
+            class _PMC_EX(ctypes.Structure):
+                _fields_ = [
+                    ("cb", ctypes.c_uint32),
+                    ("PageFaultCount", ctypes.c_uint32),
+                    ("PeakWorkingSetSize", ctypes.c_size_t),
+                    ("WorkingSetSize", ctypes.c_size_t),
+                    ("QuotaPeakPagedPoolUsage", ctypes.c_size_t),
+                    ("QuotaPagedPoolUsage", ctypes.c_size_t),
+                    ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t),
+                    ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
+                    ("PagefileUsage", ctypes.c_size_t),
+                    ("PeakPagefileUsage", ctypes.c_size_t),
+                    ("PrivateUsage", ctypes.c_size_t),
+                ]
+
+            class _MEMSTAT(ctypes.Structure):
+                _fields_ = [
+                    ("dwLength", ctypes.c_uint32),
+                    ("dwMemoryLoad", ctypes.c_uint32),
+                    ("ullTotalPhys", ctypes.c_uint64),
+                    ("ullAvailPhys", ctypes.c_uint64),
+                    ("ullTotalPageFile", ctypes.c_uint64),
+                    ("ullAvailPageFile", ctypes.c_uint64),
+                    ("ullTotalVirtual", ctypes.c_uint64),
+                    ("ullAvailVirtual", ctypes.c_uint64),
+                    ("ullAvailExtendedVirtual", ctypes.c_uint64),
+                ]
+
+            k32 = ctypes.windll.kernel32
+            k32.GetCurrentProcess.restype = ctypes.c_void_p
+            pmc = _PMC_EX()
+            pmc.cb = ctypes.sizeof(pmc)
+            hproc = k32.GetCurrentProcess()
+            get_pmi = getattr(k32, "K32GetProcessMemoryInfo", None)
+            if get_pmi is None:
+                get_pmi = ctypes.windll.psapi.GetProcessMemoryInfo
+            get_pmi.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint32]
+            get_pmi.restype = ctypes.c_int
+            if get_pmi(hproc, ctypes.byref(pmc), pmc.cb):
+                rss_mb = pmc.WorkingSetSize / (1024.0 * 1024.0)
+            ms = _MEMSTAT()
+            ms.dwLength = ctypes.sizeof(ms)
+            k32.GlobalMemoryStatusEx.argtypes = [ctypes.c_void_p]
+            k32.GlobalMemoryStatusEx.restype = ctypes.c_int
+            if k32.GlobalMemoryStatusEx(ctypes.byref(ms)):
+                total_gb = ms.ullTotalPhys / (1024.0 ** 3)
+                free_gb = ms.ullAvailPhys / (1024.0 ** 3)
+        except Exception:
+            pass
+    else:
+        try:
+            for ln in Path("/proc/self/status").read_text(encoding="utf-8").splitlines():
+                if ln.startswith("VmRSS:"):
+                    kb = float(ln.split()[1])
+                    rss_mb = kb / 1024.0
+                    break
+            for ln in Path("/proc/meminfo").read_text(encoding="utf-8").splitlines():
+                if ln.startswith("MemTotal:"):
+                    total_gb = float(ln.split()[1]) / (1024.0 * 1024.0)
+                elif ln.startswith("MemAvailable:"):
+                    free_gb = float(ln.split()[1]) / (1024.0 * 1024.0)
+        except Exception:
+            pass
+
+    return {
+        "daemon_ram_mb": round(rss_mb, 2),
+        "host_free_ram_gb": round(free_gb, 2),
+        "host_total_ram_gb": round(total_gb, 2),
+        "cpu_threads": os.cpu_count() or 1,
+        "ram_budget_mb": budget_mb,
+        "zero_weight_ok": bool(rss_mb <= budget_mb),
+    }
 
 
 def default_ops_dir() -> Path:
@@ -96,6 +207,8 @@ class OpsConfig:
     rpc_v6_port: int = 9703
     query_port: int = 9704
     warp_port: int = 9705
+    immortal_v4_port: int = 9706
+    immortal_v6_port: int = 9707
     peer_name: str = ""
     peer_ipv4: str = ""
     peer_ipv6: str = ""
@@ -103,6 +216,8 @@ class OpsConfig:
     peer_rpc_v4_port: int = 9702
     peer_rpc_v6_port: int = 9703
     peer_query_port: int = 9704
+    peer_immortal_v4_port: int = 9706
+    peer_immortal_v6_port: int = 9707
     peer_dashboard_port: int = 9780
     active_profile: str = "auto-darwin"
     daily_time: str = "08:00"
@@ -142,7 +257,7 @@ class OpsConfig:
 
 
 class TelemetryStore:
-    """Thread-safe SQLite store for daily telemetry runs, Darwinian genomes, and live events."""
+    """Thread-safe SQLite store for telemetry, Contextual 24h Link-Weather & UCB1 genomes."""
 
     def __init__(self, db_path: Path | None = None) -> None:
         base = default_ops_dir()
@@ -189,6 +304,25 @@ class TelemetryStore:
                     last_used TEXT NOT NULL DEFAULT '',
                     params_json TEXT NOT NULL
                 );
+                CREATE TABLE IF NOT EXISTS context_genomes (
+                    bucket TEXT NOT NULL,
+                    genome_id TEXT NOT NULL,
+                    pulls INTEGER NOT NULL DEFAULT 0,
+                    total_reward REAL NOT NULL DEFAULT 0.0,
+                    avg_reward REAL NOT NULL DEFAULT 0.0,
+                    last_used TEXT NOT NULL DEFAULT '',
+                    PRIMARY KEY (bucket, genome_id)
+                );
+                CREATE TABLE IF NOT EXISTS link_weather (
+                    bucket TEXT PRIMARY KEY,
+                    samples INTEGER NOT NULL DEFAULT 0,
+                    ema_rtt_ms REAL NOT NULL DEFAULT 0.0,
+                    ema_wan_speedup REAL NOT NULL DEFAULT 0.0,
+                    ema_beam_speedup REAL NOT NULL DEFAULT 0.0,
+                    ema_query_speedup REAL NOT NULL DEFAULT 0.0,
+                    best_genome TEXT NOT NULL DEFAULT '',
+                    updated_at TEXT NOT NULL DEFAULT ''
+                );
                 CREATE TABLE IF NOT EXISTS events (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     ts_local TEXT NOT NULL,
@@ -207,9 +341,27 @@ class TelemetryStore:
                     """,
                     (gid, json.dumps(params)),
                 )
+                for b in TIME_BUCKETS:
+                    cur.execute(
+                        """
+                        INSERT INTO context_genomes (bucket, genome_id, pulls, total_reward, avg_reward, last_used)
+                        VALUES (?, ?, 0, 0.0, 0.0, '')
+                        ON CONFLICT(bucket, genome_id) DO NOTHING
+                        """,
+                        (b, gid),
+                    )
+            for b in TIME_BUCKETS:
+                cur.execute(
+                    """
+                    INSERT INTO link_weather (bucket, samples, ema_rtt_ms, ema_wan_speedup, ema_beam_speedup, ema_query_speedup, best_genome, updated_at)
+                    VALUES (?, 0, 0.0, 0.0, 0.0, 0.0, '', '')
+                    ON CONFLICT(bucket) DO NOTHING
+                    """,
+                    (b,),
+                )
             self._conn.commit()
 
-    def select_genome(self, profile: str) -> tuple[str, dict[str, Any]]:
+    def select_genome(self, profile: str, hour: int | None = None) -> tuple[str, dict[str, Any]]:
         if profile == "max-speed":
             return "G3_TURBO_BULK", dict(GENOMES["G3_TURBO_BULK"])
         if profile == "lossy-armor":
@@ -217,25 +369,58 @@ class TelemetryStore:
         if profile == "exotic-v05":
             return "G0_BALANCED", dict(GENOMES["G0_BALANCED"])
 
-        # Darwinian UCB1 bandit selection
+        bucket = time_bucket_for_hour(hour)
         with self._lock:
             rows = self._conn.execute(
-                "SELECT genome_id, pulls, avg_reward FROM genomes ORDER BY genome_id"
+                """
+                SELECT g.genome_id, g.pulls AS g_pulls, g.avg_reward AS g_avg,
+                       COALESCE(c.pulls, 0) AS c_pulls, COALESCE(c.avg_reward, 0.0) AS c_avg
+                FROM genomes g
+                LEFT JOIN context_genomes c
+                  ON c.genome_id = g.genome_id AND c.bucket = ?
+                ORDER BY g.genome_id
+                """,
+                (bucket,),
             ).fetchall()
-        total_pulls = sum(int(r["pulls"]) for r in rows)
+
+        # Phase 1: global cold-start exploration covers all 5 genomes first
         for r in rows:
-            if int(r["pulls"]) == 0:
+            if int(r["g_pulls"]) == 0:
                 gid = str(r["genome_id"])
                 return gid, dict(GENOMES[gid])
+
+        ctx_total = sum(int(r["c_pulls"]) for r in rows)
+        global_total = sum(int(r["g_pulls"]) for r in rows)
         best_gid = "G0_BALANCED"
         best_score = -1.0
+
+        # If this time bucket has not been sampled yet, blend cleanly from global empirical posterior
+        if ctx_total == 0:
+            for r in rows:
+                gid = str(r["genome_id"])
+                pulls = max(1, int(r["g_pulls"]))
+                avg_r = float(r["g_avg"])
+                ucb = avg_r + 1.2 * math.sqrt(math.log(max(2, global_total)) / pulls)
+                if ucb > best_score:
+                    best_score = ucb
+                    best_gid = gid
+            return best_gid, dict(GENOMES[best_gid])
+
+        # Contextual UCB1 within active time-of-day weather bucket + global prior
         for r in rows:
             gid = str(r["genome_id"])
-            pulls = max(1, int(r["pulls"]))
-            avg_r = float(r["avg_reward"])
-            ucb = avg_r + 1.2 * math.sqrt(math.log(max(2, total_pulls)) / pulls)
-            if ucb > best_score:
-                best_score = ucb
+            c_pulls = int(r["c_pulls"])
+            g_pulls = max(1, int(r["g_pulls"]))
+            c_avg = float(r["c_avg"])
+            g_avg = float(r["g_avg"])
+            if c_pulls == 0:
+                prior = g_avg + 0.65 * math.sqrt(math.log(max(2, ctx_total)) / 1.0)
+                score = prior
+            else:
+                blended = 0.75 * c_avg + 0.25 * g_avg
+                score = blended + 1.2 * math.sqrt(math.log(max(2, ctx_total + 1)) / c_pulls)
+            if score > best_score:
+                best_score = score
                 best_gid = gid
         return best_gid, dict(GENOMES[best_gid])
 
@@ -249,6 +434,14 @@ class TelemetryStore:
             self._conn.commit()
 
     def record_run(self, summary: dict[str, Any], genome_id: str, reward: float) -> int:
+        bucket = str(summary.get("time_bucket") or _bucket_from_ts(summary["ts_local"]))
+        wan_sp = float(summary["local"]["wan_5pct_speedup"])
+        peer = summary.get("peer", {})
+        peer_ok = bool(peer.get("reachable"))
+        rtt_ms = float(peer.get("rtt_p50_ms", 0.0)) if peer_ok else 0.0
+        beam_sp = float(peer.get("beam_speedup", 0.0)) if peer_ok else 0.0
+        query_sp = float(peer.get("query_speedup", 0.0)) if peer_ok else 0.0
+
         with self._lock:
             cur = self._conn.cursor()
             cur.execute(
@@ -270,20 +463,21 @@ class TelemetryStore:
                     int(summary["health_score"]),
                     float(summary["local"]["gfni_speedup"]),
                     float(summary["local"]["wormhole_gbps"]),
-                    float(summary["local"]["wan_5pct_speedup"]),
-                    1 if summary["peer"]["reachable"] else 0,
-                    float(summary["peer"].get("rtt_p50_ms", 0.0)),
-                    float(summary["peer"].get("hedged_p99_ms", 0.0)),
-                    float(summary["peer"].get("single_p99_ms", 0.0)),
-                    float(summary["peer"].get("beam_speedup", 0.0)),
-                    float(summary["peer"].get("beam_saved_pct", 0.0)),
-                    float(summary["peer"].get("query_speedup", 0.0)),
-                    float(summary["peer"].get("query_saved_pct", 0.0)),
+                    wan_sp,
+                    1 if peer_ok else 0,
+                    float(peer.get("rtt_p50_ms", 0.0)),
+                    float(peer.get("hedged_p99_ms", 0.0)),
+                    float(peer.get("single_p99_ms", 0.0)),
+                    float(peer.get("beam_speedup", 0.0)),
+                    float(peer.get("beam_saved_pct", 0.0)),
+                    float(peer.get("query_speedup", 0.0)),
+                    float(peer.get("query_saved_pct", 0.0)),
                     json.dumps(summary["anomalies"], ensure_ascii=False),
                     json.dumps(summary, ensure_ascii=False),
                 ),
             )
             run_id = int(cur.lastrowid or 0)
+
             row = cur.execute(
                 "SELECT pulls, total_reward FROM genomes WHERE genome_id = ?",
                 (genome_id,),
@@ -298,6 +492,66 @@ class TelemetryStore:
                     """,
                     (new_pulls, new_total, new_total / new_pulls, summary["ts_local"], genome_id),
                 )
+
+            crow = cur.execute(
+                "SELECT pulls, total_reward FROM context_genomes WHERE bucket = ? AND genome_id = ?",
+                (bucket, genome_id),
+            ).fetchone()
+            if crow is not None:
+                c_pulls = int(crow["pulls"]) + 1
+                c_total = float(crow["total_reward"]) + float(reward)
+                cur.execute(
+                    """
+                    UPDATE context_genomes SET pulls = ?, total_reward = ?, avg_reward = ?, last_used = ?
+                    WHERE bucket = ? AND genome_id = ?
+                    """,
+                    (c_pulls, c_total, c_total / c_pulls, summary["ts_local"], bucket, genome_id),
+                )
+
+            best_row = cur.execute(
+                """
+                SELECT genome_id FROM context_genomes
+                WHERE bucket = ? AND pulls > 0
+                ORDER BY avg_reward DESC, pulls DESC LIMIT 1
+                """,
+                (bucket,),
+            ).fetchone()
+            best_g = str(best_row["genome_id"]) if best_row else genome_id
+
+            wrow = cur.execute("SELECT * FROM link_weather WHERE bucket = ?", (bucket,)).fetchone()
+            if wrow is not None:
+                samples = int(wrow["samples"]) + 1
+                alpha = 0.3 if int(wrow["samples"]) > 0 else 1.0
+                prev_wan = float(wrow["ema_wan_speedup"])
+                ema_wan = (1.0 - alpha) * prev_wan + alpha * wan_sp
+                ema_rtt = float(wrow["ema_rtt_ms"])
+                ema_beam = float(wrow["ema_beam_speedup"])
+                ema_query = float(wrow["ema_query_speedup"])
+                if peer_ok:
+                    a_p = 0.3 if ema_beam > 0 or ema_rtt > 0 else 1.0
+                    ema_rtt = (1.0 - a_p) * ema_rtt + a_p * rtt_ms
+                    ema_beam = (1.0 - a_p) * ema_beam + a_p * beam_sp
+                    ema_query = (1.0 - a_p) * ema_query + a_p * query_sp
+                cur.execute(
+                    """
+                    UPDATE link_weather
+                    SET samples = ?, ema_rtt_ms = ?, ema_wan_speedup = ?,
+                        ema_beam_speedup = ?, ema_query_speedup = ?,
+                        best_genome = ?, updated_at = ?
+                    WHERE bucket = ?
+                    """,
+                    (
+                        samples,
+                        round(ema_rtt, 2),
+                        round(ema_wan, 2),
+                        round(ema_beam, 2),
+                        round(ema_query, 2),
+                        best_g,
+                        summary["ts_local"],
+                        bucket,
+                    ),
+                )
+
             self._conn.commit()
             return run_id
 
@@ -323,6 +577,9 @@ class TelemetryStore:
             ).fetchall()
             event_rows = self._conn.execute(
                 "SELECT * FROM events ORDER BY id DESC LIMIT 25"
+            ).fetchall()
+            weather_rows = self._conn.execute(
+                "SELECT * FROM link_weather"
             ).fetchall()
 
         history: list[dict[str, Any]] = []
@@ -386,6 +643,31 @@ class TelemetryStore:
             }
             for e in event_rows
         ]
+
+        weather_map = {str(w["bucket"]): dict(w) for w in weather_rows}
+        link_weather = [
+            {
+                "bucket": b,
+                "samples": int(weather_map.get(b, {}).get("samples", 0)),
+                "ema_rtt_ms": float(weather_map.get(b, {}).get("ema_rtt_ms", 0.0)),
+                "ema_wan_speedup": float(weather_map.get(b, {}).get("ema_wan_speedup", 0.0)),
+                "ema_beam_speedup": float(weather_map.get(b, {}).get("ema_beam_speedup", 0.0)),
+                "ema_query_speedup": float(weather_map.get(b, {}).get("ema_query_speedup", 0.0)),
+                "best_genome": str(weather_map.get(b, {}).get("best_genome", "")),
+                "updated_at": str(weather_map.get(b, {}).get("updated_at", "")),
+            }
+            for b in TIME_BUCKETS
+        ]
+        sampled = [w for w in link_weather if w["samples"] > 0]
+        if sampled:
+            best_w = max(
+                sampled,
+                key=lambda w: w["ema_wan_speedup"] + w["ema_beam_speedup"] * 4.0 - w["ema_rtt_ms"] * 0.05,
+            )
+            recommended_window = best_w["bucket"]
+        else:
+            recommended_window = "NIGHT_CLEAN"
+
         return {
             "total_runs": len(history),
             "latest": latest_full,
@@ -393,6 +675,9 @@ class TelemetryStore:
             "avg_7d": avg_7d,
             "genomes": genomes,
             "events": events,
+            "active_bucket": time_bucket_for_hour(),
+            "link_weather": link_weather,
+            "recommended_sync_window": recommended_window,
         }
 
     def close(self) -> None:
@@ -400,8 +685,19 @@ class TelemetryStore:
             self._conn.close()
 
 
-def _http_get_json(url: str, timeout_s: float = 3.0) -> dict[str, Any]:
+def _http_get_json(url: str, timeout_s: float = 4.0) -> dict[str, Any]:
     with urllib.request.urlopen(url, timeout=timeout_s) as resp:
+        return json.loads(resp.read().decode("utf-8"))
+
+
+def _http_post_json(url: str, obj: dict[str, Any], timeout_s: float = 10.0) -> dict[str, Any]:
+    req = urllib.request.Request(
+        url,
+        data=json.dumps(obj, ensure_ascii=False).encode("utf-8"),
+        headers={"Content-Type": "application/json"},
+        method="POST",
+    )
+    with urllib.request.urlopen(req, timeout=timeout_s) as resp:
         return json.loads(resp.read().decode("utf-8"))
 
 
@@ -427,12 +723,31 @@ def _build_incremental_sample(size_bytes: int, version_seed: int) -> bytes:
     base = b"".join(unit_parts)
     reps = (size_bytes // len(base)) + 2
     buf = bytearray((base * reps)[:size_bytes])
-    # Insert/mutate deterministic 3% slice around midpoint so FastCDC preserves ~95% chunks
     rng = random.Random(version_seed)
     patch_len = max(1024, int(size_bytes * 0.03))
     mid = size_bytes // 2
     buf[mid : mid + patch_len] = rng.randbytes(patch_len)
     return bytes(b"/*DELTA-V*/" + buf[: size_bytes - 11])
+
+
+def prepare_merkle_demo_workspace(ops_dir: Path, mut_seed: int | None = None) -> Path:
+    """Create deterministic 16-file ~160 KiB demo workspace with 15 immutable files + 1 mutable status file."""
+    ws_dir = Path(ops_dir) / "merkle_demo"
+    ws_dir.mkdir(parents=True, exist_ok=True)
+    for i in range(15):
+        mod_dir = ws_dir / ("core" if i < 8 else "logs")
+        mod_dir.mkdir(parents=True, exist_ok=True)
+        fp = mod_dir / f"module_{i:02d}.txt"
+        if not fp.exists():
+            lines = [f"chimera-merkle-stable module={i} line={ln:04d} hash_anchor=cafe{i:04x}\n" for ln in range(160)]
+            fp.write_text("".join(lines), encoding="utf-8")
+    seed_val = int(time.time()) if mut_seed is None else int(mut_seed)
+    mut_file = ws_dir / "live_delta.txt"
+    mut_file.write_text(
+        f"merkle-heartbeat seed={seed_val} utc={datetime.now(timezone.utc).isoformat()}\n",
+        encoding="utf-8",
+    )
+    return ws_dir
 
 
 def _bench_local_checks(genome_params: dict[str, Any], ops_dir: Path) -> dict[str, Any]:
@@ -465,7 +780,6 @@ def _bench_local_checks(genome_params: dict[str, Any], ops_dir: Path) -> dict[st
     p16 = (b"WH16-AUTO-" + os.urandom(54)) * (sz16 // 64)
     exp_sha = hashlib.sha256(p16).hexdigest()
 
-    # TCP loopback 16 MiB
     srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     srv.bind(("127.0.0.1", 0))
     srv.listen(1)
@@ -556,6 +870,12 @@ def _bench_local_checks(genome_params: dict[str, Any], ops_dir: Path) -> dict[st
         rx_hw.close()
 
     wan_speedup = tcp_wan_rep.elapsed_ms / max(hw_rep.elapsed_ms, 0.01)
+
+    # 4) Telepathic local dictionary benchmark (Zero-Weight <5 ms)
+    sample_logs = make_synthetic_logs(128 * 1024)
+    t_dict = train_domain_dictionary([sample_logs[:65536]], domain="synthetic_eval")
+    tele_b = benchmark_compression(sample_logs[:65536], t_dict)
+
     return {
         "cpu_caps": caps,
         "gfni_ok": gfni_ok,
@@ -573,6 +893,12 @@ def _bench_local_checks(genome_params: dict[str, Any], ops_dir: Path) -> dict[st
         "wan_5pct_chimera_mbps": hw_rep.throughput_mbps,
         "wan_5pct_solves": solves_w,
         "wan_5pct_speedup": round(wan_speedup, 2),
+        "telepathy_ok": tele_b["lossless_ok"],
+        "telepathy_raw_bytes": tele_b["raw_bytes"],
+        "telepathy_zlib_bytes": tele_b["plain_zlib_bytes"],
+        "telepathy_wire_bytes": tele_b["telepathic_bytes"],
+        "telepathy_vs_raw_pct": tele_b["vs_raw_saved_pct"],
+        "telepathy_vs_zlib_pct": tele_b["vs_zlib_saved_pct"],
     }
 
 
@@ -590,7 +916,7 @@ def _bench_live_peer(
 
     # 1) Live Hedged RPC Race: Single Tailscale IPv4 vs Dual-Stack IPv4 + IPv6
     targets = [(config.peer_ipv4, config.peer_rpc_v4_port)]
-    if config.peer_ipv6:
+    if config.peer_ipv6 and config.peer_rpc_v6_port > 0:
         targets.append((config.peer_ipv6, config.peer_rpc_v6_port))
 
     rpc_ok = False
@@ -599,7 +925,7 @@ def _bench_live_peer(
     try:
         c_single = HedgedRpcClient([targets[0]], retry_after_ms=220.0)
         try:
-            for i in range(15):
+            for i in range(12):
                 resp, ms, _ = c_single.call(f"ping-{i}".encode(), timeout_s=2.5)
                 if resp:
                     single_lats.append(ms)
@@ -612,7 +938,7 @@ def _bench_live_peer(
             retry_after_ms=220.0,
         )
         try:
-            for i in range(15):
+            for i in range(12):
                 resp, ms, _ = c_hedged.call(f"hping-{i}".encode(), timeout_s=2.5)
                 if resp:
                     hedged_lats.append(ms)
@@ -636,7 +962,6 @@ def _bench_live_peer(
     bundle_file = work_dir / "daily_sync_1mb.bin"
     size_1m = 1024 * 1024
 
-    # Prime vault on cold first run so subsequent live run tests real incremental delta sync
     tx_vault = DnaVault(vault_dir=tx_vault_dir)
     loss_h = max(0.01, float(genome_params["loss_hint"]))
     if tx_vault.chunk_count < 8:
@@ -654,13 +979,11 @@ def _bench_live_peer(
     bundle_file.write_bytes(v2)
     v2_sha = hashlib.sha256(v2).hexdigest()
 
-    # Before: real TCP upload of all 1 MiB over Tailscale
     t_tcp0 = time.perf_counter()
     tcp_up = _http_post_bytes(f"{base_url}/api/tcp_sink", v2, timeout_s=25.0)
     tcp_up_ms = (time.perf_counter() - t_tcp0) * 1000.0
     tcp_up_mbps = (len(v2) * 8.0) / max(tcp_up_ms * 1000.0, 0.001)
 
-    # After: CHIMERA DNA Beam over UDP Tailscale
     brep = beam_send(
         (config.peer_ipv4, config.peer_beam_port),
         bundle_file,
@@ -671,8 +994,22 @@ def _bench_live_peer(
     beam_ok = brep.sha256 == v2_sha and bool(brep.wire_report.get("sha256_match"))
     beam_speedup = tcp_up_ms / max(brep.elapsed_ms, 0.01)
 
-    # 3) Live Remote Active Compute-in-Transit Query on Peer
+    # 3) Train/Sync Telepathic Dictionary + Live Telepathic Active Query & Fluid log_analytics
     q_file = config.watched_query_file or "@synthetic"
+    tele_store = TelepathicStore(ops_dir / "dicts")
+    domain_dict: DomainDictionary | None = None
+    try:
+        train_resp = _http_post_json(
+            f"{base_url}/api/telepathy/train",
+            {"file_path": q_file, "domain": "watched_log"},
+            timeout_s=10.0,
+        )
+        if train_resp.get("zdict_b64"):
+            domain_dict = DomainDictionary.from_wire_dict(train_resp)
+            tele_store.put(domain_dict)
+    except Exception:
+        domain_dict = tele_store.latest_for_domain("watched_log")
+
     t_qt0 = time.perf_counter()
     with urllib.request.urlopen(
         f"{base_url}/api/raw_query_file?path={urllib.parse.quote(q_file)}", timeout=20.0
@@ -686,12 +1023,104 @@ def _bench_live_peer(
     q_res, q_meta = remote_active_query(
         (config.peer_ipv4, config.peer_query_port),
         file_path=q_file,
-        plan=ComputePlan(op="filter_lines", needle="ERROR"),
+        plan=ComputePlan(
+            op="filter_lines",
+            needle="ERROR",
+            use_telepathy=True,
+            dict_id=domain_dict.dict_id if domain_dict else "",
+        ),
         est_loss=loss_h,
         timeout_s=20.0,
+        telepathy_store=tele_store,
+        domain_dict=domain_dict,
     )
     q_ok = q_res.matched_records == local_cnt
     q_speedup = tcp_q_ms / max(q_res.total_ms, 0.01)
+
+    # Fluid Compute Pushdown: log_analytics summary right on peer
+    analytics_ok = False
+    analytics_ms = 0.0
+    analytics_templates = 0
+    try:
+        a_res, _ = remote_active_query(
+            (config.peer_ipv4, config.peer_query_port),
+            file_path=q_file,
+            plan=ComputePlan(op="log_analytics", use_telepathy=True),
+            est_loss=loss_h,
+            timeout_s=15.0,
+        )
+        a_obj = json.loads(a_res.output_bytes.decode("utf-8"))
+        analytics_ok = a_obj.get("total_lines", 0) > 0
+        analytics_ms = a_res.total_ms
+        analytics_templates = int(a_obj.get("unique_templates", 0))
+    except Exception:
+        pass
+
+    # 4) Live Merkle Directory Delta Sync (16 files, 1 changed)
+    merkle_ok = False
+    merkle_res: dict[str, Any] = {}
+    try:
+        ws_dir = prepare_merkle_demo_workspace(ops_dir)
+        merkle_res = merkle_beam_sync(
+            peer_http_base=base_url,
+            peer_beam_addr=(config.peer_ipv4, config.peer_beam_port),
+            local_dir=ws_dir,
+            workspace_id="autopilot_demo",
+            vault_dir=tx_vault_dir,
+            shadow_dir=ops_dir / "merkle_shadows",
+            est_loss=loss_h,
+            timeout_s=20.0,
+        )
+        merkle_ok = bool(merkle_res.get("verified_root_match"))
+    except Exception as exc:
+        merkle_res = {"error": str(exc)}
+
+    # 5) Live Immortal Multi-Path Chaos Survival (v4 + v6, kill Lane 0 after 1 gen)
+    immortal_ok = False
+    immortal_res: dict[str, Any] = {}
+    if config.peer_ipv6 and config.peer_immortal_v4_port > 0 and config.peer_immortal_v6_port > 0:
+        try:
+            imm_targets = [
+                (config.peer_ipv4, config.peer_immortal_v4_port),
+                (config.peer_ipv6, config.peer_immortal_v6_port),
+            ]
+            sid_imm = (int(time.time()) % 200) + 10
+            payload_imm = os.urandom(128 * 1024)
+            irep = ImmortalMultiPathSender(
+                imm_targets, gen_k=32, initial_loss_hint=max(0.02, loss_h)
+            ).send_stream(
+                payload_imm,
+                stream_id=sid_imm,
+                timeout_s=12.0,
+                chaos_kill_lane=0,
+                chaos_kill_after_gens=1,
+            )
+            rx_check: dict[str, Any] = {}
+            for _ in range(5):
+                try:
+                    rx_check = _http_get_json(
+                        f"{base_url}/api/immortal/result?stream_id={sid_imm}", timeout_s=2.0
+                    )
+                    if rx_check.get("found"):
+                        break
+                except Exception:
+                    pass
+                time.sleep(0.05)
+            immortal_ok = bool(
+                irep.survived_blackout
+                and irep.sha256_match
+                and rx_check.get("sha256") == irep.sha256
+            )
+            immortal_res = {
+                "ok": immortal_ok,
+                "elapsed_ms": irep.elapsed_ms,
+                "lane_tx": irep.lane_tx_counts,
+                "lane_rx": rx_check.get("lane_rx_counts", []),
+                "survived_blackout": irep.survived_blackout,
+                "reconnects": irep.reconnects,
+            }
+        except Exception as exc:
+            immortal_res = {"ok": False, "error": str(exc)}
 
     return {
         "reachable": True,
@@ -718,12 +1147,20 @@ def _bench_live_peer(
         "query_raw_bytes": q_res.raw_bytes,
         "query_wire_bytes": q_res.wire_bytes,
         "query_saved_pct": q_res.wire_reduction_pct,
+        "query_codec_mode": q_meta.get("codec_mode", "raw"),
         "query_matched": q_res.matched_records,
         "query_p0_ms": q_res.preview_first_ms,
         "query_chimera_ms": q_res.total_ms,
         "query_tcp_ms": round(tcp_q_ms, 2),
         "query_speedup": round(q_speedup, 2),
         "query_server_exec_ms": q_meta.get("server_exec_ms", 0.0),
+        "fluid_analytics_ok": analytics_ok,
+        "fluid_analytics_ms": analytics_ms,
+        "fluid_analytics_templates": analytics_templates,
+        "merkle_ok": merkle_ok,
+        "merkle": merkle_res,
+        "immortal_ok": immortal_ok,
+        "immortal": immortal_res,
     }
 
 
@@ -733,12 +1170,14 @@ def run_daily_autopilot(
     trigger: str = "manual",
     ops_dir: Path | None = None,
 ) -> dict[str, Any]:
-    """Execute full daily health, Before-vs-After evaluation, and Darwinian UCB1 update."""
+    """Execute full daily health, Before-vs-After evaluation, and Contextual UCB1 update."""
     base_dir = Path(ops_dir) if ops_dir else default_ops_dir()
+    active_bucket = time_bucket_for_hour()
     genome_id, genome_params = store.select_genome(config.active_profile)
 
     local_res = _bench_local_checks(genome_params, base_dir)
     peer_res = _bench_live_peer(config, genome_params, base_dir)
+    zw = get_zero_weight_status()
 
     anomalies: list[str] = []
     score = 100
@@ -754,6 +1193,9 @@ def run_daily_autopilot(
     elif local_res["wan_5pct_speedup"] < 5.0:
         score -= 10
         anomalies.append("LOW_WAN_SPEEDUP")
+    if not zw["zero_weight_ok"]:
+        score -= 5
+        anomalies.append(f"HIGH_DAEMON_RAM_{zw['daemon_ram_mb']}MB")
 
     if config.peer_ipv4:
         if not peer_res.get("reachable"):
@@ -767,7 +1209,6 @@ def run_daily_autopilot(
                 score -= 10
                 anomalies.append("PEER_QUERY_MISMATCH")
 
-    # Compare vs 7-day rolling baseline
     state_before = store.get_dashboard_state(limit=7)
     avg_7d = state_before.get("avg_7d", {})
     if avg_7d.get("wan_5pct_speedup", 0.0) > 0:
@@ -777,7 +1218,6 @@ def run_daily_autopilot(
 
     score = max(0, min(100, score))
 
-    # Darwinian UCB1 Reward (normalized ~0..10 scale)
     reward = (
         min(4.0, local_res["wan_5pct_speedup"] / 10.0)
         + min(2.0, local_res["wormhole_gbps"] / 8.0)
@@ -794,10 +1234,12 @@ def run_daily_autopilot(
     now_utc = datetime.now(timezone.utc).isoformat(timespec="seconds")
     now_local = datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S")
     summary = {
+        "version": "3.0.0",
         "node_name": config.node_name,
         "role": config.role,
         "ts_utc": now_utc,
         "ts_local": now_local,
+        "time_bucket": active_bucket,
         "trigger": trigger,
         "profile": config.active_profile,
         "genome_id": genome_id,
@@ -805,6 +1247,7 @@ def run_daily_autopilot(
         "health_score": score,
         "reward": round(reward, 3),
         "anomalies": anomalies,
+        "zero_weight": zw,
         "local": local_res,
         "peer": peer_res,
     }
@@ -813,14 +1256,15 @@ def run_daily_autopilot(
 
     level = "WARN" if anomalies else "INFO"
     msg = (
-        f"Run #{run_id} [{trigger}] score={score} genome={genome_id} "
-        f"WAN_5pct={local_res['wan_5pct_speedup']}x SHM={local_res['wormhole_gbps']}Gbps"
+        f"Run #{run_id} [{trigger}|{active_bucket}] score={score} RAM={zw['daemon_ram_mb']}MB genome={genome_id} "
+        f"WAN_5pct={local_res['wan_5pct_speedup']}x Telepathy=-{local_res['telepathy_vs_raw_pct']}%"
     )
     if peer_res.get("reachable"):
         msg += (
-            f" PeerBeam={peer_res['beam_speedup']}x({peer_res['beam_saved_pct']}%) "
-            f"PeerQuery={peer_res['query_speedup']}x"
+            f" Beam={peer_res['beam_speedup']}x Query={peer_res['query_speedup']}x(-{peer_res['query_saved_pct']}%)"
         )
+        if peer_res.get("merkle_ok"):
+            msg += f" Merkle=-{peer_res['merkle'].get('total_reduction_pct', 0)}%"
     if anomalies:
         msg += f" Alerts={','.join(anomalies)}"
     store.log_event(level, "AUTOPILOT", msg)

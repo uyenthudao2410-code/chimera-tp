@@ -1,52 +1,56 @@
-# CHIMERA-HYPER v2.0.0 — Autonomous Cross-Platform Zero-Bloat Fabric
+# CHIMERA-HYPER v3.0.0 — Zero-Weight HyperGrid
 
-CHIMERA-HYPER (`chimera-tp`) is an experimental high-throughput transport, synchronization, and compute-in-flight toolkit built for high-RTT, lossy overlay WANs (Tailscale/WireGuard), fast local IPC, and 24/7 autonomous monitoring.
+CHIMERA-HYPER (`chimera-tp`) is an autonomous, ultra-lightweight cross-platform transport, synchronization, and pushdown-compute fabric connecting Windows (`Rust GFNI/AVX2`) and Linux (`C11 AVX2`) nodes across high-RTT, lossy overlay WANs (Tailscale/WireGuard) without straining desktop RAM or CPU.
 
-Instead of fighting TCP's head-of-line blocking, repetitive file retransmissions, or transferring raw gigabytes just to grep locally, CHIMERA combines hardware-accelerated Galois arithmetic, sliding-window RLNC, content-defined deduplication, pushdown active pipelines, dual-stack IPv4+IPv6 hedged transport, and a self-tuning Darwinian UCB1 control loop.
-
----
-
-## Core Architecture (5 Engines + v2.0 Autopilot)
-
-1. **Dual-ISA Silicon GF(256) Core**
-   - **Windows x64 (`native/chimera_core` — Rust):** `VGF2P8AFFINEQB` (GFNI) + AVX-512F + AVX2 SIMD matrix engine (`0x11B`) + Lock-Free Shared Memory SPSC Ring + FastCDC/Odess.
-   - **Linux x64 (`native/chimera_core_c` — C11):** AVX2 `VPSHUFB` split-nibble GF(256) (`0x11B`), bit-identical FastCDC (`32 KB` avg) + Odess SuperFeatures, Active-Pipe predicate scanner, and POSIX `/dev/shm` lock-free ring (`shm_open` + `mmap`).
-   - Verified cross-architecture parity: Windows Rust GFNI and Linux C AVX2 produce **100% bit-identical chunk cut points and Odess SuperFeatures** on identical byte streams.
-
-2. **HyperWire v2 (Sliding-Window RLNC + Wire-Stealth + Dual-Stack Tailscale MTU)**
-   - Clamped symbol payload (`1180 B` total packet budget) engineered to survive Tailscale/WireGuard `1280 B` MTU without IP fragmentation.
-   - Dual-stack `AF_INET` / `AF_INET6` sockets with single-port symmetric UDP feedback routing (`send_fn` + `feedback_queue`) and NAT punch-through.
-   - Ephemeral XOR+MAC stream obfuscation so middleboxes see uniform encrypted entropy.
-
-3. **Zero-RTT DNA Beam (FastCDC + Odess Delta Sync)**
-   - Content-defined chunking (`FastCDC`) + similarity sketch indexing (`Odess` SuperFeatures) + byte-level patch opcodes (`EQ`/`DIFF`).
-   - Only changed chunk fingerprints and compressed diffs hit the wire (`>95%` wire reduction on 30%-mutated `1 MiB` blobs).
-
-4. **Active Pipe (Pushdown Remote Log & Filter Engine)**
-   - Executes log predicates (`filter_lines`, `top_errors`, `regex_count`) right at the data owner before encoding onto the wire.
-   - Streams Priority-0 (`P0`) preview hits immediately (~1 RTT first byte) while the compressed full match payload completes in parallel.
-
-5. **v2.0 AUTOPILOT & 24/7 Mission-Control Cockpit**
-   - **Darwinian UCB1 Genome Bandit:** Rotates and scores 5 transport genomes (`G0_BALANCED` .. `G4_LOW_JITTER_V6`) based on real LAN/WAN throughput, jitter, and RTT reward, persisted in SQLite (`~/.chimera_ops/telemetry.db`).
-   - **Daily Scheduler & Anomaly Alerts:** Runs built-in daily benchmarks + OS-level triggers (`Task Scheduler` on Windows, `systemd --user` timer on Linux) and flags hardware fallbacks or >25% latency regressions.
-   - **Web Mission-Control UI (`127.0.0.1:9780` / `0.0.0.0:9780`):** Live throughput/speedup telemetry, 1-click live DNA Beam transfer, on-demand remote log query tester, and genome leaderboard.
+Designed around a strict **Zero-Weight Controller** invariant (the Windows 24/7 daemon consumes **~18–31 MB RAM** and ~0% idle CPU), `v3.0` pushes heavy directory indexing, analytics, regex scans, and read-only SQLite queries onto the remote storage host while slashing WAN traffic up to **99.93%** and surviving mid-stream IP path loss with **0 reconnects**.
 
 ---
 
-## Verified Cross-Host Benchmarks (Windows ↔ Linux Over Tailscale ~107 ms RTT)
+## Core Architecture (5 v3.0 Pillars + v2.0 Silicon Foundation)
+
+1. **Zero-Weight Merkle Directory DNA Sync (`chimera_tp/merkle_sync.py`, `fabric.py`)**
+   - On-demand `(size, mtime_ns, blake2b)` shadow cache scans unchanged files in **`~2 ms`** with zero redundant disk reads.
+   - Exchanges deterministic Merkle manifests (`POST /api/merkle/diff`): returns **0-byte payload (`noop`)** when synced; otherwise ships ONLY modified files & tombstones via `CHMRK1` over FastCDC/Odess `BeamServer` (`kind=3`) with full SHA-256 verification and strict path-traversal rejection.
+
+2. **Fluid Pushdown Compute `AQ02` (`chimera_tp/active_pipe.py`)**
+   - Pushes computation 100% onto the data-holding node near disk:
+     - `log_analytics`: normalizes timestamps, IPs, hex IDs, and integers into unique templates + hourly trends + severity counters.
+     - `multi_grep`: regex/substring search across entire source directories (`file_glob`, capped scans).
+     - `sqlite_query`: strict read-only (`?mode=ro` URI + single-statement `SELECT`/`WITH`/`PRAGMA TABLE_INFO` allowlist + 3s progress timeout + `max_rows` cap) directly on remote SQLite DBs.
+     - `remote_digest`: sub-millisecond remote tree/file hashing without transferring contents.
+
+3. **Telepathic Domain-Trained Dictionary + Template Folding (`chimera_tp/telepathy.py`)**
+   - Learns a compact **≤32 KiB** preset `zlib` dictionary sorted with hottest recurring prefixes/lines at the tail (`CHTC1` framing), paired with a lossless byte-exact segment folder (`CHLF1`).
+   - Automatically integrated into `ActiveQueryServer` / `remote_active_query` so filtered log results shrink up to **99.15%–99.93%** on the wire—beating both raw transfers and standard `zlib`.
+
+4. **Immortal Stateless Multi-Path RLNC Striping (`chimera_tp/hyper_wire.py`)**
+   - Stripes systematic + GF(256) network-coded blocks simultaneously over **IPv4 + IPv6** (`ImmortalMultiPathSender` / `Receiver` on UDP `:9706/:9707`) into one unified decoding matrix, mirroring control feedback on all active sockets.
+   - Survives complete mid-stream loss of an IPv4 path with **0 reconnects** and **100% SHA-256 verification**.
+
+5. **Contextual 24h Link Weather Bandit & Zero-Weight Guard (`chimera_tp/autopilot.py`, `dashboard.py`)**
+   - Learns optimal genomes (`G0_BALANCED` .. `G4_LOW_JITTER_V6`) per time-of-day window (`NIGHT_CLEAN`, `MORNING`, `AFTERNOON`, `PEAK_EVENING`), tracks link-weather EMAs, recommends the cleanest sync window, and continuously enforces OS-native daemon RSS & free-RAM telemetry.
+
+6. **Dual-ISA Silicon Core (`native/chimera_core` Rust GFNI + `native/chimera_core_c` C11 AVX2)**
+   - Bit-identical FastCDC chunk boundaries, Odess SuperFeatures, GF(256) (`0x11B`) SIMD linear solves, and lock-free Named/POSIX `/dev/shm` Wormhole rings on both Windows and Linux.
+
+---
+
+## Verified Live Cross-Host Telemetry (Windows ↔ Linux Over Tailscale ~109 ms RTT)
 
 Measured live between a Windows 11 Controller (`Intel Core i5-11400`, Rust GFNI) and an Ubuntu Linux Server Peer (`Intel Core i5-4300U`, C11 AVX2 `VPSHUFB`, Python 3.14.4):
 
-| Workload | Standard TCP Baseline | CHIMERA-HYPER v2.0 | Gain |
+| Capability | Baseline / Previous | CHIMERA-HYPER v3.0 Live | Gain |
 | :--- | :--- | :--- | :--- |
-| **GF(256) Matrix (1 MiB, Win Rust GFNI)** | `75.35 ms` (Python LUT) | `0.82 ms` (Native GFNI) | **91.48x** (7d avg **167.71x**) |
-| **GF(256) Matrix (1 MiB, Linux C AVX2)** | `83.59 ms` (Python LUT) | `1.05 ms` (C11 `VPSHUFB`) | **79.74x** (7d avg **81.15x**) |
-| **Zero-Copy Shared Memory IPC** | TCP Loopback (`2.23–5.22 Gbps`) | Lock-Free Ring (`3.53 Gbps` Win latest, **5.04 Gbps** Win 7d avg / **2.02 Gbps** Linux 7d avg) | Zero-syscall SPSC ring |
-| **100 ms RTT, 5% Loss (128 KB)** | `0.92–0.95 Mbps` (`~4.4–4.5 s`) | `21.39 Mbps` (Win) / `40.14 Mbps` (Linux) | **23.20x – 42.22x** |
-| **Live DNA Beam (1 MiB, 30% mutated)** | `1,131.14 ms` (`7.42 Mbps`) | `251.90 ms` (`33.30 Mbps`, `37.2 KB` wire) | **4.49x speedup**, **96.89% wire saved** |
-| **Live Active Log Query (`1.70 MB` prod log, 9,084 `ERROR` hits)** | `1,314.18 ms` (pull full + local grep) | `292.55–296.63 ms` total (`114.4 ms` P0 first hit, `5.25 ms` remote exec) | **4.43x speedup**, **68.31% wire saved** |
+| **Daemon Memory Footprint** | — | **`18.43 MB`** (Win) / **`42.88 MB`** (Linux) | Zero desktop lag (`<80 MB` budget) |
+| **Remote Log Filter (`1.70 MB` log, 9,084 hits)** | `1,852.18 ms` TCP / `538.5 KB` v2.0 | **`14.4 KB` wire (`-99.15%`)**, **`194.89 ms`** (`telepathic_fold_zdict`) | **9.50x speedup**, **37x smaller wire vs v2.0** |
+| **Fluid `log_analytics` (`23,991` lines)** | Pull `1.70 MB` & parse locally | **`1,200 B` wire (`-99.93%`)**, **`405.44 ms`**, 31 templates | Instant remote summary |
+| **Fluid `multi_grep` (`485 KB` codebase)** | Pull tree or SSH shell | **`1,200 B` wire (`-99.75%`)**, **`119.34 ms`** (`10.61 ms` server exec) | Sub-120 ms code search |
+| **Fluid `sqlite_query` (Remote RO DB)** | Download full SQLite `.db` | **`1,200 B` wire (`-97.07%`)**, **`114.93 ms`** (`1.12 ms` exec) | Zero raw DB copy |
+| **Merkle Directory Sync (`16` files, 1 changed)** | Re-send full tree | **`1.96 ms` scan → `4,800 B` (`-96.84%`)**; 2nd pass **`0 B` (`244.66 ms`)** | 0-RTT no-op when clean |
+| **Immortal Chaos Cut (Kill IPv4 Mid-Stream)** | TCP stall / disconnect | TX `[18, 170]`, RX `[8, 120]`, **`0` reconnects**, **`251.19 ms`** | Unbreakable stream continuity |
+| **WAN 5% Loss / GFNI Matrix / SHM** | TCP `0.93 Mbps` / Python `73.4 ms` | **`32.57x` WAN (`30.41 Mbps`)** / **`71.83x` GFNI (`1.02 ms`)** / **`8.28 Gbps` SHM** | Hardware-speed recovery |
 
-See [docs/EVALUATION.md](docs/EVALUATION.md) for methodology and raw counters.
+See [docs/EVALUATION.md](docs/EVALUATION.md) for complete verification metrics and test coverage.
 
 ---
 
@@ -54,35 +58,37 @@ See [docs/EVALUATION.md](docs/EVALUATION.md) for methodology and raw counters.
 
 ### 1. Build Native Silicon Core
 ```bash
-# Windows (requires Rust MSVC toolchain)
+# Windows (Rust MSVC) / Linux (GCC -O3 -mavx2)
 python scripts/build_native.py
-
-# Linux (requires gcc with -mavx2; falls back cleanly to portable C flags if needed)
-python3 scripts/build_native.py
 ```
 
 ### 2. Initialize Runtime Operations Config (`~/.chimera_ops/config.json`)
 ```bash
 # Server Peer (Linux)
-chimera ops-init --node-name peer-linux --role server --dashboard-bind 0.0.0.0:9780 --watched-query-file /path/to/app.log
+chimera ops-init --node-name peer-linux --role server --bind 0.0.0.0:9780 --watched-file /path/to/app.log --allow-root /path/to/dev
 
 # Controller Node (Windows)
-chimera ops-init --node-name win-desktop --role controller --peer-name peer-linux --peer-ipv4 <PEER_TAILSCALE_IPV4> --peer-ipv6 <PEER_TAILSCALE_IPV6> --watched-query-file /path/to/app.log --dashboard-bind 127.0.0.1:9780
+chimera ops-init --node-name win-desktop --role controller --peer-name peer-linux --peer-ipv4 <PEER_TAILSCALE_IPV4> --peer-ipv6 <PEER_TAILSCALE_IPV6> --watched-file /path/to/app.log --bind 127.0.0.1:9780
 ```
-Runtime configs and SQLite databases live exclusively under `~/.chimera_ops/` and are never committed to Git. See [docs/ops_config.example.json](docs/ops_config.example.json).
+Runtime state resides exclusively under `~/.chimera_ops/` (see [docs/ops_config.example.json](docs/ops_config.example.json)).
 
-### 3. Run Daemon + Daily Autopilot
+### 3. Run 24/7 Mission-Control Daemon & v3.0 CLI Tools
 ```bash
-# Start 24/7 Mission-Control Dashboard + Beam / HedgedRPC / ActiveQuery / Warp servers
+# Start 24/7 Cockpit + Beam + Dual-Stack RPC + ActiveQuery + Immortal + Warp
 chimera daemon
 
-# Run an immediate single autopilot cycle (Darwinian UCB1 + WAN + Cross-Host verification)
-chimera autopilot --trigger manual --profile auto-darwin
-```
+# 0-RTT Merkle directory sync
+chimera merkle-sync --dir ./project --ws myproj --peer-http http://<PEER_IP>:9780 --peer-beam <PEER_IP>:9700
 
-### 4. Register Daily Automation (OS-Specific)
-- **Windows:** `schtasks` daily at `08:00` calling `chimera autopilot --trigger scheduled` + logon trigger for `chimera daemon`.
-- **Linux:** `systemd --user` persistent unit `chimera-hyper-daemon.service` + `chimera-hyper-daily.timer` (`OnCalendar=*-*-* 08:00:00`, `loginctl enable-linger`).
+# Fluid pushdown query over UDP + Telepathic compression
+chimera fluid --peer-query <PEER_IP>:9704 --path /path/to/app.log --op log_analytics
+
+# Benchmark Telepathic domain compression against raw & plain zlib
+chimera telepathy-bench --file /path/to/app.log
+
+# Single contextual autopilot evaluation cycle
+chimera autopilot --trigger manual
+```
 
 ---
 
@@ -92,11 +98,11 @@ chimera autopilot --trigger manual --profile auto-darwin
 python -m unittest discover -s tests -v
 ```
 
-- **Windows (`win-desktop`):** Full suite (`test_chimera`, `test_hyper`, `test_v2_autopilot`) covering local realms, Rust GFNI/AVX2 kernels, HyperWire, Wormhole SHM, DNA Beam, Active Pipe, Warp proxy, SQLite telemetry, Darwinian UCB1 selection, and HTTP cockpit APIs.
-- **Linux (`peer-linux`):** `test_hyper` + `test_v2_autopilot` verifying C11 AVX2 `VPSHUFB`, POSIX `/dev/shm` Wormhole, POSIX `probe`, cross-platform config, and live server APIs.
+- **Windows:** **29 / 29 PASS** (`test_chimera`, `test_hyper`, `test_v2_autopilot`, `test_v3_hypergrid`).
+- **Linux (`C11 AVX2` + Python 3.14):** **18 / 18 PASS** (`test_hyper`, `test_v2_autopilot`, `test_v3_hypergrid`).
 
 ---
 
 ## Security & Scope Disclaimer
 
-`chimera-tp` is an experimental WAN/IPC transport engine. Its ephemeral wire obfuscation protects packet headers against passive heuristics; for production multi-tenant deployment over untrusted networks, always run behind authenticated private overlays such as Tailscale or WireGuard (authenticated Noise/ChaCha20-Poly1305).
+`chimera-tp` executes `sqlite_query` strictly in read-only URI mode (`?mode=ro`) with a single-statement `SELECT`/`WITH`/`PRAGMA TABLE_INFO` allowlist and strict directory containment (`allowed_roots`), and rejects directory traversal on all Merkle sync unpack/delete operations. For production multi-tenant traffic across untrusted WANs, run inside authenticated Tailscale or WireGuard overlays.

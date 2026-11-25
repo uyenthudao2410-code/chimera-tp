@@ -1,4 +1,4 @@
-"""24/7 CHIMERA-HYPER Mission-Control Daemon, Scheduler & Interactive Web Dashboard."""
+"""24/7 CHIMERA-HYPER v3.0 Zero-Weight Mission-Control Daemon, Scheduler & Web Cockpit."""
 
 from __future__ import annotations
 
@@ -16,7 +16,6 @@ from typing import Any
 from .active_pipe import (
     ActiveQueryServer,
     ComputePlan,
-    make_synthetic_logs,
     remote_active_query,
 )
 from .autopilot import (
@@ -24,14 +23,25 @@ from .autopilot import (
     OpsConfig,
     TelemetryStore,
     _build_incremental_sample,
+    _http_get_json,
+    _http_post_json,
     default_ops_dir,
+    get_zero_weight_status,
+    prepare_merkle_demo_workspace,
     run_daily_autopilot,
 )
 from .fabric import BeamServer, beam_send
-from .hyper_wire import HedgedRpcServer
+from .hyper_wire import HedgedRpcServer, ImmortalMultiPathReceiver, ImmortalMultiPathSender
+from .merkle_sync import (
+    ShadowMerkleIndex,
+    diff_manifests,
+    merkle_beam_sync,
+    sanitize_workspace_id,
+)
 from .native import cpu_caps
 from .probe import probe_environment
 from .protocol import ChimeraReceiver, ChimeraSender, FaultProfile
+from .telepathy import DomainDictionary, TelepathicStore, train_domain_dictionary
 from .warp import WarpServer
 
 _DASHBOARD_HTML = r"""<!doctype html>
@@ -39,7 +49,7 @@ _DASHBOARD_HTML = r"""<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CHIMERA-HYPER v2.0 Mission Control</title>
+<title>CHIMERA-HYPER v3.0 Zero-Weight HyperGrid</title>
 <style>
   :root {
     --bg: #0b0f17;
@@ -58,16 +68,15 @@ _DASHBOARD_HTML = r"""<!doctype html>
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 13px; line-height: 1.45; padding: 18px; }
-  .shell { max-width: 1260px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+  .shell { max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
   .topbar {
     display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px;
     background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px;
   }
-  .brand h1 { font-size: 17px; font-weight: 700; letter-spacing: 0.02em; display: flex; align-items: center; gap: 8px; }
+  .brand h1 { font-size: 17px; font-weight: 700; letter-spacing: 0.02em; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
   .badge { font-family: var(--mono); font-size: 11px; padding: 2px 8px; border-radius: 999px; background: rgba(34,211,238,0.14); color: var(--cyan); border: 1px solid rgba(34,211,238,0.3); }
   .badge.ok { background: rgba(52,211,153,0.14); color: var(--green); border-color: rgba(52,211,153,0.35); }
   .badge.warn { background: rgba(251,191,36,0.14); color: var(--amber); border-color: rgba(251,191,36,0.35); }
-  .badge.err { background: rgba(248,113,113,0.14); color: var(--red); border-color: rgba(248,113,113,0.35); }
   .meta-line { color: var(--muted); font-size: 11.5px; font-family: var(--mono); margin-top: 4px; }
 
   .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
@@ -78,7 +87,7 @@ _DASHBOARD_HTML = r"""<!doctype html>
   button { cursor: pointer; font-weight: 600; transition: 0.15s ease; }
   button:hover { border-color: var(--cyan); background: #1e293b; }
   button.primary { background: rgba(34,211,238,0.18); border-color: rgba(34,211,238,0.5); color: #67e8f9; }
-  button.primary:disabled { opacity: 0.5; cursor: wait; }
+  button:disabled { opacity: 0.5; cursor: wait; }
 
   .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
   .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
@@ -87,16 +96,16 @@ _DASHBOARD_HTML = r"""<!doctype html>
 
   .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 15px 17px; }
   .card-title { font-size: 12.5px; font-weight: 700; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-  .kpi-val { font-size: 26px; font-weight: 800; font-family: var(--mono); line-height: 1.15; }
+  .kpi-val { font-size: 24px; font-weight: 800; font-family: var(--mono); line-height: 1.15; }
   .kpi-sub { font-size: 11.5px; color: var(--muted); margin-top: 4px; }
 
   table { width: 100%; border-collapse: collapse; font-size: 12px; }
-  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--border); }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
   th { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
   td.mono { font-family: var(--mono); }
 
   .query-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
-  .query-bar input { flex: 1; min-width: 140px; font-family: var(--mono); }
+  .query-bar input { flex: 1; min-width: 120px; font-family: var(--mono); }
   .log-box {
     background: #090d14; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px;
     font-family: var(--mono); font-size: 11px; max-height: 220px; overflow: auto; white-space: pre-wrap;
@@ -109,49 +118,55 @@ _DASHBOARD_HTML = r"""<!doctype html>
 <div class="shell">
   <div class="topbar">
     <div class="brand">
-      <h1>CHIMERA-HYPER v2.0 <span class="badge" id="node-badge">...</span> <span class="badge ok" id="sched-badge">DAILY ...</span></h1>
-      <div class="meta-line" id="hw-meta">Probing node hardware & link state...</div>
+      <h1>
+        CHIMERA-HYPER v3.0 Zero-Weight
+        <span class="badge" id="node-badge">...</span>
+        <span class="badge ok" id="zw-badge">RAM -- MB</span>
+        <span class="badge ok" id="sched-badge">DAILY ...</span>
+      </h1>
+      <div class="meta-line" id="hw-meta">Probing hardware &amp; zero-weight telemetry...</div>
     </div>
     <div class="controls">
-      <select id="profile-select" title="Active Darwinian Profile">
-        <option value="auto-darwin">auto-darwin (UCB1 Self-Tuning)</option>
+      <select id="profile-select" title="Contextual Bandit Policy">
+        <option value="auto-darwin">auto-darwin (24h Contextual UCB1)</option>
         <option value="max-speed">max-speed (Turbo Pipeline)</option>
         <option value="lossy-armor">lossy-armor (Proactive GFNI)</option>
         <option value="exotic-v05">exotic-v05 (Multi-Realm)</option>
       </select>
       <button class="primary" id="btn-run" onclick="triggerRun()">&#9654; Chạy đánh giá ngay</button>
-      <button onclick="triggerBeam()">&#9889; Live DNA Beam &rarr; Peer</button>
-      <button onclick="triggerExotic()">&#9762; Kiểm tra v0.5 Exotic</button>
+      <button onclick="triggerMerkle()">&#127795; Merkle 0-RTT Sync</button>
+      <button onclick="triggerImmortal()">&#128293; Immortal Cắt IPv4</button>
+      <button onclick="triggerBeam()">&#9889; DNA Beam</button>
     </div>
   </div>
 
   <div class="grid-4">
     <div class="card">
-      <div class="card-title">Điểm Sức Khỏe Tổng Hợp</div>
+      <div class="card-title">Sức Khỏe &amp; Zero-Weight</div>
       <div class="kpi-val" id="kpi-health" style="color:var(--green)">--</div>
-      <div class="kpi-sub" id="kpi-health-sub">Chưa có phiên chạy</div>
+      <div class="kpi-sub" id="kpi-health-sub">CHIMERA-HYPER v2.0 / v3.0 API</div>
     </div>
     <div class="card">
       <div class="card-title">Mạng WAN 5% Rớt Gói</div>
       <div class="kpi-val" id="kpi-wan" style="color:var(--cyan)">--</div>
-      <div class="kpi-sub" id="kpi-wan-sub">CHIMERA GFNI vs TCP-CUBIC</div>
+      <div class="kpi-sub" id="kpi-wan-sub">RLNC GFNI/AVX2 vs TCP</div>
     </div>
     <div class="card">
-      <div class="card-title">Live Beam &harr; Peer</div>
+      <div class="card-title">Telepathic + DNA Beam</div>
       <div class="kpi-val" id="kpi-beam" style="color:var(--purple)">--</div>
-      <div class="kpi-sub" id="kpi-beam-sub">DNA FastCDC + Delta qua Tailscale</div>
+      <div class="kpi-sub" id="kpi-beam-sub">Giảm dây truyền tải thực tế</div>
     </div>
     <div class="card">
-      <div class="card-title">Wormhole SHM &amp; RTT Peer</div>
+      <div class="card-title">Merkle Sync &amp; Link RTT</div>
       <div class="kpi-val" id="kpi-shm" style="color:var(--amber)">--</div>
-      <div class="kpi-sub" id="kpi-shm-sub">IPC nội bộ &amp; Hedged p99</div>
+      <div class="kpi-sub" id="kpi-shm-sub">0-RTT Hash &amp; Immortal Lanes</div>
     </div>
   </div>
 
   <div class="grid-2">
     <div class="card">
       <div class="card-title">
-        <span>Đối chiếu Trước (TCP chuẩn) vs Sau (CHIMERA-HYPER)</span>
+        <span>Đối chiếu Trước vs Sau (Zero-Weight HyperGrid v3.0)</span>
         <span class="meta-line" id="latest-ts"></span>
       </div>
       <div id="compare-panel"><div class="meta-line">Nhấn "Chạy đánh giá ngay" để lấy số đo trực tiếp...</div></div>
@@ -159,31 +174,41 @@ _DASHBOARD_HTML = r"""<!doctype html>
 
     <div class="card">
       <div class="card-title">
-        <span>Biểu đồ Xu hướng Đa Ngày (Health &amp; Speedup)</span>
-        <span class="meta-line" id="trend-count">0 runs</span>
+        <span>Fluid Compute Pushdown &amp; Telepathic Wire (Chạy tại Peer)</span>
+        <span class="meta-line" id="query-badge">AQ02 UDP 9704</span>
       </div>
-      <svg id="trend-svg" viewBox="0 0 560 190" style="width:100%;height:190px;display:block;"></svg>
+      <div class="query-bar">
+        <select id="q-op">
+          <option value="log_analytics">log_analytics (Mẫu lỗi &amp; Theo giờ)</option>
+          <option value="filter_lines">filter_lines (Lọc từ khóa + Telepathy)</option>
+          <option value="multi_grep">multi_grep (Quét file / thư mục)</option>
+          <option value="sqlite_query">sqlite_query (Read-Only DB Peer)</option>
+          <option value="remote_digest">remote_digest (Hash nhanh trên Peer)</option>
+        </select>
+        <input id="q-needle" value="ERROR" placeholder="Từ khóa / SQL (SELECT ...)">
+        <input id="q-file" value="" placeholder="File/Thư mục đích (mặc định log)">
+        <button class="primary" onclick="triggerFluid()">&#128269; Chạy Fluid Pushdown</button>
+      </div>
+      <div class="log-box" id="query-out">Sẵn sàng chạy lệnh tính toán trực tiếp trên svhome mà không tốn RAM Windows.</div>
     </div>
   </div>
 
   <div class="grid-2">
     <div class="card">
       <div class="card-title">
-        <span>Active Compute-in-Transit &rarr; Peer (Lọc log ngay tại máy đích)</span>
-        <span class="meta-line" id="query-badge">UDP 9704</span>
+        <span>24h Link Weather &amp; Thời Điểm Đồng Bộ Tốt Nhất</span>
+        <span class="meta-line" id="weather-rec">Đề xuất: ...</span>
       </div>
-      <div class="query-bar">
-        <input id="q-needle" value="ERROR" placeholder="Từ khóa lọc (vd: ERROR, pull, INFO)">
-        <input id="q-file" value="" placeholder="File đích (để trống dùng file cấu hình)">
-        <button onclick="triggerQuery()">&#128269; Chạy Query từ xa</button>
-      </div>
-      <div class="log-box" id="query-out">Chưa chạy truy vấn trực tiếp.</div>
+      <table>
+        <thead><tr><th>Khung giờ</th><th>Mẫu</th><th>RTT p50</th><th>WAN</th><th>Genome Tốt</th></tr></thead>
+        <tbody id="weather-tbody"></tbody>
+      </table>
     </div>
 
     <div class="card">
       <div class="card-title">
-        <span>Darwinian Genome UCB1 Leaderboard</span>
-        <span class="meta-line">Tự học &amp; chọn cấu hình tối ưu</span>
+        <span>Contextual Darwinian Genome Leaderboard</span>
+        <span class="meta-line" id="trend-count">0 runs</span>
       </div>
       <table>
         <thead><tr><th>Genome</th><th>Pulls</th><th>Avg Reward</th><th>Params</th></tr></thead>
@@ -194,9 +219,10 @@ _DASHBOARD_HTML = r"""<!doctype html>
 
   <div class="card">
     <div class="card-title">
-      <span>Nhật ký Hoạt động &amp; Cảnh báo Tự động (SQLite Persistent)</span>
+      <span>Xu hướng &amp; Nhật ký Hoạt động Tự động</span>
       <span class="meta-line" id="services-meta"></span>
     </div>
+    <svg id="trend-svg" viewBox="0 0 900 130" style="width:100%;height:130px;display:block;margin-bottom:8px;"></svg>
     <div class="log-box" id="events-box">Loading...</div>
   </div>
 </div>
@@ -212,10 +238,10 @@ function renderTrend(history) {
   const svg = document.getElementById('trend-svg');
   document.getElementById('trend-count').textContent = history.length + ' phiên';
   if (!history.length) {
-    svg.innerHTML = '<text x="280" y="95" text-anchor="middle" fill="#64748b" font-size="12">Chưa có lịch sử chạy</text>';
+    svg.innerHTML = '<text x="450" y="65" text-anchor="middle" fill="#64748b" font-size="12">Chưa có lịch sử chạy</text>';
     return;
   }
-  const W = 560, H = 190, L = 38, R = 16, T = 18, B = 26;
+  const W = 900, H = 130, L = 36, R = 16, T = 14, B = 22;
   const pw = W - L - R, ph = H - T - B;
   let html = '';
   for (let g of [0, 50, 100]) {
@@ -224,7 +250,7 @@ function renderTrend(history) {
     html += `<text x="${L-6}" y="${y+4}" text-anchor="end" fill="#94a3b8" font-size="10" font-family="monospace">${g}</text>`;
   }
   const n = history.length;
-  const maxWan = Math.max(20, ...history.map(h => h.wan_5pct_speedup || 0));
+  const maxWan = Math.max(25, ...history.map(h => h.wan_5pct_speedup || 0));
   const ptsH = [], ptsW = [];
   history.forEach((h, i) => {
     const x = n === 1 ? L + pw / 2 : L + (i / (n - 1)) * pw;
@@ -233,28 +259,27 @@ function renderTrend(history) {
     ptsH.push(`${x.toFixed(1)},${yh.toFixed(1)}`);
     ptsW.push(`${x.toFixed(1)},${yw.toFixed(1)}`);
   });
-  html += `<polyline fill="none" stroke="#34d399" stroke-width="2.2" points="${ptsH.join(' ')}"/>`;
-  html += `<polyline fill="none" stroke="#22d3ee" stroke-width="2" stroke-dasharray="4 2" points="${ptsW.join(' ')}"/>`;
-  history.forEach((h, i) => {
-    const x = n === 1 ? L + pw / 2 : L + (i / (n - 1)) * pw;
-    const yh = T + ph - (Math.min(100, h.health_score) / 100) * ph;
-    html += `<circle cx="${x.toFixed(1)}" cy="${yh.toFixed(1)}" r="3.5" fill="#34d399"><title>#${h.id} ${h.ts_local} | score=${h.health_score} | WAN=${h.wan_5pct_speedup}x</title></circle>`;
-  });
-  html += `<text x="${L}" y="${H-6}" fill="#34d399" font-size="10">● Health (0-100)</text>`;
-  html += `<text x="${L+115}" y="${H-6}" fill="#22d3ee" font-size="10">--- WAN 5% Speedup (max ${maxWan.toFixed(0)}x)</text>`;
+  html += `<polyline fill="none" stroke="#34d399" stroke-width="2" points="${ptsH.join(' ')}"/>`;
+  html += `<polyline fill="none" stroke="#22d3ee" stroke-width="1.8" stroke-dasharray="4 2" points="${ptsW.join(' ')}"/>`;
+  html += `<text x="${L}" y="${H-5}" fill="#34d399" font-size="10">● Health</text>`;
+  html += `<text x="${L+75}" y="${H-5}" fill="#22d3ee" font-size="10">--- WAN Speedup (max ${maxWan.toFixed(0)}x)</text>`;
   svg.innerHTML = html;
 }
 
 function renderState(st) {
   const cfg = st.config || {};
   const hw = st.hardware || {};
+  const zw = st.zero_weight || {};
   document.getElementById('node-badge').textContent = `${cfg.node_name || 'node'} (${cfg.role || 'ctrl'})`;
-  document.getElementById('sched-badge').textContent = `DAILY ${cfg.daily_time || '08:00'} • ${st.today_daily_done ? 'HÔM NAY ĐÃ CHẠY' : 'CHỜ LỊCH'}`;
+  const zwEl = document.getElementById('zw-badge');
+  zwEl.textContent = `RAM ${zw.daemon_ram_mb || 0}MB • Free ${zw.host_free_ram_gb || 0}GB`;
+  zwEl.className = 'badge ' + (zw.zero_weight_ok !== false ? 'ok' : 'warn');
+  document.getElementById('sched-badge').textContent = `DAILY ${cfg.daily_time || '08:00'} • ${st.today_daily_done ? 'ĐÃ CHẠY' : 'CHỜ LỊCH'}`;
   document.getElementById('hw-meta').textContent =
-    `HW: native=${hw.native} gfni=${hw.gfni} avx2=${hw.avx2} | Peer: ${cfg.peer_name || '-'} (${cfg.peer_ipv4 || 'local-only'})`;
+    `HW: native=${hw.native} gfni=${hw.gfni} avx2=${hw.avx2} | Peer: ${cfg.peer_name || '-'} (${cfg.peer_ipv4 || 'local'}) | Dicts: ${(st.telepathy_dicts||[]).length}`;
   document.getElementById('profile-select').value = cfg.active_profile || 'auto-darwin';
   document.getElementById('services-meta').textContent =
-    `Ports: Beam=${cfg.beam_port} RPC=${cfg.rpc_v4_port}/${cfg.rpc_v6_port} Query=${cfg.query_port} Warp=${cfg.warp_port}`;
+    `Beam=${cfg.beam_port} RPC=${cfg.rpc_v4_port}/${cfg.rpc_v6_port} Query=${cfg.query_port} Immortal=${cfg.immortal_v4_port}/${cfg.immortal_v6_port}`;
   if (!document.getElementById('q-file').value && cfg.watched_query_file) {
     document.getElementById('q-file').placeholder = cfg.watched_query_file;
   }
@@ -262,48 +287,57 @@ function renderState(st) {
   const db = st.telemetry || {};
   const latest = db.latest;
   if (latest) {
-    document.getElementById('latest-ts').textContent = `${latest.ts_local} (${latest.trigger}) • ${latest.genome_id}`;
+    document.getElementById('latest-ts').textContent = `${latest.ts_local} (${latest.time_bucket || ''}) • ${latest.genome_id}`;
     const sc = latest.health_score;
     const hEl = document.getElementById('kpi-health');
     hEl.textContent = `${sc}/100`;
-    hEl.style.color = sc >= 85 ? 'var(--green)' : (sc >= 60 ? 'var(--amber)' : 'var(--red)');
-    document.getElementById('kpi-health-sub').textContent = latest.anomalies.length ? 'Cảnh báo: ' + latest.anomalies.join(', ') : 'Mọi kênh & thuật toán ổn định';
+    hEl.style.color = sc >= 85 ? 'var(--green)' : 'var(--amber)';
+    const lzw = latest.zero_weight || zw;
+    document.getElementById('kpi-health-sub').textContent = `Daemon ${lzw.daemon_ram_mb} MB / ${lzw.host_threads} threads • 0% lag`;
 
     const loc = latest.local || {};
     document.getElementById('kpi-wan').textContent = `${loc.wan_5pct_speedup || 0}x`;
-    document.getElementById('kpi-wan-sub').textContent = `CHIMERA ${loc.wan_5pct_chimera_mbps} vs TCP ${loc.wan_5pct_tcp_mbps} Mbps`;
+    document.getElementById('kpi-wan-sub').textContent = `GFNI ${loc.wan_5pct_chimera_mbps} vs TCP ${loc.wan_5pct_tcp_mbps} Mbps`;
 
     const pr = latest.peer || {};
     if (pr.reachable) {
-      document.getElementById('kpi-beam').textContent = `${pr.beam_speedup}x (${pr.beam_saved_pct}%)`;
-      document.getElementById('kpi-beam-sub').textContent = `${pr.beam_eff_mbps} Mbps eff vs TCP ${pr.tcp_upload_mbps} Mbps`;
-      document.getElementById('kpi-shm').textContent = `${loc.wormhole_gbps} Gbps | ${pr.rtt_p50_ms}ms`;
-      document.getElementById('kpi-shm-sub').textContent = `Peer p99: Single ${pr.single_p99_ms}ms -> Hedged ${pr.hedged_p99_ms}ms`;
+      document.getElementById('kpi-beam').textContent = `-${pr.query_saved_pct}% dây`;
+      document.getElementById('kpi-beam-sub').textContent = `Beam -${pr.beam_saved_pct}% (${pr.beam_speedup}x) • Mode: ${pr.query_codec_mode || 'zlib'}`;
+      const mk = pr.merkle || {};
+      document.getElementById('kpi-shm').textContent = `${pr.rtt_p50_ms} ms`;
+      document.getElementById('kpi-shm-sub').textContent = mk.verified_root_match ? `Merkle -${mk.total_reduction_pct}% | SHM ${loc.wormhole_gbps}Gbps` : `SHM ${loc.wormhole_gbps} Gbps`;
     } else {
-      document.getElementById('kpi-beam').textContent = 'Offline/Local';
-      document.getElementById('kpi-beam-sub').textContent = pr.reason || 'Chưa cấu hình peer';
+      document.getElementById('kpi-beam').textContent = `-${loc.telepathy_vs_raw_pct || 0}%`;
+      document.getElementById('kpi-beam-sub').textContent = `Telepathy local (${loc.telepathy_vs_zlib_pct || 0}% < zlib)`;
       document.getElementById('kpi-shm').textContent = `${loc.wormhole_gbps} Gbps`;
       document.getElementById('kpi-shm-sub').textContent = `TCP loopback: ${loc.tcp_loopback_gbps} Gbps`;
     }
 
     let cmp = '';
-    cmp += `<div class="cmp-row"><span>Lõi GF(256) 32×1180 Solve</span><span class="mono">Python ${loc.gfni_py_ms}ms &rarr; <b>Native ${loc.gfni_native_ms}ms (${loc.gfni_speedup}x)</b></span></div>`;
-    cmp += `<div class="cmp-row"><span>IPC nội bộ 16 MiB (SHA-256)</span><span class="mono">TCP ${loc.tcp_loopback_gbps} Gbps &rarr; <b>Wormhole ${loc.wormhole_gbps} Gbps</b></span></div>`;
-    cmp += `<div class="cmp-row"><span>WAN 5% Drop (40ms RTT)</span><span class="mono">TCP ${loc.wan_5pct_tcp_mbps} Mbps &rarr; <b>GFNI ${loc.wan_5pct_chimera_mbps} Mbps (${loc.wan_5pct_speedup}x)</b></span></div>`;
+    cmp += `<div class="cmp-row"><span>Lõi Silicon GF(256)</span><span class="mono">Python ${loc.gfni_py_ms}ms &rarr; <b>Native ${loc.gfni_native_ms}ms (${loc.gfni_speedup}x)</b></span></div>`;
+    cmp += `<div class="cmp-row"><span>Telepathic Local Dict</span><span class="mono">Zlib ${loc.telepathy_zlib_bytes}B &rarr; <b>CHTC1 ${loc.telepathy_wire_bytes}B (-${loc.telepathy_vs_raw_pct}%)</b></span></div>`;
+    cmp += `<div class="cmp-row"><span>WAN 5% Drop</span><span class="mono">TCP ${loc.wan_5pct_tcp_mbps} Mbps &rarr; <b>GFNI ${loc.wan_5pct_chimera_mbps} Mbps (${loc.wan_5pct_speedup}x)</b></span></div>`;
     if (pr.reachable) {
-      cmp += `<div class="cmp-row"><span>Live ${pr.peer_name} DNA Beam 1 MiB</span><span class="mono">TCP ${pr.tcp_upload_ms}ms &rarr; <b>Beam ${pr.beam_elapsed_ms}ms (-${pr.beam_saved_pct}% dây, ${pr.beam_speedup}x)</b></span></div>`;
-      cmp += `<div class="cmp-row"><span>Live ${pr.peer_name} Active Query</span><span class="mono">TCP ${pr.query_tcp_ms}ms &rarr; <b>Pipe ${pr.query_chimera_ms}ms (-${pr.query_saved_pct}% dây, P0 ${pr.query_p0_ms}ms)</b></span></div>`;
-      cmp += `<div class="cmp-row"><span>Live Dual-Stack Hedged RPC</span><span class="mono">V4 p99 ${pr.single_p99_ms}ms &rarr; <b>V4+V6 p99 ${pr.hedged_p99_ms}ms</b></span></div>`;
+      cmp += `<div class="cmp-row"><span>Live Telepathic Query (${pr.query_codec_mode})</span><span class="mono">TCP ${pr.query_tcp_ms}ms &rarr; <b>${pr.query_chimera_ms}ms (${pr.query_wire_bytes}B / -${pr.query_saved_pct}%)</b></span></div>`;
+      if (pr.merkle && pr.merkle.verified_root_match) {
+        cmp += `<div class="cmp-row"><span>Live Merkle 16-file Sync</span><span class="mono">${pr.merkle.total_bytes}B &rarr; <b>${pr.merkle.udp_wire_bytes}B (-${pr.merkle.total_reduction_pct}% trong ${pr.merkle.elapsed_ms}ms)</b></span></div>`;
+      }
+      if (pr.immortal && pr.immortal.ok) {
+        cmp += `<div class="cmp-row"><span>Immortal Cắt IPv4 Giữa Dòng</span><span class="mono">TX ${JSON.stringify(pr.immortal.lane_tx)} &rarr; <b>Sống 100% (0 reconnect, ${pr.immortal.elapsed_ms}ms)</b></span></div>`;
+      }
     }
     document.getElementById('compare-panel').innerHTML = cmp;
   }
 
   renderTrend(db.history || []);
+  document.getElementById('weather-rec').textContent = `Giờ sạch nhất: ${db.recommended_sync_window || 'NIGHT_CLEAN'} (Hiện tại: ${db.active_bucket || ''})`;
+  document.getElementById('weather-tbody').innerHTML = (db.link_weather || []).map(w =>
+    `<tr><td class="mono">${w.bucket}</td><td class="mono">${w.samples}</td><td class="mono">${w.ema_rtt_ms}ms</td><td class="mono">${w.ema_wan_speedup}x</td><td class="mono" style="color:var(--green)">${w.best_genome || '-'}</td></tr>`
+  ).join('');
 
-  const gt = document.getElementById('genome-tbody');
-  gt.innerHTML = (db.genomes || []).map(g => {
+  document.getElementById('genome-tbody').innerHTML = (db.genomes || []).map(g => {
     const p = g.params || {};
-    return `<tr><td class="mono">${g.genome_id}</td><td class="mono">${g.pulls}</td><td class="mono" style="color:var(--cyan)">${g.avg_reward.toFixed(2)}</td><td class="mono">k=${p.gen_k} win=${p.max_inflight_gens} loss=${p.loss_hint} hedge=${p.hedge_delay_ms}ms</td></tr>`;
+    return `<tr><td class="mono">${g.genome_id}</td><td class="mono">${g.pulls}</td><td class="mono" style="color:var(--cyan)">${g.avg_reward.toFixed(2)}</td><td class="mono">k=${p.gen_k} loss=${p.loss_hint}</td></tr>`;
   }).join('');
 
   const evs = (db.events || []).map(e => `[${e.ts_local}] [${e.level}] [${e.category}] ${e.message}`).join('\n');
@@ -311,54 +345,58 @@ function renderState(st) {
 }
 
 async function refresh() {
-  try {
-    const st = await api('/api/status');
-    renderState(st);
-  } catch (e) { console.error(e); }
+  try { renderState(await api('/api/status')); } catch (e) { console.error(e); }
 }
 
 async function triggerRun() {
   const b = document.getElementById('btn-run');
-  b.disabled = true; b.textContent = 'Đang chạy kiểm chứng...';
-  try {
-    await api('/api/run?sync=1', { method: 'POST' });
-    await refresh();
-  } catch (e) { alert('Lỗi: ' + e.message); }
+  b.disabled = true; b.textContent = 'Đang chạy...';
+  try { await api('/api/run?sync=1', { method: 'POST' }); await refresh(); }
+  catch (e) { alert('Lỗi: ' + e.message); }
   finally { b.disabled = false; b.textContent = '▶ Chạy đánh giá ngay'; }
 }
 
 async function triggerBeam() {
   try {
     const res = await api('/api/live-beam', { method: 'POST' });
-    alert(`Live DNA Beam xong!\nWire: ${res.udp_wire_bytes} B / ${res.raw_bytes} B (Tiết kiệm ${res.reduction_pct}%)\nThời gian: ${res.elapsed_ms} ms`);
+    alert(`DNA Beam: ${res.udp_wire_bytes}B / ${res.raw_bytes}B (-${res.reduction_pct}%) trong ${res.elapsed_ms}ms`);
     await refresh();
-  } catch (e) { alert('Live Beam error: ' + e.message); }
+  } catch (e) { alert(e.message); }
 }
 
-async function triggerQuery() {
-  const needle = document.getElementById('q-needle').value || 'ERROR';
-  const file = document.getElementById('q-file').value || '';
-  document.getElementById('query-out').textContent = 'Đang thực thi Active Compute-in-Transit trên peer...';
+async function triggerMerkle() {
   try {
-    const res = await api('/api/live-query', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ needle, file_path: file })
+    const res = await api('/api/live-merkle', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({}) });
+    alert(`Merkle Sync: root=${res.remote_root_hash}\nChanged=${res.changed_files}/${res.total_files} files | UDP Wire=${res.udp_wire_bytes}B (-${res.total_reduction_pct}%)\n2nd 0-RTT Pass noop=${res.second_pass_noop} in ${res.second_pass_ms}ms`);
+    await refresh();
+  } catch (e) { alert(e.message); }
+}
+
+async function triggerImmortal() {
+  try {
+    const res = await api('/api/live-immortal', { method: 'POST' });
+    alert(`Immortal Multi-Path Chaos Survival!\nSurvived Blackout: ${res.survived_blackout}\nLane TX: ${JSON.stringify(res.lane_tx_counts)}\nLane RX (Peer): ${JSON.stringify(res.lane_rx_counts)}\nReconnects: ${res.reconnects} | Time: ${res.elapsed_ms}ms`);
+    await refresh();
+  } catch (e) { alert(e.message); }
+}
+
+async function triggerFluid() {
+  const op = document.getElementById('q-op').value;
+  const val = document.getElementById('q-needle').value || '';
+  const fpath = document.getElementById('q-file').value || '';
+  const out = document.getElementById('query-out');
+  out.textContent = 'Đang chạy Fluid Pushdown trực tiếp trên peer...';
+  try {
+    const body = { op, file_path: fpath, needle: val, patterns: [val], sql: val, use_telepathy: true };
+    const res = await api('/api/live-fluid', {
+      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
     });
-    document.getElementById('query-out').textContent =
-      `Matched: ${res.matched_records} dòng | Wire: ${res.wire_bytes}/${res.raw_bytes} B (-${res.wire_reduction_pct}%) | P0 Preview: ${res.preview_first_ms}ms | Total: ${res.total_ms}ms\n--- Top Preview ---\n` +
-      (res.preview_items || []).join('\n');
+    out.textContent =
+      `[${res.op}] Codec=${res.codec_mode} | Raw=${res.raw_bytes}B -> Uncomp=${res.uncompressed_output_bytes}B -> Zlib=${res.plain_zlib_bytes}B -> Wire=${res.wire_bytes}B (-${res.wire_reduction_pct}%)\n` +
+      `P0=${res.preview_first_ms}ms | Total=${res.total_ms}ms | ServerExec=${res.server_exec_ms}ms | Matched=${res.matched_records}\n--- Output Preview ---\n` +
+      (res.output_preview_text || (res.preview_items || []).join('\n'));
     await refresh();
-  } catch (e) {
-    document.getElementById('query-out').textContent = 'Lỗi: ' + e.message;
-  }
-}
-
-async function triggerExotic() {
-  try {
-    const res = await api('/api/exotic-audit', { method: 'POST' });
-    alert('Exotic v0.5 Status:\n' + JSON.stringify(res, null, 2));
-    await refresh();
-  } catch (e) { alert('Exotic audit error: ' + e.message); }
+  } catch (e) { out.textContent = 'Lỗi: ' + e.message; }
 }
 
 document.getElementById('profile-select').addEventListener('change', async (ev) => {
@@ -383,7 +421,7 @@ class _ThreadingControlServer(http.server.ThreadingHTTPServer):
 
 
 class ChimeraDaemon:
-    """24/7 Mission-Control HTTP + UDP service host & daily self-scheduling daemon."""
+    """24/7 Zero-Weight Mission-Control HTTP + UDP service host & daily self-scheduling daemon."""
 
     def __init__(
         self,
@@ -394,6 +432,9 @@ class ChimeraDaemon:
         self.ops_dir = Path(ops_dir) if ops_dir else default_ops_dir()
         self.config = config if config is not None else OpsConfig.load(self.ops_dir)
         self.store = TelemetryStore(self.ops_dir / "telemetry.db")
+        self.telepathy_store = TelepathicStore(self.ops_dir / "dicts")
+        self.merkle_root = self.ops_dir / "merkle_workspaces"
+        self.merkle_root.mkdir(parents=True, exist_ok=True)
         self.auto_seed_on_empty = auto_seed_on_empty
 
         self._run_lock = threading.Lock()
@@ -401,6 +442,7 @@ class ChimeraDaemon:
         self._beam_srv: BeamServer | None = None
         self._rpc_srv: HedgedRpcServer | None = None
         self._query_srv: ActiveQueryServer | None = None
+        self._immortal_rx: ImmortalMultiPathReceiver | None = None
         self._warp_srv: WarpServer | None = None
         self._httpd: _ThreadingControlServer | None = None
         self._threads: list[threading.Thread] = []
@@ -414,12 +456,15 @@ class ChimeraDaemon:
         return roots
 
     def start(self) -> "ChimeraDaemon":
-        # 1) Start persistent BeamServer
+        ephemeral_mode = int(self.config.beam_port) == 0 and int(self.config.query_port) == 0
+
+        # 1) Start persistent BeamServer (supporting kind=3 Merkle patches)
         self._beam_srv = BeamServer(
             bind_ip="0.0.0.0",
             bind_port=int(self.config.beam_port),
             vault_dir=self.ops_dir / "rx_vault",
             out_dir=self.ops_dir / "received_beam",
+            merkle_root=self.merkle_root,
         ).start()
         self.config.beam_port = self._beam_srv.ctrl_addr[1]
 
@@ -427,15 +472,13 @@ class ChimeraDaemon:
         rpc_binds: list[tuple[str, int]] = [("0.0.0.0", int(self.config.rpc_v4_port))]
         if int(self.config.rpc_v6_port) >= 0:
             try:
-                test_srv = HedgedRpcServer(
+                self._rpc_srv = HedgedRpcServer(
                     rpc_binds + [("::", int(self.config.rpc_v6_port))],
                     handler=lambda b: b"CHIMERA-PONG:" + b[:32],
                 ).start()
-                self._rpc_srv = test_srv
             except OSError:
                 self._rpc_srv = HedgedRpcServer(
-                    rpc_binds,
-                    handler=lambda b: b"CHIMERA-PONG:" + b[:32],
+                    rpc_binds, handler=lambda b: b"CHIMERA-PONG:" + b[:32]
                 ).start()
         else:
             self._rpc_srv = HedgedRpcServer(
@@ -445,15 +488,47 @@ class ChimeraDaemon:
         if len(self._rpc_srv.addrs) > 1:
             self.config.rpc_v6_port = self._rpc_srv.addrs[1][1]
 
-        # 3) Start ActiveQueryServer
+        # 3) Start ActiveQueryServer (AQ01/AQ02 + Fluid Compute + Telepathy)
         self._query_srv = ActiveQueryServer(
             bind_ip="0.0.0.0",
             bind_port=int(self.config.query_port),
             allowed_roots=self._allowed_roots(),
+            telepathy_store=self.telepathy_store,
         ).start()
         self.config.query_port = self._query_srv.addr[1]
 
-        # 4) Start HTTP Control Dashboard first so Warp can target it cleanly
+        # 4) Start ImmortalMultiPathReceiver (IPv4 + optional IPv6)
+        imm_v4_p = 0 if ephemeral_mode else int(self.config.immortal_v4_port)
+        imm_v6_p = 0 if ephemeral_mode else int(self.config.immortal_v6_port)
+        if imm_v4_p >= 0:
+            imm_binds = [("0.0.0.0", imm_v4_p)]
+            if imm_v6_p >= 0:
+                try:
+                    self._immortal_rx = ImmortalMultiPathReceiver(
+                        imm_binds + [("::", imm_v6_p)]
+                    ).start()
+                except OSError:
+                    self._immortal_rx = ImmortalMultiPathReceiver(imm_binds).start()
+            else:
+                self._immortal_rx = ImmortalMultiPathReceiver(imm_binds).start()
+            self.config.immortal_v4_port = self._immortal_rx.addrs[0][1]
+            if len(self._immortal_rx.addrs) > 1:
+                self.config.immortal_v6_port = self._immortal_rx.addrs[1][1]
+
+            def _drain_immortal() -> None:
+                while not self._stop.is_set() and self._immortal_rx is not None:
+                    try:
+                        self._immortal_rx.wait_any_stats(timeout_s=0.3)
+                    except TimeoutError:
+                        continue
+                    except Exception:
+                        break
+
+            th_imm = threading.Thread(target=_drain_immortal, daemon=True)
+            th_imm.start()
+            self._threads.append(th_imm)
+
+        # 5) Start HTTP Control Cockpit
         daemon_ref = self
         host_b, port_b = self.config.dashboard_bind.rsplit(":", 1)
         host_b = host_b.strip("[]") or "127.0.0.1"
@@ -486,14 +561,26 @@ class ChimeraDaemon:
                         200,
                         {
                             "ok": True,
+                            "version": "3.0.0",
                             "node_name": daemon_ref.config.node_name,
                             "role": daemon_ref.config.role,
                             "hardware": cpu_caps(),
+                            "zero_weight": get_zero_weight_status(),
                         },
                     )
                     return
                 if parsed.path == "/api/status":
                     self._send_json(200, daemon_ref.status_payload())
+                    return
+                if parsed.path == "/api/immortal/result":
+                    qs = urllib.parse.parse_qs(parsed.query)
+                    sid = int(qs.get("stream_id", ["0"])[0])
+                    st = (
+                        daemon_ref._immortal_rx.get_recent_stats(sid)
+                        if daemon_ref._immortal_rx is not None
+                        else None
+                    )
+                    self._send_json(200, {"found": st is not None, **(st or {})})
                     return
                 if parsed.path == "/api/raw_query_file":
                     qs = urllib.parse.parse_qs(parsed.query)
@@ -527,11 +614,7 @@ class ChimeraDaemon:
                     ms = (time.perf_counter() - t0) * 1000.0
                     self._send_json(
                         200,
-                        {
-                            "bytes": clen - rem,
-                            "sha256": hasher.hexdigest(),
-                            "server_ms": round(ms, 2),
-                        },
+                        {"bytes": clen - rem, "sha256": hasher.hexdigest(), "server_ms": round(ms, 2)},
                     )
                     return
 
@@ -562,6 +645,216 @@ class ChimeraDaemon:
                         self._send_json(200, {"active_profile": prof})
                     except Exception as exc:
                         self._send_json(400, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/merkle/diff":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        ws_id = sanitize_workspace_id(str(body.get("workspace_id", "default")))
+                        ws_dir = daemon_ref.merkle_root / ws_id
+                        snap = ShadowMerkleIndex().scan(ws_dir)
+                        diff = diff_manifests(
+                            local_files=body.get("files", {}),
+                            local_root=str(body.get("root_hash", "")),
+                            remote_files=snap.files,
+                            remote_root=snap.root_hash,
+                        )
+                        diff["remote_root_hash"] = snap.root_hash
+                        diff["workspace_id"] = ws_id
+                        self._send_json(200, diff)
+                    except Exception as exc:
+                        self._send_json(400, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/telepathy/train":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        fpath = str(body.get("file_path") or daemon_ref.config.watched_query_file or "@synthetic")
+                        domain = str(body.get("domain", "default"))
+                        raw = daemon_ref._query_srv._load_target_bytes(fpath)  # type: ignore[union-attr]
+                        d = train_domain_dictionary([raw[: 512 * 1024]], domain=domain)
+                        daemon_ref.telepathy_store.put(d)
+                        daemon_ref.store.log_event(
+                            "INFO", "TELEPATHY", f"Trained dict={d.dict_id} ({len(d.zdict)}B) for {domain}"
+                        )
+                        self._send_json(200, d.to_wire_dict())
+                    except Exception as exc:
+                        self._send_json(400, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/live-merkle":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        ws_id = sanitize_workspace_id(str(body.get("workspace_id", "autopilot_demo")))
+                        local_dir_arg = str(body.get("local_dir", ""))
+                        if local_dir_arg:
+                            target_dir = Path(local_dir_arg).resolve()
+                        else:
+                            target_dir = prepare_merkle_demo_workspace(daemon_ref.ops_dir)
+                        peer_ip = daemon_ref.config.peer_ipv4 or "127.0.0.1"
+                        peer_bport = (
+                            daemon_ref.config.peer_beam_port
+                            if daemon_ref.config.peer_ipv4
+                            else daemon_ref.config.beam_port
+                        )
+                        peer_http = (
+                            f"http://{peer_ip}:{daemon_ref.config.peer_dashboard_port}"
+                            if daemon_ref.config.peer_ipv4
+                            else f"http://127.0.0.1:{daemon_ref.http_addr[1]}"
+                        )
+                        rep1 = merkle_beam_sync(
+                            peer_http_base=peer_http,
+                            peer_beam_addr=(peer_ip, peer_bport),
+                            local_dir=target_dir,
+                            workspace_id=ws_id,
+                            vault_dir=daemon_ref.ops_dir / "tx_vault",
+                            shadow_dir=daemon_ref.ops_dir / "merkle_shadows",
+                            est_loss=0.02,
+                        )
+                        rep2 = merkle_beam_sync(
+                            peer_http_base=peer_http,
+                            peer_beam_addr=(peer_ip, peer_bport),
+                            local_dir=target_dir,
+                            workspace_id=ws_id,
+                            vault_dir=daemon_ref.ops_dir / "tx_vault",
+                            shadow_dir=daemon_ref.ops_dir / "merkle_shadows",
+                            est_loss=0.02,
+                        )
+                        rep1["second_pass_noop"] = rep2["noop"]
+                        rep1["second_pass_ms"] = rep2["elapsed_ms"]
+                        daemon_ref.store.log_event(
+                            "INFO",
+                            "MERKLE",
+                            f"Sync ws={ws_id} changed={rep1['changed_files']}/{rep1['total_files']} wire={rep1['udp_wire_bytes']}B 2nd_noop={rep2['noop']}({rep2['elapsed_ms']}ms)",
+                        )
+                        self._send_json(200, rep1)
+                    except Exception as exc:
+                        self._send_json(500, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/live-fluid":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        op = str(body.get("op", "log_analytics"))
+                        fpath = str(
+                            body.get("file_path")
+                            or daemon_ref.config.watched_query_file
+                            or "@synthetic"
+                        )
+                        peer_ip = daemon_ref.config.peer_ipv4 or "127.0.0.1"
+                        peer_qport = (
+                            daemon_ref.config.peer_query_port
+                            if daemon_ref.config.peer_ipv4
+                            else daemon_ref.config.query_port
+                        )
+                        peer_http = (
+                            f"http://{peer_ip}:{daemon_ref.config.peer_dashboard_port}"
+                            if daemon_ref.config.peer_ipv4
+                            else f"http://127.0.0.1:{daemon_ref.http_addr[1]}"
+                        )
+                        dd: DomainDictionary | None = daemon_ref.telepathy_store.latest_for_domain("watched_log")
+                        if dd is None and bool(body.get("use_telepathy", True)) and op in ("filter_lines", "multi_grep", "log_analytics"):
+                            try:
+                                tr = _http_post_json(
+                                    f"{peer_http}/api/telepathy/train",
+                                    {"file_path": fpath, "domain": "watched_log"},
+                                    timeout_s=8.0,
+                                )
+                                if tr.get("zdict_b64"):
+                                    dd = DomainDictionary.from_wire_dict(tr)
+                                    daemon_ref.telepathy_store.put(dd)
+                            except Exception:
+                                pass
+
+                        plan = ComputePlan(
+                            op=op,  # type: ignore[arg-type]
+                            needle=str(body.get("needle", "ERROR")),
+                            patterns=tuple(body.get("patterns", [])),
+                            match_mode="all" if body.get("match_mode") == "all" else "any",
+                            regex=bool(body.get("regex", False)),
+                            ignore_case=bool(body.get("ignore_case", False)),
+                            file_glob=str(body.get("file_glob", "*")),
+                            sql=str(body.get("sql", "")),
+                            max_rows=int(body.get("max_rows", 200)),
+                            use_telepathy=bool(body.get("use_telepathy", True)),
+                            dict_id=dd.dict_id if dd else "",
+                        )
+                        res, meta = remote_active_query(
+                            (peer_ip, peer_qport),
+                            file_path=fpath,
+                            plan=plan,
+                            est_loss=0.02,
+                            timeout_s=15.0,
+                            telepathy_store=daemon_ref.telepathy_store,
+                            domain_dict=dd,
+                        )
+                        out = res.to_dict()
+                        out.update(meta)
+                        txt = res.output_bytes.decode("utf-8", errors="replace")
+                        out["output_preview_text"] = txt[:1600]
+                        daemon_ref.store.log_event(
+                            "INFO",
+                            "FLUID",
+                            f"op={op} codec={meta.get('codec_mode')} wire={res.wire_bytes}B (-{res.wire_reduction_pct}%) {res.total_ms}ms",
+                        )
+                        self._send_json(200, out)
+                    except Exception as exc:
+                        self._send_json(500, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/live-immortal":
+                    try:
+                        peer_ip = daemon_ref.config.peer_ipv4 or "127.0.0.1"
+                        if daemon_ref.config.peer_ipv4:
+                            targets = [(peer_ip, daemon_ref.config.peer_immortal_v4_port)]
+                            if daemon_ref.config.peer_ipv6 and daemon_ref.config.peer_immortal_v6_port > 0:
+                                targets.append((daemon_ref.config.peer_ipv6, daemon_ref.config.peer_immortal_v6_port))
+                            peer_http = f"http://{peer_ip}:{daemon_ref.config.peer_dashboard_port}"
+                        else:
+                            targets = [
+                                ("127.0.0.1", daemon_ref.config.immortal_v4_port),
+                                (
+                                    "::1" if daemon_ref._immortal_rx and len(daemon_ref._immortal_rx.addrs) > 1 else "127.0.0.1",
+                                    daemon_ref.config.immortal_v6_port
+                                    if (daemon_ref._immortal_rx and len(daemon_ref._immortal_rx.addrs) > 1)
+                                    else daemon_ref.config.immortal_v4_port,
+                                ),
+                            ]
+                            peer_http = f"http://127.0.0.1:{daemon_ref.http_addr[1]}"
+
+                        sid = (int(time.time()) % 200) + 20
+                        payload = os.urandom(128 * 1024)
+                        irep = ImmortalMultiPathSender(
+                            targets, gen_k=32, initial_loss_hint=0.03
+                        ).send_stream(
+                            payload,
+                            stream_id=sid,
+                            timeout_s=12.0,
+                            chaos_kill_lane=0 if len(targets) >= 2 else None,
+                            chaos_kill_after_gens=1,
+                        )
+                        rx_check: dict[str, Any] = {}
+                        for _ in range(5):
+                            try:
+                                rx_check = _http_get_json(
+                                    f"{peer_http}/api/immortal/result?stream_id={sid}", timeout_s=2.0
+                                )
+                                if rx_check.get("found"):
+                                    break
+                            except Exception:
+                                pass
+                            time.sleep(0.05)
+                        out = irep.to_dict()
+                        out["lane_rx_counts"] = rx_check.get("lane_rx_counts", [])
+                        out["peer_sha256_match"] = rx_check.get("sha256") == irep.sha256
+                        daemon_ref.store.log_event(
+                            "INFO",
+                            "IMMORTAL",
+                            f"lanes={irep.lanes_total} killed={irep.lanes_killed} tx={irep.lane_tx_counts} rx={out['lane_rx_counts']} ok={out['peer_sha256_match']}",
+                        )
+                        self._send_json(200, out)
+                    except Exception as exc:
+                        self._send_json(500, {"error": str(exc)})
                     return
 
                 if parsed.path == "/api/live-beam":
@@ -609,12 +902,20 @@ class ChimeraDaemon:
                             if daemon_ref.config.peer_ipv4
                             else daemon_ref.config.query_port
                         )
+                        dd = daemon_ref.telepathy_store.latest_for_domain("watched_log")
                         res, meta = remote_active_query(
                             (peer_ip, peer_qport),
                             file_path=fpath,
-                            plan=ComputePlan(op="filter_lines", needle=needle),
+                            plan=ComputePlan(
+                                op="filter_lines",
+                                needle=needle,
+                                use_telepathy=True,
+                                dict_id=dd.dict_id if dd else "",
+                            ),
                             est_loss=0.02,
                             timeout_s=15.0,
+                            telepathy_store=daemon_ref.telepathy_store,
+                            domain_dict=dd,
                         )
                         daemon_ref.store.log_event(
                             "INFO",
@@ -622,7 +923,7 @@ class ChimeraDaemon:
                             f"needle={needle!r} matched={res.matched_records} wire_saved={res.wire_reduction_pct}% in {res.total_ms}ms",
                         )
                         out = res.to_dict()
-                        out["server_exec_ms"] = meta.get("server_exec_ms", 0.0)
+                        out.update(meta)
                         self._send_json(200, out)
                     except Exception as exc:
                         self._send_json(500, {"error": str(exc)})
@@ -681,18 +982,21 @@ class ChimeraDaemon:
         t_http.start()
         t_sched.start()
         self._threads.extend([t_http, t_sched])
+        zw = get_zero_weight_status()
         self.store.log_event(
             "INFO",
             "DAEMON",
-            f"Started on http://{self.http_addr[0]}:{self.http_addr[1]} | Beam={self.config.beam_port} Query={self.config.query_port}",
+            f"v3.0 Started on http://{self.http_addr[0]}:{self.http_addr[1]} | RAM={zw['daemon_ram_mb']}MB | Beam={self.config.beam_port} Query={self.config.query_port} Immortal={self.config.immortal_v4_port}/{self.config.immortal_v6_port}",
         )
         return self
 
     def status_payload(self) -> dict[str, Any]:
         return {
-            "version": "2.0.0",
+            "version": "3.0.0",
             "config": self.config.to_dict(),
             "hardware": cpu_caps(),
+            "zero_weight": get_zero_weight_status(),
+            "telepathy_dicts": self.telepathy_store.list_dicts(),
             "today_daily_done": self.store.has_daily_run_today(),
             "telemetry": self.store.get_dashboard_state(limit=30),
         }
@@ -725,7 +1029,13 @@ class ChimeraDaemon:
         if self._httpd is not None:
             self._httpd.shutdown()
             self._httpd.server_close()
-        for srv in (self._warp_srv, self._query_srv, self._rpc_srv, self._beam_srv):
+        for srv in (
+            self._warp_srv,
+            self._immortal_rx,
+            self._query_srv,
+            self._rpc_srv,
+            self._beam_srv,
+        ):
             if srv is not None:
                 srv.close()
         self.store.close()

@@ -1,4 +1,4 @@
-"""Command-line interface for CHIMERA-HYPER v1.0 (and legacy v0.5.0 exotic modes)."""
+"""Command-line interface for CHIMERA-HYPER v3.0 (plus v1.0 & v0.5.0 exotic modes)."""
 
 from __future__ import annotations
 
@@ -11,13 +11,15 @@ import sys
 import time
 from pathlib import Path
 
-from .active_pipe import ActivePipeEngine, ComputePlan
+from .active_pipe import ActivePipeEngine, ComputePlan, remote_active_query
 from .autopilot import OpsConfig, TelemetryStore, default_ops_dir, run_daily_autopilot
 from .dashboard import ChimeraDaemon
 from .fabric import BeamServer, ChimeraFabric, beam_send
+from .merkle_sync import merkle_beam_sync
 from .native import WormholeChannel
 from .probe import probe_environment
 from .protocol import ChimeraReceiver, ChimeraSender, FaultProfile
+from .telepathy import TelepathicStore, benchmark_compression, train_domain_dictionary
 from .warp import WarpClient, WarpServer
 
 
@@ -99,7 +101,7 @@ def main(argv: list[str] | None = None) -> int:
     _configure_utf8()
     parser = argparse.ArgumentParser(
         prog="chimera-tp",
-        description="CHIMERA-HYPER v1.0: Silicon-Native High-Performance Transport + Exotic Multi-Realm Suite",
+        description="CHIMERA-HYPER v3.0: Zero-Weight HyperGrid + Silicon GFNI/AVX2 Transport + Multi-Realm Suite",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -187,6 +189,30 @@ def main(argv: list[str] | None = None) -> int:
     p_auto = sub.add_parser("autopilot", help="Run one daily health + Before-vs-After + Darwinian UCB1 cycle")
     p_auto.add_argument("--ops-dir", default="", help="Override ops directory")
     p_auto.add_argument("--trigger", default="manual", help="Run trigger tag (daily/manual/startup)")
+
+    p_ms = sub.add_parser("merkle-sync", help="0-RTT Merkle hash check and sparse directory DNA sync")
+    p_ms.add_argument("--dir", required=True, help="Local directory to synchronize")
+    p_ms.add_argument("--ws", default="default", help="Workspace identifier on peer")
+    p_ms.add_argument("--peer-http", required=True, help="Peer dashboard HTTP base URL")
+    p_ms.add_argument("--peer-beam", required=True, help="Peer BeamServer HOST:PORT")
+    p_ms.add_argument("--ops-dir", default="", help="Override ops directory")
+    p_ms.add_argument("--est-loss", type=float, default=0.02, help="Estimated UDP loss hint")
+
+    p_fl = sub.add_parser("fluid", help="Execute remote Fluid Compute operator on peer near disk")
+    p_fl.add_argument("--peer-query", required=True, help="Peer ActiveQueryServer HOST:PORT")
+    p_fl.add_argument("--path", required=True, help="Remote file, directory, or SQLite DB path")
+    p_fl.add_argument(
+        "--op",
+        choices=("log_analytics", "filter_lines", "multi_grep", "sqlite_query", "remote_digest"),
+        default="log_analytics",
+        help="Fluid pushdown operator name",
+    )
+    p_fl.add_argument("--needle", default="ERROR", help="Filter substring or pattern")
+    p_fl.add_argument("--sql", default="", help="Read-only SQL SELECT/WITH query")
+    p_fl.add_argument("--no-telepathy", action="store_true", help="Disable Telepathic dict compression")
+
+    p_tb = sub.add_parser("telepathy-bench", help="Benchmark Telepathic dictionary vs raw and plain zlib")
+    p_tb.add_argument("--file", required=True, help="Sample log, code, or JSON file")
 
     # ---- Legacy Research Subcommands (v0.5.0 Multi-Realm Exotic Lanes) ----
     p_probe = sub.add_parser("probe", help="Probe hardware capabilities & Windows network realms")
@@ -456,6 +482,43 @@ def main(argv: list[str] | None = None) -> int:
             return 0 if int(rep["health_score"]) >= 60 else 1
         finally:
             store.close()
+
+    if args.command == "merkle-sync":
+        ops_dir = Path(args.ops_dir) if args.ops_dir else default_ops_dir()
+        rep = merkle_beam_sync(
+            peer_http_base=args.peer_http,
+            peer_beam_addr=_parse_host_port(args.peer_beam),
+            local_dir=Path(args.dir),
+            workspace_id=args.ws,
+            vault_dir=ops_dir / "tx_vault",
+            shadow_dir=ops_dir / "merkle_shadows",
+            est_loss=float(args.est_loss),
+        )
+        print(json.dumps(rep, indent=2, ensure_ascii=False))
+        return 0 if rep.get("verified_root_match") else 1
+
+    if args.command == "fluid":
+        plan = ComputePlan(
+            op=args.op,
+            needle=args.needle,
+            patterns=(args.needle,) if args.needle else (),
+            sql=args.sql,
+            use_telepathy=not bool(args.no_telepathy),
+        )
+        res, meta = remote_active_query(_parse_host_port(args.peer_query), args.path, plan)
+        out = res.to_dict()
+        out.update(meta)
+        out["output_preview"] = res.output_bytes.decode("utf-8", errors="replace")[:1200]
+        print(json.dumps(out, indent=2, ensure_ascii=False))
+        return 0
+
+    if args.command == "telepathy-bench":
+        raw = Path(args.file).read_bytes()
+        split = max(1024, len(raw) // 2)
+        d = train_domain_dictionary([raw[:split]], domain=Path(args.file).stem)
+        rep = benchmark_compression(raw[split:] if len(raw) > split else raw, d)
+        print(json.dumps(rep, indent=2, ensure_ascii=False))
+        return 0 if rep["lossless_ok"] else 1
 
     if args.command == "demo":
         from .demo import run_demo

@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "chimera-tp"
-version = "2.0.0"
-description = "CHIMERA-HYPER v2.0: Cross-Host Windows<->Linux Silicon GFNI/AVX2 Transport, DNA Vault, Wormhole IPC, Daily Autopilot & Control Dashboard"
+version = "3.0.0"
+description = "CHIMERA-HYPER v3.0: Zero-Weight HyperGrid (Merkle 0-RTT Sync, Fluid Pushdown, Telepathic Dict, Immortal Multi-Path & Contextual Autopilot)"
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.11"
