@@ -26,6 +26,7 @@ from .autopilot import (
     _http_get_json,
     _http_post_json,
     default_ops_dir,
+    format_cluster_markdown_report,
     get_zero_weight_status,
     prepare_merkle_demo_workspace,
     run_daily_autopilot,
@@ -134,10 +135,20 @@ _DASHBOARD_HTML = r"""<!doctype html>
         <option value="exotic-v05">exotic-v05 (Multi-Realm)</option>
       </select>
       <button class="primary" id="btn-run" onclick="triggerRun()">&#9654; Chạy đánh giá ngay</button>
+      <button onclick="openMarkdownReport()">&#128196; Báo cáo (.md)</button>
       <button onclick="triggerMerkle()">&#127795; Merkle 0-RTT Sync</button>
       <button onclick="triggerImmortal()">&#128293; Immortal Cắt IPv4</button>
       <button onclick="triggerBeam()">&#9889; DNA Beam</button>
     </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <span>Tailscale Cluster Hub — Sức Khỏe Toàn Cụm &amp; Đánh Giá Đồng Bộ (24/7 trên Hub)</span>
+      <span class="badge ok" id="cluster-grade">HẠNG: ...</span>
+    </div>
+    <div class="kpi-sub" id="cluster-highlights" style="margin-bottom:10px;">Đang nạp báo cáo từ các node trong mạng Tailscale...</div>
+    <div class="grid-2" id="cluster-nodes"></div>
   </div>
 
   <div class="grid-4">
@@ -285,24 +296,45 @@ function renderState(st) {
   }
 
   const db = st.telemetry || {};
+  const cl = st.cluster || {};
+  const verdict = cl.evaluation_verdict || {};
+  const clBadge = document.getElementById('cluster-grade');
+  clBadge.textContent = `HẠNG: ${verdict.grade || '--'} • TB ${verdict.avg_health_score || 0}/100`;
+  clBadge.className = 'badge ' + ((verdict.grade === 'A+' || verdict.grade === 'A') ? 'ok' : 'warn');
+  document.getElementById('cluster-highlights').textContent =
+    (verdict.highlights || []).join(' • ') || 'Chưa có báo cáo cross-host; bấm "Chạy đánh giá ngay" từ Windows để đẩy lên Hub.';
+
+  const clNodes = cl.nodes || [];
+  document.getElementById('cluster-nodes').innerHTML = clNodes.length ? clNodes.map(n => `
+    <div style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:11px 13px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+        <strong class="mono">${n.node_name} <span class="badge">${n.role}</span></strong>
+        <span class="badge ${n.health_score>=85?'ok':'warn'}">${n.health_score}/100</span>
+      </div>
+      <div class="meta-line">RAM: ${n.daemon_ram_mb} MB | WAN 5%: ${n.wan_5pct_speedup}x | GF(256): ${n.gfni_speedup}x | SHM: ${n.wormhole_gbps} Gbps</div>
+      <div class="meta-line">${n.peer_reachable ? `Cross-Host Beam: ${n.beam_speedup}x | Query: -${n.query_saved_pct}% (${n.query_speedup}x) | Merkle: -${n.merkle_saved_pct}%` : 'Node Hub Server (nhận dữ liệu qua Tailscale)'} • ${n.ts_local}</div>
+    </div>
+  `).join('') : '<div class="meta-line">Chưa có node nào ghi vào cluster_reports.</div>';
+
   const latest = db.latest;
-  if (latest) {
-    document.getElementById('latest-ts').textContent = `${latest.ts_local} (${latest.time_bucket || ''}) • ${latest.genome_id}`;
-    const sc = latest.health_score;
+  const eff = (latest && latest.peer && latest.peer.reachable) ? latest : (cl.latest_cross_host || latest);
+  if (eff) {
+    document.getElementById('latest-ts').textContent = `${eff.ts_local} (${eff.node_name || ''} • ${eff.time_bucket || ''}) • ${eff.genome_id}`;
+    const sc = eff.health_score;
     const hEl = document.getElementById('kpi-health');
     hEl.textContent = `${sc}/100`;
     hEl.style.color = sc >= 85 ? 'var(--green)' : 'var(--amber)';
-    const lzw = latest.zero_weight || zw;
-    document.getElementById('kpi-health-sub').textContent = `Daemon ${lzw.daemon_ram_mb} MB / ${lzw.host_threads} threads • 0% lag`;
+    const lzw = eff.zero_weight || zw;
+    document.getElementById('kpi-health-sub').textContent = `Daemon ${lzw.daemon_ram_mb} MB / ${lzw.host_threads} threads • Hub ${zw.daemon_ram_mb || 0} MB`;
 
-    const loc = latest.local || {};
+    const loc = eff.local || {};
     document.getElementById('kpi-wan').textContent = `${loc.wan_5pct_speedup || 0}x`;
-    document.getElementById('kpi-wan-sub').textContent = `GFNI ${loc.wan_5pct_chimera_mbps} vs TCP ${loc.wan_5pct_tcp_mbps} Mbps`;
+    document.getElementById('kpi-wan-sub').textContent = `GFNI/AVX2 ${loc.wan_5pct_chimera_mbps} vs TCP ${loc.wan_5pct_tcp_mbps} Mbps`;
 
-    const pr = latest.peer || {};
+    const pr = eff.peer || {};
     if (pr.reachable) {
       document.getElementById('kpi-beam').textContent = `-${pr.query_saved_pct}% dây`;
-      document.getElementById('kpi-beam-sub').textContent = `Beam -${pr.beam_saved_pct}% (${pr.beam_speedup}x) • Mode: ${pr.query_codec_mode || 'zlib'}`;
+      document.getElementById('kpi-beam-sub').textContent = `Beam -${pr.beam_saved_pct}% (${pr.beam_speedup}x) • ${pr.query_codec_mode || 'zlib'}`;
       const mk = pr.merkle || {};
       document.getElementById('kpi-shm').textContent = `${pr.rtt_p50_ms} ms`;
       document.getElementById('kpi-shm-sub').textContent = mk.verified_root_match ? `Merkle -${mk.total_reduction_pct}% | SHM ${loc.wormhole_gbps}Gbps` : `SHM ${loc.wormhole_gbps} Gbps`;
@@ -314,13 +346,13 @@ function renderState(st) {
     }
 
     let cmp = '';
-    cmp += `<div class="cmp-row"><span>Lõi Silicon GF(256)</span><span class="mono">Python ${loc.gfni_py_ms}ms &rarr; <b>Native ${loc.gfni_native_ms}ms (${loc.gfni_speedup}x)</b></span></div>`;
+    cmp += `<div class="cmp-row"><span>Lõi Silicon GF(256) (${eff.node_name})</span><span class="mono">Python ${loc.gfni_py_ms}ms &rarr; <b>Native ${loc.gfni_native_ms}ms (${loc.gfni_speedup}x)</b></span></div>`;
     cmp += `<div class="cmp-row"><span>Telepathic Local Dict</span><span class="mono">Zlib ${loc.telepathy_zlib_bytes}B &rarr; <b>CHTC1 ${loc.telepathy_wire_bytes}B (-${loc.telepathy_vs_raw_pct}%)</b></span></div>`;
-    cmp += `<div class="cmp-row"><span>WAN 5% Drop</span><span class="mono">TCP ${loc.wan_5pct_tcp_mbps} Mbps &rarr; <b>GFNI ${loc.wan_5pct_chimera_mbps} Mbps (${loc.wan_5pct_speedup}x)</b></span></div>`;
+    cmp += `<div class="cmp-row"><span>WAN 5% Drop</span><span class="mono">TCP ${loc.wan_5pct_tcp_mbps} Mbps &rarr; <b>RLNC ${loc.wan_5pct_chimera_mbps} Mbps (${loc.wan_5pct_speedup}x)</b></span></div>`;
     if (pr.reachable) {
       cmp += `<div class="cmp-row"><span>Live Telepathic Query (${pr.query_codec_mode})</span><span class="mono">TCP ${pr.query_tcp_ms}ms &rarr; <b>${pr.query_chimera_ms}ms (${pr.query_wire_bytes}B / -${pr.query_saved_pct}%)</b></span></div>`;
       if (pr.merkle && pr.merkle.verified_root_match) {
-        cmp += `<div class="cmp-row"><span>Live Merkle 16-file Sync</span><span class="mono">${pr.merkle.total_bytes}B &rarr; <b>${pr.merkle.udp_wire_bytes}B (-${pr.merkle.total_reduction_pct}% trong ${pr.merkle.elapsed_ms}ms)</b></span></div>`;
+        cmp += `<div class="cmp-row"><span>Live Merkle 16-file Sync</span><span class="mono">${pr.merkle.total_bytes}B &rarr; <b>${pr.merkle.udp_wire_bytes}B (-${pr.merkle.total_reduction_pct}% / ${pr.merkle.elapsed_ms}ms)</b></span></div>`;
       }
       if (pr.immortal && pr.immortal.ok) {
         cmp += `<div class="cmp-row"><span>Immortal Cắt IPv4 Giữa Dòng</span><span class="mono">TX ${JSON.stringify(pr.immortal.lane_tx)} &rarr; <b>Sống 100% (0 reconnect, ${pr.immortal.elapsed_ms}ms)</b></span></div>`;
@@ -354,6 +386,10 @@ async function triggerRun() {
   try { await api('/api/run?sync=1', { method: 'POST' }); await refresh(); }
   catch (e) { alert('Lỗi: ' + e.message); }
   finally { b.disabled = false; b.textContent = '▶ Chạy đánh giá ngay'; }
+}
+
+function openMarkdownReport() {
+  window.open('/api/cluster/report?format=md', '_blank');
 }
 
 async function triggerBeam() {
@@ -572,6 +608,29 @@ class ChimeraDaemon:
                 if parsed.path == "/api/status":
                     self._send_json(200, daemon_ref.status_payload())
                     return
+                if parsed.path == "/api/cluster/report":
+                    qs = urllib.parse.parse_qs(parsed.query)
+                    fmt = qs.get("format", ["json"])[0]
+                    st_payload = daemon_ref.status_payload()
+                    if fmt == "md":
+                        md_bytes = format_cluster_markdown_report(st_payload).encode("utf-8")
+                        self.send_response(200)
+                        self.send_header("Content-Type", "text/markdown; charset=utf-8")
+                        self.send_header("Content-Disposition", 'inline; filename="chimera_eval_report.md"')
+                        self.send_header("Content-Length", str(len(md_bytes)))
+                        self.end_headers()
+                        self.wfile.write(md_bytes)
+                        return
+                    self._send_json(
+                        200,
+                        {
+                            "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
+                            "version": "3.0.0",
+                            "cluster": st_payload.get("cluster", {}),
+                            "status": st_payload,
+                        },
+                    )
+                    return
                 if parsed.path == "/api/immortal/result":
                     qs = urllib.parse.parse_qs(parsed.query)
                     sid = int(qs.get("stream_id", ["0"])[0])
@@ -630,6 +689,23 @@ class ChimeraDaemon:
                             daemon=True,
                         ).start()
                         self._send_json(202, {"queued": True})
+                    return
+
+                if parsed.path == "/api/cluster/ingest":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8"))
+                        if not body.get("node_name") or not body.get("ts_local"):
+                            self._send_json(400, {"error": "Missing node_name or ts_local"})
+                            return
+                        rid = daemon_ref.store.record_cluster_report(body)
+                        daemon_ref.store.log_event(
+                            "INFO",
+                            "CLUSTER",
+                            f"Ingested report #{rid} from {body.get('node_name')} score={body.get('health_score')}",
+                        )
+                        self._send_json(200, {"ok": True, "report_id": rid})
+                    except Exception as exc:
+                        self._send_json(400, {"error": str(exc)})
                     return
 
                 if parsed.path == "/api/profile":
@@ -999,6 +1075,7 @@ class ChimeraDaemon:
             "telepathy_dicts": self.telepathy_store.list_dicts(),
             "today_daily_done": self.store.has_daily_run_today(),
             "telemetry": self.store.get_dashboard_state(limit=30),
+            "cluster": self.store.get_cluster_overview(limit=30),
         }
 
     def run_cycle(self, trigger: str = "manual") -> dict[str, Any]:

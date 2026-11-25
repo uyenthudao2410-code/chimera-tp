@@ -90,6 +90,14 @@ chimera telepathy-bench --file /path/to/app.log
 chimera autopilot --trigger manual
 ```
 
+### 4. Always-On Tailscale HTTPS Cluster Hub (Phone / Any Tailnet Device)
+Expose the Linux server peer's dashboard privately over Tailscale TLS (`tailnet only`, auto-trusted certificate) so you can inspect aggregated Windows + Linux evaluations anytime even when the desktop PC is offline:
+```bash
+sudo tailscale serve --bg --https=9781 http://127.0.0.1:9780
+```
+- **Web Cockpit:** `https://<node>.<tailnet>.ts.net:9781` (auto-receives cross-host reports via `POST /api/cluster/ingest` whenever controller runs `autopilot`)
+- **One-Click Markdown Evaluation Report:** `https://<node>.<tailnet>.ts.net:9781/api/cluster/report?format=md`
+
 ---
 
 ## Tests

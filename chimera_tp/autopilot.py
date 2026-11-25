@@ -330,6 +330,23 @@ class TelemetryStore:
                     category TEXT NOT NULL,
                     message TEXT NOT NULL
                 );
+                CREATE TABLE IF NOT EXISTS cluster_reports (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    node_name TEXT NOT NULL,
+                    role TEXT NOT NULL,
+                    version TEXT NOT NULL,
+                    ts_utc TEXT NOT NULL,
+                    ts_local TEXT NOT NULL,
+                    health_score INTEGER NOT NULL,
+                    daemon_ram_mb REAL NOT NULL,
+                    wan_5pct_speedup REAL NOT NULL,
+                    beam_speedup REAL NOT NULL,
+                    query_speedup REAL NOT NULL,
+                    query_saved_pct REAL NOT NULL,
+                    merkle_saved_pct REAL NOT NULL,
+                    immortal_ok INTEGER NOT NULL,
+                    summary_json TEXT NOT NULL
+                );
                 """
             )
             for gid, params in GENOMES.items():
@@ -554,6 +571,169 @@ class TelemetryStore:
 
             self._conn.commit()
             return run_id
+
+    def record_cluster_report(self, summary: dict[str, Any]) -> int:
+        node_name = str(summary.get("node_name") or "unknown")
+        role = str(summary.get("role") or "node")
+        version = str(summary.get("version") or "3.0.0")
+        ts_utc = str(summary.get("ts_utc") or "")
+        ts_local = str(summary.get("ts_local") or "")
+        health_score = int(summary.get("health_score", 0))
+        zw = summary.get("zero_weight", {}) or {}
+        daemon_ram_mb = float(zw.get("daemon_ram_mb", 0.0))
+        loc = summary.get("local", {}) or {}
+        wan_sp = float(loc.get("wan_5pct_speedup", 0.0))
+        peer = summary.get("peer", {}) or {}
+        beam_sp = float(peer.get("beam_speedup", 0.0)) if peer.get("reachable") else 0.0
+        query_sp = float(peer.get("query_speedup", 0.0)) if peer.get("reachable") else 0.0
+        query_saved = float(peer.get("query_saved_pct", 0.0)) if peer.get("reachable") else 0.0
+        merkle = peer.get("merkle", {}) or {}
+        merkle_saved = float(merkle.get("total_reduction_pct", 0.0)) if peer.get("reachable") else 0.0
+        immortal_ok = 1 if (peer.get("reachable") and peer.get("immortal_ok")) else 0
+
+        with self._lock:
+            cur = self._conn.cursor()
+            cur.execute(
+                """
+                INSERT INTO cluster_reports (
+                    node_name, role, version, ts_utc, ts_local, health_score,
+                    daemon_ram_mb, wan_5pct_speedup, beam_speedup, query_speedup,
+                    query_saved_pct, merkle_saved_pct, immortal_ok, summary_json
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    node_name,
+                    role,
+                    version,
+                    ts_utc,
+                    ts_local,
+                    health_score,
+                    daemon_ram_mb,
+                    wan_sp,
+                    beam_sp,
+                    query_sp,
+                    query_saved,
+                    merkle_saved,
+                    immortal_ok,
+                    json.dumps(summary, ensure_ascii=False),
+                ),
+            )
+            rid = int(cur.lastrowid or 0)
+            self._conn.commit()
+            return rid
+
+    def get_cluster_overview(self, limit: int = 30) -> dict[str, Any]:
+        with self._lock:
+            rows = self._conn.execute(
+                "SELECT * FROM cluster_reports ORDER BY id DESC LIMIT ?", (limit * 4,)
+            ).fetchall()
+
+        latest_by_node: dict[str, dict[str, Any]] = {}
+        latest_cross_host: dict[str, Any] | None = None
+
+        for r in rows:
+            nname = str(r["node_name"])
+            try:
+                parsed = json.loads(r["summary_json"])
+            except Exception:
+                parsed = {}
+            if latest_cross_host is None and (parsed.get("peer", {}) or {}).get("reachable"):
+                latest_cross_host = parsed
+            if nname not in latest_by_node:
+                loc = parsed.get("local", {}) or {}
+                peer = parsed.get("peer", {}) or {}
+                zw = parsed.get("zero_weight", {}) or {}
+                latest_by_node[nname] = {
+                    "id": int(r["id"]),
+                    "node_name": nname,
+                    "role": str(r["role"]),
+                    "version": str(r["version"]),
+                    "ts_utc": str(r["ts_utc"]),
+                    "ts_local": str(r["ts_local"]),
+                    "health_score": int(r["health_score"]),
+                    "daemon_ram_mb": float(r["daemon_ram_mb"]),
+                    "host_free_ram_gb": float(zw.get("host_free_ram_gb", 0.0)),
+                    "host_total_ram_gb": float(zw.get("host_total_ram_gb", 0.0)),
+                    "hardware": loc.get("cpu_caps", {}),
+                    "gfni_speedup": float(loc.get("gfni_speedup", 0.0)),
+                    "wormhole_gbps": float(loc.get("wormhole_gbps", 0.0)),
+                    "wan_5pct_speedup": float(r["wan_5pct_speedup"]),
+                    "beam_speedup": float(r["beam_speedup"]),
+                    "query_speedup": float(r["query_speedup"]),
+                    "query_saved_pct": float(r["query_saved_pct"]),
+                    "merkle_saved_pct": float(r["merkle_saved_pct"]),
+                    "immortal_ok": bool(r["immortal_ok"]),
+                    "genome_id": str(parsed.get("genome_id", "")),
+                    "trigger": str(parsed.get("trigger", "")),
+                    "anomalies": list(parsed.get("anomalies", [])),
+                    "peer_reachable": bool(peer.get("reachable")),
+                }
+
+        nodes = sorted(
+            latest_by_node.values(),
+            key=lambda x: (0 if x["role"] == "server" else 1, x["node_name"]),
+        )
+
+        # Fallback: also inspect local runs table if cluster_reports has no cross-host entry yet
+        if latest_cross_host is None:
+            with self._lock:
+                rrow = self._conn.execute(
+                    "SELECT summary_json FROM runs WHERE peer_reachable = 1 ORDER BY id DESC LIMIT 1"
+                ).fetchone()
+            if rrow is not None:
+                try:
+                    latest_cross_host = json.loads(rrow["summary_json"])
+                except Exception:
+                    latest_cross_host = None
+
+        avg_health = (
+            round(sum(n["health_score"] for n in nodes) / len(nodes), 1) if nodes else 0.0
+        )
+        all_zw_ok = all(n["daemon_ram_mb"] <= 80.0 for n in nodes) if nodes else True
+        cross_ok = bool(
+            latest_cross_host
+            and (latest_cross_host.get("peer", {}) or {}).get("beam_ok")
+            and (latest_cross_host.get("peer", {}) or {}).get("query_ok")
+        )
+        if not nodes:
+            grade = "PENDING"
+        elif avg_health >= 95.0 and all_zw_ok and (cross_ok or len(nodes) == 1):
+            grade = "A+"
+        elif avg_health >= 85.0:
+            grade = "A"
+        elif avg_health >= 70.0:
+            grade = "B"
+        else:
+            grade = "WARN"
+
+        highlights: list[str] = []
+        if nodes:
+            highlights.append(
+                f"{len(nodes)} node báo cáo | Sức khỏe TB {avg_health}/100 | Zero-Weight {'ĐẠT' if all_zw_ok else 'CẦN XEM'}"
+            )
+        if latest_cross_host:
+            pr = latest_cross_host.get("peer", {}) or {}
+            mk = pr.get("merkle", {}) or {}
+            highlights.append(
+                f"Cross-Host ({latest_cross_host.get('node_name')} ↔ {pr.get('peer_name')}): "
+                f"Query -{pr.get('query_saved_pct', 0)}% ({pr.get('query_speedup', 0)}x), "
+                f"Beam -{pr.get('beam_saved_pct', 0)}% ({pr.get('beam_speedup', 0)}x)"
+                + (f", Merkle -{mk.get('total_reduction_pct', 0)}%" if mk.get("verified_root_match") else "")
+                + (", Immortal 0-reconnect OK" if pr.get("immortal_ok") else "")
+            )
+
+        return {
+            "total_ingested": len(rows),
+            "nodes": nodes,
+            "latest_cross_host": latest_cross_host,
+            "evaluation_verdict": {
+                "grade": grade,
+                "avg_health_score": avg_health,
+                "zero_weight_ok": all_zw_ok,
+                "cross_host_verified": cross_ok,
+                "highlights": highlights,
+            },
+        }
 
     def has_daily_run_today(self) -> bool:
         today_prefix = datetime.now().astimezone().strftime("%Y-%m-%d")
@@ -1164,6 +1344,80 @@ def _bench_live_peer(
     }
 
 
+def format_cluster_markdown_report(status_payload: dict[str, Any]) -> str:
+    """Format human-readable Markdown cluster evaluation report for Tailscale Hub."""
+    cluster = status_payload.get("cluster", {}) or {}
+    verdict = cluster.get("evaluation_verdict", {}) or {}
+    nodes = cluster.get("nodes", []) or []
+    cross = cluster.get("latest_cross_host") or (status_payload.get("telemetry", {}) or {}).get("latest")
+    zw = status_payload.get("zero_weight", {}) or {}
+    tel = status_payload.get("telemetry", {}) or {}
+    now_str = datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")
+
+    lines: list[str] = [
+        f"# CHIMERA-HYPER v{status_payload.get('version', '3.0.0')} — Báo Cáo Đánh Giá Cụm",
+        "",
+        f"- **Thời điểm xuất:** `{now_str}`",
+        f"- **Xếp hạng cụm:** **{verdict.get('grade', 'N/A')}** (Sức khỏe TB: `{verdict.get('avg_health_score', 0)}/100`, Zero-Weight: `{verdict.get('zero_weight_ok', True)}`)",
+        f"- **Hub hiện tại:** `{status_payload.get('config', {}).get('node_name', 'svhome')}` (RAM daemon `{zw.get('daemon_ram_mb', 0)} MB` / trống `{zw.get('host_free_ram_gb', 0)} GB`)",
+        f"- **Khung giờ đề xuất đồng bộ nặng:** `{tel.get('recommended_sync_window', 'NIGHT_CLEAN')}` (hiện tại `{tel.get('active_bucket', '')}`)",
+        "",
+        "## 1. Sức khỏe từng Node",
+        "",
+        "| Node | Vai trò | RAM Daemon | GF(256) Speedup | WAN 5% Drop | Beam | Query (-wire) | Cập nhật |",
+        "| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :--- |",
+    ]
+    for n in nodes:
+        lines.append(
+            f"| `{n.get('node_name')}` | {n.get('role')} | {n.get('daemon_ram_mb', 0)} MB | "
+            f"{n.get('gfni_speedup', 0)}x | **{n.get('wan_5pct_speedup', 0)}x** | "
+            f"{n.get('beam_speedup', 0)}x | {n.get('query_speedup', 0)}x (-{n.get('query_saved_pct', 0)}%) | {n.get('ts_local', '')} |"
+        )
+    if not nodes:
+        lines.append("| _(Chưa có node nào gửi báo cáo)_ | - | - | - | - | - | - | - |")
+
+    if cross:
+        loc = cross.get("local", {}) or {}
+        pr = cross.get("peer", {}) or {}
+        lines.extend(
+            [
+                "",
+                f"## 2. Đối chiếu Trước vs Sau mới nhất (`{cross.get('node_name')}` -> `{pr.get('peer_name', 'local')}`)",
+                "",
+                "| Tác vụ | Trước (TCP chuẩn) | Sau (CHIMERA v3.0) | Hiệu quả |",
+                "| :--- | :--- | :--- | :--- |",
+                f"| Lõi GF(256) 1 MB | {loc.get('gfni_py_ms', 0)} ms | {loc.get('gfni_native_ms', 0)} ms | **{loc.get('gfni_speedup', 0)}x** |",
+                f"| WAN 5% Rớt Gói | {loc.get('wan_5pct_tcp_mbps', 0)} Mbps | {loc.get('wan_5pct_chimera_mbps', 0)} Mbps | **{loc.get('wan_5pct_speedup', 0)}x** |",
+                f"| Telepathic Local | Zlib {loc.get('telepathy_zlib_bytes', 0)} B | {loc.get('telepathy_wire_bytes', 0)} B | **-{loc.get('telepathy_vs_raw_pct', 0)}%** |",
+            ]
+        )
+        if pr.get("reachable"):
+            mk = pr.get("merkle", {}) or {}
+            imm = pr.get("immortal", {}) or {}
+            lines.extend(
+                [
+                    f"| DNA Beam 1 MiB (Tailscale) | {pr.get('tcp_upload_ms', 0)} ms ({pr.get('tcp_upload_mbps', 0)} Mbps) | {pr.get('beam_elapsed_ms', 0)} ms ({pr.get('beam_wire_bytes', 0)} B) | **-{pr.get('beam_saved_pct', 0)}% ({pr.get('beam_speedup', 0)}x)** |",
+                    f"| Remote Log Query ({pr.get('query_codec_mode', '')}) | {pr.get('query_tcp_ms', 0)} ms ({pr.get('query_raw_bytes', 0)} B) | {pr.get('query_chimera_ms', 0)} ms ({pr.get('query_wire_bytes', 0)} B) | **-{pr.get('query_saved_pct', 0)}% ({pr.get('query_speedup', 0)}x)** |",
+                ]
+            )
+            if mk.get("verified_root_match"):
+                lines.append(
+                    f"| Merkle Sync 16 file | {mk.get('total_bytes', 0)} B | {mk.get('udp_wire_bytes', 0)} B (`scan {mk.get('scan_ms', 0)} ms`) | **-{mk.get('total_reduction_pct', 0)}%** |"
+                )
+            if imm.get("ok"):
+                lines.append(
+                    f"| Immortal Cắt IPv4 giữa dòng | Đứt phiên TCP | TX `{imm.get('lane_tx', [])}` / RX `{imm.get('lane_rx', [])}` ({imm.get('elapsed_ms', 0)} ms) | **0 reconnect** |"
+                )
+
+    lines.extend(["", "## 3. Khuyến nghị theo Link Weather 24h", ""])
+    for w in tel.get("link_weather", []) or []:
+        if int(w.get("samples", 0)) > 0:
+            lines.append(
+                f"- `{w['bucket']}`: `{w['samples']}` mẫu | RTT `{w['ema_rtt_ms']} ms` | WAN `{w['ema_wan_speedup']}x` | Genome tốt nhất: `{w['best_genome']}`"
+            )
+    return "\n".join(lines) + "\n"
+
+
 def run_daily_autopilot(
     config: OpsConfig,
     store: TelemetryStore,
@@ -1253,6 +1507,17 @@ def run_daily_autopilot(
     }
     run_id = store.record_run(summary, genome_id=genome_id, reward=reward)
     summary["run_id"] = run_id
+    store.record_cluster_report(summary)
+
+    pushed_to_hub = False
+    if config.peer_ipv4:
+        try:
+            hub_url = f"http://{config.peer_ipv4}:{config.peer_dashboard_port}/api/cluster/ingest"
+            ingest_res = _http_post_json(hub_url, summary, timeout_s=5.0)
+            pushed_to_hub = bool(ingest_res.get("ok"))
+        except Exception:
+            pushed_to_hub = False
+    summary["pushed_to_hub"] = pushed_to_hub
 
     level = "WARN" if anomalies else "INFO"
     msg = (

@@ -647,7 +647,7 @@ class ChimeraSender:
                 while True:
                     try:
                         pkt, _ = ctrl.recvfrom(65535)
-                    except BlockingIOError:
+                    except (BlockingIOError, ConnectionResetError):
                         break
                     if pkt[:4] == b"SOLV":
                         parsed = json.loads(pkt[4:].decode("utf-8"))
@@ -902,7 +902,7 @@ class ChimeraSender:
                 while True:
                     try:
                         pkt, _ = ctrl.recvfrom(65535)
-                    except BlockingIOError:
+                    except (BlockingIOError, ConnectionResetError):
                         break
                     if pkt[:4] == b"JOK!":
                         parsed = json.loads(pkt[4:].decode("utf-8"))

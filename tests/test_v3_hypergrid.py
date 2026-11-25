@@ -327,3 +327,77 @@ class TestChimeraV3HyperGrid(unittest.TestCase):
                 self.assertTrue(irep["peer_sha256_match"])
             finally:
                 daemon.close()
+
+    def test_cluster_hub_ingest_and_markdown_evaluation_report(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            ops = Path(tmp) / "hub"
+            cfg = OpsConfig(
+                node_name="svhome-hub",
+                role="server",
+                dashboard_bind="127.0.0.1:0",
+                beam_port=0,
+                rpc_v4_port=0,
+                rpc_v6_port=-1,
+                query_port=0,
+                warp_port=0,
+            )
+            daemon = ChimeraDaemon(config=cfg, ops_dir=ops, auto_seed_on_empty=False).start()
+            base = f"http://127.0.0.1:{daemon.http_addr[1]}"
+            try:
+                sample_ctrl = {
+                    "version": "3.0.0",
+                    "node_name": "win-desktop",
+                    "role": "controller",
+                    "ts_utc": "2026-11-25T05:40:00+00:00",
+                    "ts_local": "2026-11-25 12:40:00",
+                    "time_bucket": "AFTERNOON",
+                    "trigger": "daily",
+                    "profile": "auto-darwin",
+                    "genome_id": "G2_LOSSY_ARMOR",
+                    "health_score": 100,
+                    "zero_weight": {"daemon_ram_mb": 19.5, "host_free_ram_gb": 10.5, "cpu_threads": 12},
+                    "local": {
+                        "gfni_speedup": 95.2,
+                        "wormhole_gbps": 8.1,
+                        "wan_5pct_speedup": 31.4,
+                        "telepathy_zlib_bytes": 860,
+                        "telepathy_wire_bytes": 669,
+                        "telepathy_vs_raw_pct": 98.98,
+                    },
+                    "peer": {
+                        "reachable": True,
+                        "peer_name": "svhome-hub",
+                        "beam_ok": True,
+                        "beam_speedup": 4.6,
+                        "beam_saved_pct": 96.9,
+                        "query_ok": True,
+                        "query_speedup": 9.5,
+                        "query_saved_pct": 99.15,
+                        "query_codec_mode": "telepathic_fold_zdict",
+                        "merkle": {"verified_root_match": True, "total_reduction_pct": 96.84},
+                        "immortal_ok": True,
+                        "immortal": {"ok": True, "lane_tx": [18, 170], "lane_rx": [8, 120]},
+                    },
+                }
+                req = urllib.request.Request(
+                    f"{base}/api/cluster/ingest",
+                    data=json.dumps(sample_ctrl).encode("utf-8"),
+                    headers={"Content-Type": "application/json"},
+                    method="POST",
+                )
+                ing = json.loads(urllib.request.urlopen(req, timeout=5.0).read().decode("utf-8"))
+                self.assertTrue(ing["ok"])
+
+                st = json.loads(urllib.request.urlopen(f"{base}/api/status", timeout=5.0).read().decode("utf-8"))
+                cl = st["cluster"]
+                self.assertEqual(cl["evaluation_verdict"]["grade"], "A+")
+                self.assertEqual(len(cl["nodes"]), 1)
+                self.assertEqual(cl["nodes"][0]["node_name"], "win-desktop")
+                self.assertIsNotNone(cl["latest_cross_host"])
+
+                md = urllib.request.urlopen(f"{base}/api/cluster/report?format=md", timeout=5.0).read().decode("utf-8")
+                self.assertIn("win-desktop", md)
+                self.assertIn("99.15", md)
+                self.assertIn("A+", md)
+            finally:
+                daemon.close()

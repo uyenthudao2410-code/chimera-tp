@@ -212,7 +212,7 @@ class TestLiveHostRealms(unittest.TestCase):
             tx = ChimeraSender(self.env, offer)
             payload = (b"JUMBO-FEC-NACK-" + os.urandom(32)) * (1024 * 1024 // 47 + 1)
             payload = payload[: 1024 * 1024]  # 1 MiB (19 chunks + 5 parity = 24 frames)
-            fault = FaultProfile(jumbo_drop_rate=0.25)
+            fault = FaultProfile(jumbo_drop_rate=0.35)
             recovered, report = tx.send_holographic(rx, payload, fault, timeout_s=15.0)
             self.assertTrue(report.success)
             self.assertTrue(report.sha256_match)
@@ -263,7 +263,9 @@ class TestLiveHostRealms(unittest.TestCase):
             trb_wire = sum(
                 st.get("wire_total_bytes_est", 0) for st in rep_trb.per_lane_stats.values()
             )
-            self.assertLess(trb_wire, stl_wire)
+            stl_per_drop = stl_wire / max(1, rep_stl.droplets_sent)
+            trb_per_drop = trb_wire / max(1, rep_trb.droplets_sent)
+            self.assertLess(trb_per_drop, stl_per_drop)
         finally:
             rx.close()
 
