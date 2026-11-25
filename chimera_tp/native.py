@@ -14,15 +14,15 @@ from .gf256 import INV, MUL_BYTES
 
 
 def _discover_and_load_dll() -> ctypes.CDLL | None:
-    candidates = [
-        Path(__file__).resolve().with_name("_chimera_core.dll"),
-        Path(__file__).resolve().parents[1]
-        / "native"
-        / "chimera_core"
-        / "target"
-        / "release"
-        / "chimera_core.dll",
-    ]
+    lib_dir = Path(__file__).resolve().parent
+    repo_dir = Path(__file__).resolve().parents[1]
+    if os.name == "nt":
+        candidates = [
+            lib_dir / "_chimera_core.dll",
+            repo_dir / "native" / "chimera_core" / "target" / "release" / "chimera_core.dll",
+        ]
+    else:
+        candidates = [lib_dir / "_chimera_core.so"]
     for path in candidates:
         if path.exists():
             try:
@@ -88,18 +88,25 @@ def _bind_signatures(lib: ctypes.CDLL) -> None:
 
         lib.chimera_wormhole_open.argtypes = [c_wchar_p]
         lib.chimera_wormhole_open.restype = c_void_p
+    else:
+        c_char_p = ctypes.c_char_p
+        lib.chimera_wormhole_create.argtypes = [c_char_p, c_size_t]
+        lib.chimera_wormhole_create.restype = c_void_p
 
-        lib.chimera_wormhole_write.argtypes = [c_void_p, c_void_p, c_size_t, c_u32]
-        lib.chimera_wormhole_write.restype = c_ssize_t
+        lib.chimera_wormhole_open.argtypes = [c_char_p]
+        lib.chimera_wormhole_open.restype = c_void_p
 
-        lib.chimera_wormhole_read.argtypes = [c_void_p, c_void_p, c_size_t, c_u32]
-        lib.chimera_wormhole_read.restype = c_ssize_t
+    lib.chimera_wormhole_write.argtypes = [c_void_p, c_void_p, c_size_t, c_u32]
+    lib.chimera_wormhole_write.restype = c_ssize_t
 
-        lib.chimera_wormhole_mark_eof.argtypes = [c_void_p]
-        lib.chimera_wormhole_mark_eof.restype = None
+    lib.chimera_wormhole_read.argtypes = [c_void_p, c_void_p, c_size_t, c_u32]
+    lib.chimera_wormhole_read.restype = c_ssize_t
 
-        lib.chimera_wormhole_close.argtypes = [c_void_p]
-        lib.chimera_wormhole_close.restype = None
+    lib.chimera_wormhole_mark_eof.argtypes = [c_void_p]
+    lib.chimera_wormhole_mark_eof.restype = None
+
+    lib.chimera_wormhole_close.argtypes = [c_void_p]
+    lib.chimera_wormhole_close.restype = None
 
 
 _DLL: ctypes.CDLL | None = _discover_and_load_dll()
@@ -421,14 +428,18 @@ def active_filter_lines(
 
 
 def _normalize_wormhole_name(name: str) -> str:
-    if name.startswith("Local\\") or name.startswith("Global\\"):
-        return name
     safe = "".join(ch if ch.isalnum() or ch in "-_." else "_" for ch in name)
-    return f"Local\\CHIMERA_WH_{safe}"
+    if os.name == "nt":
+        if name.startswith("Local\\") or name.startswith("Global\\"):
+            return name
+        return f"Local\\CHIMERA_WH_{safe}"
+    if name.startswith("/") and "/" not in name[1:]:
+        return name
+    return f"/chimera_wh_{safe}"[:250]
 
 
 class WormholeChannel:
-    """Lock-free cross-process Windows Shared Memory ring buffer channel."""
+    """Lock-free cross-process Shared Memory ring buffer (Win32 CreateFileMappingW / POSIX shm_open)."""
 
     def __init__(self, handle: int, name: str, is_creator: bool) -> None:
         self._handle = int(handle)
@@ -443,23 +454,25 @@ class WormholeChannel:
         capacity_mb: int = 16,
         capacity_bytes: int | None = None,
     ) -> "WormholeChannel":
-        if _DLL is None or os.name != "nt":
-            raise RuntimeError("WormholeChannel requires Windows + native _chimera_core.dll")
+        if _DLL is None:
+            raise RuntimeError("WormholeChannel requires native _chimera_core shared library")
         cap = int(capacity_bytes) if capacity_bytes is not None else int(capacity_mb) * 1024 * 1024
         full_name = _normalize_wormhole_name(name)
-        handle = _DLL.chimera_wormhole_create(full_name, cap)
+        arg_name = full_name if os.name == "nt" else full_name.encode("utf-8")
+        handle = _DLL.chimera_wormhole_create(arg_name, cap)
         if not handle:
-            raise OSError(f"CreateFileMappingW failed for wormhole '{full_name}'")
+            raise OSError(f"Wormhole shared memory create failed for '{full_name}'")
         return cls(handle, full_name, is_creator=True)
 
     @classmethod
     def open(cls, name: str, wait_timeout_s: float = 5.0) -> "WormholeChannel":
-        if _DLL is None or os.name != "nt":
-            raise RuntimeError("WormholeChannel requires Windows + native _chimera_core.dll")
+        if _DLL is None:
+            raise RuntimeError("WormholeChannel requires native _chimera_core shared library")
         full_name = _normalize_wormhole_name(name)
+        arg_name = full_name if os.name == "nt" else full_name.encode("utf-8")
         deadline = time.perf_counter() + max(0.05, wait_timeout_s)
         while True:
-            handle = _DLL.chimera_wormhole_open(full_name)
+            handle = _DLL.chimera_wormhole_open(arg_name)
             if handle:
                 return cls(handle, full_name, is_creator=False)
             if time.perf_counter() >= deadline:

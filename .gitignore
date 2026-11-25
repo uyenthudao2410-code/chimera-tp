@@ -13,8 +13,10 @@ chimera_dashboard.html
 chimera_eval_dashboard.html
 native/chimera_core/target/
 *.dll
+*.so
 *.pdb
 *.lib
 *.exp
 chimera_hyper_eval.json
 chimera_hyper_dashboard.html
+chimera_v2_live_summary.html

@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import hashlib
 import math
+import os
+import queue
 import socket
 import struct
 import threading
@@ -33,8 +35,24 @@ _PTYPE_PRIO_ACK = 7
 _PTYPE_RPC_REQ = 10
 _PTYPE_RPC_RESP = 11
 
-SYM_SIZE = 1360
+SYM_SIZE = 1180  # Safe <= 1280 B Tailscale MTU with 20B header + IP/UDP encapsulation
 DEFAULT_GEN_K = 32
+
+
+def _family_for_ip(ip: str) -> int:
+    return socket.AF_INET6 if ":" in ip else socket.AF_INET
+
+
+def _bind_any(family: int) -> tuple[str, int]:
+    return ("::", 0) if family == socket.AF_INET6 else ("0.0.0.0", 0)
+
+
+def _disable_connreset(sock: socket.socket) -> None:
+    if os.name == "nt":
+        try:
+            sock.ioctl(0x9800000C, False)
+        except (AttributeError, OSError, ValueError):
+            pass
 
 
 def _pack_frame(
@@ -113,7 +131,9 @@ class HyperWireReceiver:
     ) -> None:
         self._gen_k = gen_k
         self._sym_size = sym_size
-        self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        fam = _family_for_ip(bind_ip)
+        self._sock = socket.socket(fam, socket.SOCK_DGRAM)
+        _disable_connreset(self._sock)
         try:
             self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 8 * 1024 * 1024)
             self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 8 * 1024 * 1024)
@@ -121,7 +141,7 @@ class HyperWireReceiver:
             pass
         self._sock.bind((bind_ip, bind_port))
         self._sock.settimeout(0.01)
-        self.addr: tuple[str, int] = self._sock.getsockname()
+        self.addr: tuple[str, int] = self._sock.getsockname()[:2]
         self._on_priority_frame = on_priority_frame
 
         self._lock = threading.Lock()
@@ -130,6 +150,13 @@ class HyperWireReceiver:
         self._sessions: dict[int, _RxSession] = {}
         self._completed: dict[int, tuple[bytes, int]] = {}
         self._done_cv = threading.Condition(self._lock)
+
+    def punch(self, peer_addr: tuple[str, int]) -> None:
+        """Send tiny UDP hole-punch packet so stateful firewalls allow peer return frames."""
+        try:
+            self._sock.sendto(b"CHP0", peer_addr)
+        except OSError:
+            pass
 
     def start(self) -> "HyperWireReceiver":
         self._thread = threading.Thread(target=self._rx_loop, daemon=True)
@@ -500,17 +527,43 @@ class HyperWireSender:
         stream_id: int = 1,
         priority_frame: bytes | None = None,
         timeout_s: float = 25.0,
+        send_fn: Callable[[bytes, tuple[str, int]], None] | None = None,
+        feedback_queue: "queue.Queue[bytes] | None" = None,
     ) -> HyperWireReport:
         t0 = time.perf_counter()
         orig_len = len(payload)
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        try:
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 4 * 1024 * 1024)
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 4 * 1024 * 1024)
-        except OSError:
-            pass
-        sock.bind(("127.0.0.1", 0))
-        sock.settimeout(0.005)
+        own_sock: socket.socket | None = None
+        if send_fn is None or feedback_queue is None:
+            fam = _family_for_ip(self.target_addr[0])
+            own_sock = socket.socket(fam, socket.SOCK_DGRAM)
+            _disable_connreset(own_sock)
+            try:
+                own_sock.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 4 * 1024 * 1024)
+                own_sock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 4 * 1024 * 1024)
+            except OSError:
+                pass
+            own_sock.bind(_bind_any(fam))
+            own_sock.settimeout(0.005)
+
+        def _raw_send(pkt_b: bytes) -> None:
+            if send_fn is not None:
+                send_fn(pkt_b, self.target_addr)
+            elif own_sock is not None:
+                own_sock.sendto(pkt_b, self.target_addr)
+
+        def _raw_recv() -> bytes | None:
+            if feedback_queue is not None:
+                try:
+                    return feedback_queue.get_nowait()
+                except queue.Empty:
+                    return None
+            if own_sock is not None:
+                try:
+                    data, _ = own_sock.recvfrom(4096)
+                    return data
+                except (socket.timeout, ConnectionResetError):
+                    return None
+            return None
 
         wire_bytes = 0
         sys_sent = 0
@@ -532,10 +585,10 @@ class HyperWireSender:
                         1,
                         priority_frame,
                     )
-                    sock.sendto(p_pkt, self.target_addr)
+                    _raw_send(p_pkt)
                     wire_bytes += len(p_pkt)
                     if est_loss > 0.01:
-                        sock.sendto(p_pkt, self.target_addr)
+                        _raw_send(p_pkt)
                         wire_bytes += len(p_pkt)
                     prio_first_ms = round((time.perf_counter() - t0) * 1000.0, 2)
 
@@ -545,17 +598,19 @@ class HyperWireSender:
                     fin_ok = False
                     deadline = t0 + timeout_s
                     while not fin_ok and time.perf_counter() < deadline:
-                        sock.sendto(pkt, self.target_addr)
+                        _raw_send(pkt)
                         wire_bytes += len(pkt)
                         sys_sent += 1
-                        try:
-                            ack, _ = sock.recvfrom(4096)
+                        wait_end = time.perf_counter() + 0.04
+                        while time.perf_counter() < wait_end:
+                            ack = _raw_recv()
+                            if ack is None:
+                                time.sleep(0.002)
+                                continue
                             parsed = _unpack_frame(ack)
                             if parsed and parsed[0] == _PTYPE_FIN_ACK and parsed[1] == stream_id:
                                 fin_ok = True
                                 break
-                        except (socket.timeout, ConnectionResetError):
-                            time.sleep(0.01)
                     elapsed_ms = (time.perf_counter() - t0) * 1000.0
                     return HyperWireReport(
                         bytes_transferred=0,
@@ -611,7 +666,7 @@ class HyperWireSender:
                         gap = tx_clock - time.perf_counter()
                         if gap > 0.002:
                             time.sleep(0.001)
-                    sock.sendto(pkt_bytes, self.target_addr)
+                    _raw_send(pkt_bytes)
                     wire_bytes += len(pkt_bytes)
 
                 def emit_coded_symbols(gid: int, count: int, is_retransmit: bool = False) -> None:
@@ -662,9 +717,8 @@ class HyperWireSender:
                     # Drain incoming feedback (GEN_ACK, GEN_NEED, FIN_ACK)
                     progressed = False
                     while True:
-                        try:
-                            ctrl, _ = sock.recvfrom(4096)
-                        except (socket.timeout, ConnectionResetError):
+                        ctrl = _raw_recv()
+                        if ctrl is None:
                             break
                         parsed = _unpack_frame(ctrl)
                         if parsed is None:
@@ -727,7 +781,8 @@ class HyperWireSender:
                     sha256_match=success,
                 )
             finally:
-                sock.close()
+                if own_sock is not None:
+                    own_sock.close()
 
 
 # ---------------------------------------------------------------------------
@@ -736,7 +791,7 @@ class HyperWireSender:
 
 
 class HedgedRpcServer:
-    """Multi-homed RPC responder handling raced duplicate packets idempotently."""
+    """Multi-homed dual-stack RPC responder handling raced duplicate packets idempotently."""
 
     def __init__(
         self,
@@ -747,11 +802,12 @@ class HedgedRpcServer:
         self._socks: list[socket.socket] = []
         self.addrs: list[tuple[str, int]] = []
         for ip, port in bind_addrs:
-            s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            s = socket.socket(_family_for_ip(ip), socket.SOCK_DGRAM)
+            _disable_connreset(s)
             s.bind((ip, port))
             s.settimeout(0.05)
             self._socks.append(s)
-            self.addrs.append(s.getsockname())
+            self.addrs.append(s.getsockname()[:2])
         self._stop = threading.Event()
         self._cache: dict[int, bytes] = {}
         self._lock = threading.Lock()
@@ -804,7 +860,7 @@ class HedgedRpcServer:
 
 
 class HedgedRpcClient:
-    """Multi-path hedged UDP RPC client picking the fastest arriving verified response."""
+    """Dual-stack multi-path hedged UDP RPC client picking the fastest verified response."""
 
     def __init__(
         self,
@@ -817,21 +873,32 @@ class HedgedRpcClient:
         self.targets = list(targets)
         self.hedge_delay_s = max(0.0, hedge_delay_ms / 1000.0)
         self.retry_after_s = max(0.02, retry_after_ms / 1000.0)
-        self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        self._sock.bind(("127.0.0.1", 0))
-        self._sock.settimeout(0.01)
+
+        self._socks: dict[int, socket.socket] = {}
+        for ip, _port in self.targets:
+            fam = _family_for_ip(ip)
+            if fam not in self._socks:
+                s = socket.socket(fam, socket.SOCK_DGRAM)
+                _disable_connreset(s)
+                s.bind(_bind_any(fam))
+                s.settimeout(0.01)
+                self._socks[fam] = s
+
         self._req_seq = 0
         self._lock = threading.Lock()
         self._replies: dict[int, tuple[bytes, int]] = {}
         self._cv = threading.Condition(self._lock)
         self._stop = threading.Event()
-        self._rx_thread = threading.Thread(target=self._rx_loop, daemon=True)
-        self._rx_thread.start()
+        self._rx_threads: list[threading.Thread] = []
+        for sock in self._socks.values():
+            th = threading.Thread(target=self._rx_loop, args=(sock,), daemon=True)
+            th.start()
+            self._rx_threads.append(th)
 
-    def _rx_loop(self) -> None:
+    def _rx_loop(self, sock: socket.socket) -> None:
         while not self._stop.is_set():
             try:
-                pkt, _ = self._sock.recvfrom(65535)
+                pkt, _ = sock.recvfrom(65535)
             except (socket.timeout, ConnectionResetError):
                 continue
             except OSError:
@@ -846,6 +913,15 @@ class HedgedRpcClient:
                         self._replies[req_id] = (body, path_idx)
                         self._cv.notify_all()
 
+    def _sendto_target(self, pkt: bytes, dst: tuple[str, int]) -> None:
+        fam = _family_for_ip(dst[0])
+        sock = self._socks.get(fam)
+        if sock is not None:
+            try:
+                sock.sendto(pkt, dst)
+            except OSError:
+                pass
+
     def call(
         self, payload: bytes, timeout_s: float = 3.0
     ) -> tuple[bytes, float, int]:
@@ -857,19 +933,14 @@ class HedgedRpcClient:
         deadline = t0 + timeout_s
         next_retry = t0 + self.retry_after_s
 
-        def fire_all() -> None:
-            if self.hedge_delay_s == 0.0:
-                for idx, dst in enumerate(self.targets):
-                    pkt = _pack_frame(_PTYPE_RPC_REQ, 1, 0, idx, req_id, 1, payload)
-                    try:
-                        self._sock.sendto(pkt, dst)
-                    except OSError:
-                        pass
-            else:
-                pkt0 = _pack_frame(_PTYPE_RPC_REQ, 1, 0, 0, req_id, 1, payload)
-                self._sock.sendto(pkt0, self.targets[0])
+        if self.hedge_delay_s == 0.0:
+            for idx, dst in enumerate(self.targets):
+                pkt = _pack_frame(_PTYPE_RPC_REQ, 1, 0, idx, req_id, 1, payload)
+                self._sendto_target(pkt, dst)
+        else:
+            pkt0 = _pack_frame(_PTYPE_RPC_REQ, 1, 0, 0, req_id, 1, payload)
+            self._sendto_target(pkt0, self.targets[0])
 
-        fire_all()
         hedged_fired = self.hedge_delay_s == 0.0
 
         with self._lock:
@@ -881,18 +952,12 @@ class HedgedRpcClient:
                     hedged_fired = True
                     for idx, dst in enumerate(self.targets[1:], start=1):
                         pkt = _pack_frame(_PTYPE_RPC_REQ, 1, 0, idx, req_id, 1, payload)
-                        try:
-                            self._sock.sendto(pkt, dst)
-                        except OSError:
-                            pass
+                        self._sendto_target(pkt, dst)
                 elif now >= next_retry:
                     next_retry = now + self.retry_after_s
                     for idx, dst in enumerate(self.targets):
                         pkt = _pack_frame(_PTYPE_RPC_REQ, 1, 0, idx, req_id, 1, payload)
-                        try:
-                            self._sock.sendto(pkt, dst)
-                        except OSError:
-                            pass
+                        self._sendto_target(pkt, dst)
                 self._cv.wait(timeout=0.005)
 
             body, win_path = self._replies.pop(req_id)
@@ -902,8 +967,10 @@ class HedgedRpcClient:
 
     def close(self) -> None:
         self._stop.set()
-        self._rx_thread.join(timeout=1.0)
-        try:
-            self._sock.close()
-        except OSError:
-            pass
+        for th in self._rx_threads:
+            th.join(timeout=1.0)
+        for sock in self._socks.values():
+            try:
+                sock.close()
+            except OSError:
+                pass

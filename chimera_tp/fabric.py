@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import os
+import queue
 import socket
 import struct
 import threading
@@ -14,7 +15,13 @@ from typing import Any
 
 from .active_pipe import ActivePipeEngine, ActivePipeResult, ComputePlan
 from .dna_vault import DnaCodec, DnaStats, DnaVault, pack_directory, unpack_directory
-from .hyper_wire import HyperWireReceiver, HyperWireReport, HyperWireSender
+from .hyper_wire import (
+    HyperWireReceiver,
+    HyperWireReport,
+    HyperWireSender,
+    _disable_connreset,
+    _family_for_ip,
+)
 from .native import WormholeChannel, cpu_caps, has_native
 
 _BEAM_REQ_HDR = struct.Struct("!4sHH")  # magic="BMQ1", reply_port(u16), est_loss_bps(u16)
@@ -58,10 +65,11 @@ class BeamServer:
         self.codec = DnaCodec()
         self.est_loss = est_loss
 
-        self._ctrl_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self._ctrl_sock = socket.socket(_family_for_ip(bind_ip), socket.SOCK_DGRAM)
+        _disable_connreset(self._ctrl_sock)
         self._ctrl_sock.bind((bind_ip, bind_port))
         self._ctrl_sock.settimeout(0.05)
-        self.ctrl_addr: tuple[str, int] = self._ctrl_sock.getsockname()
+        self.ctrl_addr: tuple[str, int] = self._ctrl_sock.getsockname()[:2]
 
         self._rx = HyperWireReceiver(bind_ip=bind_ip, bind_port=0).start()
         self.data_addr: tuple[str, int] = self._rx.addr
@@ -71,6 +79,7 @@ class BeamServer:
         self._vault_cv = threading.Condition(self._lock)
         self._decoding_busy = False
         self._stream_peers: dict[int, str] = {}
+        self._sketch_fb_queues: dict[int, queue.Queue[bytes]] = {}
         self._completed: list[dict[str, Any]] = []
         self._cv = threading.Condition(self._lock)
         self._ctrl_thread = threading.Thread(target=self._ctrl_loop, daemon=True)
@@ -90,12 +99,19 @@ class BeamServer:
                 continue
             except OSError:
                 break
+            # Route HyperWire feedback packets for outbound sketch streams directly
+            if len(pkt) >= 20 and pkt[:2] == b"CH":
+                sid_fb = pkt[3]
+                with self._lock:
+                    fq = self._sketch_fb_queues.get(sid_fb)
+                if fq is not None:
+                    fq.put(pkt)
+                continue
             if len(pkt) < _BEAM_REQ_HDR.size:
                 continue
             magic, reply_port, loss_bps = _BEAM_REQ_HDR.unpack_from(pkt, 0)
             if magic != b"BMQ1":
                 continue
-            # Ensure previous transfer's DNA decode + vault commit finished before exporting sketch
             deadline = time.perf_counter() + 5.0
             with self._lock:
                 while not self._stop.is_set() and time.perf_counter() < deadline:
@@ -108,18 +124,38 @@ class BeamServer:
                 self._current_stream = (self._current_stream % 250) + 1
                 self._stream_peers[stream_id] = addr[0]
                 sketch = self.vault.export_sketch()
+                fb_q: queue.Queue[bytes] = queue.Queue()
+                self._sketch_fb_queues[stream_id] = fb_q
             resp_meta = struct.pack("!4sHH", b"BMR1", self.data_addr[1], stream_id)
             try:
                 self._ctrl_sock.sendto(resp_meta, addr)
             except OSError:
                 pass
-            sketch_sender = HyperWireSender(
-                (addr[0], reply_port), initial_loss_hint=max(self.est_loss, loss_bps / 10000.0)
-            )
-            try:
-                sketch_sender.send_stream(sketch, stream_id=stream_id, timeout_s=15.0)
-            except Exception:
-                pass
+            target_reply = (addr[0], reply_port)
+            loss_hint = max(self.est_loss, loss_bps / 10000.0)
+
+            def _send_sketch(
+                sid_arg: int = stream_id,
+                dst_arg: tuple[str, int] = target_reply,
+                sk_bytes: bytes = sketch,
+                q_arg: queue.Queue[bytes] = fb_q,
+                lh: float = loss_hint,
+            ) -> None:
+                try:
+                    HyperWireSender(dst_arg, initial_loss_hint=lh).send_stream(
+                        sk_bytes,
+                        stream_id=sid_arg,
+                        timeout_s=15.0,
+                        send_fn=lambda b, d: self._ctrl_sock.sendto(b, d),
+                        feedback_queue=q_arg,
+                    )
+                except Exception:
+                    pass
+                finally:
+                    with self._lock:
+                        self._sketch_fb_queues.pop(sid_arg, None)
+
+            threading.Thread(target=_send_sketch, daemon=True).start()
 
     def _rx_wait_loop(self) -> None:
         while not self._stop.is_set():
@@ -219,15 +255,20 @@ def beam_send(
     else:
         raise FileNotFoundError(f"Source path not found: {source_path}")
 
-    # Handshake to fetch receiver's DNA sketch
-    sketch_rx = HyperWireReceiver(bind_ip="127.0.0.1", bind_port=0).start()
-    ctrl_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    # Handshake to fetch receiver's DNA sketch (dual-stack + UDP firewall punch)
+    fam = _family_for_ip(target_ctrl_addr[0])
+    bind_ip = "::" if fam == socket.AF_INET6 else "0.0.0.0"
+    sketch_rx = HyperWireReceiver(bind_ip=bind_ip, bind_port=0).start()
+    sketch_rx.punch(target_ctrl_addr)
+    ctrl_sock = socket.socket(fam, socket.SOCK_DGRAM)
+    _disable_connreset(ctrl_sock)
     ctrl_sock.settimeout(2.0)
     try:
         try:
             req = _BEAM_REQ_HDR.pack(b"BMQ1", sketch_rx.addr[1], int(est_loss * 10000)) + bytes([stream_id])
             data_port = None
             for _ in range(5):
+                sketch_rx.punch(target_ctrl_addr)
                 ctrl_sock.sendto(req, target_ctrl_addr)
                 try:
                     resp, _ = ctrl_sock.recvfrom(4096)
@@ -305,9 +346,9 @@ class ChimeraFabric:
     @staticmethod
     def capabilities() -> dict[str, Any]:
         return {
-            "version": "1.0.0",
+            "version": "2.0.0",
             "hardware": cpu_caps(),
-            "wormhole_available": has_native() and os.name == "nt",
+            "wormhole_available": has_native(),
             "modes": ["wormhole-shm", "dna-beam", "gfni-wire", "hedged-rpc", "active-pipe", "exotic-v05"],
         }
 
@@ -320,7 +361,7 @@ class ChimeraFabric:
     ) -> tuple[bytes, dict[str, Any]]:
         """Automatically use Wormhole SHM for local IPC or DNA+HyperWire for network transport."""
         is_local = peer_host in ("127.0.0.1", "::1", "localhost")
-        if is_local and not force_wire and has_native() and os.name == "nt" and len(data) >= 65536:
+        if is_local and not force_wire and has_native() and len(data) >= 65536:
             name = f"SMART_{os.getpid()}_{time.monotonic_ns()}"
             t0 = time.perf_counter()
             out_holder: list[bytes] = []

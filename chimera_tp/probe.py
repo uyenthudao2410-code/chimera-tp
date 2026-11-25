@@ -234,8 +234,118 @@ def _probe_icmp_reflect() -> tuple[bool, float, str]:
         tx.close()
 
 
+def _probe_posix_environment() -> EnvironmentProfile:
+    """Discover local POSIX/Linux network interfaces cleanly (for dual-host deployment)."""
+    realms: dict[str, RealmInfo] = {}
+    ok4, ms4, note4 = _probe_udp_unicast(socket.AF_INET, "127.0.0.1", b"LO4")
+    realms["LO_V4"] = RealmInfo(
+        lane_id="LO_V4",
+        adapter_name="lo",
+        address_family="IPv4",
+        ip="127.0.0.1",
+        mtu=65536,
+        link_speed="Loopback",
+        available=ok4,
+        probe_ms=round(ms4, 2),
+        technique="POSIX Loopback IPv4",
+        note=note4,
+        if_index=1,
+    )
+    ok6, ms6, note6 = _probe_udp_unicast(socket.AF_INET6, "::1", b"J" * 32000)
+    realms["LO_V6_JUMBO"] = RealmInfo(
+        lane_id="LO_V6_JUMBO",
+        adapter_name="lo",
+        address_family="IPv6",
+        ip="::1",
+        mtu=65536,
+        link_speed="Loopback IPv6",
+        available=ok6,
+        probe_ms=round(ms6, 2),
+        technique="POSIX IPv6 Loopback Bulk",
+        note=note6,
+        if_index=1,
+    )
+
+    try:
+        proc = subprocess.run(
+            ["ip", "-j", "addr"], capture_output=True, text=True, timeout=5, check=False
+        )
+        ifaces = json.loads(proc.stdout) if proc.returncode == 0 and proc.stdout.strip() else []
+    except Exception:
+        ifaces = []
+
+    raw_adapters: list[dict[str, Any]] = []
+    for iface in ifaces:
+        ifname = str(iface.get("ifname", ""))
+        mtu = int(iface.get("mtu", 1500))
+        raw_adapters.append({"Name": ifname, "MTU": mtu, "OperState": iface.get("operstate", "")})
+        for addr in iface.get("addr_info", []):
+            fam = addr.get("family", "")
+            ip = str(addr.get("local", ""))
+            if not ip or ip.startswith("127.") or ip == "::1" or ip.startswith("fe80:"):
+                continue
+            if "tailscale" in ifname.lower() or ip.startswith("100.") or ip.startswith("fd7a:"):
+                if fam == "inet" and "TS_V4_1280" not in realms:
+                    ok, ms, note = _probe_udp_unicast(socket.AF_INET, ip, b"TSV4")
+                    realms["TS_V4_1280"] = RealmInfo(
+                        lane_id="TS_V4_1280",
+                        adapter_name=ifname,
+                        address_family="IPv4",
+                        ip=ip,
+                        mtu=mtu,
+                        link_speed="Tailscale Tunnel",
+                        available=ok,
+                        probe_ms=round(ms, 2),
+                        technique="Cross-Host Tailscale IPv4 <=1280B MTU",
+                        note=note,
+                        if_index=int(iface.get("ifindex", 0)),
+                    )
+                elif fam == "inet6" and "TS_V6_CHORD" not in realms:
+                    ok, ms, note = _probe_udp_unicast(socket.AF_INET6, ip, b"TSV6")
+                    realms["TS_V6_CHORD"] = RealmInfo(
+                        lane_id="TS_V6_CHORD",
+                        adapter_name=ifname,
+                        address_family="IPv6",
+                        ip=ip,
+                        mtu=mtu,
+                        link_speed="Tailscale Tunnel IPv6",
+                        available=ok,
+                        probe_ms=round(ms, 2),
+                        technique="Cross-Host Tailscale IPv6 Path",
+                        note=note,
+                        if_index=int(iface.get("ifindex", 0)),
+                    )
+            elif fam == "inet" and "LAN_LENGTH" not in realms:
+                ok, ms, note = _probe_udp_unicast(socket.AF_INET, ip, b"LAN4")
+                realms["LAN_LENGTH"] = RealmInfo(
+                    lane_id="LAN_LENGTH",
+                    adapter_name=ifname,
+                    address_family="IPv4",
+                    ip=ip,
+                    mtu=mtu,
+                    link_speed="NIC IPv4",
+                    available=ok,
+                    probe_ms=round(ms, 2),
+                    technique="POSIX Physical/Wi-Fi IPv4 Interface",
+                    note=note,
+                    if_index=int(iface.get("ifindex", 0)),
+                )
+
+    fp_items = sorted(f"{r.adapter_name}|{r.address_family}|{r.ip}|{r.mtu}" for r in realms.values())
+    fingerprint = hashlib.sha256("\n".join(fp_items).encode("utf-8")).hexdigest()
+    return EnvironmentProfile(
+        hostname=socket.gethostname(),
+        os_info=platform.platform(),
+        topology_fingerprint=fingerprint,
+        realms=realms,
+        raw_adapters=raw_adapters,
+    )
+
+
 def probe_environment() -> EnvironmentProfile:
-    """Discover local Windows network interfaces and verify all CHIMERA-TP transport realms."""
+    """Discover local network interfaces and verify CHIMERA transport realms."""
+    if os.name != "nt":
+        return _probe_posix_environment()
     net = _query_windows_network()
     adapters = net["adapters"]
     ipifs = net["ipifs"]
