@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "chimera-tp"
+version = "0.2.0"
+description = "CHIMERA-TP: Multi-realm polymorphic transport protocol over GF(256) RLNC for Windows network stack research"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11"
+authors = [
+  { name = "uyenthudao2410-code", email = "uyenthu.dao2410@gmail.com" },
+]
+keywords = [
+  "networking",
+  "transport-protocol",
+  "rlnc",
+  "fountain-codes",
+  "gf256",
+  "polymorphic-networking",
+  "windows",
+]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Win32 (MS Windows)",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: Microsoft :: Windows",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: System :: Networking",
+]
+dependencies = []
+
+[project.scripts]
+chimera-tp = "chimera_tp.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["chimera_tp*"]
