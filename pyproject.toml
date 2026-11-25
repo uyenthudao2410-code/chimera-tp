@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "chimera-tp"
-version = "0.5.0"
-description = "CHIMERA-TP: Multi-realm polymorphic transport protocol over GF(256) RLNC for Windows network stack research"
+version = "1.0.0"
+description = "CHIMERA-HYPER v1.0: Silicon GFNI/AVX2 Adaptive FEC, FastCDC DNA Vault, Shared-Memory Wormhole & Compute-in-Transit Transport"
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.11"
