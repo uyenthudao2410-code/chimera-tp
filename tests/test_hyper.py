@@ -43,9 +43,11 @@ from chimera_tp.warp import WarpClient, WarpServer
 
 class TestChimeraHyperV1(unittest.TestCase):
     def test_gfni_exhaustive_65536_equivalence(self) -> None:
-        self.assertTrue(has_native(), "Native Rust _chimera_core.dll must be present")
+        self.assertTrue(has_native(), "Native _chimera_core shared library must be present")
         caps = cpu_caps()
-        self.assertTrue(caps["gfni"], f"Expected Intel GFNI enabled on host, got {caps}")
+        self.assertTrue(caps["avx2"], f"Expected AVX2 enabled on host, got {caps}")
+        if os.name == "nt":
+            self.assertTrue(caps["gfni"], f"Expected Intel GFNI enabled on Windows host, got {caps}")
 
         # 1) Exhaustive all 256 x 256 byte products (includes leading & embedded 0x00 bytes)
         src = bytes(range(256))

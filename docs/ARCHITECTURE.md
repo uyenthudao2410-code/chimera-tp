@@ -1,44 +1,79 @@
-# Kiến trúc kỹ thuật CHIMERA-HYPER v1.0 (`chimera-tp`)
+# Architecture — CHIMERA-HYPER v2.0.0
 
-## 1. Tổng quan kiến trúc hai tầng
+```
++-----------------------------------------------------------------------------+
+|                        Control & Observability Plane                        |
+|   HTTP Cockpit (127.0.0.1:9780)  |  SQLite Telemetry & Darwinian UCB1 Bandit |
+|   Built-in 08:00 Daily Scheduler |  OS Triggers (Task Scheduler / systemd)   |
++--------------------------------------+--------------------------------------+
+                                       |
+      +--------------------------------+--------------------------------+
+      v                                v                                v
++--------------------+      +-----------------------+      +--------------------+
+|   Transport Fabric |      |   Zero-RTT DNA Beam   |      |    Active Pipe     |
+|  HyperWire v2 RLNC |      | FastCDC + Odess + Zstd|      | Remote Pushdown UI |
+|  Dual-Stack v4/v6  |      | Byte-Level Delta Sync |      | P0 Preview -> Body |
++---------+----------+      +-----------+-----------+      +---------+----------+
+          |                             |                            |
+          +-----------------------------+----------------------------+
+                                        |
+                                        v
++-----------------------------------------------------------------------------+
+|                        Cross-Platform Silicon Core                          |
+|   Windows: Rust cdylib (VGF2P8AFFINEQB GFNI / AVX2 + Named Shared Memory)   |
+|   Linux:   C11 .so    (AVX2 VPSHUFB Split-Nibble GF256 + POSIX /dev/shm)    |
++-----------------------------------------------------------------------------+
+```
 
-Từ phiên bản **v1.0.0**, `chimera-tp` tách rõ hai chế độ:
-- **CHIMERA-HYPER v1.0 (Mặc định hiệu năng & công việc thật)**: Kết hợp lõi Rust `native/chimera_core` + FFI zero-copy `chimera_tp/native.py` với 4 động cơ chính (`dna_vault.py`, `hyper_wire.py`, `active_pipe.py`, `warp.py`, điều phối bởi `fabric.py`).
-- **CHIMERA-TP v0.5 Exotic Realms (`lanes.py`, `protocol.py`)**: Giữ nguyên 100% tương thích 8 cõi truyền dị biệt (`GHOST_127`, `LAN_LENGTH`, `TS_V4_1280`, `TS_V6_CHORD`, `HYPERV_MCAST`, `WSL_PERMUTE`, `ICMP_REFLECT`, `LO_V6_JUMBO`) cho nghiên cứu đa kênh.
+## 1. Dual-ISA Silicon Core (`chimera_tp/native.py`)
 
----
+Both native libraries export an identical ABI via `ctypes` so all higher layers (`gf256.py`, `active_pipe.py`, `hyper_wire.py`, `fabric.py`) operate identically on Windows and Linux:
 
-## 2. Lõi Silicon Native Rust (`native/chimera_core/src/lib.rs`)
+| Symbol | Role | Windows Implementation (`chimera_core.dll`) | Linux Implementation (`_chimera_core.so`) |
+| :--- | :--- | :--- | :--- |
+| `chimera_cpu_caps` | Bitmask probe | CPUID (GFNI, AVX2, AVX-512F) | `__builtin_cpu_supports("avx2")` |
+| `chimera_gf256_muladd` | `dst ^= src * coeff` in GF(2^8) `0x11B` | Rust `VGF2P8AFFINEQB` / AVX2 | C11 AVX2 `_mm256_shuffle_epi8` high/low nibble tables |
+| `chimera_fastcdc_cut` | Content-defined chunking | Gear rolling hash (`32 KB` target) | Identical Gear table & masks (`32 KB` target) |
+| `chimera_odess_superfeatures` | Chunk similarity sketch | AVX2/scalar Odess rolling hash | Identical Odess rolling hash |
+| `chimera_delta_diff` / `apply` | Byte-level patch codec | `EQ` / `DIFF` run-length opcodes | Identical `EQ` / `DIFF` opcodes |
+| `chimera_active_filter` | Native line filter | Substring scan | Identical substring scan |
+| `chimera_shm_*` | Lock-free SPSC ring | Win32 `CreateFileMappingW` | POSIX `shm_open` + `mmap` (`/dev/shm`) |
 
-Biên dịch thành `chimera_tp/_chimera_core.dll` với `opt-level = 3, lto = true, codegen-units = 1`, không phụ thuộc crate ngoài:
+## 2. HyperWire v2 & Single-Port NAT/Firewall Traversal (`chimera_tp/hyper_wire.py`)
 
-### 2.1 Intel GFNI (`_mm256_gf2p8mul_epi8`) & AVX2 cho $GF(2^8)$
-- Đa thức chuẩn `0x11B` ($x^8 + x^4 + x^3 + x + 1$), khớp tuyệt đối 65,536/65,536 cặp byte với `chimera_tp.gf256.gf_mul`.
-- `chimera_gf256_mul_add` & `chimera_gf256_scale`: xử lý 128 byte/vòng (unroll `4 x __m256i`), fallback AVX2 XOR cho `coeff == 1` và bảng hằng `MUL_LUT` tĩnh cho phần đuôi hoặc CPU không có GFNI.
-- `chimera_gf256_encode_block` & `chimera_gf256_decode_matrix`: khử Gauss-Jordan toàn ma trận ngay trong Rust chỉ qua **1 lần gọi FFI** cho mỗi thế hệ `k x block_len`.
+Cross-host Tailscale/WireGuard traversal introduces two real-world constraints that v2.0 solves directly:
 
-### 2.2 FastCDC + Odess Super-Feature + Delta Codec
-- **FastCDC (`chimera_fastcdc`)**: Dùng bảng Gear 64-bit tĩnh (`GEAR_TABLE`) với hai mặt nạ chuẩn hóa (`mask_s` ngặt trước `avg_sz`, `mask_l` lỏng sau `avg_sz`), giúp chèn byte ở đầu file chỉ làm lệch 1 khối đầu và vẫn khớp 100% các khối phía sau.
-- **Odess Super-Features (`chimera_superfeatures`)**: Băm mẫu vị trí có `(h & sample_mask) == 0` qua 12 hàm biến đổi tuyến tính độc lập, gom thành 4 super-feature `u64` (nhóm 3) để tìm khối họ hàng tương đồng ở độ phức tạp $O(1)$.
-- **Delta Codec (`chimera_delta_encode` / `chimera_delta_decode`)**: Chỉ mục bảng băm trượt 16 byte trên `base`, mở rộng khớp 8 byte/bước (`COPY=0x01`, `LITERAL=0x02`).
+1. **Overlay MTU (`1280 B`)**: `SYM_SIZE = 1180`, `_CHUNK_MAX = 1140` prevents IP fragmentation across Tailscale DERP relays and direct UDP tunnels.
+2. **Asymmetric Firewall Blocking Return Ephemeral Sockets**: Windows Defender Firewall frequently drops inbound UDP from peers if sent to a random ephemeral return port. `BeamServer` (`:9700`) and `ActiveQueryServer` (`:9704`) accept outbound-punched packets (`punch()`) and route feedback (`CH` ACK/solve packets) back through `send_fn` on the same bound server socket using `HyperWireSender`'s internal `feedback_queue`.
+3. **Wire Protocol Demultiplexing**:
+   - `b"CH"` header prefix: HyperWire RLNC packet (data coded symbols + feedback ACKs).
+   - `b"AQ01"` header prefix: Active Pipe remote query envelope & P0/payload framing (collision-free with `b"CH"` on shared listeners).
 
-### 2.3 Active Byte-Line Filter & Lock-Free Windows Shared Memory Wormhole
-- `chimera_active_filter_lines`: lọc dòng chứa từ khóa đích trực tiếp trên vùng nhớ thô với tốc độ multi-GB/s.
-- `chimera_wormhole_*`: Tạo/mở vùng nhớ dùng chung Windows (`CreateFileMappingW` / `OpenFileMappingW` trên tiền tố `Local\CHIMERA_WH_`), tiêu đề căn lề cache line (`magic`, `capacity`, `closed`, `write_pos`, `read_pos` dùng atomic `Acquire`/`Release`). Tương thích streaming vượt kích thước ring (`len > capacity`), pre-touch trang nhớ khi khởi tạo và chiến lược `spin_loop` &rarr; `yield_now` &rarr; `Sleep(1)`.
+## 3. Dual-Stack Hedged RPC (`chimera_tp/warp.py`, `chimera_tp/dashboard.py`)
 
----
+When an IPv4 and IPv6 Tailscale address are configured, the controller's `HedgedRpcClient` dispatches concurrent or staggered (`hedge_delay_ms`) probes to `:9702` (IPv4) and `:9703` (IPv6), taking the first valid response to crush `p99` tail latency during path shifts or relay congestion.
 
-## 3. Giao thức Vận chuyển (`hyper_wire.py`), Tunnel (`warp.py`), Compute (`active_pipe.py`)
+## 4. Autopilot & Darwinian UCB1 Bandit (`chimera_tp/autopilot.py`)
 
-### 3.1 HyperWire (20-Byte Compact Frame + Adaptive GFNI FEC)
-- Header **20 byte**: `magic(2)="CH"`, `ptype(1)`, `stream_id(1)`, `gen_id(2)`, `sym_id(2)`, `orig_len(4)`, `k(2)`, `payload_len(2)`, `crc32(4)`.
-- **Zero-Bloat Fast Path**: Ở trạng thái mạng sạch (`est_loss == 0`), chỉ gửi `k` gói hệ thống (`SYS`), `0` gói FEC, `0` khử ma trận (`1.53%` overhead tổng).
-- **Zero-Collapse Lossy Path**: Receiver theo dõi khoảng trống thứ tự gói hệ thống để cập nhật `observed_loss_ewma` và phát hiện mất gói ngay khi thấy gói thế hệ/chỉ số cao hơn (`GEN_NEED`). Sender điều chỉnh số gói sửa lỗi chủ động theo phân bố nhị thức $k \frac{p}{1-p} + 1.15\sigma$ và không bao giờ cắt đôi cửa sổ gửi (`max_inflight_gens = 24`).
-- **Linear Independence Filter (`select_independent_rows`)**: Loại bỏ các hàng FEC phụ thuộc tuyến tính ngay trước khi gọi `gf256_decode_matrix`, triệt tiêu hoàn toàn nguy cơ kẹt ma trận suy biến.
-- **Hedged Multi-Path Racing (`HedgedRpcClient` / `HedgedRpcServer`)**: Bắn đồng thời/trễ có kiểm soát yêu cầu RPC lên nhiều đường đích và ăn phản hồi hợp lệ về đầu tiên, chống sập `p99`.
+Five parameter genomes define tuning across loss hint, generation size `K`, inflight generations, and hedge delay:
 
-### 3.2 Warp Transparent TCP Accelerator (`warp.py`)
-- Multiplex kết nối TCP (`WarpClient` &harr; `WarpServer`) thành các mảnh `_CHUNK_MAX = 1320 B` với cờ nén `zlib` từng mảnh, nhóm parity `GF(256)` (`_FEC_GROUP = 8`) và `NACK` chọn lọc không giảm băng thông trên mạng mất gói.
+- `G0_BALANCED` (`gen_k=32`, `inflight=24`, `loss_hint=0.00`, `hedge=15ms`)
+- `G1_DUAL_RACE` (`gen_k=32`, `inflight=28`, `loss_hint=0.02`, `hedge=0ms`)
+- `G2_LOSSY_ARMOR` (`gen_k=32`, `inflight=32`, `loss_hint=0.06`, `hedge=0ms`)
+- `G3_TURBO_BULK` (`gen_k=32`, `inflight=36`, `loss_hint=0.01`, `hedge=25ms`)
+- `G4_LOW_JITTER_V6` (`gen_k=24`, `inflight=24`, `loss_hint=0.03`, `hedge=5ms`)
 
-### 3.3 Legacy v0.5.0 Exotic Multi-Realm Plane (`lanes.py` / `protocol.py`)
-- Bảo lưu đầy đủ Segmented `GF(256)` RLNC, Chaos Scheduler (`balanced`/`stealth`/`turbo`), Parallel Per-Lane TX Workers và 8 kênh ẩn/vật lý trên Windows (`GHOST_127`, `LAN_LENGTH`, `TS_V4_1280`, `TS_V6_CHORD`, `HYPERV_MCAST TTL=0`, `WSL_PERMUTE S_6`, `ICMP_REFLECT`, `LO_V6_JUMBO`).
+At each run, UCB1 picks either an unpulled genome (to guarantee full exploration) or maximizes `avg_reward + C * sqrt(ln(N) / n_i)`. Rewards combine normalized GF(256) speedup, WAN 5%-loss throughput speedup, DNA Beam efficiency, Active Query speedup, and dual-stack latency gains. Any fallback from native SIMD, beam failure, or severe regression lowers `health_score` and logs an `ANOMALY` event in SQLite.
+
+## 5. 24/7 Mission-Control Cockpit (`chimera_tp/dashboard.py`)
+
+A self-contained `ThreadingHTTPServer` binds to `127.0.0.1:9780` (controller) or `0.0.0.0:9780` (peer, Tailscale-protected) and exposes:
+
+- `GET /` — Interactive single-page dark cockpit with live hardware badges, cross-host benchmark cards, DNA Beam transfer test button, remote log grep tester, and genome leaderboard.
+- `GET /api/health` — Minimal node health + ISA bitmask.
+- `GET /api/status` — Active config, 7-day averages, history, genome stats, and anomaly feed.
+- `POST /api/run` — Trigger `auto-darwin` or explicit profile run on demand.
+- `POST /api/live-beam` — Live DNA Beam differential sync to peer + comparison against raw TCP upload (`/api/tcp_sink`).
+- `POST /api/live-query` — Live Active Pipe remote log filter vs full-file TCP baseline (`/api/raw_query_file`).
+- `POST /api/profile` — Switch active autopilot policy (`auto-darwin`, etc.).
+- `POST /api/exotic-audit` — Run deterministic cross-check audit across GF(256), SHM, and Active Query invariants.

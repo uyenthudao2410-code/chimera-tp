@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "chimera-tp"
-version = "1.0.0"
-description = "CHIMERA-HYPER v1.0: Silicon GFNI/AVX2 Adaptive FEC, FastCDC DNA Vault, Shared-Memory Wormhole & Compute-in-Transit Transport"
+version = "2.0.0"
+description = "CHIMERA-HYPER v2.0: Cross-Host Windows<->Linux Silicon GFNI/AVX2 Transport, DNA Vault, Wormhole IPC, Daily Autopilot & Control Dashboard"
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.11"

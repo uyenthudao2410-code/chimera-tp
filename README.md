@@ -1,74 +1,102 @@
-# CHIMERA-HYPER v1.0 (`chimera-tp`)
+# CHIMERA-HYPER v2.0.0 — Autonomous Cross-Platform Zero-Bloat Fabric
 
-**Silicon-Native Zero-Byte DNA Vault, Hardware GFNI (`VGF2P8MULB`) Adaptive Wire, Lock-Free Shared-Memory Wormhole & Active Compute-in-Transit Protocol**
+CHIMERA-HYPER (`chimera-tp`) is an experimental high-throughput transport, synchronization, and compute-in-flight toolkit built for high-RTT, lossy overlay WANs (Tailscale/WireGuard), fast local IPC, and 24/7 autonomous monitoring.
 
-CHIMERA-HYPER v1.0 nâng cấp toàn diện từ bản nghiên cứu đa cõi `v0.5.0` thành một **kiến trúc giao thức tăng tốc truyền tải và xử lý công việc thực tế**, kết hợp **lõi Rust 1.92 (`chimera_core.dll`)** tận dụng tập lệnh phần cứng **Intel GFNI + AVX2** cùng 4 đột phá tầng vận chuyển:
-
-1. **Zero-Byte DNA Vault (`dna_vault.py` / `beam`)**: Cắt khối theo ranh giới nội dung bằng Rust FastCDC (`Gear hash`) + nhận diện khối họ hàng **Odess 4x64-bit Super-Feature** + nén sai khác Delta. Đồng bộ lại tập dữ liệu `30 MB` sửa `3%` qua mạng `100 Mbps` chỉ tốn **`160 KB` dây mạng (`99.49%` tiết kiệm)** — đạt tốc độ hiệu dụng **`940.0 Mbps` (`9.43x` nhanh hơn TCP)**.
-2. **Silicon GFNI Adaptive Wire (`hyper_wire.py` / `warp`)**: Giao thức UDP có hệ thống + mã sửa lỗi `GF(256)` nhân trực tiếp bằng silicon Intel `VGF2P8MULB` (`56.9 Gbps`, giải ma trận `32x1360` trong `0.72 ms` — nhanh hơn Python **`149.3x`**). `0%` FEC overhead trên mạng sạch; trên mạng rớt **`10%` gói (`50 ms` RTT)** giữ tốc độ **`53.0 Mbps`** trong khi TCP-CUBIC sập xuống **`0.64 Mbps` (`82.53x` nhanh hơn TCP!)**.
-3. **Active Compute-in-Transit (`active_pipe.py` / `pipe query`)**: Chạy lọc dòng/JSON/CSV (`Rust active_filter_lines`) ngay trên đường truyền và đẩy kết quả tóm tắt ưu tiên cao (`Priority-0 Preview`) sau `38.2 ms`, rút truy vấn `24.6 MB` log từ `2,011 ms` xuống **`65.4 ms` (`30.73x` nhanh hơn TCP)**.
-4. **Lock-Free Shared Memory Wormhole & Hedged Multi-Path (`native.py`, `hyper_wire.py`)**: Ring buffer bộ nhớ dùng chung không khóa trên Windows cho IPC nội bộ (`11.35 Gbps` end-to-end với SHA-256 trên `64 MiB`, nhanh hơn **`1.50x`** TCP loopback; `~24 Gbps` streaming thuần) và **Hedged Multi-Path Racing** cắt **`1.99x`** độ trễ đuôi `p99`.
-
-*(Toàn bộ 8 kênh đa cõi dị biệt từ bản v0.5.0 — `GHOST_127`, `LAN_LENGTH`, `TS_V4_1280`, `TS_V6_CHORD`, `HYPERV_MCAST`, `WSL_PERMUTE`, `ICMP_REFLECT`, `LO_V6_JUMBO` — vẫn được giữ nguyên vẹn cho mục đích nghiên cứu qua `send` / `listen` / `connect`.)*
+Instead of fighting TCP's head-of-line blocking, repetitive file retransmissions, or transferring raw gigabytes just to grep locally, CHIMERA combines hardware-accelerated Galois arithmetic, sliding-window RLNC, content-defined deduplication, pushdown active pipelines, dual-stack IPv4+IPv6 hedged transport, and a self-tuning Darwinian UCB1 control loop.
 
 ---
 
-## Tổng hợp kết quả đo Trước (TCP chuẩn) vs Sau (CHIMERA-HYPER v1.0)
+## Core Architecture (5 Engines + v2.0 Autopilot)
 
-Kiểm chứng trên Windows 64-bit (`Intel Core i5-11400`: `gfni=true`, `avx2=true`, `avx512f=true`; **`19/19` unit/integration tests PASS trong `24.47s`**):
+1. **Dual-ISA Silicon GF(256) Core**
+   - **Windows x64 (`native/chimera_core` — Rust):** `VGF2P8AFFINEQB` (GFNI) + AVX-512F + AVX2 SIMD matrix engine (`0x11B`) + Lock-Free Shared Memory SPSC Ring + FastCDC/Odess.
+   - **Linux x64 (`native/chimera_core_c` — C11):** AVX2 `VPSHUFB` split-nibble GF(256) (`0x11B`), bit-identical FastCDC (`32 KB` avg) + Odess SuperFeatures, Active-Pipe predicate scanner, and POSIX `/dev/shm` lock-free ring (`shm_open` + `mmap`).
+   - Verified cross-architecture parity: Windows Rust GFNI and Linux C AVX2 produce **100% bit-identical chunk cut points and Odess SuperFeatures** on identical byte streams.
 
-| Tác vụ đo thực tế | BEFORE — TCP chuẩn | AFTER — CHIMERA-HYPER v1.0 | Tỷ lệ đột phá |
+2. **HyperWire v2 (Sliding-Window RLNC + Wire-Stealth + Dual-Stack Tailscale MTU)**
+   - Clamped symbol payload (`1180 B` total packet budget) engineered to survive Tailscale/WireGuard `1280 B` MTU without IP fragmentation.
+   - Dual-stack `AF_INET` / `AF_INET6` sockets with single-port symmetric UDP feedback routing (`send_fn` + `feedback_queue`) and NAT punch-through.
+   - Ephemeral XOR+MAC stream obfuscation so middleboxes see uniform encrypted entropy.
+
+3. **Zero-RTT DNA Beam (FastCDC + Odess Delta Sync)**
+   - Content-defined chunking (`FastCDC`) + similarity sketch indexing (`Odess` SuperFeatures) + byte-level patch opcodes (`EQ`/`DIFF`).
+   - Only changed chunk fingerprints and compressed diffs hit the wire (`>95%` wire reduction on 30%-mutated `1 MiB` blobs).
+
+4. **Active Pipe (Pushdown Remote Log & Filter Engine)**
+   - Executes log predicates (`filter_lines`, `top_errors`, `regex_count`) right at the data owner before encoding onto the wire.
+   - Streams Priority-0 (`P0`) preview hits immediately (~1 RTT first byte) while the compressed full match payload completes in parallel.
+
+5. **v2.0 AUTOPILOT & 24/7 Mission-Control Cockpit**
+   - **Darwinian UCB1 Genome Bandit:** Rotates and scores 5 transport genomes (`G0_BALANCED` .. `G4_LOW_JITTER_V6`) based on real LAN/WAN throughput, jitter, and RTT reward, persisted in SQLite (`~/.chimera_ops/telemetry.db`).
+   - **Daily Scheduler & Anomaly Alerts:** Runs built-in daily benchmarks + OS-level triggers (`Task Scheduler` on Windows, `systemd --user` timer on Linux) and flags hardware fallbacks or >25% latency regressions.
+   - **Web Mission-Control UI (`127.0.0.1:9780` / `0.0.0.0:9780`):** Live throughput/speedup telemetry, 1-click live DNA Beam transfer, on-demand remote log query tester, and genome leaderboard.
+
+---
+
+## Verified Cross-Host Benchmarks (Windows ↔ Linux Over Tailscale ~107 ms RTT)
+
+Measured live between a Windows 11 Controller (`Intel Core i5-11400`, Rust GFNI) and an Ubuntu Linux Server Peer (`Intel Core i5-4300U`, C11 AVX2 `VPSHUFB`, Python 3.14.4):
+
+| Workload | Standard TCP Baseline | CHIMERA-HYPER v2.0 | Gain |
 | :--- | :--- | :--- | :--- |
-| **Core `GF(256)` 16 MiB Vector** | Python: `86.04 ms` (`1.56 Gbps`) | Rust Intel GFNI: **`2.36 ms` (`56.94 Gbps`)** | **`36.5x`** |
-| **Core `32x1360` RLNC Matrix Solve** | Python: `106.77 ms` | Rust Intel GFNI: **`0.72 ms`** | **`149.3x`** |
-| **Đồng bộ 30 MB (chèn đầu + sửa 3%) @ 100 Mbps** | `2,523.5 ms` (`99.7 Mbps`, `31.5 MB`) | **`267.7 ms` (`940.0 Mbps` eff., `160 KB`)** | **`9.43x`** (`99.49%` saved) |
-| **Mạng WAN rớt 0% / 2% / 5% / 10% (`2 MiB`, `50 ms` RTT)** | `14.59` / `1.78` / `1.04` / `0.64 Mbps` | **`53.94` / `54.44` / `48.31` / `52.96 Mbps`** | **`3.7x` &rarr; `82.53x`** |
-| **Lọc `24.6 MB` log (1% match) @ 100 Mbps** | `2,010.9 ms` (`24.6 MB`) | **`65.4 ms` (`248.9 KB`, P0 `38.2 ms`)** | **`30.73x`** (`98.99%` saved) |
-| **RPC độ trễ đuôi (80 reqs, jitter + 5% loss)** | Single Path `p99 = 353.6 ms` | **Hedged Multi-Path `p99 = 177.4 ms`** | **`1.99x` giảm `p99`** |
-| **IPC nội bộ `64 MiB` Windows (có SHA-256)** | TCP `127.0.0.1`: `70.94 ms` (`7.57 Gbps`) | **Wormhole SHM: `47.30 ms` (`11.35 Gbps`)** | **`1.50x`** |
-| **Worst-case: `2 MiB` Random mới 100%, 0% rớt** | `173.9 ms` (`96.5 Mbps`) | `203.1 ms` (`82.6 Mbps`, `1.53%` overhead) | `0.86x` (bỏ phình v0.5) |
+| **GF(256) Matrix (1 MiB, Win Rust GFNI)** | `75.35 ms` (Python LUT) | `0.82 ms` (Native GFNI) | **91.48x** (7d avg **167.71x**) |
+| **GF(256) Matrix (1 MiB, Linux C AVX2)** | `83.59 ms` (Python LUT) | `1.05 ms` (C11 `VPSHUFB`) | **79.74x** (7d avg **81.15x**) |
+| **Zero-Copy Shared Memory IPC** | TCP Loopback (`2.23–5.22 Gbps`) | Lock-Free Ring (`3.53 Gbps` Win latest, **5.04 Gbps** Win 7d avg / **2.02 Gbps** Linux 7d avg) | Zero-syscall SPSC ring |
+| **100 ms RTT, 5% Loss (128 KB)** | `0.92–0.95 Mbps` (`~4.4–4.5 s`) | `21.39 Mbps` (Win) / `40.14 Mbps` (Linux) | **23.20x – 42.22x** |
+| **Live DNA Beam (1 MiB, 30% mutated)** | `1,131.14 ms` (`7.42 Mbps`) | `251.90 ms` (`33.30 Mbps`, `37.2 KB` wire) | **4.49x speedup**, **96.89% wire saved** |
+| **Live Active Log Query (`1.70 MB` prod log, 9,084 `ERROR` hits)** | `1,314.18 ms` (pull full + local grep) | `292.55–296.63 ms` total (`114.4 ms` P0 first hit, `5.25 ms` remote exec) | **4.43x speedup**, **68.31% wire saved** |
+
+See [docs/EVALUATION.md](docs/EVALUATION.md) for methodology and raw counters.
 
 ---
 
-## Cài đặt & Sử dụng trong công việc hằng ngày
+## Quick Start
 
-Yêu cầu: **Windows 10/11 (64-bit)**, **Python >= 3.11**, **Rust `cargo`** (để build lõi native zero-dependency).
+### 1. Build Native Silicon Core
+```bash
+# Windows (requires Rust MSVC toolchain)
+python scripts/build_native.py
 
-```powershell
-# 1. Build lõi Rust Silicon Core (GFNI/AVX2/FastCDC/Delta/Wormhole)
-python scripts\build_native.py
-
-# 2. Cài CLI toàn cục (tùy chọn)
-pip install -e . --no-build-isolation
-
-# 3. Kiểm tra phần cứng GFNI + 8 cõi mạng Windows
-python -m chimera_tp probe
-
-# 4. BEAM: Đồng bộ thư mục / file qua DNA Vault + GFNI Wire
-python -m chimera_tp beam serve --bind 127.0.0.1:9100 --vault .\rx_vault --out-dir .\dest_dir --max-transfers 0
-python -m chimera_tp beam send --target 127.0.0.1:9100 --dir .\src_dir --vault .\tx_vault
-
-# 5. WARP: Tăng tốc trong suốt mọi kết nối TCP qua mạng yếu/rớt gói
-python -m chimera_tp warp server --bind 0.0.0.0:9200 --forward 127.0.0.1:8080 --est-loss 0.05
-python -m chimera_tp warp client --listen 127.0.0.1:7200 --target SERVER_IP:9200 --est-loss 0.05
-
-# 6. PIPE: Lọc dữ liệu lớn ngay trên đường truyền hoặc truyền IPC qua Shared Memory Wormhole
-python -m chimera_tp pipe query --file .\app.log --op filter_lines --needle ERROR
-python -m chimera_tp pipe wormhole --create JOB1 --file .\dataset.bin
-
-# 7. Chạy toàn bộ 19 bài kiểm thử & bộ benchmark Before-vs-After
-python -m unittest discover -s tests -v
-python -m chimera_tp bench-hyper
+# Linux (requires gcc with -mavx2; falls back cleanly to portable C flags if needed)
+python3 scripts/build_native.py
 ```
 
+### 2. Initialize Runtime Operations Config (`~/.chimera_ops/config.json`)
+```bash
+# Server Peer (Linux)
+chimera ops-init --node-name peer-linux --role server --dashboard-bind 0.0.0.0:9780 --watched-query-file /path/to/app.log
+
+# Controller Node (Windows)
+chimera ops-init --node-name win-desktop --role controller --peer-name peer-linux --peer-ipv4 <PEER_TAILSCALE_IPV4> --peer-ipv6 <PEER_TAILSCALE_IPV6> --watched-query-file /path/to/app.log --dashboard-bind 127.0.0.1:9780
+```
+Runtime configs and SQLite databases live exclusively under `~/.chimera_ops/` and are never committed to Git. See [docs/ops_config.example.json](docs/ops_config.example.json).
+
+### 3. Run Daemon + Daily Autopilot
+```bash
+# Start 24/7 Mission-Control Dashboard + Beam / HedgedRPC / ActiveQuery / Warp servers
+chimera daemon
+
+# Run an immediate single autopilot cycle (Darwinian UCB1 + WAN + Cross-Host verification)
+chimera autopilot --trigger manual --profile auto-darwin
+```
+
+### 4. Register Daily Automation (OS-Specific)
+- **Windows:** `schtasks` daily at `08:00` calling `chimera autopilot --trigger scheduled` + logon trigger for `chimera daemon`.
+- **Linux:** `systemd --user` persistent unit `chimera-hyper-daemon.service` + `chimera-hyper-daily.timer` (`OnCalendar=*-*-* 08:00:00`, `loginctl enable-linger`).
+
 ---
 
-## Tài liệu chi tiết
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — Kiến trúc Rust Silicon Core (`GFNI`, FastCDC, Odess, Delta, Wormhole), HyperWire, Active Pipe và Warp.
-- [docs/EVALUATION.md](docs/EVALUATION.md) — Báo cáo thực nghiệm chi tiết `v0.5.0` và `v1.0.0` (tất cả bài test, soak, và bảng Trước–Sau).
-- [docs/ROADMAP.md](docs/ROADMAP.md) — Các mốc đã hoàn thành (`v0.2.0` &rarr; `v1.0.0`) và hướng mở rộng tiếp theo.
+## Tests
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+- **Windows (`win-desktop`):** Full suite (`test_chimera`, `test_hyper`, `test_v2_autopilot`) covering local realms, Rust GFNI/AVX2 kernels, HyperWire, Wormhole SHM, DNA Beam, Active Pipe, Warp proxy, SQLite telemetry, Darwinian UCB1 selection, and HTTP cockpit APIs.
+- **Linux (`peer-linux`):** `test_hyper` + `test_v2_autopilot` verifying C11 AVX2 `VPSHUFB`, POSIX `/dev/shm` Wormhole, POSIX `probe`, cross-platform config, and live server APIs.
 
 ---
 
-## Giấy phép
-Phát hành theo giấy phép [MIT](LICENSE).
+## Security & Scope Disclaimer
+
+`chimera-tp` is an experimental WAN/IPC transport engine. Its ephemeral wire obfuscation protects packet headers against passive heuristics; for production multi-tenant deployment over untrusted networks, always run behind authenticated private overlays such as Tailscale or WireGuard (authenticated Noise/ChaCha20-Poly1305).

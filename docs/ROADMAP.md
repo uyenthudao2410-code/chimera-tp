@@ -1,17 +1,21 @@
-# Lộ trình nghiên cứu & phát triển (`CHIMERA-TP` &rarr; `CHIMERA-HYPER`)
+# Roadmap — CHIMERA-HYPER
 
-## Đã hoàn thành
-- [x] **v0.2.0**: Kiến trúc 8 cõi truyền dị biệt trên Windows (`GHOST_127` &rarr; `LO_V6_JUMBO`) + GF(256) RLNC + Chaos Scheduler.
-- [x] **v0.3.0**: CRC-32 từng mảnh, XOR Stripe FEC (4:1) và Selective NACK ARQ (`JCHK`/`JNCK`/`JOK!`) cho `LO_V6_JUMBO`.
-- [x] **v0.4.0**: Phát song song theo từng lane và 3 profile lập lịch (`balanced`, `stealth`, `turbo`).
-- [x] **v0.5.0**: Segmented RLNC ($O(K)$ scaling) + chế độ 2 tiến trình (`listen` / `connect`).
-- [x] **v1.0.0 (`CHIMERA-HYPER`)**:
-  - Lõi Rust 1.92 Silicon Native (`_chimera_core.dll`) tăng tốc Intel **GFNI (`VGF2P8MULB`)** + AVX2 đạt `56.9 Gbps` (`149.3x` giải mã ma trận).
-  - **DNA Vault (`beam`)**: FastCDC + Odess Super-Feature + Delta Codec giảm tới `99.49%` băng thông đồng bộ tăng dần.
-  - **Silicon GFNI Wire + Hedged Multi-Path + Transparent TCP Tunnel (`warp`)**: Giữ `53.0 Mbps` dưới `10%` rớt gói WAN (`82.5x` nhanh hơn TCP-CUBIC) và giảm `1.99x` độ trễ đuôi `p99`.
-  - **Lock-Free Windows Shared Memory Wormhole & Active Compute-in-Transit (`pipe`)**: `11.35 Gbps` IPC cục bộ (có SHA-256) và lọc `24.6 MB` log trên đường truyền nhanh hơn `30.7x`.
+## Completed — `v1.0.0` (Hyper Foundation)
+- Rust GFNI / AVX2 / AVX-512F GF(256) matrix engine + Win32 Named Shared Memory ring
+- HyperWire sliding-window RLNC + XOR obfuscation
+- FastCDC + Odess SuperFeature delta engine (DNA Beam)
+- Active Pipe compute-in-flight filter with P0 preview streaming
+- Full local benchmark & HTML visualization report
 
-## Hướng mở rộng tiếp theo (v1.1+)
-1. **Cross-Host Daemon & Tailscale Auto-Peering**: Tự động phát hiện peer cùng LAN / Tailscale (`TS_V4_1280` + WAN) để `warp` và `beam` mở khóa đồng thời đa đường vật lý thực tế giữa hai máy Windows/Linux.
-2. **GPU Batch Coding (CUDA/Vulkan trên GTX 1650)**: Đẩy tác vụ mã hóa GF(256) thế hệ cực lớn (>100 MB) hoặc kiểm tra hash song song sang GPU trong các đường truyền datacenter multi-10GbE.
-3. **PyO3 Native Extension**: Thay lớp `ctypes` ở `pip` wheel bằng module PyO3/CFFI để cắt tiếp chi phí chuyển đổi buffer Python ở mức chunk nhỏ `1–4 KB`.
+## Completed — `v2.0.0 AUTOPILOT` (Cross-Platform & Autonomous Ops)
+- **Linux C11 AVX2 Silicon Core (`native/chimera_core_c`)**: `VPSHUFB` split-nibble GF(256), bit-identical FastCDC/Odess, and POSIX `/dev/shm` lock-free SPSC Wormhole.
+- **Cross-Host Tailscale Dual-Stack Transport**: MTU-safe (`1180 B`) symbol framing, `AF_INET`/`AF_INET6` hedged RPC, single-port UDP NAT/firewall feedback routing, and bidirectional DNA Beam + Active Query servers.
+- **Autonomous Daily Control Loop (`autopilot.py`)**: SQLite-backed run telemetry, regression/fallback anomaly detection, and 5-genome **Darwinian UCB1 Bandit** self-tuning.
+- **24/7 Mission-Control Cockpit (`dashboard.py`)**: Web dashboard + REST API + built-in daily scheduler + OS-level triggers (`Task Scheduler` & `systemd --user`).
+
+## Next Horizons — `v2.1+`
+1. **Cross-Chunk Dictionary Compression (Zstd Trained Dicts)**: Train per-repo / per-log-stream Zstd dictionaries across `Odess` buckets to push Active Query wire reduction from `68%` toward `85%+` on repetitive log streams.
+2. **Adaptive Congestion & RTT Estimator (Kalman Loss Tracking)**: Feed live moving-window packet loss and jitter from `HyperWire` directly into `loss_hint` mid-stream rather than per-run genome selection alone.
+3. **Directory-Tree Merkle Beam (`beam-sync`)**: Extend `BeamServer` from single blobs to hierarchical Merkle trees for sub-second cross-host workspace synchronization over high-RTT VPN links.
+4. **ARM64 NEON (`PMULL` / `VTBL`) Core**: Port `native/chimera_core_c` to `aarch64` NEON (`vmull_p8` / `vqtbl1q_u8`) for Raspberry Pi / Apple Silicon edge nodes.
+5. **Signed Cluster Mesh Auth**: HMAC-SHA256 / Ed25519 challenge-response framing on daemon control endpoints so cockpit management remains hardened even on untrusted LANs.

@@ -12,6 +12,8 @@ import time
 from pathlib import Path
 
 from .active_pipe import ActivePipeEngine, ComputePlan
+from .autopilot import OpsConfig, TelemetryStore, default_ops_dir, run_daily_autopilot
+from .dashboard import ChimeraDaemon
 from .fabric import BeamServer, ChimeraFabric, beam_send
 from .native import WormholeChannel
 from .probe import probe_environment
@@ -78,7 +80,7 @@ def _add_send_options(p: argparse.ArgumentParser) -> None:
     p.add_argument(
         "--corrupt-lan",
         action="store_true",
-        help="Invert 100% of random noise payload bytes on LAN_LENGTH",
+        help="Invert all random noise payload bytes on LAN_LENGTH",
     )
     p.add_argument(
         "--profile",
@@ -163,6 +165,28 @@ def main(argv: list[str] | None = None) -> int:
 
     p_bh = sub.add_parser("bench-hyper", help="Run CHIMERA-HYPER v1.0 Before-vs-After benchmark suite")
     p_bh.add_argument("--out", default="chimera_hyper_eval.json", help="Output JSON path")
+
+    p_init = sub.add_parser("ops-init", help="Initialize ~/.chimera_ops/config.json for 24/7 operation")
+    p_init.add_argument("--ops-dir", default="", help="Override ops directory (default ~/.chimera_ops)")
+    p_init.add_argument("--node-name", default="", help="Logical node name")
+    p_init.add_argument("--role", choices=("controller", "server"), default="controller")
+    p_init.add_argument("--bind", default="127.0.0.1:9780", help="Dashboard HTTP HOST:PORT")
+    p_init.add_argument("--peer-name", default="", help="Peer hostname/label")
+    p_init.add_argument("--peer-ipv4", default="", help="Peer IPv4 (Tailscale/LAN)")
+    p_init.add_argument("--peer-ipv6", default="", help="Peer IPv6 (Tailscale)")
+    p_init.add_argument("--watched-file", default="@synthetic", help="Remote/local log file for Active Pipe")
+    p_init.add_argument("--allow-root", action="append", default=[], help="Allowed root directories for ActiveQueryServer")
+    p_init.add_argument("--daily-time", default="08:00", help="Daily HH:MM local time")
+    p_init.add_argument("--profile", default="auto-darwin", choices=("auto-darwin", "max-speed", "lossy-armor", "exotic-v05"))
+
+    p_daemon = sub.add_parser("daemon", help="Run 24/7 Mission-Control Dashboard & UDP accelerator services")
+    p_daemon.add_argument("--ops-dir", default="", help="Override ops directory")
+    p_daemon.add_argument("--bind", default="", help="Override dashboard HOST:PORT")
+    p_daemon.add_argument("--no-seed", action="store_true", help="Skip startup baseline run when telemetry DB is empty")
+
+    p_auto = sub.add_parser("autopilot", help="Run one daily health + Before-vs-After + Darwinian UCB1 cycle")
+    p_auto.add_argument("--ops-dir", default="", help="Override ops directory")
+    p_auto.add_argument("--trigger", default="manual", help="Run trigger tag (daily/manual/startup)")
 
     # ---- Legacy Research Subcommands (v0.5.0 Multi-Realm Exotic Lanes) ----
     p_probe = sub.add_parser("probe", help="Probe hardware capabilities & Windows network realms")
@@ -369,6 +393,69 @@ def main(argv: list[str] | None = None) -> int:
 
         run_eval(Path(args.out))
         return 0
+
+    if args.command == "ops-init":
+        ops_dir = Path(args.ops_dir) if args.ops_dir else default_ops_dir()
+        cfg = OpsConfig.load(ops_dir)
+        if args.node_name:
+            cfg.node_name = args.node_name
+        cfg.role = args.role
+        cfg.dashboard_bind = args.bind
+        if args.peer_name:
+            cfg.peer_name = args.peer_name
+        if args.peer_ipv4:
+            cfg.peer_ipv4 = args.peer_ipv4
+        if args.peer_ipv6:
+            cfg.peer_ipv6 = args.peer_ipv6
+        if args.watched_file:
+            cfg.watched_query_file = args.watched_file
+        if args.allow_root:
+            cfg.allowed_query_roots = [str(Path(p)) for p in args.allow_root]
+        cfg.daily_time = args.daily_time
+        cfg.active_profile = args.profile
+        saved = cfg.save(ops_dir)
+        print(json.dumps({"config_path": str(saved), "config": cfg.to_dict()}, indent=2, ensure_ascii=False))
+        return 0
+
+    if args.command == "daemon":
+        ops_dir = Path(args.ops_dir) if args.ops_dir else default_ops_dir()
+        cfg = OpsConfig.load(ops_dir)
+        if args.bind:
+            cfg.dashboard_bind = args.bind
+        stop_ev = False
+
+        def _sig_stop(_signum: int, _frame: object) -> None:
+            nonlocal stop_ev
+            stop_ev = True
+
+        signal.signal(signal.SIGINT, _sig_stop)
+        if hasattr(signal, "SIGTERM"):
+            signal.signal(signal.SIGTERM, _sig_stop)
+
+        daemon = ChimeraDaemon(
+            config=cfg, ops_dir=ops_dir, auto_seed_on_empty=not bool(args.no_seed)
+        ).start()
+        print(
+            f"CHIMERA-HYPER v2.0 Daemon listening at http://{daemon.http_addr[0]}:{daemon.http_addr[1]}",
+            flush=True,
+        )
+        try:
+            while not stop_ev:
+                time.sleep(0.5)
+        finally:
+            daemon.close()
+        return 0
+
+    if args.command == "autopilot":
+        ops_dir = Path(args.ops_dir) if args.ops_dir else default_ops_dir()
+        cfg = OpsConfig.load(ops_dir)
+        store = TelemetryStore(ops_dir / "telemetry.db")
+        try:
+            rep = run_daily_autopilot(cfg, store, trigger=args.trigger, ops_dir=ops_dir)
+            print(json.dumps(rep, indent=2, ensure_ascii=False))
+            return 0 if int(rep["health_score"]) >= 60 else 1
+        finally:
+            store.close()
 
     if args.command == "demo":
         from .demo import run_demo

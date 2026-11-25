@@ -1,0 +1,22 @@
+{
+  "node_name": "win-controller",
+  "role": "controller",
+  "dashboard_bind": "127.0.0.1:9780",
+  "beam_port": 9700,
+  "rpc_v4_port": 9702,
+  "rpc_v6_port": 9703,
+  "query_port": 9704,
+  "warp_port": 9705,
+  "peer_name": "remote-peer",
+  "peer_ipv4": "100.64.0.2",
+  "peer_ipv6": "fd7a:115c:a1e0::2",
+  "peer_beam_port": 9700,
+  "peer_rpc_v4_port": 9702,
+  "peer_rpc_v6_port": 9703,
+  "peer_query_port": 9704,
+  "peer_dashboard_port": 9780,
+  "active_profile": "auto-darwin",
+  "daily_time": "08:00",
+  "watched_query_file": "@synthetic",
+  "allowed_query_roots": []
+}
