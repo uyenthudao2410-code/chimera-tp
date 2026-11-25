@@ -1,100 +1,74 @@
-# CHIMERA-TP (v0.5.0)
+# CHIMERA-HYPER v1.0 (`chimera-tp`)
 
-**Cross-Host Interface Metamorphic Entangled Routing Architecture — Transport Protocol**
+**Silicon-Native Zero-Byte DNA Vault, Hardware GFNI (`VGF2P8MULB`) Adaptive Wire, Lock-Free Shared-Memory Wormhole & Active Compute-in-Transit Protocol**
 
-CHIMERA-TP là một giao thức truyền tải thực nghiệm bằng Python 3.11 thuần (không phụ thuộc thư viện ngoài), được thiết kế để khai thác đồng thời toàn bộ các lớp giao diện mạng và "dị tật" (quirks) của hệ điều hành Windows hiện đại thành 8 kênh truyền dị biệt, kết hợp **Segmented GF(256) RLNC**, lập lịch hỗn loạn song song đa luồng (`balanced` / `stealth` / `turbo`), và **XOR Stripe FEC + Selective NACK ARQ**.
+CHIMERA-HYPER v1.0 nâng cấp toàn diện từ bản nghiên cứu đa cõi `v0.5.0` thành một **kiến trúc giao thức tăng tốc truyền tải và xử lý công việc thực tế**, kết hợp **lõi Rust 1.92 (`chimera_core.dll`)** tận dụng tập lệnh phần cứng **Intel GFNI + AVX2** cùng 4 đột phá tầng vận chuyển:
 
-> **Phạm vi nghiên cứu**: Toàn bộ 8 kênh hiện hoạt động khép kín trên các giao diện nội bộ của cùng một máy chủ (`127.0.0.0/8`, `::1`, địa chỉ cục bộ của NIC Ethernet, Tailscale tunnel, Hyper-V vSwitch, WSL2 vSwitch) để nghiên cứu kỹ thuật giao thức, mã hóa kênh phụ (covert/side-channel transport) và chịu lỗi đa đường truyền mà không phát gói nhiễu ra Internet.
+1. **Zero-Byte DNA Vault (`dna_vault.py` / `beam`)**: Cắt khối theo ranh giới nội dung bằng Rust FastCDC (`Gear hash`) + nhận diện khối họ hàng **Odess 4x64-bit Super-Feature** + nén sai khác Delta. Đồng bộ lại tập dữ liệu `30 MB` sửa `3%` qua mạng `100 Mbps` chỉ tốn **`160 KB` dây mạng (`99.49%` tiết kiệm)** — đạt tốc độ hiệu dụng **`940.0 Mbps` (`9.43x` nhanh hơn TCP)**.
+2. **Silicon GFNI Adaptive Wire (`hyper_wire.py` / `warp`)**: Giao thức UDP có hệ thống + mã sửa lỗi `GF(256)` nhân trực tiếp bằng silicon Intel `VGF2P8MULB` (`56.9 Gbps`, giải ma trận `32x1360` trong `0.72 ms` — nhanh hơn Python **`149.3x`**). `0%` FEC overhead trên mạng sạch; trên mạng rớt **`10%` gói (`50 ms` RTT)** giữ tốc độ **`53.0 Mbps`** trong khi TCP-CUBIC sập xuống **`0.64 Mbps` (`82.53x` nhanh hơn TCP!)**.
+3. **Active Compute-in-Transit (`active_pipe.py` / `pipe query`)**: Chạy lọc dòng/JSON/CSV (`Rust active_filter_lines`) ngay trên đường truyền và đẩy kết quả tóm tắt ưu tiên cao (`Priority-0 Preview`) sau `38.2 ms`, rút truy vấn `24.6 MB` log từ `2,011 ms` xuống **`65.4 ms` (`30.73x` nhanh hơn TCP)**.
+4. **Lock-Free Shared Memory Wormhole & Hedged Multi-Path (`native.py`, `hyper_wire.py`)**: Ring buffer bộ nhớ dùng chung không khóa trên Windows cho IPC nội bộ (`11.35 Gbps` end-to-end với SHA-256 trên `64 MiB`, nhanh hơn **`1.50x`** TCP loopback; `~24 Gbps` streaming thuần) và **Hedged Multi-Path Racing** cắt **`1.99x`** độ trễ đuôi `p99`.
 
----
-
-## Kiến trúc tổng quan (v0.5.0)
-
-```mermaid
-flowchart LR
-    Payload["Payload (Bytes / File / Stream)"] --> Mode{"Transport Mode"}
-    Mode -- "PURE-METAMORPHIC" --> Zlib["zlib + Padding (k x 16B)"]
-    Zlib --> SegRLNC["Segmented GF(256) RLNC (max 32 blks/gen) + Keyed CRC-16"]
-    SegRLNC --> Chaos["Chaos Scheduler (balanced | stealth | turbo)"]
-    Chaos --> Pool["7 Dedicated Per-Lane TX Workers (Parallel)"]
-    Pool --> L1["GHOST_127 (0B UDP src 127.A.B.C)"]
-    Pool --> L2["LAN_LENGTH (urandom Length)"]
-    Pool --> L3["TS_V4_1280 (MTU<=1200 Whitened)"]
-    Pool --> L4["TS_V6_CHORD (16-Port Bitmask)"]
-    Pool --> L5["HYPERV_MCAST (16-Group TTL=0)"]
-    Pool --> L6["WSL_PERMUTE (S_6 Lehmer Order)"]
-    Pool --> L7["ICMP_REFLECT (Type-8 -> Kernel Type-0)"]
-    Mode -- "HOLOGRAPHIC-SPLIT" --> OTP["BLAKE2b OTP ^ Topology Fingerprint"]
-    OTP --> FEC["CRC-32 + XOR Stripe FEC (4:1) + Selective NACK"]
-    FEC --> L8["LO_V6_JUMBO (::1 58 KiB Superframes)"]
-    OTP -- "72 B Key Capsule" --> SegRLNC
-```
-
-### 8 Cõi truyền tải (Transport Realms)
-
-| Lane ID | Giao diện đích (Windows) | Cơ chế điều chế tín hiệu |
-| :--- | :--- | :--- |
-| `GHOST_127` | Loopback `127.0.0.0/8` | Gói UDP **0 byte payload**, giấu 2 byte + tag vào IP nguồn `127.A.B.C` |
-| `LAN_LENGTH` | Ethernet LAN IPv4 | Chỉ gửi `os.urandom(...)`, giải mã thuần theo độ dài gói (`64..1343 B`) |
-| `TS_V4_1280` | Tailscale Tunnel IPv4 (MTU 1280) | Khung làm trắng bằng BLAKE2b ép chuẩn `<= 1200 B` |
-| `TS_V6_CHORD` | Tailscale ULA IPv6 | Hợp âm 16 cổng note IPv6 + 1 cổng barline chốt bitmask từ 16-bit |
-| `HYPERV_MCAST` | Hyper-V Default Switch | 16 nhóm multicast `239.255.13.1..16` (`IP_MULTICAST_TTL=0`) đại diện nibble |
-| `WSL_PERMUTE` | WSL2 vEthernet | Mã hóa từng byte theo thứ tự đến của 6 gói hoán vị ($S_6$ Lehmer rank) |
-| `ICMP_REFLECT` | Raw ICMP `127.0.0.1` (Admin) | Gửi Echo Request (Type 8), thu bản phản xạ kernel Echo Reply (Type 0) |
-| `LO_V6_JUMBO` | Loopback `::1` (MTU 4 GiB) | Siêu khung 58 KiB che OTP + CRC-32 + XOR Stripe FEC (4:1) + Selective NACK |
+*(Toàn bộ 8 kênh đa cõi dị biệt từ bản v0.5.0 — `GHOST_127`, `LAN_LENGTH`, `TS_V4_1280`, `TS_V6_CHORD`, `HYPERV_MCAST`, `WSL_PERMUTE`, `ICMP_REFLECT`, `LO_V6_JUMBO` — vẫn được giữ nguyên vẹn cho mục đích nghiên cứu qua `send` / `listen` / `connect`.)*
 
 ---
 
-## Cài đặt & Chạy nhanh
+## Tổng hợp kết quả đo Trước (TCP chuẩn) vs Sau (CHIMERA-HYPER v1.0)
 
-Yêu cầu: **Windows 10/11**, **Python >= 3.11** (chạy với quyền Administrator nếu muốn bật thêm kênh raw socket `ICMP_REFLECT`; ở quyền user thường giao thức tự động bỏ qua `ICMP_REFLECT` và chạy bình thường trên 7 kênh còn lại).
+Kiểm chứng trên Windows 64-bit (`Intel Core i5-11400`: `gfni=true`, `avx2=true`, `avx512f=true`; **`19/19` unit/integration tests PASS trong `24.47s`**):
+
+| Tác vụ đo thực tế | BEFORE — TCP chuẩn | AFTER — CHIMERA-HYPER v1.0 | Tỷ lệ đột phá |
+| :--- | :--- | :--- | :--- |
+| **Core `GF(256)` 16 MiB Vector** | Python: `86.04 ms` (`1.56 Gbps`) | Rust Intel GFNI: **`2.36 ms` (`56.94 Gbps`)** | **`36.5x`** |
+| **Core `32x1360` RLNC Matrix Solve** | Python: `106.77 ms` | Rust Intel GFNI: **`0.72 ms`** | **`149.3x`** |
+| **Đồng bộ 30 MB (chèn đầu + sửa 3%) @ 100 Mbps** | `2,523.5 ms` (`99.7 Mbps`, `31.5 MB`) | **`267.7 ms` (`940.0 Mbps` eff., `160 KB`)** | **`9.43x`** (`99.49%` saved) |
+| **Mạng WAN rớt 0% / 2% / 5% / 10% (`2 MiB`, `50 ms` RTT)** | `14.59` / `1.78` / `1.04` / `0.64 Mbps` | **`53.94` / `54.44` / `48.31` / `52.96 Mbps`** | **`3.7x` &rarr; `82.53x`** |
+| **Lọc `24.6 MB` log (1% match) @ 100 Mbps** | `2,010.9 ms` (`24.6 MB`) | **`65.4 ms` (`248.9 KB`, P0 `38.2 ms`)** | **`30.73x`** (`98.99%` saved) |
+| **RPC độ trễ đuôi (80 reqs, jitter + 5% loss)** | Single Path `p99 = 353.6 ms` | **Hedged Multi-Path `p99 = 177.4 ms`** | **`1.99x` giảm `p99`** |
+| **IPC nội bộ `64 MiB` Windows (có SHA-256)** | TCP `127.0.0.1`: `70.94 ms` (`7.57 Gbps`) | **Wormhole SHM: `47.30 ms` (`11.35 Gbps`)** | **`1.50x`** |
+| **Worst-case: `2 MiB` Random mới 100%, 0% rớt** | `173.9 ms` (`96.5 Mbps`) | `203.1 ms` (`82.6 Mbps`, `1.53%` overhead) | `0.86x` (bỏ phình v0.5) |
+
+---
+
+## Cài đặt & Sử dụng trong công việc hằng ngày
+
+Yêu cầu: **Windows 10/11 (64-bit)**, **Python >= 3.11**, **Rust `cargo`** (để build lõi native zero-dependency).
 
 ```powershell
-# Tùy chọn: cài editable để dùng lệnh `chimera-tp` toàn cục
+# 1. Build lõi Rust Silicon Core (GFNI/AVX2/FastCDC/Delta/Wormhole)
+python scripts\build_native.py
+
+# 2. Cài CLI toàn cục (tùy chọn)
 pip install -e . --no-build-isolation
 
-# 1. Dò 8 cõi mạng trên máy hiện tại
+# 3. Kiểm tra phần cứng GFNI + 8 cõi mạng Windows
 python -m chimera_tp probe
 
-# 2. Chạy demo 4 pha
-python -m chimera_tp demo
+# 4. BEAM: Đồng bộ thư mục / file qua DNA Vault + GFNI Wire
+python -m chimera_tp beam serve --bind 127.0.0.1:9100 --vault .\rx_vault --out-dir .\dest_dir --max-transfers 0
+python -m chimera_tp beam send --target 127.0.0.1:9100 --dir .\src_dir --vault .\tx_vault
 
-# 3. Chế độ 2 tiến trình độc lập (Terminal 1: listen, Terminal 2: connect)
-python -m chimera_tp listen --offer-file .\offer.json --out-file .\received.bin
-python -m chimera_tp connect --offer-file .\offer.json --file .\payload.bin --mode holographic --jumbo-drop 0.25
+# 5. WARP: Tăng tốc trong suốt mọi kết nối TCP qua mạng yếu/rớt gói
+python -m chimera_tp warp server --bind 0.0.0.0:9200 --forward 127.0.0.1:8080 --est-loss 0.05
+python -m chimera_tp warp client --listen 127.0.0.1:7200 --target SERVER_IP:9200 --est-loss 0.05
 
-# 4. Gửi 1 tiến trình với profile turbo/stealth/balanced
-python -m chimera_tp send --text "Xin chao CHIMERA-TP v0.5" --mode metamorphic --profile turbo --drop 0.2 --corrupt-lan
+# 6. PIPE: Lọc dữ liệu lớn ngay trên đường truyền hoặc truyền IPC qua Shared Memory Wormhole
+python -m chimera_tp pipe query --file .\app.log --op filter_lines --needle ERROR
+python -m chimera_tp pipe wormhole --create JOB1 --file .\dataset.bin
 
-# 5. Chạy bộ test đơn vị & tích hợp (11/11 tests)
+# 7. Chạy toàn bộ 19 bài kiểm thử & bộ benchmark Before-vs-After
 python -m unittest discover -s tests -v
-
-# 6. Chạy đầy đủ benchmark đánh giá v0.5.0
-python -m benchmarks.benchmark_eval
+python -m chimera_tp bench-hyper
 ```
 
 ---
 
-## Tóm tắt kết quả nâng cấp v0.2.0 &rarr; v0.5.0
-
-Số liệu thực nghiệm đo trên máy Windows thực tế (`11/11` unit tests PASS, `20/20` soak test PASS, `5/5` audit PASS):
-
-| Chỉ số | v0.2.0 | v0.5.0 | Cải thiện |
-| :--- | :--- | :--- | :--- |
-| **2 KiB không nén (`PURE-METAMORPHIC`)** | `363.42 ms` (`45.08 kbps`, `204.0x`) | `83.71 ms` (`balanced`), **`65.32 ms`** (`turbo`, `250.8 kbps`, `78.9x`) | **Nhanh hơn 4.34x – 5.56x**, giảm dây 2.58x |
-| **4 KiB không nén (`PURE-METAMORPHIC`)** | `765.70 ms` (`42.79 kbps`) | **`180.69 ms`** (`181.35 kbps`) | **Nhanh hơn 4.24x** |
-| **16 KiB không nén (`PURE-METAMORPHIC`)** | Nghẽn $O(K^3)$ | **`536.78 ms`** (**`244.18 kbps`**, 33 generations) | Mở rộng quy mô tuyến tính $O(K)$ |
-| **20-Run Soak Test (p50 / p95)** | `53.20 ms` / `214.78 ms` | **`24.35 ms`** / **`129.10 ms`** | **Giảm 2.18x độ trễ trung vị** |
-| **`HOLOGRAPHIC-SPLIT` mất 25% chunk (`1 MiB`)** | Không phục hồi | **`111.55 ms`** (**`75.20 Mbps`**, `FEC=4, NACK=2`) | **Sống sót 100%** dưới 25% rớt jumbo |
-| **`HOLOGRAPHIC-SPLIT` `8 MiB`** | Chưa kiểm thử | **`787.55 ms`** (**`85.21 Mbps`**, entropy `7.99998 b/B`) | Bơm 145 siêu khung 58 KiB an toàn |
-
-Chi tiết kỹ thuật xem tại:
-- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — Đặc tả Segmented GF(256) RLNC, 8 kênh, Parallel TX Worker, Stripe XOR FEC & Selective NACK.
-- [docs/EVALUATION.md](docs/EVALUATION.md) — Phân tích Before-vs-After (TCP/UDP chuẩn vs CHIMERA-TP), so sánh v0.2.0 vs v0.5.0, và giới hạn còn lại.
-- [docs/ROADMAP.md](docs/ROADMAP.md) — Lộ trình nghiên cứu tiếp theo.
+## Tài liệu chi tiết
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — Kiến trúc Rust Silicon Core (`GFNI`, FastCDC, Odess, Delta, Wormhole), HyperWire, Active Pipe và Warp.
+- [docs/EVALUATION.md](docs/EVALUATION.md) — Báo cáo thực nghiệm chi tiết `v0.5.0` và `v1.0.0` (tất cả bài test, soak, và bảng Trước–Sau).
+- [docs/ROADMAP.md](docs/ROADMAP.md) — Các mốc đã hoàn thành (`v0.2.0` &rarr; `v1.0.0`) và hướng mở rộng tiếp theo.
 
 ---
 
 ## Giấy phép
-
 Phát hành theo giấy phép [MIT](LICENSE).

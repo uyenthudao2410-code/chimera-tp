@@ -1,46 +1,44 @@
-# Kiến trúc kỹ thuật CHIMERA-TP (v0.5.0)
+# Kiến trúc kỹ thuật CHIMERA-HYPER v1.0 (`chimera-tp`)
 
-## 1. Mô hình phân lớp
+## 1. Tổng quan kiến trúc hai tầng
 
-CHIMERA-TP tách biệt **Control Plane** (bắt tay `STRT`/`RDY!`/`GACK`/`SOLV`/`JCHK`/`JNCK`/`JOK!` trên `::1`), **Segmented Coding & Parallel Chaos Plane** (GF(256) RLNC + Logistic Map + Worker Pool theo lane), và **Polymorphic Physical/Virtual Lanes** (8 cơ chế điều chế khác nhau trên từng giao diện Windows).
-
-### 1.1 Trường hữu hạn $GF(2^8)$ & Segmented RLNC ($O(K)$ Scaling)
-- **Đa thức bất khả quy**: $P(x) = x^8 + x^4 + x^3 + x + 1$ (`0x11B`), **phần tử sinh nguyên thủy `0x03`** (chu kỳ `255`).
-- **Tăng tốc vector**: bảng `MUL_BYTES[256]` qua `bytes.translate()` ở tốc độ C + big-int `XOR`.
-- **Segmented Multi-Generation RLNC (v0.5.0)**:
-  - Chia dữ liệu thành nhiều thế hệ (mặc định `gen_size = 32` khối = `512 B/generation`, tối đa `64` thế hệ = `32 KiB` dữ liệu không nén).
-  - Nếu `num_gens == 1`: giữ nguyên header 16-bit `droplet_id`.
-  - Nếu `num_gens > 1`: đóng gói `wire_id = ((gen_id & 0x3F) << 10) | (local_id & 0x3FF)`, dẫn xuất seed riêng cho từng thế hệ qua `blake2s(rlnc_seed + uint16(gen_id))` và tính Keyed CRC-16 trên `rlnc_seed + body`.
-  - Khi một thế hệ giải đủ `gk` khối, bên nhận phát `GACK(tid, gen_id)` để bên gửi loại thế hệ đó khỏi `pending_gens` ngay lập tức.
-  - Độ phức tạp khử Gauss giảm từ $O(K^3)$ xuống $O((K/G) \cdot G^3) = O(K \cdot 32^2)$ tuyến tính theo $K$.
-
-### 1.2 Bộ lập lịch hỗn loạn & Phát song song theo Lane (v0.4.0)
-- **Ba profile hỗn loạn**:
-  - `balanced`: phân bổ đều với cửa sổ phủ vòng (rolling-window coverage) đảm bảo mọi kênh đều tham gia.
-  - `stealth`: ưu tiên các kênh ẩn dữ liệu thuần metadata (`GHOST_127:4`, `LAN_LENGTH:3`, `TS_V6_CHORD:3`, `HYPERV_MCAST:3`, `WSL_PERMUTE:3`, `TS_V4_1280:1`, `ICMP_REFLECT:1`).
-  - `turbo`: ưu tiên kênh độ trễ thấp và khuếch đại dây thấp (`TS_V4_1280:8`, `ICMP_REFLECT:8`, `GHOST_127:2`, các kênh còn lại `1`).
-- **Per-Lane Parallel Dispatch**: Mỗi kênh sống sở hữu đúng 1 thread worker TX và `queue.Queue(maxsize=2)`. Kiến trúc 1-worker-per-lane đảm bảo thứ tự `frame_tag` và socket nội bộ của lane luôn tuần tự an toàn, trong khi các lane chậm không làm nghẽn lane nhanh.
+Từ phiên bản **v1.0.0**, `chimera-tp` tách rõ hai chế độ:
+- **CHIMERA-HYPER v1.0 (Mặc định hiệu năng & công việc thật)**: Kết hợp lõi Rust `native/chimera_core` + FFI zero-copy `chimera_tp/native.py` với 4 động cơ chính (`dna_vault.py`, `hyper_wire.py`, `active_pipe.py`, `warp.py`, điều phối bởi `fabric.py`).
+- **CHIMERA-TP v0.5 Exotic Realms (`lanes.py`, `protocol.py`)**: Giữ nguyên 100% tương thích 8 cõi truyền dị biệt (`GHOST_127`, `LAN_LENGTH`, `TS_V4_1280`, `TS_V6_CHORD`, `HYPERV_MCAST`, `WSL_PERMUTE`, `ICMP_REFLECT`, `LO_V6_JUMBO`) cho nghiên cứu đa kênh.
 
 ---
 
-## 2. Đặc tả 8 kênh truyền dị biệt
+## 2. Lõi Silicon Native Rust (`native/chimera_core/src/lib.rs`)
 
-| Kênh | Địa chỉ & Giao thức nền | Cấu trúc gói / Cơ chế thu | Đặc tính chính |
-| :--- | :--- | :--- | :--- |
-| **`GHOST_127`** | `127.0.0.1` UDP (`127.0.0.0/8`) | Bind 10 cổng nhận; đóng `tag4 + b0 + b1` vào IP nguồn `127.o1.o2.o3`, gửi **`0 B` UDP payload**. | 0 byte payload trên dây; độ trễ cao do tạo/đóng socket nguồn. |
-| **`LAN_LENGTH`** | NIC LAN IPv4 UDP | Bind `droplet_size` cổng nhận. Gửi `os.urandom(64 + (tag_mod << 8) + byte)` (`64..1343 B`). Bên nhận **bỏ qua 100% nội dung payload**. | Miễn nhiễm đảo 100% bit payload; phóng đại băng thông `~310x`. |
-| **`TS_V4_1280`** | Tailscale IPv4 UDP | Khung `b"TS" + uint32 frame_tag + uint16 len + (droplet ^ keystream)` ép `<= 1200 B`. | Nhanh nhất (`~0.1–0.15 ms/giọt`), khuếch đại chỉ `1.31x`. |
-| **`TS_V6_CHORD`** | Tailscale ULA IPv6 UDP | 16 cổng note + 1 cổng barline. Mỗi từ 16-bit gửi header 3B `(tag8, word_idx, popcount)` cho từng bit `1`, chốt bằng barline. | Không chứa bit dữ liệu trong payload (`~109x` wire amp). |
-| **`HYPERV_MCAST`** | Hyper-V Default Switch Multicast | 16 nhóm `239.255.13.1..16` trên 16 cổng, `IP_MULTICAST_TTL = 0`, spark 2B theo nibble. | Ràng buộc host-local tuyệt đối nhờ `TTL=0`. |
-| **`WSL_PERMUTE`** | WSL2 vSwitch IPv4 UDP | Ánh xạ `(byte << 1) | (idx & 1)` thành hoán vị 6 phần tử ($S_6$ Lehmer), phát 6 gói 3B theo thứ tự. | Tự phát hiện đảo thứ tự qua bit parity `idx & 1`. |
-| **`ICMP_REFLECT`** | `127.0.0.1` Raw ICMP (`IPPROTO_ICMP`) | Echo Request `type=8` (`id=session_icmp_id`) -> Kernel Windows phản xạ `type=0`. | Khuếch đại `1.22x`, đòi hỏi quyền Administrator. |
-| **`LO_V6_JUMBO`** | `::1` IPv6 UDP | Siêu khung `JM` tối đa `58,000 B` kèm `CRC-32` + gói chẵn lẻ `JP` (Stripe XOR `4:1`) + `JCHK`/`JNCK`/`JOK!` Selective NACK. | Đạt `85+ Mbps` trên `8 MiB` và tự phục hồi khi rớt 25% chunk. |
+Biên dịch thành `chimera_tp/_chimera_core.dll` với `opt-level = 3, lto = true, codegen-units = 1`, không phụ thuộc crate ngoài:
+
+### 2.1 Intel GFNI (`_mm256_gf2p8mul_epi8`) & AVX2 cho $GF(2^8)$
+- Đa thức chuẩn `0x11B` ($x^8 + x^4 + x^3 + x + 1$), khớp tuyệt đối 65,536/65,536 cặp byte với `chimera_tp.gf256.gf_mul`.
+- `chimera_gf256_mul_add` & `chimera_gf256_scale`: xử lý 128 byte/vòng (unroll `4 x __m256i`), fallback AVX2 XOR cho `coeff == 1` và bảng hằng `MUL_LUT` tĩnh cho phần đuôi hoặc CPU không có GFNI.
+- `chimera_gf256_encode_block` & `chimera_gf256_decode_matrix`: khử Gauss-Jordan toàn ma trận ngay trong Rust chỉ qua **1 lần gọi FFI** cho mỗi thế hệ `k x block_len`.
+
+### 2.2 FastCDC + Odess Super-Feature + Delta Codec
+- **FastCDC (`chimera_fastcdc`)**: Dùng bảng Gear 64-bit tĩnh (`GEAR_TABLE`) với hai mặt nạ chuẩn hóa (`mask_s` ngặt trước `avg_sz`, `mask_l` lỏng sau `avg_sz`), giúp chèn byte ở đầu file chỉ làm lệch 1 khối đầu và vẫn khớp 100% các khối phía sau.
+- **Odess Super-Features (`chimera_superfeatures`)**: Băm mẫu vị trí có `(h & sample_mask) == 0` qua 12 hàm biến đổi tuyến tính độc lập, gom thành 4 super-feature `u64` (nhóm 3) để tìm khối họ hàng tương đồng ở độ phức tạp $O(1)$.
+- **Delta Codec (`chimera_delta_encode` / `chimera_delta_decode`)**: Chỉ mục bảng băm trượt 16 byte trên `base`, mở rộng khớp 8 byte/bước (`COPY=0x01`, `LITERAL=0x02`).
+
+### 2.3 Active Byte-Line Filter & Lock-Free Windows Shared Memory Wormhole
+- `chimera_active_filter_lines`: lọc dòng chứa từ khóa đích trực tiếp trên vùng nhớ thô với tốc độ multi-GB/s.
+- `chimera_wormhole_*`: Tạo/mở vùng nhớ dùng chung Windows (`CreateFileMappingW` / `OpenFileMappingW` trên tiền tố `Local\CHIMERA_WH_`), tiêu đề căn lề cache line (`magic`, `capacity`, `closed`, `write_pos`, `read_pos` dùng atomic `Acquire`/`Release`). Tương thích streaming vượt kích thước ring (`len > capacity`), pre-touch trang nhớ khi khởi tạo và chiến lược `spin_loop` &rarr; `yield_now` &rarr; `Sleep(1)`.
 
 ---
 
-## 3. Chế độ `HOLOGRAPHIC-SPLIT`, Khóa Topology & Vận hành 2 tiến trình
+## 3. Giao thức Vận chuyển (`hyper_wire.py`), Tunnel (`warp.py`), Compute (`active_pipe.py`)
 
-1. Khối dữ liệu lớn được che bằng `blake2b(holo_key || topology_fingerprint)`.
-2. Khối che chia thành các siêu khung 58 KiB qua `LO_V6_JUMBO` kèm gói parity XOR theo từng stripe `4` chunk (`JP`). Nếu mất `1` chunk trong stripe, bên nhận khôi phục tức thì ở **0 RTT**; nếu mất `>= 2` chunk trong cùng stripe, cơ chế `JCHK -> JNCK(missing)` yêu cầu phát lại đúng các mảnh thiếu.
-3. Capsule khóa 72 byte (`is_capsule=True`) truyền qua `PURE-METAMORPHIC` trên 7 kênh dị biệt.
-4. Khi chạy tách 2 tiến trình (`chimera-tp listen` và `chimera-tp connect`), `ChimeraReceiver` ghi `offer.json` nguyên tử qua `os.replace()` và đồng bộ hoàn tất qua hàng đợi `_incoming_queue` + thông điệp mạng `SOLV`/`JOK!`.
+### 3.1 HyperWire (20-Byte Compact Frame + Adaptive GFNI FEC)
+- Header **20 byte**: `magic(2)="CH"`, `ptype(1)`, `stream_id(1)`, `gen_id(2)`, `sym_id(2)`, `orig_len(4)`, `k(2)`, `payload_len(2)`, `crc32(4)`.
+- **Zero-Bloat Fast Path**: Ở trạng thái mạng sạch (`est_loss == 0`), chỉ gửi `k` gói hệ thống (`SYS`), `0` gói FEC, `0` khử ma trận (`1.53%` overhead tổng).
+- **Zero-Collapse Lossy Path**: Receiver theo dõi khoảng trống thứ tự gói hệ thống để cập nhật `observed_loss_ewma` và phát hiện mất gói ngay khi thấy gói thế hệ/chỉ số cao hơn (`GEN_NEED`). Sender điều chỉnh số gói sửa lỗi chủ động theo phân bố nhị thức $k \frac{p}{1-p} + 1.15\sigma$ và không bao giờ cắt đôi cửa sổ gửi (`max_inflight_gens = 24`).
+- **Linear Independence Filter (`select_independent_rows`)**: Loại bỏ các hàng FEC phụ thuộc tuyến tính ngay trước khi gọi `gf256_decode_matrix`, triệt tiêu hoàn toàn nguy cơ kẹt ma trận suy biến.
+- **Hedged Multi-Path Racing (`HedgedRpcClient` / `HedgedRpcServer`)**: Bắn đồng thời/trễ có kiểm soát yêu cầu RPC lên nhiều đường đích và ăn phản hồi hợp lệ về đầu tiên, chống sập `p99`.
+
+### 3.2 Warp Transparent TCP Accelerator (`warp.py`)
+- Multiplex kết nối TCP (`WarpClient` &harr; `WarpServer`) thành các mảnh `_CHUNK_MAX = 1320 B` với cờ nén `zlib` từng mảnh, nhóm parity `GF(256)` (`_FEC_GROUP = 8`) và `NACK` chọn lọc không giảm băng thông trên mạng mất gói.
+
+### 3.3 Legacy v0.5.0 Exotic Multi-Realm Plane (`lanes.py` / `protocol.py`)
+- Bảo lưu đầy đủ Segmented `GF(256)` RLNC, Chaos Scheduler (`balanced`/`stealth`/`turbo`), Parallel Per-Lane TX Workers và 8 kênh ẩn/vật lý trên Windows (`GHOST_127`, `LAN_LENGTH`, `TS_V4_1280`, `TS_V6_CHORD`, `HYPERV_MCAST TTL=0`, `WSL_PERMUTE S_6`, `ICMP_REFLECT`, `LO_V6_JUMBO`).

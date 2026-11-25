@@ -1,61 +1,54 @@
-# Đánh giá thực nghiệm & So sánh nâng cấp (v0.2.0 &rarr; v0.5.0)
+# Đánh giá thực nghiệm & So sánh Trước–Sau (CHIMERA-HYPER v1.0 & v0.5.0)
 
-Tài liệu này tổng hợp kết quả chạy thực tế sau nâng cấp v0.5.0 của bộ test (`11/11` tests PASS trong `20.543s`) và 7 suite benchmark (`benchmarks/benchmark_eval.py`) trên môi trường Windows thực tế.
-
----
-
-## 1. Hậu kiểm các bug đã phát hiện & xử lý qua hai vòng kiểm thử
-
-1. **v0.2.0 — Nhiễm độc liên phiên & chết luồng RX tại 70% drop**:
-   - Đã vá bằng Keyed CRC-16 (`rlnc_seed + body`), `reset_state()` xả socket/slot trước mỗi phiên và bắt `zlib.error`.
-2. **v0.5.0 (Milestone 3) — `SOLV` JSON tràn ngưỡng UDP `65,507 B` (`WinError 10040`) ở 16 KiB (`k=1,025`)**:
-   - Khi chuyển sang Segmented RLNC và gửi thành công `1,025` khối, danh sách `rank_timeline` dài 1,032 phần tử khiến gói UDP `SOLV` vượt 90 KiB và bị hệ điều hành từ chối im lặng.
-   - **Khắc phục**: Lấy mẫu đều tối đa `120` mốc `rank_timeline` trong gói `SOLV`, giúp `SOLV` luôn `< 12 KiB` ngay cả khi truyền hàng nghìn khối.
+Tài liệu này ghi nhận số liệu thực nghiệm đo trên hệ thống Windows 64-bit (`Intel Core i5-11400`, `gfni=true`, `avx2=true`, `avx512f=true`, Rust `1.92.0`, Python `3.11.7`).
 
 ---
 
-## 2. So sánh Trước (TCP/UDP chuẩn) vs Sau (CHIMERA-TP v0.5.0)
+## Phần A — Đánh giá CHIMERA-HYPER v1.0 (`benchmarks/benchmark_hyper.py`)
 
-| Kịch bản đo | BEFORE — TCP / UDP chuẩn | AFTER — CHIMERA-TP v0.5.0 | Ghi chú kỹ thuật |
+Kiểm chứng đồng thời **`19/19` unit/integration tests PASS (`24.474s`)** (`11/11` v0.5.0 + `8/8` v1.0.0) và 7 suite benchmark đối đầu trực diện TCP/UDP chuẩn trên cùng mô hình giới hạn băng thông/mất gói đối xứng (`ImpairedUdpBridge` + `WinTimerScope`).
+
+### 1. Lõi Silicon Native Rust Intel GFNI (`suite_0_silicon_core`)
+
+| Phép toán `GF(256)` (`0x11B`) | Python thuần (`gf256.py`) | Rust Silicon Core (`GFNI` + `AVX2`) | Tăng tốc |
+| :--- | ---: | ---: | ---: |
+| **16 MiB Vector `mul_add`** | `86.04 ms` (`1,559.9 Mbps`) | **`2.36 ms` (`56,939.5 Mbps`)** | **`36.5x`** |
+| **32 x 1360 B RLNC Encode + Matrix Solve** | `106.77 ms` | **`0.72 ms`** | **`149.25x`** |
+
+- Kiểm thử vét cạn **65,536/65,536** cặp byte `(a, b)` trong `[0..255] x [0..255]`: **0 sai khác** so với `gf_mul`.
+
+### 2. Chống sập băng thông mạng WAN có rớt gói (`suite_2_lossy_wan`)
+
+Truyền `2 MiB` dữ liệu ngẫu nhiên qua cùng cầu `ImpairedUdpBridge(bandwidth=100 Mbps, RTT=50 ms)`. **Lưu ý:** CHIMERA-HYPER khởi chạy hoàn toàn mù (`initial_loss_hint=0.0`), tự học mức rớt gói từ phản hồi vòng đầu.
+
+| Tỷ lệ rớt gói | TCP-CUBIC chuẩn (IW10/RTO) | CHIMERA Silicon GFNI Wire | Tốc độ vượt trội |
+| ---: | :--- | :--- | ---: |
+| **0%** | `1,150.15 ms` (`14.59 Mbps`, rtx=0) | **`311.05 ms` (`53.94 Mbps`, fec=0, overhead=1.53%)** | **`3.70x`** |
+| **2%** | `9,422.40 ms` (`1.78 Mbps`, rtx=41, rto=10) | **`308.20 ms` (`54.44 Mbps`, fec=136, solves=24)** | **`30.57x`** |
+| **5%** | `16,143.58 ms` (`1.04 Mbps`, rtx=90, rto=32) | **`347.29 ms` (`48.31 Mbps`, fec=159, solves=38)** | **`46.48x`** |
+| **10%** | `26,143.85 ms` (`0.64 Mbps`, rtx=172, rto=83) | **`316.79 ms` (`52.96 Mbps`, fec=288, solves=47)** | **`82.53x`** |
+
+### 3. Bốn đột phá công việc thực tế (`suite_1`, `suite_3`, `suite_4`, `suite_5`)
+
+| Tác vụ thực tế | BEFORE (Chuẩn truyền thống) | AFTER (CHIMERA-HYPER v1.0) | Hiệu quả đo được |
 | :--- | :--- | :--- | :--- |
-| **512 B bình thường (LAN)** | TCP: `2.12 ms` (`1,928 kbps`, `552 B`)<br/>UDP: `0.62 ms` (`6,606 kbps`, `544 B`) | `PURE-METAMORPHIC`: `32.65 ms` (`125.4 kbps`, `53.17x` amp) | `0%` plaintext trên từng NIC đơn lẻ; đổi lại độ trễ và băng thông gấp nhiều lần |
-| **256 KiB Bulk (`::1`)** | TCP: `2.04 ms` (`1,030.0 Mbps`)<br/>Wire entropy: `6.122 b/B` | `HOLOGRAPHIC-SPLIT`: `60.94 ms` (`34.4 Mbps`)<br/>Wire entropy: **`7.99934 b/B`** | Che OTP gắn với `topology_fingerprint` |
-| **1 MiB Bulk (`::1`)** | TCP: `16.12 ms` (`520.3 Mbps`)<br/>UDP: `12.78 ms` (`656.4 Mbps`) | `HOLOGRAPHIC-SPLIT`: `132.41 ms` (`63.4 Mbps`)<br/>Wire entropy: **`7.99982 b/B`** | Chậm hơn TCP `~8x`, bù lại entropy `7.9998 b/B` và khóa 72 B đi 7 kênh |
-| **20% Packet Loss (512 B)** | UDP: **FAIL** (`SHA-256 sai`) | **PASS** (`SHA-256 khớp`) | GF(256) tự bù không cần bắt tay lại |
-| **Đảo 100% bit payload** | UDP: **FAIL** (`SHA-256 sai`) | `LAN_LENGTH`: **PASS** (`SHA-256 khớp`) | Giải mã theo độ dài gói, bất biến với nội dung payload |
-| **Đứt 3 giao diện mạng** | Single-NIC: **FAIL** (`0%`) | **PASS** (`SHA-256 khớp` trên 4 làn sống) | Khả năng sống sót đa đường truyền |
-| **Mất 25% chunk `LO_V6_JUMBO` (`1 MiB`)** | UDP thuần: **FAIL** | **PASS** (`111.55 ms`, `75.20 Mbps`, `FEC=4, NACK=2`) | **Tính năng mới v0.5.0**: Stripe XOR FEC 0-RTT + Selective NACK |
+| **Đồng bộ 30 MB (chèn đầu + sửa 3%) @ 100 Mbps** | TCP: `2,523.5 ms` (`31.46 MB` wire, `99.7 Mbps`) | **DNA Beam**: **`267.7 ms`** (`160,080 B` wire, `1,322` REF + `9` DELTA, **`940.0 Mbps` eff.**) | **`9.43x`** (`99.49%` wire saved) |
+| **Lọc `24.6 MB` log (1% khớp) @ 100 Mbps** | TCP tải về rồi lọc: `2,010.9 ms` | **Active Pipe**: **`65.4 ms`** (`248,907 B` wire, **P0 preview sau `38.2 ms`**) | **`30.73x`** (`98.99%` wire saved) |
+| **RPC tương tác (80 reqs, 50 ms RTT + jitter + 5% loss)** | Đơn đường: `p50=114.6`, `p95=240.0`, `p99=353.6 ms` | **Hedged Multi-Path**: `p50=72.9`, `p95=118.8`, **`p99=177.4 ms`** | **`1.99x` giảm `p99`** |
+| **IPC Windows `64 MiB` (kèm kiểm tra SHA-256)** | TCP `127.0.0.1`: `70.94 ms` (`7.57 Gbps`) | **Wormhole SHM**: **`47.30 ms` (`11.35 Gbps`)** | **`1.50x`** |
+
+### 4. Kiểm tra trung thực Worst-Case (`suite_6_worst_case`)
+
+- Dữ liệu `2 MiB` ngẫu nhiên không nén mới hoàn toàn trên đường truyền `100 Mbps` sạch (`0%` rớt gói):
+  - **TCP**: `173.87 ms` (`96.49 Mbps`)
+  - **CHIMERA Auto-Pilot**: `203.09 ms` (`82.61 Mbps`, `fec=0`, overhead khung chỉ `1.53%`, bằng **`0.856x` TCP**).
+  - Xác nhận đã triệt tiêu hoàn toàn nhược điểm phình băng thông `53x–204x` và chậm `8x` ở v0.5.0 khi chạy ở chế độ thực chiến.
 
 ---
 
-## 3. Bước nhảy vọt từ v0.2.0 lên v0.5.0 (Số liệu đo thực tế)
+## Phần B — Lưu trữ kết quả v0.5.0 Exotic Lanes
 
-### 3.1 Ma trận Profile & Song song (2,048 B dữ liệu ngẫu nhiên không nén, `k=129`)
-
-| Cấu hình | Kết quả | Thời gian (ms) | Goodput (kbps) | Tổng dây ước tính (B) | Wire Amplification |
-| :--- | :--- | ---: | ---: | ---: | ---: |
-| `balanced_seq` (như v0.2.0) | PASS | `363.42` | `45.08` | `417,784` | `204.00x` |
-| `balanced_par` (v0.5.0) | PASS | `83.71` | `195.72` | `197,768` | `96.57x` |
-| `stealth_par` (v0.5.0) | PASS | `75.95` | `215.73` | `167,826` | `81.95x` |
-| `turbo_par` (v0.5.0) | PASS | **`65.32`** | **`250.81`** | **`161,631`** | **`78.92x`** |
-
-### 3.2 Scaling kích thước & Soak Test
-- **`PURE-METAMORPHIC` (`0 B -> 16 KiB` không nén)**:
-  - `0 B`: `4.33 ms` | `1 B`: `3.87 ms` | `64 B`: `7.38 ms` (`69.35 kbps`) | `512 B`: `94.60 ms` | `2,048 B`: `83.88 ms` (`195.33 kbps`) | `4,096 B`: `180.69 ms` (`181.35 kbps`, nhanh hơn **4.24x** so với `765.70 ms` của v0.2.0) | `16,384 B` (`turbo`, `k=1,025`, 33 gen): **`536.78 ms` (`244.18 kbps`)**.
-- **`HOLOGRAPHIC-SPLIT` (`16 KiB -> 8 MiB`)**:
-  - `16 KiB`: `17.65 ms` (`7.43 Mbps`, `7.98988 b/B`)
-  - `256 KiB`: `48.45 ms` (`43.29 Mbps`, `7.99920 b/B`)
-  - `1 MiB`: `130.77 ms` (`64.15 Mbps`, `7.99982 b/B`)
-  - `4 MiB`: `473.79 ms` (`70.82 Mbps`, `7.99996 b/B`)
-  - `8 MiB` (145 chunks): `787.55 ms` (**`85.21 Mbps`**, `7.99998 b/B`)
-- **Chaos Drop Sweep (`0% -> 70%`)**: **6/6 PASS** (`19.09 ms` @ `0%` -> `444.81 ms` @ `70%`, `ratio=3.64x`).
-- **20-Run Soak Test**: **20/20 (100.0%)** — `min=9.85 ms`, `p50=24.35 ms`, `p95=129.10 ms`, `crc_drops=0`.
-- **2-Process CLI (`listen` / `connect`)**: PASS cả `PURE-METAMORPHIC` lẫn `HOLOGRAPHIC-SPLIT` dưới `25%` jumbo drop trên 2 tiến trình OS tách biệt.
-- **5-Point Security Audit**: **5/5 PASS**.
-
----
-
-## 4. Giới hạn còn tồn tại ở v0.5.0
-1. **Phóng đại băng thông vẫn lớn** khi dùng `LAN_LENGTH` (`~310x`), `TS_V6_CHORD` (`~109x`), `WSL_PERMUTE` (`~97x`); chế độ `turbo` giảm tổng dây từ `204x` xuống `78.9x` nhưng chưa triệt tiêu hẳn nếu không tắt `LAN_LENGTH`.
-2. **Phạm vi host-local**: `GHOST_127`, `ICMP_REFLECT` (`127.0.0.1`), `HYPERV_MCAST` (`TTL=0`), và `LO_V6_JUMBO` (`::1`) chỉ hoạt động nội bộ trên cùng máy chủ.
-3. **Nút cổ chai Python thuần**: Khi truyền trên `::1`, `HOLOGRAPHIC-SPLIT` đạt `~63–85 Mbps` so với `520–1,030 Mbps` của TCP kernel do chi phí băm `blake2b` tạo keystream OTP và vòng lặp đóng/mở gói ở user-space.
+Các tính chất đặc biệt của bộ v0.5.0 vẫn vượt qua toàn bộ **`11/11` tests** trong `tests/test_chimera.py`:
+- **`GHOST_127`**: `0 B` payload UDP.
+- **`LAN_LENGTH`**: Bất biến với đảo bit 100% nội dung payload.
+- **`HOLOGRAPHIC-SPLIT`**: Bơm `8 MiB` đạt `85.21 Mbps` trên `::1`, chịu rớt `25%` jumbo chunk qua Stripe XOR FEC + Selective NACK, entropy `7.99998 b/B`.
