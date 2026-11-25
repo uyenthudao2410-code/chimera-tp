@@ -128,6 +128,14 @@ def _bind_signatures(lib: ctypes.CDLL) -> None:
         lib.chimera_ppm_decompress.argtypes = [c_void_p, c_size_t, c_void_p, c_size_t]
         lib.chimera_ppm_decompress.restype = c_ssize_t
 
+    if hasattr(lib, "chimera_pir_xor_query"):
+        lib.chimera_pir_xor_query.argtypes = [c_void_p, c_size_t, c_size_t, c_void_p, c_void_p]
+        lib.chimera_pir_xor_query.restype = None
+
+    if hasattr(lib, "chimera_fsk_demod_bits"):
+        lib.chimera_fsk_demod_bits.argtypes = [c_void_p, c_size_t, c_void_p, c_size_t]
+        lib.chimera_fsk_demod_bits.restype = c_size_t
+
 
 _DLL: ctypes.CDLL | None = _discover_and_load_dll()
 
@@ -852,3 +860,79 @@ def ppm_decompress(comp: bytes | bytearray) -> bytes:
         prev2 = prev1
         prev1 = ctx & 0xFF
     return bytes(out_dec)
+
+
+def v8_native_caps() -> dict[str, bool]:
+    return {
+        "pir_xor": _DLL is not None and hasattr(_DLL, "chimera_pir_xor_query"),
+        "fsk_demod": _DLL is not None and hasattr(_DLL, "chimera_fsk_demod_bits"),
+    }
+
+
+def pir_xor_query(
+    db_flat: bytes | bytearray,
+    n_records: int,
+    rec_len: int,
+    query_bits: bytes | bytearray,
+) -> bytes:
+    """Bit-identical 2-server IT-PIR XOR accumulator over contiguous fixed-length database records."""
+    if n_records <= 0 or rec_len <= 0:
+        return b""
+    req_q = (n_records + 7) // 8
+    if len(db_flat) < n_records * rec_len or len(query_bits) < req_q:
+        raise ValueError("Invalid buffer lengths for pir_xor_query")
+    out = bytearray(rec_len)
+    if _DLL is not None and hasattr(_DLL, "chimera_pir_xor_query"):
+        dp, kd = _ro_ptr(db_flat)
+        qp, kq = _ro_ptr(query_bits)
+        op, ko = _rw_ptr(out)
+        _DLL.chimera_pir_xor_query(dp, n_records, rec_len, qp, op)
+        _ = (kd, kq, ko)
+        return bytes(out)
+    mv = memoryview(db_flat)
+    acc = 0
+    for i in range(n_records):
+        if (query_bits[i >> 3] >> (i & 7)) & 1:
+            off = i * rec_len
+            acc ^= int.from_bytes(mv[off : off + rec_len], "little")
+    return acc.to_bytes(rec_len, "little")
+
+
+_FSK_COS0 = (32767, -23170, 0, 23170, -32767, 23170, 0, -23170)
+_FSK_SIN0 = (0, 23170, -32767, 23170, 0, -23170, 32767, -23170)
+_FSK_COS1 = (32767, -26509, 10126, 10126, -26509)
+_FSK_SIN1 = (0, 19260, -31164, 31164, -19260)
+
+
+def fsk_demod_bits(pcm_bytes: bytes | bytearray) -> bytes:
+    """Deterministic Q15 quadrature correlator demodulating 48kHz PCM (40 samples/bit) -> 0/1 bytes."""
+    n_samples = len(pcm_bytes) // 2
+    if n_samples < 40:
+        return b""
+    n_syms = n_samples // 40
+    out = bytearray(n_syms)
+    if _DLL is not None and hasattr(_DLL, "chimera_fsk_demod_bits"):
+        pp, kp = _ro_ptr(pcm_bytes)
+        op, ko = _rw_ptr(out)
+        got = int(_DLL.chimera_fsk_demod_bits(pp, n_samples, op, n_syms))
+        _ = (kp, ko)
+        return bytes(out[:got])
+    samples = struct.unpack_from(f"<{n_syms * 40}h", pcm_bytes, 0)
+    for s in range(n_syms):
+        base = s * 40
+        i0 = q0 = i1 = q1 = 0
+        idx5 = 0
+        for j in range(40):
+            x = samples[base + j]
+            idx8 = j & 7
+            i0 += x * _FSK_COS0[idx8]
+            q0 += x * _FSK_SIN0[idx8]
+            i1 += x * _FSK_COS1[idx5]
+            q1 += x * _FSK_SIN1[idx5]
+            idx5 += 1
+            if idx5 == 5:
+                idx5 = 0
+        si0, sq0 = i0 >> 10, q0 >> 10
+        si1, sq1 = i1 >> 10, q1 >> 10
+        out[s] = 1 if (si1 * si1 + sq1 * sq1) > (si0 * si0 + sq0 * sq0) else 0
+    return bytes(out)

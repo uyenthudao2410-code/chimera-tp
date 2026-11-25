@@ -42,6 +42,15 @@ from .omega_bench import run_omega_benchmark
 from .omega_compute import NeuralPpmCodec, RemoteRamStore, WasmActivePipe, build_wasm_byte_counter_module
 from .omega_storage import RegeneratingMeshVault, SlepianWolfSync, detect_fs_mount_caps
 from .omega_transport import GeneticWireEngine, detect_os_tun_caps
+from .singularity_airgap_crypto import (
+    AirGapFountainBridge,
+    PlausibleDeniabilityVault,
+    PrivateInfoRetrievalEngine,
+    build_deterministic_pir_db,
+)
+from .singularity_bench import run_singularity_benchmark
+from .singularity_kolmogorov_swarm import KolmogorovGrammarCodec, SwarmAnycastMesh
+from .singularity_time_crdt import MerkleCrdtShadowTwin, SpeculativeTimeWarpEngine
 from .edge_proxy import EdgeGateway, LocalEdgeProxy, edge_fetch_remote
 from .fabric import BeamServer, beam_send
 from .ghost_fs import GhostFsEngine
@@ -75,7 +84,7 @@ _DASHBOARD_HTML = r"""<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CHIMERA-HYPER v7.0 OMEGA-FABRIC HyperOS</title>
+<title>CHIMERA-HYPER v8.0 SINGULARITY HyperOS</title>
 <style>
   :root {
     --bg: #0b0f17;
@@ -186,8 +195,8 @@ _DASHBOARD_HTML = r"""<!doctype html>
 
   <div class="card">
     <div class="card-title">
-      <span>PHANTOM-5MS HyperOS Workbench (Terminal • Ghost-FS Explorer • Drop-Portal • AI Context • Medic • OMEGA-14)</span>
-      <span class="meta-line" id="v5-wb-meta">Omega v7.0</span>
+      <span>PHANTOM-5MS HyperOS Workbench (Terminal • Ghost-FS Explorer • Drop-Portal • AI Context • Medic • OMEGA-14 • SINGULARITY)</span>
+      <span class="meta-line" id="v5-wb-meta">Singularity v8.0</span>
     </div>
     <div class="tab-bar">
       <button class="tab-btn active" onclick="showV5Tab('pty', this)">Ghost-PTY Terminal</button>
@@ -196,6 +205,7 @@ _DASHBOARD_HTML = r"""<!doctype html>
       <button class="tab-btn" onclick="showV5Tab('medic', this)">CHIMERA-MEDIC</button>
       <button class="tab-btn" onclick="showV5Tab('synergy', this)">Radar + Tqouta Synergy</button>
       <button class="tab-btn" onclick="showV5Tab('omega', this)">v7.0 OMEGA-14 Lab</button>
+      <button class="tab-btn" onclick="showV5Tab('singularity', this)">v8.0 SINGULARITY Lab</button>
     </div>
     <div id="tab-pty" class="v5-tab">
       <div class="query-bar">
@@ -255,6 +265,18 @@ _DASHBOARD_HTML = r"""<!doctype html>
       </div>
       <div id="omega-table" style="margin-bottom:8px;"></div>
       <div class="log-box" id="omega-out" style="max-height:210px;">CHIMERA-HYPER v7.0 OMEGA-FABRIC — Sẵn sàng đánh giá Trước/Sau toàn bộ 14 đột phá giao thức.</div>
+    </div>
+    <div id="tab-singularity" class="v5-tab" style="display:none;">
+      <div class="query-bar">
+        <button class="primary" onclick="singularityBenchmark()">Chạy Benchmark Đối Kháng 7 Đột Phá v8.0</button>
+        <button onclick="singularityStatus()">Trạng Thái v8.0</button>
+        <button onclick="singularityPirTest()">Truy Vấn Mù PIR</button>
+        <button onclick="singularityKolmogorovTest()">Nén Kolmogorov</button>
+        <button onclick="singularityCrdtTest()">Hòa Nhập CRDT</button>
+        <button onclick="singularityDualVaultTest()">Két 2 Sự Thật</button>
+      </div>
+      <div id="singularity-table" style="margin-bottom:8px;"></div>
+      <div class="log-box" id="singularity-out" style="max-height:220px;">CHIMERA-HYPER v8.0 SINGULARITY — Sẵn sàng kiểm chuẩn đối kháng Time-Warp, CRDT, Siêu âm Air-Gap, PIR mù, Két 2 lớp, Kolmogorov &amp; Swarm 3 nút.</div>
     </div>
   </div>
 
@@ -760,6 +782,65 @@ async function omegaRamTest() {
   } catch (e) { box.textContent = 'Lỗi Remote RAM: ' + e.message; }
 }
 
+async function singularityStatus() {
+  const box = document.getElementById('singularity-out');
+  box.textContent = 'Đang kiểm tra phần cứng SIMD PIR/FSK & v8.0 SINGULARITY...';
+  try {
+    const r = await api('/api/singularity/status');
+    box.textContent = JSON.stringify(r, null, 2);
+  } catch (e) { box.textContent = 'Lỗi Singularity Status: ' + e.message; }
+}
+
+async function singularityBenchmark() {
+  const box = document.getElementById('singularity-out');
+  const tbl = document.getElementById('singularity-table');
+  box.textContent = 'Đang chạy đánh giá đối kháng cả 7 ý tưởng v8.0 (bao gồm 2-Server PIR & Speculative qua hầm 5 ms)...';
+  try {
+    const r = await api('/api/singularity/benchmark', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
+    const rows = Object.values(r.ideas || {}).map(it =>
+      `<tr><td>${esc(it.name)}</td><td>${esc(it.before)}</td><td><b>${esc(it.after)}</b></td><td style="color:${it.ok ? '#34d399' : '#fb7185'}">${it.ok ? 'PASS' : 'FAIL'}</td></tr>`
+    ).join('');
+    tbl.innerHTML = `<table class="tbl"><thead><tr><th>Đột phá v8.0</th><th>Trước / Baseline</th><th>Đo thực tế (v8.0 SINGULARITY)</th><th>KQ</th></tr></thead><tbody>${rows}</tbody></table>`;
+    box.textContent = JSON.stringify({ verified: r.ideas_verified, total: r.ideas_total, total_ms: r.total_ms, native_v8: r.native_v8 }, null, 2);
+  } catch (e) { box.textContent = 'Lỗi Benchmark v8.0: ' + e.message; }
+}
+
+async function singularityPirTest() {
+  const box = document.getElementById('singularity-out');
+  box.textContent = 'Đang thử truy vấn mù IT-PIR trên slab 1 MiB...';
+  try {
+    const r = await api('/api/singularity/pir-shard', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
+    box.textContent = JSON.stringify(r, null, 2);
+  } catch (e) { box.textContent = 'Lỗi PIR: ' + e.message; }
+}
+
+async function singularityKolmogorovTest() {
+  const box = document.getElementById('singularity-out');
+  box.textContent = 'Đang đo nén Kolmogorov vs zlib-9 / lzma / PPM v7 trên 3 bộ dữ liệu...';
+  try {
+    const r = await api('/api/singularity/kolmogorov', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
+    box.textContent = JSON.stringify(r, null, 2);
+  } catch (e) { box.textContent = 'Lỗi Kolmogorov: ' + e.message; }
+}
+
+async function singularityCrdtTest() {
+  const box = document.getElementById('singularity-out');
+  box.textContent = 'Đang trộn Merkle-CRDT offline theo 20 thứ tự xáo trộn...';
+  try {
+    const r = await api('/api/singularity/crdt-merge', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
+    box.textContent = JSON.stringify(r, null, 2);
+  } catch (e) { box.textContent = 'Lỗi CRDT: ' + e.message; }
+}
+
+async function singularityDualVaultTest() {
+  const box = document.getElementById('singularity-out');
+  box.textContent = 'Đang kiểm định pháp y thống kê Két Hai Sự Thật (10 đơn vs 10 kép)...';
+  try {
+    const r = await api('/api/singularity/dual-vault', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
+    box.textContent = JSON.stringify(r, null, 2);
+  } catch (e) { box.textContent = 'Lỗi Dual-Vault: ' + e.message; }
+}
+
 function logV4(msg) {
   const el = document.getElementById('v4-console');
   el.style.display = 'block';
@@ -987,6 +1068,9 @@ class ChimeraDaemon:
         )
         self.remote_ram = RemoteRamStore(max_bytes=16 * 1024 * 1024)
         self.genetic_wire = GeneticWireEngine()
+        self.time_warp = SpeculativeTimeWarpEngine()
+        self._pir_lock = threading.Lock()
+        self._pir_slab: bytes | None = None
 
         self._run_lock = threading.Lock()
         self._ephemeral_mode = int(self.config.beam_port) == 0 and int(self.config.query_port) == 0
@@ -1217,7 +1301,7 @@ class ChimeraDaemon:
                         200,
                         {
                             "ok": True,
-                            "version": "7.0.0",
+                            "version": "8.0.0",
                             "node_name": daemon_ref.config.node_name,
                             "role": daemon_ref.config.role,
                             "hardware": cpu_caps(),
@@ -1242,6 +1326,7 @@ class ChimeraDaemon:
                     "/api/synergy/bounties",
                     "/api/synergy/burn-scan",
                     "/api/omega/status",
+                    "/api/singularity/status",
                 ):
                     qs = urllib.parse.parse_qs(parsed.query)
                     if daemon_ref._should_proxy("local=1" in parsed.query):
@@ -1307,6 +1392,23 @@ class ChimeraDaemon:
                                     "os_tun_caps": detect_os_tun_caps(),
                                     "fs_mount_caps": detect_fs_mount_caps(),
                                     "remote_ram": daemon_ref.remote_ram.stats(),
+                                },
+                            )
+                        elif parsed.path == "/api/singularity/status":
+                            from .native import v7_native_caps, v8_native_caps
+
+                            self._send_json(
+                                200,
+                                {
+                                    "ok": True,
+                                    "version": "8.0.0",
+                                    "node_name": daemon_ref.config.node_name,
+                                    "role": daemon_ref.config.role,
+                                    "native_v7": v7_native_caps(),
+                                    "native_v8": v8_native_caps(),
+                                    "pir_db_loaded": daemon_ref._pir_slab is not None,
+                                    "time_warp_throttled": daemon_ref.time_warp.throttled,
+                                    "zero_weight": get_zero_weight_status(),
                                 },
                             )
                     except PermissionError as pe:
@@ -1410,7 +1512,7 @@ class ChimeraDaemon:
                         200,
                         {
                             "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
-                            "version": "7.0.0",
+                            "version": "8.0.0",
                             "cluster": st_payload.get("cluster", {}),
                             "status": st_payload,
                         },
@@ -2134,6 +2236,13 @@ class ChimeraDaemon:
                     "/api/omega/ram-get",
                     "/api/omega/slepian-sync",
                     "/api/omega/regen-vault",
+                    "/api/singularity/pir-shard",
+                    "/api/singularity/speculative-fetch",
+                    "/api/singularity/crdt-merge",
+                    "/api/singularity/dual-vault",
+                    "/api/singularity/kolmogorov",
+                    "/api/singularity/airgap",
+                    "/api/singularity/swarm",
                 ):
                     raw_b = self._read_body()
                     try:
@@ -2380,6 +2489,66 @@ class ChimeraDaemon:
                                     "shard_bytes": len(healed["data"]),
                                 },
                             )
+                        elif parsed.path == "/api/singularity/pir-shard":
+                            from .native import pir_xor_query
+
+                            n_rec = int(body.get("n_records", 2048))
+                            r_len = int(body.get("rec_len", 512))
+                            with daemon_ref._pir_lock:
+                                if daemon_ref._pir_slab is None or len(daemon_ref._pir_slab) != n_rec * r_len:
+                                    daemon_ref._pir_slab = build_deterministic_pir_db(n_rec, r_len)
+                                db_buf = daemon_ref._pir_slab
+                            q_bytes = bytes.fromhex(str(body["query_hex"])) if body.get("query_hex") else b"\x55" * ((n_rec + 7) // 8)
+                            t_pir = time.perf_counter()
+                            ans = pir_xor_query(db_buf, n_rec, r_len, q_bytes)
+                            scan_ms = round((time.perf_counter() - t_pir) * 1000.0, 4)
+                            self._send_json(
+                                200,
+                                {
+                                    "ok": len(ans) == r_len,
+                                    "node_name": daemon_ref.config.node_name,
+                                    "n_records": n_rec,
+                                    "rec_len": r_len,
+                                    "ans_hex": ans.hex(),
+                                    "scan_ms": scan_ms,
+                                },
+                            )
+                        elif parsed.path == "/api/singularity/speculative-fetch":
+                            key_name = str(body.get("key") or "mod_00.py")
+                            ver_tag = str(body.get("version_tag") or "v1")
+                            plen = max(16, min(65536, int(body.get("payload_len", 800))))
+                            seed_b = (f"# remote {key_name} {ver_tag}\n".encode("utf-8") * ((plen // 20) + 3))[:plen]
+                            self._send_json(
+                                200,
+                                {
+                                    "ok": True,
+                                    "node_name": daemon_ref.config.node_name,
+                                    "key": key_name,
+                                    "version_tag": ver_tag,
+                                    "data_hex": seed_b.hex(),
+                                    "sha256": hashlib.sha256(seed_b).hexdigest(),
+                                },
+                            )
+                        elif parsed.path == "/api/singularity/crdt-merge":
+                            out_c = MerkleCrdtShadowTwin.run_benchmark()
+                            out_c["node_name"] = daemon_ref.config.node_name
+                            self._send_json(200, out_c)
+                        elif parsed.path == "/api/singularity/dual-vault":
+                            out_v = PlausibleDeniabilityVault.run_benchmark()
+                            out_v["node_name"] = daemon_ref.config.node_name
+                            self._send_json(200, out_v)
+                        elif parsed.path == "/api/singularity/kolmogorov":
+                            out_k = KolmogorovGrammarCodec.run_benchmark()
+                            out_k["node_name"] = daemon_ref.config.node_name
+                            self._send_json(200, out_k)
+                        elif parsed.path == "/api/singularity/airgap":
+                            out_a = AirGapFountainBridge.run_benchmark()
+                            out_a["node_name"] = daemon_ref.config.node_name
+                            self._send_json(200, out_a)
+                        elif parsed.path == "/api/singularity/swarm":
+                            out_s = SwarmAnycastMesh.run_benchmark()
+                            out_s["node_name"] = daemon_ref.config.node_name
+                            self._send_json(200, out_s)
                     except PermissionError as pe:
                         self._send_json(403, {"error": str(pe)})
                     except FileNotFoundError as fnf:
@@ -2404,6 +2573,25 @@ class ChimeraDaemon:
                             else ""
                         )
                         rep = run_omega_benchmark(peer_http_base=peer_base)
+                        self._send_json(200, rep)
+                    except Exception as exc:
+                        self._send_json(500, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/singularity/benchmark":
+                    raw_b = self._read_body()
+                    try:
+                        body = json.loads(raw_b.decode("utf-8") or "{}")
+                    except Exception:
+                        self._send_json(400, {"error": "Invalid JSON body"})
+                        return
+                    try:
+                        peer_base = (
+                            daemon_ref.active_edge_peer_base()
+                            if (daemon_ref.config.role == "controller" and not bool(body.get("local_only", False)))
+                            else ""
+                        )
+                        rep = run_singularity_benchmark(peer_http_base=peer_base)
                         self._send_json(200, rep)
                     except Exception as exc:
                         self._send_json(500, {"error": str(exc)})
@@ -2484,7 +2672,7 @@ class ChimeraDaemon:
         self.store.log_event(
             "INFO",
             "DAEMON",
-            f"v7.0 Started on http://{self.http_addr[0]}:{self.http_addr[1]} | RAM={zw['daemon_ram_mb']}MB | Beam={self.config.beam_port} EdgeProxy={self.config.edge_proxy_port} PhantomFB={self._phantom_srv.fallback_port}",
+            f"v8.0 Started on http://{self.http_addr[0]}:{self.http_addr[1]} | RAM={zw['daemon_ram_mb']}MB | Beam={self.config.beam_port} EdgeProxy={self.config.edge_proxy_port} PhantomFB={self._phantom_srv.fallback_port}",
         )
         return self
 
@@ -2521,7 +2709,7 @@ class ChimeraDaemon:
 
     def status_payload(self) -> dict[str, Any]:
         return {
-            "version": "7.0.0",
+            "version": "8.0.0",
             "config": self.config.to_dict(),
             "hardware": cpu_caps(),
             "zero_weight": get_zero_weight_status(),

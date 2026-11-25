@@ -40,7 +40,13 @@
 - **Ghost-Block, Regen Mesh & 0-RTT Information Theory (`omega_storage.py`)**: 4 KB block patching (`-99.64%`), `K=3, N=5` Cauchy regenerating vault with zero-plaintext shard healing, 0-RTT Slepian-Wolf blind delta sync (Berlekamp-Massey + Chien search over native syndromes), and `$0` Serverless Parasitic Dead-Drop Mesh with hourly Lehmer carrier permutation.
 - **Sandboxed WASM AQ03, Compressed Remote RAM, PPM Codec, UEP Display & PQ/Genetic Wire (`omega_compute.py`, `omega_bench.py`)**: Strict fuel/memory WebAssembly 1.0 interpreter (`109 B` `.wasm` module), `REMOTE_HTTP` 4 KB compressed RAM swap/fault (`-94.85%`), Shared-Prior + Native Order-2 Context-Mixing Arithmetic Range Codec (`-6.46%` vs `zlib-9`), `UEP-RLNC` crisp-text protection (`25/25` under `15%` loss), Hybrid Module-LWE+X25519 + Chaff-as-RLNC, and 12-byte `CHG7` Self-Mutating Genetic Wire DNA.
 
-## Next Horizons — `v7.5 / v8.0`
+## Completed — `v8.0.0 SINGULARITY` (7 Adversarial Frontier Engines)
+- **Native SIMD Extensions (`lib.rs`, `chimera_core.c`, `native.py`)**: Bit-identical Rust & C11 AVX2 `chimera_pir_xor_query` (`10.03 GB/s` 2-server PIR XOR) and pure-integer Q15 quadrature `chimera_fsk_demod_bits` (`18.0/19.2 kHz` ultrasonic FSK).
+- **Time-Warp & Offline CRDT (`singularity_time_crdt.py`)**: Speculative prefetch (`11/12` hits, `0.0106 ms` vs `10.169 ms` HTTP = `959x`) with automatic anti-waste throttling on random walks (`0` stale reads); `HLC` + `BLAKE2s` Merkle-CRDT converging across `20/20` shuffled permutations with conflict audit.
+- **Air-Gap Fountain, IT-PIR & Plausible Deniability (`singularity_airgap_crypto.py`)**: `6 dB` AWGN + `33%` frame erasure ultrasonic/optical fountain recovery; live cross-host 2-server 1 MiB IT-PIR (`1,536 B` wire, `-99.85%`); `10-vs-10` forensic-indistinguishable dual-password GF(256) vault (`~7.989 b/B`, equal bytes).
+- **Kolmogorov Grammar & 3-Node Swarm (`singularity_kolmogorov_swarm.py`)**: Lossless columnar delta-zigzag + Order-2 PPM beating `zlib-9` (`-72.69%`), `lzma` (`-30.76%`), and v7 PPM (`-66.27%`) on `1,000` JSONL logs with `+0.0061%` on random data; 3-socket UDP 2-hop RLNC recode rerouting & `1.1 ms` `K=3` rehydration.
+
+## Next Horizons — `v8.5+`
 1. **Dual-Node Active-Active Tqouta Mesh (`:12500` Win ↔ `:12550` Hub)**: Cross-failover local relay pool so rate-limited accounts on one host seamlessly spill to healthy accounts on the peer over 5 ms UDP.
 2. **Cross-Bounty Semantic Patch Memory**: Embed past winning `solution.patch` patterns in FTS5/BM25 so recurring issue classes replay proven structural recipes at 0 tokens.
 3. **Tech-Stack Batching & Prompt-Cache Prefix Pinning**: Schedule queued bounties by shared repository/runtime stack to push Tqouta prompt-cache hit rates from `76.6%` toward `>90%`.

@@ -300,7 +300,7 @@ class TestChimeraV3HyperGrid(unittest.TestCase):
             base = f"http://127.0.0.1:{daemon.http_addr[1]}"
             try:
                 h = json.loads(urllib.request.urlopen(f"{base}/api/health", timeout=5.0).read().decode())
-                self.assertIn(h["version"], ("3.0.0", "4.0.0", "5.0.0", "6.0.0", "7.0.0"))
+                self.assertIn(h["version"], ("3.0.0", "4.0.0", "5.0.0", "6.0.0", "7.0.0", "8.0.0"))
                 self.assertGreater(h["zero_weight"]["daemon_ram_mb"], 0.0)
                 self.assertIn("zero_weight_ok", h["zero_weight"])
 

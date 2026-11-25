@@ -1,4 +1,4 @@
-# CHIMERA-HYPER v7.0.0 — Hướng Dẫn Dễ Hiểu (Cũng Dùng Được Dù Không Chuyên Công Nghệ)
+# CHIMERA-HYPER v8.0.0 — Hướng Dẫn Dễ Hiểu (Cũng Dùng Được Dù Không Chuyên Công Nghệ)
 
 > **Tóm tắt 1 câu:** **CHIMERA-HYPER (`chimera-tp`)** là *"đường cao tốc riêng + bộ trợ lý siêu nhẹ"* nối thẳng **máy tính Windows trước mặt bạn** với **máy chủ Linux đặt ở nhà (chạy 24/7)** thành như một chiếc máy tính liền mạch — **nhanh gấp ~5.5–19 lần**, **chống mất kết nối/nghẽn mạng**, và **cắt mạnh tiền token AI + bảo vệ dữ liệu**.
 
@@ -74,22 +74,36 @@ Phiên bản `v7.0` bổ sung **14 động cơ công nghệ cốt lõi** ở t�
 
 ---
 
+## 3b. Giải mã 7 nâng cấp biên giới `v8.0 SINGULARITY` (Kèm giới hạn trung thực)
+
+Phiên bản `v8.0` đi xa hơn một bước nữa khi chạm vào các bài toán ngoại tuyến, cách ly mạng, truy vấn mù và nén cấu trúc — mỗi tính năng đều được kiểm tra bằng bài toán đối kháng khắc nghiệt:
+
+1. **Chạy đoán trước độ trễ âm (`Speculative Time-Warp`):** Theo dõi chuỗi thao tác vừa làm để tải nháp file sắp mở vào RAM trước khi bạn bấm. Đo live qua hầm `5 ms`: lần bấm kế tiếp phản hồi **`0.0106 ms` thay vì `10.169 ms` (`959.3x`)**, trúng **`11/12` (`91.67%`)**, `0` dữ liệu cũ. *Hạn chế thực tế:* Nếu bạn bấm nhảy cóc hoàn toàn ngẫu nhiên, đoán sẽ trượt — nên hệ thống có phanh tự động (`auto-throttle`) tự tắt đầu cơ khi tỉ lệ trúng dưới `25%` để không tốn băng thông.
+2. **Làm việc ngoại tuyến tự hòa nhập (`Merkle-CRDT Shadow-Twin`):** Cho phép sửa khi mất mạng rồi tự ghép bằng đồng hồ nhân quả (`HLC` + `BLAKE2s` Merkle Root) thay vì bị từ chối lỗi `409`. Xáo trộn `20` thứ tự đến khác nhau đều hội tụ ra cùng `1` gốc. *Hạn chế:* Nếu 2 người sửa đè cùng `1` dòng khi mất mạng, bản đến sau thắng làm bản chính và bản thua được lưu vào nhật ký kiểm toán chứ không tự viết lại ý nghĩa câu văn.
+3. **Truyền file không cần Wi-Fi hay dây mạng (`Air-Gap Ultrasonic & Optical Fountain`):** Bắn gói tin mã `GF(256)` một chiều bằng sóng âm `18.0/19.2 kHz` hoặc khung 2D nhấp nháy. Vẫn khôi phục `100%` dù bị nhiễu `6 dB AWGN` + mất `33%` khung âm thanh / `30%` khung hình. *Hạn chế:* Tốc độ âm thanh `~1,200 bps` chỉ phù hợp gửi khóa bí mật, cấu hình ngắn (`< 16 KB`), không dùng cho file video nặng.
+4. **Truy vấn mù từ xa (`2-Server Blind IT-PIR`):** Nhờ chia truy vấn thành `2` mẫu nhiễu ngẫu nhiên gửi sang 2 kho bản sao độc lập (Windows + Linux), bạn lấy được đúng `1` dòng từ kho **`1 MiB` (`2,048` bản ghi)** mà từng máy riêng lẻ không biết bạn hỏi dòng nào — chỉ tốn **`1,536 B` trên dây (`-99.85%`)**, tốc độ quét native **`10.03 GB/s`**. *Hạn chế:* Yêu cầu `2` máy giữ bản sao không cấu kết và phải quét qua toàn bộ tập bản ghi mỗi lần hỏi.
+5. **Két sắt "Hai Sự Thật" (`Plausible Deniability Dual-Vault`):** Cùng một tệp két Cauchy `16,384 B`: Mật khẩu 1 mở tài liệu công việc bình thường, Mật khẩu 2 mở bí mật ẩn bên trong. Kiểm định đối sánh `10` két đơn và `10` két kép có dung lượng bằng hệt nhau, độ hỗn loạn `7.9888` vs `7.9887 b/B`, không phân biệt được bằng thống kê. *Hạn chế:* Phải chừa sẵn dung lượng cố định ban đầu cho két ẩn.
+6. **Nén ngữ pháp cột vượt chuẩn (`Kolmogorov Grammar Wire Codec`):** Tách khung lặp của log/JSONL, nén cột số bằng sai phân `delta-zigzag` trước khi đưa qua bộ mã Order-2 native. Với `1,000` dòng JSONL thay đổi liên tục (`81,091 B`), nén còn **`1,889 B` — nhỏ hơn `zlib-9` (`6,917 B`) `72.69%`, nhỏ hơn `lzma` (`2,728 B`) `30.76%` và nhỏ hơn `PPM v7` (`5,600 B`) `66.27%`**. *Hạn chế:* Nếu gặp dữ liệu hoàn toàn ngẫu nhiên (`16 KB`), codec tự nhận biết và lùi sạch về bản gốc chỉ cộng thêm `+1 byte` (`+0.0061%`).
+7. **Lưới 3 nút tự rẽ đường & cứu hộ (`Swarm RLNC Anycast & Failover`):** Khi đường thẳng bị đứt/suy hao nặng (`35%` mất gói), dữ liệu được nút thứ 3 pha trộn mã `GF(256)` (`8/8` tới đích với `0` byte plaintext lộ ở relay) và tự dựng lại trạng thái từ `3/5` mảnh Cauchy trong **`1.1 ms`**. *Hạn chế:* Để rẽ đường vật lý ngoài Internet thật, bạn cần thêm tối thiểu 1 máy/VPS thứ 3 tham gia cụm; hiện mới kiểm chứng trên mạng giả lập 3 socket nội bộ.
+
+---
+
 ## 4. Bảng tóm tắt Trước & Sau đo thực tế trên hệ thống thật
 
-Tất cả số liệu dưới đây được đo trực tiếp giữa **PC Windows** (`Rust GFNI/AVX-512F`, Python 3.11) và **Linux Home Server** (`C11 AVX2`, Python 3.14.4) nối qua `PHANTOM_5MS_DIRECT` (**`5.8 ms`** RTT):
+Tất cả số liệu dưới đây được đo trực tiếp giữa **PC Windows** (`Rust GFNI/AVX-512F`, Python 3.11) và **Linux Home Server** (`C11 AVX2`, Python 3.14.4) nối qua `PHANTOM_5MS_DIRECT` (**`5.81 ms`** RTT):
 
-| Hạng mục kiểm chứng | Trước đây (Cách thông thường) | Sau khi có CHIMERA-HYPER v7.0.0 | Đánh giá |
+| Hạng mục kiểm chứng | Trước đây / Đối thủ | Sau khi có CHIMERA-HYPER v8.0.0 | Đánh giá |
 | :--- | :--- | :--- | :---: |
-| **Bộ nhớ RAM chạy ngầm 24/7** | Tốn nặng nếu chạy app desktop | **`32.79 MB`** (Win) • **`44.40 MB`** (Linux) — dưới trần `80 MB` | Đạt |
-| **Độ khớp lõi Windows ↔ Linux** | Dễ lệch giữa 2 hệ điều hành | **Khớp từng bit SHA-256 (`4/4` hàm native lõi Rust = C11)** | Đạt |
-| **Tốc độ gọi AI `Tqouta` về nhà** | `506.63 ms` qua HTTPS chuẩn | **`36.63 ms` min / `52.68–53.26 ms` TB** (`:12550`) | Nhanh hơn `9.5x` |
+| **Bộ nhớ RAM chạy ngầm 24/7** | Tốn nặng nếu chạy app desktop | **`33.04 MB`** (Win) • **`47.14 MB`** (Linux) — dưới trần `80 MB` | Đạt |
+| **Độ khớp lõi Windows ↔ Linux** | Dễ lệch giữa 2 hệ điều hành | **Khớp từng bit SHA-256 (`6/6` hàm native lõi Rust = C11 AVX2)** | Đạt |
+| **Tốc độ gọi AI `Tqouta` & Time-Warp** | `506.63 ms` HTTPS • `10.17 ms` HTTP | `Tqouta` `36–53 ms` (`9.5x`) • Time-Warp **`0.0106 ms` (`959x`, `11/12`)** | Cực nhanh |
 | **Soi đường dẫn code (`Radar`)** | AI tự mò, tốn nhiều lượt token | **`390.4 KB -> 4.10 KB` (`-98.95%`)** trong `71.89 ms`, `0` token | Tiết kiệm triệt để |
-| **Độ bền toàn bộ 14 ý tưởng v7.0** | Chạy đơn lẻ từng lớp rời rạc | **Đạt `14 / 14`** khi kiểm chuẩn live trong **`469.81 ms`** | Đạt 100% |
-| **Vá file 4 KB / Đồng bộ 0-RTT** | Tải lại cả file / hỏi qua lại 2 vòng | Ghost-Block **`-99.64%`** (`95 B`) • Slepian-Wolf **`-56.61%..72.6%`** | Nhanh, ít băng thông |
-| **Gửi mã WASM / Mượn RAM `5 ms`** | Kéo log thô / Swap ổ đĩa | WASM **`109 B` chạy trên Linux mất `0.72 ms`** • RAM **`-94.85%`** | Chạy xuyên máy thật |
-| **Kiểm thử tự động toàn dự án** | — | **`53 / 53` bài test PASS** trên cả Windows (`65.3s`) và Linux (`45.7s`) | Ổn định cả 2 đầu |
+| **Kiểm chuẩn sống v7.0 & v8.0** | Chạy đơn lẻ thiếu kiểm tra đối kháng | v7.0 **`14/14` PASS** • v8.0 **`7/7` PASS** (xuyên hầm `5.81 ms`) | Đạt 100% |
+| **Nén log JSONL / HTTP (`Kolmogorov`)** | `zlib-9`: `6,917 B` / `lzma`: `2,728 B` | JSONL **`1,889 B` (`-72.69%` vs z9)** • HTTP **`1,102 B` (`-50.09%` vs lzma)** | Vượt trội log/JSON |
+| **Truy vấn mù `1 MiB` & Két 2 lớp** | Kéo cả DB / 1 mật khẩu lộ sạch | PIR **`1,536 B` wire (`-99.85%`, `10.03 GB/s`)** • Két Chi2 lệch `6.29` | Riêng tư tuyệt đối |
+| **Kiểm thử tự động toàn dự án** | — | **`62 / 62` bài test PASS** trên cả Windows (`74.3s`) và Linux (`51.5s`) | Ổn định cả 2 đầu |
 
-Chi tiết kỹ thuật sâu hơn xem thêm tại [docs/EVALUATION.md](docs/EVALUATION.md), [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) và [docs/ROADMAP.md](docs/ROADMAP.md).
+Chi tiết kỹ thuật sâu hơn xem thêm tại [docs/EVALUATION.md](docs/EVALUATION.md), [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/MOONSHOT_VAULT.md](docs/MOONSHOT_VAULT.md) và [docs/ROADMAP.md](docs/ROADMAP.md).
 
 ---
 
@@ -97,25 +111,29 @@ Chi tiết kỹ thuật sâu hơn xem thêm tại [docs/EVALUATION.md](docs/EVAL
 
 Khi hai máy đã bật sẵn dịch vụ chạy ngầm, bạn chỉ cần mở trình duyệt trên Windows:
 
-- **Bảng điều khiển trung tâm (Xem RAM, log, bấm test 14 công nghệ v7.0):**
-  👉 Mở trình duyệt vào **`http://127.0.0.1:9780`** -> chọn tab **v7.0 OMEGA-14 Lab** hoặc **Radar + Tqouta Synergy**.
+- **Bảng điều khiển trung tâm (Xem RAM, log, bấm test 7 công nghệ v8.0 & 14 công nghệ v7.0):**
+  👉 Mở trình duyệt vào **`http://127.0.0.1:9780`** -> chọn tab **v8.0 SINGULARITY Lab**, **v7.0 OMEGA-14 Lab** hoặc **Radar + Tqouta Synergy**.
 - **Xem thư mục & kết quả file patch trên máy chủ ở nhà:**
   👉 Mở trình duyệt vào **`http://127.0.0.1:9788/dav/`**.
 
 Nếu bạn muốn kiểm tra nhanh bằng dòng lệnh (`PowerShell` hoặc `Terminal`):
 
 ```bash
-# Chạy kiểm tra thực tế toàn bộ 14 công nghệ qua đường hầm 5 ms
+# Chạy kiểm chuẩn đối kháng 7 đột phá v8.0 xuyên hầm 5 ms (bao gồm 2-Server PIR & Time-Warp)
+chimera-tp singularity bench --peer-http http://127.0.0.1:9780
+
+# Xem trạng thái phần cứng SIMD v8.0 hoặc thử từng động cơ v8.0 offline
+chimera-tp singularity status --peer-http http://127.0.0.1:9780
+chimera-tp singularity pir
+chimera-tp singularity kolmogorov
+chimera-tp singularity crdt
+chimera-tp singularity dual-vault
+
+# Chạy kiểm tra thực tế toàn bộ 14 công nghệ v7.0 & trạng thái Radar + Tqouta
 chimera-tp omega bench --peer-http http://127.0.0.1:9780
-
-# Xem trạng thái driver/phần cứng cả 2 đầu và thử gửi mã WASM sang máy nhà
-chimera-tp omega status --peer-http http://127.0.0.1:9780
-chimera-tp omega wasm --peer-http http://127.0.0.1:9780
-
-# Xem trạng thái Radar + Tqouta (đã che sạch email)
 chimera-tp synergy status --peer-http http://127.0.0.1:9780
 
-# Tự chạy toàn bộ 53 bài kiểm tra tự động
+# Tự chạy toàn bộ 62 bài kiểm tra tự động
 python -m unittest discover -s tests -v
 ```
 

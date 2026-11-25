@@ -1,6 +1,6 @@
 """CHIMERA-HYPER v6.0: APEX-SYNERGY (PHANTOM-5MS, Radar + Tqouta Fusion, Ghost-PTY, Ghost-FS WebDAV, Medic & Drop-Portal)."""
 
-__version__ = "7.0.0"
+__version__ = "8.0.0"
 
 from .active_pipe import ActivePipeEngine, ActivePipeResult, ActiveQueryServer, ComputePlan, remote_active_query
 from .apex_synergy import ApexSynergyEngine
@@ -71,10 +71,20 @@ from .omega_transport import (
     x25519_keypair,
     x25519_shared,
 )
+from .singularity_airgap_crypto import (
+    AirGapFountainBridge,
+    PlausibleDeniabilityVault,
+    PrivateInfoRetrievalEngine,
+    build_deterministic_pir_db,
+)
+from .singularity_bench import format_singularity_markdown, run_singularity_benchmark
+from .singularity_kolmogorov_swarm import KolmogorovGrammarCodec, SwarmAnycastMesh
+from .singularity_time_crdt import HlcClock, MerkleCrdtReplica, MerkleCrdtShadowTwin, SpeculativeTimeWarpEngine
 
 __all__ = [
     "ActivePipeEngine",
     "ActivePipeResult",
+    "AirGapFountainBridge",
     "ApexSynergyEngine",
     "BeamReport",
     "BeamServer",
@@ -98,14 +108,18 @@ __all__ = [
     "GhostPtyManager",
     "HedgedRpcClient",
     "HedgedRpcServer",
+    "HlcClock",
     "HyperWireReceiver",
     "HyperWireReport",
     "HyperWireSender",
     "ImmortalMultiPathReceiver",
     "ImmortalMultiPathSender",
     "ImmortalReport",
+    "KolmogorovGrammarCodec",
     "LocalEdgeProxy",
     "MedicEngine",
+    "MerkleCrdtReplica",
+    "MerkleCrdtShadowTwin",
     "MerkleSnapshot",
     "MultiIspBondingEngine",
     "NatPunchResponder",
@@ -114,7 +128,9 @@ __all__ = [
     "ParasiticDeadDropMesh",
     "PhantomTunnelClient",
     "PhantomTunnelServer",
+    "PlausibleDeniabilityVault",
     "PolymorphicMimicLayer",
+    "PrivateInfoRetrievalEngine",
     "QuantumChaffShield",
     "RealmInfo",
     "RegeneratingMeshVault",
@@ -125,6 +141,8 @@ __all__ = [
     "ShadowMerkleIndex",
     "SiliconDataPlane",
     "SlepianWolfSync",
+    "SpeculativeTimeWarpEngine",
+    "SwarmAnycastMesh",
     "TelemetryStore",
     "TelepathicCodec",
     "TelepathicStore",
@@ -138,6 +156,7 @@ __all__ = [
     "attempt_direct_punch",
     "beam_send",
     "beam_send_merkle_patch",
+    "build_deterministic_pir_db",
     "build_propfind_xml",
     "build_wasm_byte_counter_module",
     "cpu_caps",
@@ -147,6 +166,7 @@ __all__ = [
     "discover_nat_profile",
     "edge_fetch_remote",
     "format_omega_markdown",
+    "format_singularity_markdown",
     "get_zero_weight_status",
     "has_native",
     "hybrid_pq_decaps",
@@ -161,6 +181,7 @@ __all__ = [
     "reconstruct_secret_gf256_2of3",
     "restore_holo_backup",
     "run_omega_benchmark",
+    "run_singularity_benchmark",
     "seal_packet",
     "split_secret_gf256_2of3",
     "train_domain_dictionary",

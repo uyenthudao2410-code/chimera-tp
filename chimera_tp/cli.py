@@ -306,6 +306,13 @@ def main(argv: list[str] | None = None) -> int:
     p_om.add_argument("--peer-http", default="http://127.0.0.1:9780", help="Target daemon HTTP URL")
     p_om.add_argument("--local", action="store_true", help="Run action offline instead of querying daemon")
 
+    # ---- CHIMERA-HYPER v8.0 SINGULARITY Subcommands ----
+    p_sg = sub.add_parser("singularity", help="SINGULARITY 7-idea status, adversarial bench, PIR, Kolmogorov codec, CRDT, airgap, dual vault, and swarm")
+    p_sg.add_argument("action", choices=("status", "bench", "pir", "kolmogorov", "crdt", "airgap", "dual-vault", "swarm"), help="Singularity action")
+    p_sg.add_argument("--input", default="", help="Optional input text for Kolmogorov codec test")
+    p_sg.add_argument("--peer-http", default="http://127.0.0.1:9780", help="Target daemon HTTP URL")
+    p_sg.add_argument("--local", action="store_true", help="Run action offline instead of querying daemon")
+
     # ---- Legacy Research Subcommands (v0.5.0 Multi-Realm Exotic Lanes) ----
     p_probe = sub.add_parser("probe", help="Probe hardware capabilities & Windows network realms")
     p_probe.add_argument("--json", action="store_true", help="Emit probe profile as JSON")
@@ -943,6 +950,63 @@ def main(argv: list[str] | None = None) -> int:
         healed = mv.repair_missing_shard([enc["shards"][0], enc["shards"][2], enc["shards"][3]], target_node_idx=1)
         rec = mv.decode_shards([healed, enc["shards"][3], enc["shards"][4]])
         print(json.dumps({"ok": rec == raw_v, "repair_ms": healed["repair_ms"], "entropy": healed["entropy"]}, indent=2))
+        return 0
+
+    if args.command == "singularity":
+        import urllib.request
+        from .native import v8_native_caps
+        from .singularity_airgap_crypto import (
+            AirGapFountainBridge,
+            PlausibleDeniabilityVault,
+            PrivateInfoRetrievalEngine,
+        )
+        from .singularity_bench import format_singularity_markdown, run_singularity_benchmark
+        from .singularity_kolmogorov_swarm import KolmogorovGrammarCodec, SwarmAnycastMesh
+        from .singularity_time_crdt import MerkleCrdtShadowTwin
+
+        base = args.peer_http.rstrip("/")
+        if args.action == "status":
+            if args.local:
+                print(json.dumps({"ok": True, "version": "8.0.0", "native_v8": v8_native_caps()}, indent=2))
+                return 0
+            with urllib.request.urlopen(f"{base}/api/singularity/status", timeout=8.0) as r:
+                print(r.read().decode("utf-8"))
+            return 0
+        if args.action == "bench":
+            if args.local:
+                rep = run_singularity_benchmark()
+            else:
+                req = urllib.request.Request(
+                    f"{base}/api/singularity/benchmark",
+                    data=b"{}",
+                    headers={"Content-Type": "application/json"},
+                    method="POST",
+                )
+                with urllib.request.urlopen(req, timeout=30.0) as r:
+                    rep = json.loads(r.read().decode("utf-8"))
+            print(format_singularity_markdown(rep))
+            return 0
+        if args.action == "pir":
+            print(json.dumps(PrivateInfoRetrievalEngine.run_benchmark(), indent=2))
+            return 0
+        if args.action == "kolmogorov":
+            if args.input:
+                raw_in = args.input.encode("utf-8")
+                comp_in = KolmogorovGrammarCodec.compress(raw_in)
+                print(json.dumps({"ok": KolmogorovGrammarCodec.decompress(comp_in) == raw_in, "raw_bytes": len(raw_in), "comp_bytes": len(comp_in)}, indent=2))
+                return 0
+            print(json.dumps(KolmogorovGrammarCodec.run_benchmark(), indent=2))
+            return 0
+        if args.action == "crdt":
+            print(json.dumps(MerkleCrdtShadowTwin.run_benchmark(), indent=2))
+            return 0
+        if args.action == "airgap":
+            print(json.dumps(AirGapFountainBridge.run_benchmark(), indent=2))
+            return 0
+        if args.action == "dual-vault":
+            print(json.dumps(PlausibleDeniabilityVault.run_benchmark(), indent=2))
+            return 0
+        print(json.dumps(SwarmAnycastMesh.run_benchmark(), indent=2))
         return 0
 
     if args.command == "demo":

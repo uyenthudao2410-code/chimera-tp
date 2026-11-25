@@ -1,32 +1,38 @@
-# Architecture — CHIMERA-HYPER v7.0.0 OMEGA-FABRIC
+# Architecture — CHIMERA-HYPER v8.0.0 SINGULARITY
 
 ```
 +------------------------------------------------------------------------------------+
-|               CHIMERA-HYPER v7.0 OMEGA-FABRIC Control & Protocol Plane             |
+|              CHIMERA-HYPER v8.0 SINGULARITY Control & Frontier Plane               |
 |  Win (:9780 Cockpit | :9788 Edge + /dav/ HTML/DAV | :2222 SSH | :9789 | :12550 v1) |
-|  Zero-Weight Guard (32.79 MB Win / 44.40 MB Linux) | Transparent Peer Routing      |
+|  Zero-Weight Guard (33.04 MB Win / 47.14 MB Linux) | Transparent Peer Routing      |
 +----+--------------------+--------------------+--------------------+----------------+
      |                    |                    |                    |
      v                    v                    v                    v
 +-------------+    +---------------+    +--------------+    +------------------------+
-| OMEGA Trans |    | OMEGA Storage |    | OMEGA Compute|    | APEX-SYNERGY & HyperOS |
-| X25519+MLWE |    | Ghost-Block   |    | WASM MVP VM  |    | Ghost-PTY/FS, Medic,   |
-| ChaCha20,   |    | K=3/N=5 Mesh, |    | 4KB Rem-RAM  |    | Drop-Portal, Tqouta/   |
-| Bond,Mimic, |    | Slepian-Wolf, |    | Order-2 PPM, |    | Radar :12550 & K=2/N=3 |
-| Recode,Gene |    | Parasitic $0  |    | UEP Display  |    | Subprocess GF256 Vault |
-+------+------+    +-------+-------+    +------+-------+    +-----------+------------+
-       |                   |                   |                        |
-       +-------------------+-------------------+------------------------+
-                           |
-                           v  (v5.0 + v4.0 + v3.0: FTS5, Sentinel, NAT Buster, Merkle, AQ02, CHTC1, Immortal)
+| SINGULARITY |    | OMEGA v7.0    |    | OMEGA v7.0   |    | APEX-SYNERGY & HyperOS |
+| TimeWarp,   |    | X25519+MLWE,  |    | Ghost-Block, |    | Ghost-PTY/FS, Medic,   |
+| MerkleCRDT, |    | Bond, Mimic,  |    | K=3/5, SW0,  |    | Drop-Portal, Tqouta/   |
+| AirGap FSK, |    | Recode, Gene, |    | WASM AQ03,   |    | Radar :12550 & K=2/N=3 |
+| IT-PIR,     |    | Chaff-as-RLNC |    | Rem-RAM, UEP |    | Subprocess GF256 Vault |
+| DualVault,  |    +-------+-------+    +------+-------+    +-----------+------------+
+| Kolmogorov, |            |                   |                        |
+| Swarm-3Node |            +-------------------+------------------------+
++------+------+                                |
+       |                                       v
 +------------------------------------------------------------------------------------+
-|                  Bit-Identical Cross-Platform Silicon Core (v7.0)                  |
-|   Windows: Rust cdylib (GFNI/AVX2/AVX-512F + ChaCha20, Recode, PPM, Slepian, SHM)  |
-|   Linux:   C11 .so     (AVX2 VPSHUFB + ChaCha20, Recode, PPM, Slepian, /dev/shm)   |
+|                  Bit-Identical Cross-Platform Silicon Core (v8.0)                  |
+|   Windows: Rust cdylib (GFNI/AVX2/AVX-512F + PIR XOR, Q15 FSK, ChaCha20, PPM, SHM) |
+|   Linux:   C11 .so     (AVX2 VPSHUFB + AVX2 PIR XOR, Q15 FSK, ChaCha20, /dev/shm)  |
 +------------------------------------------------------------------------------------+
 ```
 
-## 0. `v7.0.0 OMEGA-FABRIC` Protocol & Systems Modules
+## 0. `v8.0.0 SINGULARITY` Frontier Modules & Honest Guardrails
+- **Native SIMD Extensions (`native/chimera_core/src/lib.rs`, `native/chimera_core_c/chimera_core.c`, `chimera_tp/native.py`)**: Exports bit-identical `chimera_pir_xor_query` (`10.03 GB/s` 2-server IT-PIR XOR accumulator) and integer Q15 quadrature correlator `chimera_fsk_demod_bits` (`18.0/19.2 kHz` orthogonal FSK at `48 kHz` / `40 samples per bit`) alongside all v7.0/v1.0 primitives.
+- **Time-Warp & Offline CRDT (`chimera_tp/singularity_time_crdt.py`)**: `SpeculativeTimeWarpEngine` (Markov bigram prefetch + SHA-256 stale invalidation + automatic anti-waste throttling `< 25%` hit rate) and `MerkleCrdtShadowTwin` (`HLC` + per-line tombstones + conflict audit log + `BLAKE2s` Merkle root verified across 20 shuffled merge permutations).
+- **Air-Gap Fountain, IT-PIR & Plausible Deniability (`chimera_tp/singularity_airgap_crypto.py`)**: `AirGapFountainBridge` (unidirectional 1,200 bps ultrasonic FSK + 2D grid GF(256) Fountain under `6 dB` AWGN and `30–33%` frame erasures), `PrivateInfoRetrievalEngine` (live cross-host 2-server 1 MiB IT-PIR requiring only `1,536 B` wire), and `PlausibleDeniabilityVault` (fixed 16 KB Cauchy `(2,3)` container inspected across 10-vs-10 Shannon/Chi2/autocorrelation forensic checks). Note: `/api/singularity/pir-shard` allocates its `1 MiB` slab lazily only on first PIR query so idle daemon RSS stays unaffected.
+- **Kolmogorov Grammar & 3-Node Swarm (`chimera_tp/singularity_kolmogorov_swarm.py`, `singularity_bench.py`)**: `KolmogorovGrammarCodec` (schema extraction + columnar delta-zigzag/dictionary + native Order-2 PPM with strict bit-exactness verification & `+1 B` random fallback) and `SwarmAnycastMesh` (3-socket UDP 2-hop zero-plaintext GF(256) recoding relay + `K=3` standby rehydration), exposed via `v8.0 SINGULARITY Lab`, `/api/singularity/*`, and `chimera-tp singularity`.
+
+## 0b. `v7.0.0 OMEGA-FABRIC` Protocol & Systems Modules
 - **Silicon Cryptographic & Coding Primitives (`native/chimera_core`, `native/chimera_core_c`, `chimera_tp/native.py`)**: Exports bit-exact RFC 8439 `chimera_chacha20_xor`, zero-decode `chimera_gf256_recode`, GF(256) `chimera_slepian_syndrome`, and Order-2 context-mixing arithmetic codec `chimera_ppm_compress`/`chimera_ppm_decompress` across Windows Rust and Linux C11 AVX2.
 - **OMEGA Transport (`chimera_tp/omega_transport.py`)**: `SiliconDataPlane` + `VirtualNicBridge` (X25519 + IPv4 framing + honest OS TUN probe), `MultiIspBondingEngine` (0 ms blackout failover), `PolymorphicMimicLayer` (QUIC/WebRTC mimicry), `RlncRecodingRelay`, `HybridPqKem` + `QuantumChaffShield` (Module-LWE + X25519 + chaotic port hopping + chaff-as-RLNC), and `GeneticWireEngine` (12-byte `CHG7` evolving wire DNA).
 - **OMEGA Storage (`chimera_tp/omega_storage.py`)**: `GhostBlockEngine` (4 KB incremental patches + OS WinFsp/FUSE3 probe), `RegeneratingMeshVault` (`K=3, N=5` Cauchy shard healing without plaintext decode), `SlepianWolfSync` (0-RTT blind syndrome delta with Berlekamp-Massey + Chien search), and `ParasiticDeadDropMesh` (hourly Lehmer carrier rotation across public channels).

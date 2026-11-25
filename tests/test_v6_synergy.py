@@ -331,7 +331,7 @@ class TestV6Synergy(unittest.TestCase):
             base = f"http://127.0.0.1:{daemon.http_addr[1]}"
             try:
                 h = json.loads(urllib.request.urlopen(f"{base}/api/health", timeout=4.0).read().decode())
-                self.assertIn(h["version"], ("6.0.0", "7.0.0"))
+                self.assertIn(h["version"], ("6.0.0", "7.0.0", "8.0.0"))
                 self.assertGreater(h["zero_weight"]["daemon_ram_mb"], 0.0)
 
                 syn = json.loads(urllib.request.urlopen(f"{base}/api/synergy/status", timeout=5.0).read().decode())

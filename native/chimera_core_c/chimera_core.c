@@ -1225,3 +1225,87 @@ ssize_t chimera_ppm_decompress(const uint8_t *inp, size_t inp_len, uint8_t *out,
     free(p0); free(p1); free(p2);
     return (ssize_t)orig_len;
 }
+
+/* ------------------------------------------------------------------------- */
+/* CHIMERA v8.0 SINGULARITY Extensions (IT-PIR AVX2 XOR & Q15 FSK Demod)     */
+/* ------------------------------------------------------------------------- */
+
+void chimera_pir_xor_query(
+    const uint8_t *db_flat,
+    size_t n_records,
+    size_t rec_len,
+    const uint8_t *query_bits,
+    uint8_t *out_rec
+) {
+    if (!out_rec || rec_len == 0) return;
+    memset(out_rec, 0, rec_len);
+    if (!db_flat || !query_bits || n_records == 0) return;
+
+    int has_avx2 = (chimera_cpu_caps() & 2u) != 0;
+    for (size_t i = 0; i < n_records; i++) {
+        if ((query_bits[i >> 3] >> (i & 7)) & 1u) {
+            const uint8_t *rec = db_flat + (i * rec_len);
+            size_t j = 0;
+#if defined(__AVX2__)
+            if (has_avx2) {
+                for (; j + 32 <= rec_len; j += 32) {
+                    __m256i a = _mm256_loadu_si256((const __m256i *)(out_rec + j));
+                    __m256i b = _mm256_loadu_si256((const __m256i *)(rec + j));
+                    _mm256_storeu_si256((__m256i *)(out_rec + j), _mm256_xor_si256(a, b));
+                }
+            }
+#else
+            (void)has_avx2;
+#endif
+            for (; j + 8 <= rec_len; j += 8) {
+                uint64_t d, s;
+                memcpy(&d, out_rec + j, 8);
+                memcpy(&s, rec + j, 8);
+                d ^= s;
+                memcpy(out_rec + j, &d, 8);
+            }
+            for (; j < rec_len; j++) {
+                out_rec[j] ^= rec[j];
+            }
+        }
+    }
+}
+
+size_t chimera_fsk_demod_bits(
+    const int16_t *pcm,
+    size_t n_samples,
+    uint8_t *out_bits,
+    size_t max_bits
+) {
+    if (!pcm || !out_bits || n_samples < 40u || max_bits == 0u) return 0u;
+    static const int64_t COS0[8] = {32767, -23170, 0, 23170, -32767, 23170, 0, -23170};
+    static const int64_t SIN0[8] = {0, 23170, -32767, 23170, 0, -23170, 32767, -23170};
+    static const int64_t COS1[5] = {32767, -26509, 10126, 10126, -26509};
+    static const int64_t SIN1[5] = {0, 19260, -31164, 31164, -19260};
+
+    size_t n_syms = n_samples / 40u;
+    if (n_syms > max_bits) n_syms = max_bits;
+    for (size_t s = 0; s < n_syms; s++) {
+        const int16_t *sym = pcm + (s * 40u);
+        int64_t i0 = 0, q0 = 0, i1 = 0, q1 = 0;
+        size_t idx5 = 0;
+        for (size_t j = 0; j < 40u; j++) {
+            int64_t x = (int64_t)sym[j];
+            size_t idx8 = j & 7u;
+            i0 += x * COS0[idx8];
+            q0 += x * SIN0[idx8];
+            i1 += x * COS1[idx5];
+            q1 += x * SIN1[idx5];
+            idx5++;
+            if (idx5 == 5u) idx5 = 0u;
+        }
+        int64_t si0 = i0 >> 10;
+        int64_t sq0 = q0 >> 10;
+        int64_t si1 = i1 >> 10;
+        int64_t sq1 = q1 >> 10;
+        int64_t e0 = si0 * si0 + sq0 * sq0;
+        int64_t e1 = si1 * si1 + sq1 * sq1;
+        out_bits[s] = (e1 > e0) ? 1u : 0u;
+    }
+    return n_syms;
+}

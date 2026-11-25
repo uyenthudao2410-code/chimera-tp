@@ -1550,3 +1550,91 @@ pub unsafe extern "C" fn chimera_ppm_decompress(
     }
     orig_len as isize
 }
+
+// -----------------------------------------------------------------------------
+// CHIMERA v8.0 SINGULARITY Extensions (IT-PIR SIMD XOR & Q15 FSK Demodulator)
+// -----------------------------------------------------------------------------
+
+#[no_mangle]
+pub unsafe extern "C" fn chimera_pir_xor_query(
+    db_flat: *const u8,
+    n_records: usize,
+    rec_len: usize,
+    query_bits: *const u8,
+    out_rec: *mut u8,
+) {
+    if out_rec.is_null() || rec_len == 0 {
+        return;
+    }
+    ptr::write_bytes(out_rec, 0, rec_len);
+    if db_flat.is_null() || query_bits.is_null() || n_records == 0 {
+        return;
+    }
+    let out_slice = std::slice::from_raw_parts_mut(out_rec, rec_len);
+    let q_bytes = (n_records + 7) / 8;
+    let q_slice = std::slice::from_raw_parts(query_bits, q_bytes);
+    let words = rec_len / 8;
+    for i in 0..n_records {
+        if ((q_slice[i >> 3] >> (i & 7)) & 1) != 0 {
+            let rec = std::slice::from_raw_parts(db_flat.add(i * rec_len), rec_len);
+            let dst_ptr = out_slice.as_mut_ptr() as *mut u64;
+            let src_ptr = rec.as_ptr() as *const u64;
+            for w in 0..words {
+                let d = ptr::read_unaligned(dst_ptr.add(w));
+                let s = ptr::read_unaligned(src_ptr.add(w));
+                ptr::write_unaligned(dst_ptr.add(w), d ^ s);
+            }
+            for b in (words * 8)..rec_len {
+                out_slice[b] ^= rec[b];
+            }
+        }
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn chimera_fsk_demod_bits(
+    pcm: *const i16,
+    n_samples: usize,
+    out_bits: *mut u8,
+    max_bits: usize,
+) -> usize {
+    if pcm.is_null() || out_bits.is_null() || n_samples < 40 || max_bits == 0 {
+        return 0;
+    }
+    const COS0: [i64; 8] = [32767, -23170, 0, 23170, -32767, 23170, 0, -23170];
+    const SIN0: [i64; 8] = [0, 23170, -32767, 23170, 0, -23170, 32767, -23170];
+    const COS1: [i64; 5] = [32767, -26509, 10126, 10126, -26509];
+    const SIN1: [i64; 5] = [0, 19260, -31164, 31164, -19260];
+
+    let n_syms = (n_samples / 40).min(max_bits);
+    let samples = std::slice::from_raw_parts(pcm, n_syms * 40);
+    let out = std::slice::from_raw_parts_mut(out_bits, n_syms);
+    for s in 0..n_syms {
+        let base = s * 40;
+        let mut i0: i64 = 0;
+        let mut q0: i64 = 0;
+        let mut i1: i64 = 0;
+        let mut q1: i64 = 0;
+        let mut idx5 = 0usize;
+        for j in 0..40 {
+            let x = samples[base + j] as i64;
+            let idx8 = j & 7;
+            i0 += x * COS0[idx8];
+            q0 += x * SIN0[idx8];
+            i1 += x * COS1[idx5];
+            q1 += x * SIN1[idx5];
+            idx5 += 1;
+            if idx5 == 5 {
+                idx5 = 0;
+            }
+        }
+        let si0 = i0 >> 10;
+        let sq0 = q0 >> 10;
+        let si1 = i1 >> 10;
+        let sq1 = q1 >> 10;
+        let e0 = si0 * si0 + sq0 * sq0;
+        let e1 = si1 * si1 + sq1 * sq1;
+        out[s] = if e1 > e0 { 1 } else { 0 };
+    }
+    n_syms
+}
