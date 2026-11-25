@@ -205,6 +205,27 @@ class TestLiveHostRealms(unittest.TestCase):
         finally:
             rx.close()
 
+    def test_holographic_survives_25pct_jumbo_drop_via_fec_and_nack(self) -> None:
+        rx = ChimeraReceiver(self.env, droplet_size=20)
+        offer = rx.start()
+        try:
+            tx = ChimeraSender(self.env, offer)
+            payload = (b"JUMBO-FEC-NACK-" + os.urandom(32)) * (1024 * 1024 // 47 + 1)
+            payload = payload[: 1024 * 1024]  # 1 MiB (19 chunks + 5 parity = 24 frames)
+            fault = FaultProfile(jumbo_drop_rate=0.25)
+            recovered, report = tx.send_holographic(rx, payload, fault, timeout_s=15.0)
+            self.assertTrue(report.success)
+            self.assertTrue(report.sha256_match)
+            self.assertEqual(
+                hashlib.sha256(recovered).hexdigest(),
+                hashlib.sha256(payload).hexdigest(),
+            )
+            self.assertGreater(
+                report.jumbo_fec_recoveries + report.jumbo_nack_retransmits, 0
+            )
+        finally:
+            rx.close()
+
 
 if __name__ == "__main__":
     unittest.main()

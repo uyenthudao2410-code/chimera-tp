@@ -9,6 +9,7 @@ import socket
 import struct
 import threading
 import time
+import zlib
 from dataclasses import dataclass, field
 from typing import Any, Callable
 
@@ -26,6 +27,7 @@ class FaultProfile:
     kill_lanes: set[str] = field(default_factory=set)
     packet_drop_rate: float = 0.0
     corrupt_lan_noise: bool = False
+    jumbo_drop_rate: float = 0.0
 
 
 @dataclass
@@ -41,6 +43,7 @@ class LaneStats:
     droplets_recv: int = 0
     fault_drops_injected: int = 0
     reconstruct_errors: int = 0
+    fec_recoveries: int = 0
     total_tx_ms: float = 0.0
 
     def to_dict(self) -> dict[str, Any]:
@@ -55,6 +58,7 @@ class LaneStats:
             "droplets_recv": self.droplets_recv,
             "fault_drops_injected": self.fault_drops_injected,
             "reconstruct_errors": self.reconstruct_errors,
+            "fec_recoveries": self.fec_recoveries,
             "total_tx_ms": round(self.total_tx_ms, 3),
             "avg_tx_ms": round(avg_tx, 3),
         }
@@ -924,13 +928,14 @@ class IcmpKernelReflectLane(AlienLane):
 
 
 # ---------------------------------------------------------------------------
-# 8. LO_V6_JUMBO: ::1 58 KiB Chaotic-OTP Jumbo Superframes
+# 8. LO_V6_JUMBO: ::1 58 KiB Chaotic-OTP Jumbo Superframes (CRC-32 + XOR FEC + NACK)
 # ---------------------------------------------------------------------------
 class LoopbackV6JumboLane(AlienLane):
-    """Blasts 58 KiB masked superframes over Loopback IPv6 (::1, MTU 4294967295)."""
+    """Blasts 58 KiB masked superframes over Loopback IPv6 (::1) with XOR stripe FEC & NACK."""
 
     lane_id = "LO_V6_JUMBO"
     MAX_CHUNK = 58000
+    STRIPE_SIZE = 4
 
     def __init__(
         self,
@@ -942,7 +947,10 @@ class LoopbackV6JumboLane(AlienLane):
         self.on_jumbo = on_jumbo
         self._port = 0
         self._chunks: dict[int, dict[int, bytes]] = {}
+        self._parities: dict[int, dict[int, bytes]] = {}
         self._totals: dict[int, int] = {}
+        self._total_lens: dict[int, int] = {}
+        self._completed_tids: set[int] = set()
         self._tx_sock: socket.socket | None = None
 
     def start_receiver(self) -> dict[str, Any]:
@@ -952,52 +960,189 @@ class LoopbackV6JumboLane(AlienLane):
         self._start_rx_thread()
         return {"ip": self.ip, "port": self._port, "max_chunk": self.MAX_CHUNK}
 
-    def send_blob(
-        self,
-        endpoint: dict[str, Any],
-        transfer_id: int,
-        masked_blob: bytes,
-    ) -> int:
-        """Split `masked_blob` into 58 KiB superframes and transmit over ::1."""
-        t0 = time.perf_counter()
+    def _ensure_tx_sock(self) -> socket.socket:
         if self._tx_sock is None:
             tx = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
             tx.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 4 * 1024 * 1024)
             tx.bind((self.ip, 0))
             self._tx_sock = tx
+        return self._tx_sock
 
-        total_chunks = max(1, (len(masked_blob) + self.MAX_CHUNK - 1) // self.MAX_CHUNK)
-        for idx in range(total_chunks):
-            chunk = masked_blob[idx * self.MAX_CHUNK : (idx + 1) * self.MAX_CHUNK]
-            frame = b"JM" + struct.pack("!IHH", transfer_id, idx, total_chunks) + chunk
-            self._tx_sock.sendto(frame, (endpoint["ip"], endpoint["port"]))
-            self.stats.packets_sent += 1
-            self.stats.wire_payload_bytes += len(frame)
-            self.stats.wire_total_bytes_est += len(frame) + 48
+    def _send_jumbo_frame(
+        self,
+        endpoint: dict[str, Any],
+        magic: bytes,
+        transfer_id: int,
+        seq_idx: int,
+        total_chunks: int,
+        total_len: int,
+        payload: bytes,
+        drop_rate: float,
+    ) -> bool:
+        if drop_rate > 0.0 and self._rng.random() < drop_rate:
+            self.stats.fault_drops_injected += 1
+            return False
+        tx = self._ensure_tx_sock()
+        crc = zlib.crc32(payload) & 0xFFFFFFFF
+        frame = (
+            magic
+            + struct.pack("!IHHII", transfer_id, seq_idx, total_chunks, total_len, crc)
+            + payload
+        )
+        tx.sendto(frame, (endpoint["ip"], endpoint["port"]))
+        self.stats.packets_sent += 1
+        self.stats.wire_payload_bytes += len(frame)
+        self.stats.wire_total_bytes_est += len(frame) + 48
+        return True
+
+    def send_blob(
+        self,
+        endpoint: dict[str, Any],
+        transfer_id: int,
+        masked_blob: bytes,
+        fault: FaultProfile | None = None,
+    ) -> int:
+        """Split `masked_blob` into 58 KiB superframes + XOR stripe parities over ::1."""
+        t0 = time.perf_counter()
+        total_len = len(masked_blob)
+        total_chunks = max(1, (total_len + self.MAX_CHUNK - 1) // self.MAX_CHUNK)
+        drop_rate = fault.jumbo_drop_rate if fault else 0.0
+        chunks = [
+            masked_blob[idx * self.MAX_CHUNK : (idx + 1) * self.MAX_CHUNK]
+            for idx in range(total_chunks)
+        ]
+
+        for idx, chunk in enumerate(chunks):
+            self._send_jumbo_frame(
+                endpoint, b"JM", transfer_id, idx, total_chunks, total_len, chunk, drop_rate
+            )
             if total_chunks > 4:
-                time.sleep(0.0002)
+                time.sleep(0.00015)
+
+        num_stripes = (total_chunks + self.STRIPE_SIZE - 1) // self.STRIPE_SIZE
+        for stripe_idx in range(num_stripes):
+            s_start = stripe_idx * self.STRIPE_SIZE
+            s_chunks = chunks[s_start : s_start + self.STRIPE_SIZE]
+            max_len = max(len(c) for c in s_chunks)
+            acc = 0
+            for c in s_chunks:
+                padded = c.ljust(max_len, b"\x00")
+                acc ^= int.from_bytes(padded, "little")
+            parity = acc.to_bytes(max_len, "little")
+            self._send_jumbo_frame(
+                endpoint,
+                b"JP",
+                transfer_id,
+                stripe_idx,
+                total_chunks,
+                total_len,
+                parity,
+                drop_rate,
+            )
+
         self.stats.droplets_sent += total_chunks
         self.stats.total_tx_ms += (time.perf_counter() - t0) * 1000.0
         return total_chunks
+
+    def send_missing_chunks(
+        self,
+        endpoint: dict[str, Any],
+        transfer_id: int,
+        masked_blob: bytes,
+        missing_indices: list[int],
+        fault: FaultProfile | None = None,
+    ) -> int:
+        """Retransmit specifically requested chunk indices for Selective NACK ARQ."""
+        t0 = time.perf_counter()
+        total_len = len(masked_blob)
+        total_chunks = max(1, (total_len + self.MAX_CHUNK - 1) // self.MAX_CHUNK)
+        drop_rate = fault.jumbo_drop_rate if fault else 0.0
+        for idx in missing_indices:
+            if 0 <= idx < total_chunks:
+                chunk = masked_blob[idx * self.MAX_CHUNK : (idx + 1) * self.MAX_CHUNK]
+                self._send_jumbo_frame(
+                    endpoint, b"JM", transfer_id, idx, total_chunks, total_len, chunk, drop_rate
+                )
+        self.stats.total_tx_ms += (time.perf_counter() - t0) * 1000.0
+        return len(missing_indices)
+
+    def get_missing_chunks(self, transfer_id: int, expected_total: int) -> list[int]:
+        """Return sorted list of chunk indices still missing for `transfer_id`."""
+        with self._lock:
+            if transfer_id in self._completed_tids:
+                return []
+            cmap = self._chunks.get(transfer_id, {})
+            return [i for i in range(expected_total) if i not in cmap]
+
+    def _try_fec_recover_locked(self, tid: int) -> None:
+        total = self._totals.get(tid, 0)
+        total_len = self._total_lens.get(tid, 0)
+        cmap = self._chunks.get(tid)
+        pmap = self._parities.get(tid)
+        if not total or cmap is None or pmap is None:
+            return
+        for stripe_idx, parity in list(pmap.items()):
+            s_start = stripe_idx * self.STRIPE_SIZE
+            s_end = min(total, s_start + self.STRIPE_SIZE)
+            missing = [i for i in range(s_start, s_end) if i not in cmap]
+            if len(missing) == 1:
+                m_idx = missing[0]
+                plen = len(parity)
+                acc = int.from_bytes(parity, "little")
+                for i in range(s_start, s_end):
+                    if i == m_idx:
+                        continue
+                    acc ^= int.from_bytes(cmap[i].ljust(plen, b"\x00"), "little")
+                exp_len = min(self.MAX_CHUNK, max(0, total_len - m_idx * self.MAX_CHUNK))
+                cmap[m_idx] = acc.to_bytes(plen, "little")[:exp_len]
+                self.stats.fec_recoveries += 1
+                del pmap[stripe_idx]
 
     def _handle_socket_ready(self, sock: socket.socket) -> None:
         data, _ = sock.recvfrom(65535)
         rx_ts = time.perf_counter()
         self.stats.packets_recv += 1
-        if len(data) < 10 or data[:2] != b"JM":
+        if len(data) < 18:
             return
-        tid, idx, total = struct.unpack("!IHH", data[2:10])
-        chunk = data[10:]
-        self._totals[tid] = total
-        cmap = self._chunks.setdefault(tid, {})
-        cmap[idx] = chunk
-        if len(cmap) == total:
-            blob = b"".join(cmap[i] for i in range(total))
-            del self._chunks[tid]
-            del self._totals[tid]
-            self.stats.droplets_recv += total
-            if self.on_jumbo is not None:
-                self.on_jumbo(tid, blob, rx_ts)
+        magic = data[:2]
+        if magic not in (b"JM", b"JP"):
+            return
+        tid, seq_idx, total, total_len, crc = struct.unpack("!IHHII", data[2:18])
+        payload = data[18:]
+        if (zlib.crc32(payload) & 0xFFFFFFFF) != crc:
+            self.stats.reconstruct_errors += 1
+            return
+
+        completed_blob: bytes | None = None
+        with self._lock:
+            if tid in self._completed_tids:
+                return
+            self._totals[tid] = total
+            self._total_lens[tid] = total_len
+            cmap = self._chunks.setdefault(tid, {})
+            pmap = self._parities.setdefault(tid, {})
+            if magic == b"JM":
+                if seq_idx < total and seq_idx not in cmap:
+                    cmap[seq_idx] = payload
+            else:
+                pmap[seq_idx] = payload
+            self._try_fec_recover_locked(tid)
+            if len(cmap) == total:
+                completed_blob = b"".join(cmap[i] for i in range(total))[:total_len]
+                self._completed_tids.add(tid)
+                self._chunks.pop(tid, None)
+                self._parities.pop(tid, None)
+                self._totals.pop(tid, None)
+                self._total_lens.pop(tid, None)
+                self.stats.droplets_recv += total
+        if completed_blob is not None and self.on_jumbo is not None:
+            self.on_jumbo(tid, completed_blob, rx_ts)
+
+    def _clear_assembly_state(self) -> None:
+        self._chunks.clear()
+        self._parities.clear()
+        self._totals.clear()
+        self._total_lens.clear()
 
     def close(self) -> None:
         super().close()

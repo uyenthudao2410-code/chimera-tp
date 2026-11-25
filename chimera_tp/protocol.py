@@ -59,6 +59,8 @@ class TransferReport:
     topology_fingerprint: str
     holo_entropy_bits_per_byte: float | None = None
     jumbo_chunks: int = 0
+    jumbo_fec_recoveries: int = 0
+    jumbo_nack_retransmits: int = 0
     rank_timeline: list[dict[str, Any]] = field(default_factory=list)
     per_lane_stats: dict[str, dict[str, Any]] = field(default_factory=dict)
     error: str = ""
@@ -200,6 +202,50 @@ class ChimeraReceiver:
                 if data[:4] == b"STRT":
                     msg = json.loads(data[4:].decode("utf-8"))
                     self._init_transfer_session(msg, (addr[0], addr[1]))
+                elif data[:4] == b"JCHK" and len(data) >= 10:
+                    jtid, jtotal = struct.unpack("!IH", data[4:10])
+                    self._handle_jumbo_check(jtid, jtotal, (addr[0], addr[1]))
+
+    def _handle_jumbo_check(
+        self, holo_tid: int, total_chunks: int, reply_addr: tuple[str, int]
+    ) -> None:
+        if self._ctrl_sock is None:
+            return
+        fec_rec = self._jumbo_lane.stats.fec_recoveries if self._jumbo_lane else 0
+        with self._lock:
+            recovered_info = self._holo_recovered.get(holo_tid)
+            has_blob = holo_tid in self._holo_blobs
+        if recovered_info is not None:
+            _, actual_sha, sha_ok = recovered_info
+            resp = b"JOK!" + json.dumps(
+                {
+                    "transfer_id": holo_tid,
+                    "sha256_match": sha_ok,
+                    "actual_sha256": actual_sha,
+                    "fec_recoveries": fec_rec,
+                },
+                separators=(",", ":"),
+            ).encode("utf-8")
+        elif has_blob:
+            resp = b"JBLK" + struct.pack("!I", holo_tid)
+        else:
+            missing = (
+                self._jumbo_lane.get_missing_chunks(holo_tid, total_chunks)
+                if self._jumbo_lane
+                else list(range(total_chunks))
+            )
+            resp = b"JNCK" + json.dumps(
+                {
+                    "transfer_id": holo_tid,
+                    "missing": missing[:256],
+                    "fec_recoveries": fec_rec,
+                },
+                separators=(",", ":"),
+            ).encode("utf-8")
+        try:
+            self._ctrl_sock.sendto(resp, reply_addr)
+        except OSError:
+            pass
 
     def _init_transfer_session(
         self, msg: dict[str, Any], reply_addr: tuple[str, int]
@@ -641,7 +687,7 @@ class ChimeraSender:
 
     def send_holographic(
         self,
-        receiver: ChimeraReceiver,
+        receiver: ChimeraReceiver | None,
         payload: bytes,
         fault: FaultProfile | None = None,
         timeout_s: float = 15.0,
@@ -650,9 +696,10 @@ class ChimeraSender:
         if self.offer.get("jumbo") is None:
             raise RuntimeError("LO_V6_JUMBO endpoint is unavailable")
 
+        fault = fault or FaultProfile()
         t0 = time.perf_counter()
         holo_tid = self._next_transfer_id()
-        waiter = receiver.register_holographic_waiter(holo_tid)
+        waiter = receiver.register_holographic_waiter(holo_tid) if receiver is not None else None
 
         holo_key = os.urandom(32)
         topo_bytes = bytes.fromhex(self.env.topology_fingerprint)
@@ -667,8 +714,14 @@ class ChimeraSender:
         assert len(capsule) == 72
 
         jtx = LoopbackV6JumboLane(ip="::1", session_seed=self.session_seed)
+        ctrl = socket.socket(socket.AF_INET6, socket.SOCK_DGRAM)
+        _disable_udp_connreset(ctrl)
+        ctrl.bind(("::1", 0))
+        ctrl.setblocking(False)
+        ctrl_ep = (self.offer["ctrl"]["ip"], int(self.offer["ctrl"]["port"]))
+        nack_retransmits = 0
         try:
-            chunks = jtx.send_blob(self.offer["jumbo"], holo_tid, masked_blob)
+            chunks = jtx.send_blob(self.offer["jumbo"], holo_tid, masked_blob, fault=fault)
             _, cap_report = self._send_metamorphic_core(
                 payload=capsule,
                 fault=fault,
@@ -680,17 +733,59 @@ class ChimeraSender:
                 cap_report.payload_bytes = len(payload)
                 return b"", cap_report
 
-            if not waiter.wait(timeout=3.0):
-                cap_report.success = False
-                cap_report.error = "Timed out waiting for holographic blob assembly"
-                return b"", cap_report
+            # Selective NACK ARQ & JOK! confirmation loop (works both in-process & cross-process)
+            jok_data: dict[str, Any] | None = None
+            jchk_pkt = b"JCHK" + struct.pack("!IH", holo_tid, chunks)
+            arq_deadline = time.perf_counter() + min(10.0, timeout_s)
+            while time.perf_counter() < arq_deadline and jok_data is None:
+                ctrl.sendto(jchk_pkt, ctrl_ep)
+                r, _, _ = select.select([ctrl], [], [], 0.03)
+                if not r:
+                    continue
+                while True:
+                    try:
+                        pkt, _ = ctrl.recvfrom(65535)
+                    except BlockingIOError:
+                        break
+                    if pkt[:4] == b"JOK!":
+                        parsed = json.loads(pkt[4:].decode("utf-8"))
+                        if int(parsed["transfer_id"]) == holo_tid:
+                            jok_data = parsed
+                            break
+                    elif pkt[:4] == b"JNCK":
+                        parsed = json.loads(pkt[4:].decode("utf-8"))
+                        if int(parsed["transfer_id"]) == holo_tid:
+                            missing = list(parsed.get("missing", []))
+                            if missing:
+                                nack_retransmits += jtx.send_missing_chunks(
+                                    self.offer["jumbo"], holo_tid, masked_blob, missing, fault=fault
+                                )
+                                time.sleep(0.005)
 
-            recovered, actual_sha, sha_ok = receiver.get_holographic_verification(holo_tid)
+            if jok_data is None:
+                if waiter is not None and waiter.wait(timeout=0.5) and receiver is not None:
+                    recovered, actual_sha, sha_ok = receiver.get_holographic_verification(holo_tid)
+                    fec_rec = receiver.get_jumbo_stats().get("fec_recoveries", 0)
+                else:
+                    cap_report.success = False
+                    cap_report.error = "Timed out waiting for holographic blob assembly"
+                    return b"", cap_report
+            else:
+                sha_ok = bool(jok_data["sha256_match"])
+                actual_sha = str(jok_data["actual_sha256"])
+                fec_rec = int(jok_data.get("fec_recoveries", 0))
+                if receiver is not None and sha_ok:
+                    recovered = receiver.get_recovered_payload(holo_tid)
+                else:
+                    recovered = b""
+
             elapsed_ms = (time.perf_counter() - t0) * 1000.0
             j_tx_stats = jtx.stats.to_dict()
-            j_rx_stats = receiver.get_jumbo_stats()
-            j_tx_stats["packets_recv"] = j_rx_stats.get("packets_recv", 0)
-            j_tx_stats["droplets_recv"] = j_rx_stats.get("droplets_recv", 0)
+            if receiver is not None:
+                j_rx_stats = receiver.get_jumbo_stats()
+                j_tx_stats["packets_recv"] = j_rx_stats.get("packets_recv", 0)
+                j_tx_stats["droplets_recv"] = j_rx_stats.get("droplets_recv", 0)
+            j_tx_stats["fec_recoveries"] = fec_rec
             j_tx_stats["killed"] = False
             cap_report.per_lane_stats["LO_V6_JUMBO"] = j_tx_stats
 
@@ -706,6 +801,9 @@ class ChimeraSender:
             )
             cap_report.holo_entropy_bits_per_byte = round(blob_entropy, 5)
             cap_report.jumbo_chunks = chunks
+            cap_report.jumbo_fec_recoveries = fec_rec
+            cap_report.jumbo_nack_retransmits = nack_retransmits
             return recovered, cap_report
         finally:
+            ctrl.close()
             jtx.close()
