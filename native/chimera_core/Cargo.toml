@@ -1,0 +1,16 @@
+[package]
+name = "chimera_core"
+version = "1.0.0"
+edition = "2021"
+description = "CHIMERA-HYPER v1.0 Silicon-Native GFNI/AVX2, FastCDC, Delta, and Lock-Free Wormhole Core"
+license = "MIT"
+
+[lib]
+name = "chimera_core"
+crate-type = ["cdylib"]
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"

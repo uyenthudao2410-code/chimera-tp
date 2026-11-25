@@ -530,6 +530,43 @@ class SegmentedRLNCDecoder:
         return out
 
 
+def select_independent_rows(coeff_rows: list[bytes], k: int) -> list[int] | None:
+    """Return indices of `k` linearly independent rows over GF(256), or None if rank < k."""
+    if len(coeff_rows) < k:
+        return None
+    pivots: dict[int, bytearray] = {}
+    selected: list[int] = []
+    for idx, orig in enumerate(coeff_rows):
+        row = bytearray(orig)
+        for col, prow in pivots.items():
+            factor = row[col]
+            if factor == 0:
+                continue
+            if factor == 1:
+                r_int = int.from_bytes(row, "little") ^ int.from_bytes(prow, "little")
+            else:
+                tbl = MUL_BYTES[factor]
+                r_int = int.from_bytes(row, "little") ^ int.from_bytes(
+                    bytes(prow).translate(tbl), "little"
+                )
+            row = bytearray(r_int.to_bytes(k, "little"))
+        pcol = -1
+        for col in range(k):
+            if row[col] != 0:
+                pcol = col
+                break
+        if pcol == -1:
+            continue
+        inv_p = INV[row[pcol]]
+        if inv_p != 1:
+            row = bytearray(bytes(row).translate(MUL_BYTES[inv_p]))
+        pivots[pcol] = row
+        selected.append(idx)
+        if len(selected) == k:
+            return selected
+    return None
+
+
 def shannon_entropy(data: bytes) -> float:
     """Compute Shannon entropy in bits per byte (max 8.0)."""
     if not data:
