@@ -1,4 +1,4 @@
-"""24/7 CHIMERA-HYPER v4.0 Zero-Weight HyperOS Daemon, Scheduler & Web Cockpit."""
+"""24/7 CHIMERA-HYPER v5.0 PHANTOM-5MS Zero-Weight HyperOS Daemon, Tunnel & Web Cockpit."""
 
 from __future__ import annotations
 
@@ -10,7 +10,9 @@ import json
 import os
 import threading
 import time
+import urllib.error
 import urllib.parse
+import urllib.request
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -34,8 +36,11 @@ from .autopilot import (
     run_daily_autopilot,
 )
 from .code_search import CodeSearchIndex
+from .drop_portal import DropPortalStore, pack_ai_context
 from .edge_proxy import EdgeGateway, LocalEdgeProxy, edge_fetch_remote
 from .fabric import BeamServer, beam_send
+from .ghost_fs import GhostFsEngine
+from .ghost_pty import GhostPtyManager
 from .holo_backup import (
     create_holo_backup,
     list_holo_backups,
@@ -44,6 +49,7 @@ from .holo_backup import (
     store_received_shard,
 )
 from .hyper_wire import HedgedRpcServer, ImmortalMultiPathReceiver, ImmortalMultiPathSender
+from .medic import MedicEngine
 from .merkle_sync import (
     ShadowMerkleIndex,
     diff_manifests,
@@ -52,6 +58,7 @@ from .merkle_sync import (
 )
 from .nat_buster import NatPunchResponder, attempt_direct_punch, discover_nat_profile
 from .native import cpu_caps
+from .phantom_tunnel import PhantomTunnelClient, PhantomTunnelServer
 from .probe import probe_environment
 from .protocol import ChimeraReceiver, ChimeraSender, FaultProfile
 from .sentinel import SentinelEngine
@@ -63,7 +70,7 @@ _DASHBOARD_HTML = r"""<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CHIMERA-HYPER v4.0 Zero-Weight HyperOS</title>
+<title>CHIMERA-HYPER v5.0 PHANTOM-5MS HyperOS</title>
 <style>
   :root {
     --bg: #0b0f17;
@@ -126,6 +133,8 @@ _DASHBOARD_HTML = r"""<!doctype html>
   }
   .cmp-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
   .cmp-row:last-child { border-bottom: none; }
+  .tab-bar { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+  .tab-btn.active { background: rgba(34,211,238,0.2); border-color: var(--cyan); color: #67e8f9; }
 </style>
 </head>
 <body>
@@ -133,9 +142,10 @@ _DASHBOARD_HTML = r"""<!doctype html>
   <div class="topbar">
     <div class="brand">
       <h1>
-        CHIMERA-HYPER v4.0 Zero-Weight HyperOS
+        CHIMERA-HYPER v5.0 PHANTOM-5MS
         <span class="badge" id="node-badge">...</span>
         <span class="badge ok" id="zw-badge">RAM -- MB</span>
+        <span class="badge ok" id="phantom-badge">TUNNEL ...</span>
         <span class="badge ok" id="sched-badge">DAILY ...</span>
       </h1>
       <div class="meta-line" id="hw-meta">Probing hardware &amp; zero-weight telemetry...</div>
@@ -150,22 +160,74 @@ _DASHBOARD_HTML = r"""<!doctype html>
       <button class="primary" id="btn-run" onclick="triggerRun()">&#9654; Chạy đánh giá ngay</button>
       <button onclick="openMarkdownReport()">&#128196; Báo cáo (.md)</button>
       <button onclick="forceRefresh()">&#8635; Làm mới</button>
+      <button onclick="triggerPhantomConnect()">&#9889; Kết nối 5ms</button>
       <button onclick="triggerNatBust()">&#128640; NAT Buster</button>
-      <button onclick="triggerEdgeTest()">&#9889; Edge Warp</button>
+      <button onclick="triggerEdgeTest()">&#127760; Edge Warp</button>
       <button onclick="triggerHoloBackup()">&#128272; Holo GF256</button>
-      <button onclick="triggerMerkle()">&#127795; Merkle Sync</button>
+      <button onclick="triggerMerkle()">&#127795; Merkle</button>
       <button onclick="triggerImmortal()">&#128293; Immortal</button>
     </div>
   </div>
 
   <div class="card">
     <div class="card-title">
-      <span>Tailscale Cluster Hub — Sức Khỏe Toàn Cụm &amp; HyperOS Action Console</span>
+      <span>Tailscale Cluster Hub — Sức Khỏe Toàn Cụm &amp; PHANTOM-5MS Console</span>
       <span class="badge ok" id="cluster-grade">HẠNG: ...</span>
     </div>
     <div class="kpi-sub" id="cluster-highlights" style="margin-bottom:10px;">Đang nạp báo cáo từ các node trong mạng Tailscale...</div>
     <div class="grid-2" id="cluster-nodes"></div>
     <div class="log-box" id="v4-console" style="margin-top:10px;max-height:130px;display:none;"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <span>PHANTOM-5MS HyperOS Workbench (Terminal • Ghost-FS Explorer • Drop-Portal • AI Context • Medic)</span>
+      <span class="meta-line" id="v5-wb-meta">Zero-Weight v5.0</span>
+    </div>
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="showV5Tab('pty', this)">Ghost-PTY Terminal</button>
+      <button class="tab-btn" onclick="showV5Tab('fs', this)">Ghost-FS Explorer</button>
+      <button class="tab-btn" onclick="showV5Tab('portal', this)">Drop-Portal &amp; AI Context</button>
+      <button class="tab-btn" onclick="showV5Tab('medic', this)">CHIMERA-MEDIC</button>
+    </div>
+    <div id="tab-pty" class="v5-tab">
+      <div class="query-bar">
+        <button class="primary" onclick="ptyCreate()">Mở Bash PTY</button>
+        <input id="pty-cmd" value="uname -a && uptime" placeholder="Nhập lệnh gửi vào Ghost-PTY (svhome)...">
+        <button onclick="ptySendCmd()">Gửi lệnh</button>
+        <button onclick="ptyPoll()">Đọc tiếp</button>
+        <span class="meta-line" id="pty-id-lbl">Chưa mở PTY</span>
+      </div>
+      <div class="log-box" id="pty-out" style="max-height:170px;">Nhấn "Mở Bash PTY" để mở terminal persistent trên svhome (không rớt khi đổi mạng).</div>
+    </div>
+    <div id="tab-fs" class="v5-tab" style="display:none;">
+      <div class="query-bar">
+        <input id="fs-path" value="" placeholder="Thư mục con hoặc đường dẫn file (để trống = root DEV)">
+        <button class="primary" onclick="fsList()">Duyệt Thư Mục</button>
+        <button onclick="fsGitStatus()">Git Status</button>
+      </div>
+      <div class="log-box" id="fs-out" style="max-height:170px;">Chưa tải danh sách Ghost-FS.</div>
+    </div>
+    <div id="tab-portal" class="v5-tab" style="display:none;">
+      <div class="query-bar">
+        <input id="portal-title" value="Ghi chú nhanh" placeholder="Tiêu đề Drop" style="max-width:160px;">
+        <input id="portal-text" value="" placeholder="Nội dung clipboard muốn chuyển tức thì...">
+        <button class="primary" onclick="portalDrop()">Gửi Drop (TTL 10m)</button>
+        <input id="ctx-q" value="MAIL_FAIL_502" placeholder="Triệu chứng/Từ khóa gom AI Context..." style="max-width:210px;">
+        <button onclick="packAiContext()">Gom AI Context (&lt;8KB)</button>
+      </div>
+      <div class="log-box" id="portal-out" style="max-height:170px;">Chưa có mục Drop hoặc Context Pack nào.</div>
+    </div>
+    <div id="tab-medic" class="v5-tab" style="display:none;">
+      <div class="query-bar">
+        <input id="medic-pattern" value="FAIL" placeholder="Mẫu lỗi cần điều tra (vd: FAIL, ERROR)">
+        <button class="primary" onclick="medicInvestigate()">Điều tra Pháp Y</button>
+        <button onclick="medicRun('verify_email_log_tail')">Quét Log Email</button>
+        <button onclick="medicRun('probe_services')">Probe Dịch Vụ</button>
+        <button onclick="medicRun('holo_snapshot_configs')">Chụp GF256 Snapshot</button>
+      </div>
+      <div class="log-box" id="medic-out" style="max-height:170px;">CHIMERA-MEDIC sẵn sàng phân tích &amp; xử lý an toàn có backup GF(256).</div>
+    </div>
   </div>
 
   <div class="grid-2">
@@ -445,6 +507,121 @@ function renderState(st) {
   document.getElementById('sentinel-out').textContent = sAlerts.length
     ? sAlerts.slice(0, 6).map(a => `[${a.severity}] ${a.title}\n  ${a.detail}\n  Gợi ý: ${a.diagnosis}`).join('\n---\n')
     : 'Hệ thống khỏe mạnh — chưa ghi nhận cảnh báo bất thường.';
+
+  const ph = st.phantom || {};
+  const phCli = ph.client || null;
+  const phEl = document.getElementById('phantom-badge');
+  if (phCli && phCli.connected) {
+    phEl.textContent = `TUNNEL ${phCli.mode === 'PHANTOM_5MS_DIRECT' ? 'P2P ' + phCli.direct_rtt_ms + 'ms' : 'FALLBACK'}`;
+    phEl.className = 'badge ' + (phCli.mode === 'PHANTOM_5MS_DIRECT' ? 'ok' : 'warn');
+  } else {
+    const sc = ((ph.server || {}).sessions || []).length;
+    phEl.textContent = sc ? `PHANTOM SESSIONS: ${sc}` : 'PHANTOM READY';
+    phEl.className = 'badge';
+  }
+}
+
+let _ptySid = '';
+let _ptyCursor = 0;
+
+function showV5Tab(name, btn) {
+  document.querySelectorAll('.v5-tab').forEach(el => el.style.display = 'none');
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).style.display = 'block';
+  btn.classList.add('active');
+}
+
+async function triggerPhantomConnect() {
+  logV4('Đang đục & gắn kết PHANTOM-5MS Authenticated Tunnel...');
+  try {
+    const r = await api('/api/phantom/connect', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
+    logV4(`PHANTOM: connected=${r.connected} mode=${r.mode} RTT=${r.direct_rtt_ms}ms listeners=${JSON.stringify(r.listeners)}`);
+    await forceRefresh();
+  } catch (e) { logV4('PHANTOM lỗi: ' + e.message); }
+}
+
+async function ptyCreate() {
+  const r = await api('/api/pty/create', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
+  _ptySid = r.session_id; _ptyCursor = 0;
+  document.getElementById('pty-id-lbl').textContent = `PTY=${_ptySid}`;
+  document.getElementById('pty-out').textContent = `Mở session ${_ptySid} tại ${r.cwd}\n`;
+  setTimeout(ptyPoll, 250);
+}
+
+async function ptySendCmd() {
+  if (!_ptySid) await ptyCreate();
+  const cmd = (document.getElementById('pty-cmd').value || '') + '\n';
+  await api('/api/pty/write', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ session_id: _ptySid, text: cmd })
+  });
+  setTimeout(ptyPoll, 250);
+}
+
+async function ptyPoll() {
+  if (!_ptySid) return;
+  const r = await api(`/api/pty/read?session_id=${encodeURIComponent(_ptySid)}&cursor=${_ptyCursor}&wait_ms=250`);
+  if (r.text) {
+    const box = document.getElementById('pty-out');
+    box.textContent += r.text;
+    box.scrollTop = box.scrollHeight;
+  }
+  _ptyCursor = r.next_cursor;
+}
+
+async function fsList(optPath) {
+  if (optPath !== undefined) document.getElementById('fs-path').value = optPath;
+  const p = document.getElementById('fs-path').value || '';
+  const r = await api(`/api/fs/list?path=${encodeURIComponent(p)}`);
+  document.getElementById('fs-out').textContent =
+    `Root=${r.root} | Path=/${r.rel_path} (${r.count} mục, ${r.elapsed_ms}ms)\n` +
+    (r.entries || []).slice(0, 60).map(e => `${e.is_dir ? '[DIR ]' : '[FILE]'} ${e.rel_path} (${e.size} B)`).join('\n');
+}
+
+async function fsGitStatus() {
+  const p = document.getElementById('fs-path').value || 'chimera-tp';
+  const r = await api(`/api/fs/git-status?repo=${encodeURIComponent(p)}`);
+  document.getElementById('fs-out').textContent = `[git ${r.repo}]\n${r.status_text || '(clean)'}\n--- Commits ---\n${r.recent_commits}`;
+}
+
+async function portalDrop() {
+  const title = document.getElementById('portal-title').value || 'drop';
+  const text = document.getElementById('portal-text').value || '';
+  const r = await api('/api/portal/drop', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ title, text })
+  });
+  const lst = await api('/api/portal/list');
+  document.getElementById('portal-out').textContent =
+    `Đã gửi [${r.item_id}] (${r.raw_bytes}B -> ${r.wire_bytes}B, -${r.saved_pct}%)\n--- Danh sách Drop (${(lst.items||[]).length}) ---\n` +
+    (lst.items || []).map(x => `[${x.item_id}] ${x.title} (${x.raw_bytes}B, còn ${x.remaining_s}s): ${x.preview}`).join('\n');
+}
+
+async function packAiContext() {
+  const q = document.getElementById('ctx-q').value || 'ERROR';
+  const r = await api('/api/context/pack', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ query: q })
+  });
+  document.getElementById('portal-out').textContent =
+    `AI Context Pack (${r.chars} chars, hits=${r.hits_used}, alerts=${r.alerts_used}, ${r.elapsed_ms}ms):\n\n${r.markdown}`;
+}
+
+async function medicInvestigate() {
+  const pat = document.getElementById('medic-pattern').value || 'ERROR';
+  const r = await api('/api/medic/investigate', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ pattern: pat })
+  });
+  document.getElementById('medic-out').textContent = JSON.stringify(r, null, 2);
+}
+
+async function medicRun(pid) {
+  const r = await api('/api/medic/heal', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ playbook_id: pid, params: { dry_run: true } })
+  });
+  document.getElementById('medic-out').textContent = JSON.stringify(r, null, 2);
 }
 
 function logV4(msg) {
@@ -647,6 +824,23 @@ class ChimeraDaemon:
         self.sentinel = SentinelEngine(ops_dir=self.ops_dir)
         self.code_search = CodeSearchIndex(self.ops_dir / "code_index.db")
 
+        fs_root = (
+            Path(self.config.search_roots[0])
+            if self.config.search_roots
+            else (
+                Path(self.config.allowed_query_roots[0])
+                if self.config.allowed_query_roots
+                else self.ops_dir
+            )
+        )
+        self.ghost_pty = GhostPtyManager()
+        self.ghost_fs = GhostFsEngine(fs_root)
+        self.medic = MedicEngine(self.ops_dir)
+        self.drop_portal = DropPortalStore(
+            self.ops_dir / "drop_portal",
+            default_ttl_s=int(getattr(self.config, "drop_ttl_s", 600)),
+        )
+
         self._run_lock = threading.Lock()
         self._ephemeral_mode = int(self.config.beam_port) == 0 and int(self.config.query_port) == 0
         self._status_cache_lock = threading.Lock()
@@ -660,9 +854,53 @@ class ChimeraDaemon:
         self._immortal_rx: ImmortalMultiPathReceiver | None = None
         self._warp_srv: WarpServer | None = None
         self._local_edge_proxy: LocalEdgeProxy | None = None
+        self._phantom_srv: PhantomTunnelServer | None = None
+        self._phantom_client: PhantomTunnelClient | None = None
         self._httpd: _ThreadingControlServer | None = None
         self._threads: list[threading.Thread] = []
         self.http_addr: tuple[str, int] = ("127.0.0.1", 0)
+
+    def active_edge_peer_base(self) -> str:
+        if self._phantom_client is not None:
+            st = self._phantom_client.status()
+            if st.get("connected") and st.get("mode") == "PHANTOM_5MS_DIRECT":
+                loc_p = (st.get("listeners") or {}).get(int(self.config.peer_dashboard_port))
+                if loc_p:
+                    return f"http://127.0.0.1:{loc_p}"
+        return self.peer_http_base()
+
+    def _should_proxy(self, is_local_flag: bool = False) -> bool:
+        return (
+            not is_local_flag
+            and self.config.role == "controller"
+            and bool(self.config.peer_ipv4)
+        )
+
+    def proxy_request(
+        self,
+        method: str,
+        path_and_query: str,
+        body_bytes: bytes | None = None,
+        timeout_s: float = 12.0,
+    ) -> tuple[int, str, bytes]:
+        bases: list[str] = []
+        act = self.active_edge_peer_base()
+        if act != self.peer_http_base():
+            bases.append(act)
+        bases.append(self.peer_http_base())
+        last_exc: Exception | None = None
+        for b in bases:
+            url = f"{b}{path_and_query}"
+            headers = {"Content-Type": "application/json"} if method == "POST" else {}
+            req = urllib.request.Request(url, data=body_bytes if method == "POST" else None, headers=headers, method=method)
+            try:
+                with urllib.request.urlopen(req, timeout=timeout_s) as r:
+                    return int(r.status), str(r.headers.get("Content-Type", "application/json")), r.read()
+            except urllib.error.HTTPError as he:
+                return int(he.code), str(he.headers.get("Content-Type", "application/json")), he.read()
+            except Exception as exc:
+                last_exc = exc
+        raise RuntimeError(f"Peer proxy unreachable: {last_exc}")
 
     def _allowed_roots(self) -> list[Path]:
         roots = [Path(p).resolve() for p in self.config.allowed_query_roots]
@@ -832,13 +1070,66 @@ class ChimeraDaemon:
                         200,
                         {
                             "ok": True,
-                            "version": "4.0.0",
+                            "version": "5.0.0",
                             "node_name": daemon_ref.config.node_name,
                             "role": daemon_ref.config.role,
                             "hardware": cpu_caps(),
                             "zero_weight": get_zero_weight_status(),
                         },
                     )
+                    return
+                if parsed.path == "/api/phantom/status":
+                    self._send_json(200, daemon_ref.phantom_status())
+                    return
+                if parsed.path in ("/api/pty/list", "/api/pty/read", "/api/fs/list", "/api/fs/stat", "/api/fs/read", "/api/fs/git-status", "/api/medic/status", "/api/portal/list", "/api/portal/item"):
+                    qs = urllib.parse.parse_qs(parsed.query)
+                    if daemon_ref._should_proxy("local=1" in parsed.query):
+                        try:
+                            sc, ct, rb = daemon_ref.proxy_request("GET", self.path, timeout_s=10.0)
+                            self._send_bytes(sc, ct, rb)
+                        except Exception as exc:
+                            self._send_json(502, {"error": str(exc)})
+                        return
+                    try:
+                        if parsed.path == "/api/pty/list":
+                            self._send_json(200, {"sessions": daemon_ref.ghost_pty.list_sessions()})
+                        elif parsed.path == "/api/pty/read":
+                            sid = qs.get("session_id", [""])[0]
+                            cur = int(qs.get("cursor", ["0"])[0])
+                            wait_ms = int(qs.get("wait_ms", ["350"])[0])
+                            self._send_json(200, daemon_ref.ghost_pty.read_output(sid, cursor=cur, wait_ms=wait_ms))
+                        elif parsed.path == "/api/fs/list":
+                            rp = qs.get("path", [""])[0]
+                            out = daemon_ref.ghost_fs.list_dir(rp)
+                            if qs.get("with_self", ["0"])[0] == "1":
+                                out["self_entry"] = daemon_ref.ghost_fs.stat_entry(rp)
+                            self._send_json(200, out)
+                        elif parsed.path == "/api/fs/stat":
+                            rp = qs.get("path", [""])[0]
+                            self._send_json(200, daemon_ref.ghost_fs.stat_entry(rp))
+                        elif parsed.path == "/api/fs/read":
+                            rp = qs.get("path", [""])[0]
+                            self._send_json(200, daemon_ref.ghost_fs.read_file(rp))
+                        elif parsed.path == "/api/fs/git-status":
+                            rp = qs.get("repo", [""])[0]
+                            self._send_json(200, daemon_ref.ghost_fs.git_status(rp))
+                        elif parsed.path == "/api/medic/status":
+                            self._send_json(200, daemon_ref.medic.status())
+                        elif parsed.path == "/api/portal/list":
+                            self._send_json(200, {"items": daemon_ref.drop_portal.list_items()})
+                        elif parsed.path == "/api/portal/item":
+                            iid = qs.get("item_id", [""])[0]
+                            meta, raw_data = daemon_ref.drop_portal.get_item(iid)
+                            if qs.get("raw", ["0"])[0] == "1":
+                                self._send_bytes(200, str(meta.get("mime", "application/octet-stream")), raw_data)
+                            else:
+                                self._send_json(200, {**meta, "data_b64": base64.b64encode(raw_data).decode("ascii")})
+                    except PermissionError as pe:
+                        self._send_json(403, {"error": str(pe)})
+                    except FileNotFoundError as fnf:
+                        self._send_json(404, {"error": str(fnf)})
+                    except Exception as exc:
+                        self._send_json(400, {"error": str(exc)})
                     return
                 if parsed.path == "/api/nat/profile":
                     self._send_json(200, discover_nat_profile())
@@ -934,7 +1225,7 @@ class ChimeraDaemon:
                         200,
                         {
                             "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
-                            "version": "4.0.0",
+                            "version": "5.0.0",
                             "cluster": st_payload.get("cluster", {}),
                             "status": st_payload,
                         },
@@ -1586,6 +1877,165 @@ class ChimeraDaemon:
                         self._send_json(400, {"error": str(exc)})
                     return
 
+                if parsed.path == "/api/phantom/offer":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        if daemon_ref._phantom_srv is None:
+                            self._send_json(503, {"error": "PhantomTunnelServer not enabled on node"})
+                            return
+                        self._send_json(200, daemon_ref._phantom_srv.accept_offer(body))
+                    except Exception as exc:
+                        self._send_json(400, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/phantom/connect":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        if daemon_ref._phantom_client is None:
+                            peer_ip = daemon_ref.config.peer_ipv4 or "127.0.0.1"
+                            daemon_ref._phantom_client = PhantomTunnelClient(
+                                peer_http_base=daemon_ref.peer_http_base(),
+                                peer_udp_ip=peer_ip,
+                                peer_fallback_port=int(daemon_ref.config.phantom_fallback_port),
+                                forwards={
+                                    int(daemon_ref.config.phantom_ssh_port): 22,
+                                    int(daemon_ref.config.phantom_http_port): int(daemon_ref.config.peer_dashboard_port or daemon_ref.http_addr[1]),
+                                },
+                                local_test_mode=bool(body.get("local_test_mode", not bool(daemon_ref.config.peer_ipv4))),
+                            ).start_listeners()
+                        res = daemon_ref._phantom_client.connect(
+                            local_test_mode=bool(body.get("local_test_mode", daemon_ref._phantom_client.local_test_mode)),
+                            num_sockets=int(body.get("num_sockets", 192)),
+                            spray_count=int(body.get("spray_count", 900)),
+                            timeout_s=float(body.get("timeout_s", 3.5)),
+                        )
+                        daemon_ref.store.log_event(
+                            "INFO", "PHANTOM", f"mode={res['mode']} RTT={res['direct_rtt_ms']}ms conns={res['listeners']}"
+                        )
+                        daemon_ref.invalidate_status_cache()
+                        self._send_json(200, res)
+                    except Exception as exc:
+                        self._send_json(500, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/phantom/disconnect":
+                    if daemon_ref._phantom_client is not None:
+                        st = daemon_ref._phantom_client.disconnect()
+                        daemon_ref.invalidate_status_cache()
+                        self._send_json(200, st)
+                    else:
+                        self._send_json(200, {"connected": False, "mode": "DISCONNECTED"})
+                    return
+
+                if parsed.path in (
+                    "/api/pty/create",
+                    "/api/pty/write",
+                    "/api/pty/resize",
+                    "/api/pty/close",
+                    "/api/fs/write",
+                    "/api/medic/investigate",
+                    "/api/medic/heal",
+                    "/api/portal/drop",
+                    "/api/portal/delete",
+                    "/api/context/pack",
+                ):
+                    raw_b = self._read_body()
+                    try:
+                        body = json.loads(raw_b.decode("utf-8") or "{}")
+                    except Exception:
+                        self._send_json(400, {"error": "Invalid JSON body"})
+                        return
+                    if daemon_ref._should_proxy(bool(body.get("local_only", False))):
+                        try:
+                            sc, ct, rb = daemon_ref.proxy_request("POST", self.path, body_bytes=raw_b, timeout_s=20.0)
+                            self._send_bytes(sc, ct, rb)
+                        except Exception as exc:
+                            self._send_json(502, {"error": str(exc)})
+                        return
+                    try:
+                        if parsed.path == "/api/pty/create":
+                            self._send_json(
+                                200,
+                                daemon_ref.ghost_pty.create_session(
+                                    cwd=str(body.get("cwd", "")),
+                                    cols=int(body.get("cols", 100)),
+                                    rows=int(body.get("rows", 30)),
+                                ),
+                            )
+                        elif parsed.path == "/api/pty/write":
+                            sid = str(body.get("session_id", ""))
+                            data_b = base64.b64decode(body["data_b64"].encode("ascii")) if body.get("data_b64") else str(body.get("text", "")).encode("utf-8")
+                            self._send_json(200, daemon_ref.ghost_pty.write_input(sid, data_b))
+                        elif parsed.path == "/api/pty/resize":
+                            self._send_json(
+                                200,
+                                daemon_ref.ghost_pty.resize(str(body.get("session_id", "")), int(body.get("cols", 100)), int(body.get("rows", 30))),
+                            )
+                        elif parsed.path == "/api/pty/close":
+                            self._send_json(200, {"closed": daemon_ref.ghost_pty.close_session(str(body.get("session_id", "")))})
+                        elif parsed.path == "/api/fs/write":
+                            raw_f = base64.b64decode(body["content_b64"].encode("ascii")) if body.get("content_b64") else str(body.get("text", "")).encode("utf-8")
+                            self._send_json(
+                                200,
+                                daemon_ref.ghost_fs.write_file(
+                                    rel_path=str(body.get("path", "")),
+                                    content=raw_f,
+                                    expected_etag=str(body.get("expected_etag", "")),
+                                ),
+                            )
+                        elif parsed.path == "/api/medic/investigate":
+                            self._send_json(
+                                200,
+                                daemon_ref.medic.investigate(
+                                    daemon_ref.config,
+                                    file_path=str(body.get("file_path", "")),
+                                    pattern=str(body.get("pattern", "ERROR")),
+                                ),
+                            )
+                        elif parsed.path == "/api/medic/heal":
+                            rep = daemon_ref.medic.run_playbook(
+                                playbook_id=str(body.get("playbook_id", "")),
+                                config=daemon_ref.config,
+                                params=dict(body.get("params") or {}),
+                                backup_root=daemon_ref.backup_root,
+                                code_search=daemon_ref.code_search,
+                            )
+                            daemon_ref.store.log_event("INFO", "MEDIC", f"playbook={rep['playbook_id']} dry={rep['dry_run']} ({rep['elapsed_ms']}ms)")
+                            daemon_ref.invalidate_status_cache()
+                            self._send_json(200, rep)
+                        elif parsed.path == "/api/portal/drop":
+                            data_b = base64.b64decode(body["data_b64"].encode("ascii")) if body.get("data_b64") else str(body.get("text", "")).encode("utf-8")
+                            meta = daemon_ref.drop_portal.put_item(
+                                title=str(body.get("title", "drop")),
+                                data=data_b,
+                                kind=str(body.get("kind", "text")),
+                                mime=str(body.get("mime", "text/plain; charset=utf-8")),
+                                ttl_s=int(body["ttl_s"]) if body.get("ttl_s") else None,
+                            )
+                            daemon_ref.invalidate_status_cache()
+                            self._send_json(200, meta)
+                        elif parsed.path == "/api/portal/delete":
+                            self._send_json(200, {"deleted": daemon_ref.drop_portal.delete_item(str(body.get("item_id", "")))})
+                        elif parsed.path == "/api/context/pack":
+                            res = pack_ai_context(
+                                query=str(body.get("query", "")),
+                                code_search=daemon_ref.code_search,
+                                sentinel=daemon_ref.sentinel,
+                                allowed_roots=daemon_ref._allowed_roots(),
+                                repo=str(body.get("repo", "")),
+                                max_chars=int(body.get("max_chars", 8000)),
+                            )
+                            self._send_json(200, res)
+                    except PermissionError as pe:
+                        self._send_json(403, {"error": str(pe)})
+                    except FileNotFoundError as fnf:
+                        self._send_json(404, {"error": str(fnf)})
+                    except FileExistsError as fee:
+                        self._send_json(409, {"error": str(fee)})
+                    except Exception as exc:
+                        self._send_json(400, {"error": str(exc)})
+                    return
+
                 self._send_json(404, {"error": "Not found"})
 
             def log_message(self, *_args: object) -> None:
@@ -1602,6 +2052,40 @@ class ChimeraDaemon:
             ).start()
             self.config.warp_port = self._warp_srv.udp_addr[1]
 
+        fb_port = 0 if self._ephemeral_mode else int(self.config.phantom_fallback_port)
+        self._phantom_srv = PhantomTunnelServer(
+            fallback_port=fb_port,
+            allowed_forward_ports=list(self.config.phantom_allowed_ports) + [int(self.http_addr[1])],
+        ).start()
+
+        if bool(self.config.phantom_enabled) and self.config.role == "controller" and self.config.peer_ipv4:
+            self._phantom_client = PhantomTunnelClient(
+                peer_http_base=self.peer_http_base(),
+                peer_udp_ip=self.config.peer_ipv4,
+                peer_fallback_port=int(self.config.phantom_fallback_port),
+                forwards={
+                    int(self.config.phantom_ssh_port): 22,
+                    int(self.config.phantom_http_port): int(self.config.peer_dashboard_port),
+                },
+                local_test_mode=False,
+            ).start_listeners()
+            if not self._ephemeral_mode:
+                def _auto_phantom() -> None:
+                    if self._stop.wait(timeout=1.0) or self._phantom_client is None:
+                        return
+                    try:
+                        res = self._phantom_client.connect()
+                        self.store.log_event(
+                            "INFO", "PHANTOM", f"Auto-connect mode={res['mode']} RTT={res['direct_rtt_ms']}ms"
+                        )
+                        self.invalidate_status_cache()
+                    except Exception as exc:
+                        self.store.log_event("WARN", "PHANTOM", f"Auto-connect failed: {exc}")
+
+                th_ph = threading.Thread(target=_auto_phantom, daemon=True)
+                th_ph.start()
+                self._threads.append(th_ph)
+
         if int(self.config.edge_proxy_port) >= 0:
             proxy_peer = self.peer_http_base()
             self._local_edge_proxy = LocalEdgeProxy(
@@ -1610,6 +2094,7 @@ class ChimeraDaemon:
                 peer_http_base=proxy_peer,
                 targets=self.config.edge_targets,
                 telepathy_store=self.telepathy_store,
+                peer_http_resolver=self.active_edge_peer_base,
             ).start()
             self.config.edge_proxy_port = self._local_edge_proxy.addr[1]
 
@@ -1622,9 +2107,15 @@ class ChimeraDaemon:
         self.store.log_event(
             "INFO",
             "DAEMON",
-            f"v4.0 Started on http://{self.http_addr[0]}:{self.http_addr[1]} | RAM={zw['daemon_ram_mb']}MB | Beam={self.config.beam_port} Query={self.config.query_port} EdgeProxy={self.config.edge_proxy_port}",
+            f"v5.0 Started on http://{self.http_addr[0]}:{self.http_addr[1]} | RAM={zw['daemon_ram_mb']}MB | Beam={self.config.beam_port} EdgeProxy={self.config.edge_proxy_port} PhantomFB={self._phantom_srv.fallback_port}",
         )
         return self
+
+    def phantom_status(self) -> dict[str, Any]:
+        return {
+            "client": self._phantom_client.status() if self._phantom_client is not None else None,
+            "server": self._phantom_srv.stats() if self._phantom_srv is not None else None,
+        }
 
     def edge_stats(self) -> dict[str, Any]:
         return {
@@ -1653,7 +2144,7 @@ class ChimeraDaemon:
 
     def status_payload(self) -> dict[str, Any]:
         return {
-            "version": "4.0.0",
+            "version": "5.0.0",
             "config": self.config.to_dict(),
             "hardware": cpu_caps(),
             "zero_weight": get_zero_weight_status(),
@@ -1666,6 +2157,8 @@ class ChimeraDaemon:
             "edge": self.edge_stats(),
             "holo_backups": list_holo_backups(self.backup_root)[:8],
             "nat_last": self._last_nat_result,
+            "phantom": self.phantom_status(),
+            "portal": {"count": len(self.drop_portal.list_items())},
         }
 
     def run_cycle(self, trigger: str = "manual") -> dict[str, Any]:
@@ -1714,8 +2207,13 @@ class ChimeraDaemon:
 
     def close(self) -> None:
         self._stop.set()
+        if self._phantom_client is not None:
+            self._phantom_client.close()
+        if self._phantom_srv is not None:
+            self._phantom_srv.close()
         if self._local_edge_proxy is not None:
             self._local_edge_proxy.close()
+        self.ghost_pty.close_all()
         if self._httpd is not None:
             self._httpd.shutdown()
             self._httpd.server_close()

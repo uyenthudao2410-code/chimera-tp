@@ -1,4 +1,4 @@
-"""Command-line interface for CHIMERA-HYPER v4.0 (plus v1.0-v3.0 and v0.5.0 exotic modes)."""
+"""Command-line interface for CHIMERA-HYPER v5.0 (plus v1.0-v4.0 and v0.5.0 exotic modes)."""
 
 from __future__ import annotations
 
@@ -107,7 +107,7 @@ def main(argv: list[str] | None = None) -> int:
     _configure_utf8()
     parser = argparse.ArgumentParser(
         prog="chimera-tp",
-        description="CHIMERA-HYPER v4.0: Zero-Weight HyperOS + Silicon GFNI/AVX2 Transport + Multi-Realm Suite",
+        description="CHIMERA-HYPER v5.0: PHANTOM-5MS Tunnel + Ghost-PTY + Ghost-FS + Medic + Drop-Portal",
     )
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -253,6 +253,43 @@ def main(argv: list[str] | None = None) -> int:
     p_hb.add_argument("--backup-id", default="", help="Optional backup identifier")
     p_hb.add_argument("--peer-http", default="", help="Optional peer HTTP URL to sync Shard 1")
     p_hb.add_argument("--ops-dir", default="", help="Override ops directory")
+
+    # ---- CHIMERA-HYPER v5.0 PHANTOM-5MS Subcommands ----
+    p_ph = sub.add_parser("phantom", help="Check or connect PHANTOM-5MS persistent P2P tunnel via daemon")
+    p_ph.add_argument("action", choices=("status", "connect", "disconnect"), help="Tunnel control action")
+    p_ph.add_argument("--daemon-http", default="http://127.0.0.1:9780", help="Local daemon HTTP URL")
+
+    p_pty = sub.add_parser("pty", help="Interact with persistent Ghost-PTY sessions via HTTP")
+    p_pty.add_argument("action", choices=("create", "list", "exec", "close"), help="PTY action")
+    p_pty.add_argument("--peer-http", default="http://127.0.0.1:9780", help="Target daemon HTTP URL")
+    p_pty.add_argument("--sid", default="", help="PTY session id")
+    p_pty.add_argument("--cmd", default="", help="Shell command for exec")
+
+    p_fs = sub.add_parser("fs", help="Inspect Ghost-FS files or git status remotely")
+    p_fs.add_argument("action", choices=("ls", "cat", "git"), help="Ghost-FS action")
+    p_fs.add_argument("--path", default="", help="Relative file or repo path")
+    p_fs.add_argument("--peer-http", default="http://127.0.0.1:9780", help="Target daemon HTTP URL")
+
+    p_med = sub.add_parser("medic", help="CHIMERA-MEDIC forensic triage and safe playbook runner")
+    p_med.add_argument("action", choices=("status", "investigate", "heal"), help="Medic action")
+    p_med.add_argument("--playbook", default="probe_services", help="Allowlisted playbook ID")
+    p_med.add_argument("--pattern", default="ERROR", help="Error pattern for diagnose")
+    p_med.add_argument("--file-path", default="", help="Target file or repo path")
+    p_med.add_argument("--dry-run", action="store_true", help="Run playbook in dry-run mode")
+    p_med.add_argument("--peer-http", default="http://127.0.0.1:9780", help="Target daemon HTTP URL")
+
+    p_dp = sub.add_parser("drop", help="Send or list ephemeral Zero-Cloud Drop-Portal items")
+    p_dp.add_argument("action", choices=("put", "list", "get"), help="Drop action")
+    p_dp.add_argument("--title", default="clip", help="Drop item title")
+    p_dp.add_argument("--text", default="", help="UTF-8 text snippet to drop")
+    p_dp.add_argument("--file", default="", help="File path to drop")
+    p_dp.add_argument("--item-id", default="", help="Item id for get")
+    p_dp.add_argument("--peer-http", default="http://127.0.0.1:9780", help="Target daemon HTTP URL")
+
+    p_ctx = sub.add_parser("context-pack", help="Build compact Markdown AI Context Pack from FTS5 + Sentinel")
+    p_ctx.add_argument("query", help="Symptom, symbol, or issue query")
+    p_ctx.add_argument("--repo", default="", help="Optional repo filter")
+    p_ctx.add_argument("--peer-http", default="http://127.0.0.1:9780", help="Target daemon HTTP URL")
 
     # ---- Legacy Research Subcommands (v0.5.0 Multi-Realm Exotic Lanes) ----
     p_probe = sub.add_parser("probe", help="Probe hardware capabilities & Windows network realms")
@@ -502,7 +539,7 @@ def main(argv: list[str] | None = None) -> int:
             config=cfg, ops_dir=ops_dir, auto_seed_on_empty=not bool(args.no_seed)
         ).start()
         print(
-            f"CHIMERA-HYPER v4.0 Daemon listening at http://{daemon.http_addr[0]}:{daemon.http_addr[1]}",
+            f"CHIMERA-HYPER v5.0 Daemon listening at http://{daemon.http_addr[0]}:{daemon.http_addr[1]}",
             flush=True,
         )
         try:
@@ -668,6 +705,119 @@ def main(argv: list[str] | None = None) -> int:
             rep = restore_holo_backup([Path(s) for s in args.shard], out_dir=out_dir)
             print(json.dumps(rep, indent=2, ensure_ascii=False))
             return 0 if rep.get("sha256_match") else 1
+
+    if args.command == "phantom":
+        base = args.daemon_http.rstrip("/")
+        if args.action == "status":
+            with urllib.request.urlopen(f"{base}/api/phantom/status", timeout=5.0) as r:
+                print(r.read().decode("utf-8"))
+            return 0
+        ep = "/api/phantom/connect" if args.action == "connect" else "/api/phantom/disconnect"
+        req = urllib.request.Request(f"{base}{ep}", data=b"{}", headers={"Content-Type": "application/json"}, method="POST")
+        with urllib.request.urlopen(req, timeout=12.0) as r:
+            print(r.read().decode("utf-8"))
+        return 0
+
+    if args.command == "pty":
+        base = args.peer_http.rstrip("/")
+        if args.action == "list":
+            with urllib.request.urlopen(f"{base}/api/pty/list", timeout=6.0) as r:
+                print(r.read().decode("utf-8"))
+            return 0
+        if args.action == "create":
+            req = urllib.request.Request(f"{base}/api/pty/create", data=b"{}", headers={"Content-Type": "application/json"}, method="POST")
+            with urllib.request.urlopen(req, timeout=6.0) as r:
+                print(r.read().decode("utf-8"))
+            return 0
+        if args.action == "close":
+            req = urllib.request.Request(f"{base}/api/pty/close", data=json.dumps({"session_id": args.sid}).encode(), headers={"Content-Type": "application/json"}, method="POST")
+            with urllib.request.urlopen(req, timeout=6.0) as r:
+                print(r.read().decode("utf-8"))
+            return 0
+        req_w = urllib.request.Request(
+            f"{base}/api/pty/write",
+            data=json.dumps({"session_id": args.sid, "text": args.cmd + "\n"}).encode(),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(req_w, timeout=6.0) as r:
+            _ = r.read()
+        time.sleep(0.3)
+        with urllib.request.urlopen(f"{base}/api/pty/read?session_id={args.sid}&cursor=0&wait_ms=400", timeout=6.0) as r2:
+            print(r2.read().decode("utf-8"))
+        return 0
+
+    if args.command == "fs":
+        import urllib.parse
+
+        base = args.peer_http.rstrip("/")
+        q = urllib.parse.quote(args.path)
+        ep = f"/api/fs/list?path={q}" if args.action == "ls" else (f"/api/fs/read?path={q}" if args.action == "cat" else f"/api/fs/git-status?repo={q}")
+        with urllib.request.urlopen(f"{base}{ep}", timeout=8.0) as r:
+            print(r.read().decode("utf-8"))
+        return 0
+
+    if args.command == "medic":
+        base = args.peer_http.rstrip("/")
+        if args.action == "status":
+            with urllib.request.urlopen(f"{base}/api/medic/status", timeout=6.0) as r:
+                print(r.read().decode("utf-8"))
+            return 0
+        if args.action == "investigate":
+            req = urllib.request.Request(
+                f"{base}/api/medic/investigate",
+                data=json.dumps({"file_path": args.file_path, "pattern": args.pattern}).encode(),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=10.0) as r:
+                print(r.read().decode("utf-8"))
+            return 0
+        req = urllib.request.Request(
+            f"{base}/api/medic/heal",
+            data=json.dumps({"playbook_id": args.playbook, "params": {"file_path": args.file_path, "repo_path": args.file_path, "dry_run": bool(args.dry_run)}}).encode(),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=15.0) as r:
+            print(r.read().decode("utf-8"))
+        return 0
+
+    if args.command == "drop":
+        import base64 as b64
+
+        base = args.peer_http.rstrip("/")
+        if args.action == "list":
+            with urllib.request.urlopen(f"{base}/api/portal/list", timeout=6.0) as r:
+                print(r.read().decode("utf-8"))
+            return 0
+        if args.action == "get":
+            with urllib.request.urlopen(f"{base}/api/portal/item?item_id={args.item_id}", timeout=6.0) as r:
+                print(r.read().decode("utf-8"))
+            return 0
+        raw_b = Path(args.file).read_bytes() if args.file else args.text.encode("utf-8")
+        req = urllib.request.Request(
+            f"{base}/api/portal/drop",
+            data=json.dumps({"title": args.title, "data_b64": b64.b64encode(raw_b).decode("ascii"), "kind": "file" if args.file else "text"}).encode(),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=10.0) as r:
+            print(r.read().decode("utf-8"))
+        return 0
+
+    if args.command == "context-pack":
+        base = args.peer_http.rstrip("/")
+        req = urllib.request.Request(
+            f"{base}/api/context/pack",
+            data=json.dumps({"query": args.query, "repo": args.repo}).encode(),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=10.0) as r:
+            res = json.loads(r.read().decode("utf-8"))
+        print(res.get("markdown", ""))
+        return 0
 
     if args.command == "demo":
         from .demo import run_demo

@@ -1,50 +1,64 @@
-# Evaluation — CHIMERA-HYPER v4.0.0 Live Cluster Results
+# Evaluation — CHIMERA-HYPER v5.0.0 PHANTOM-5MS Live Cluster Results
 
-All cross-host telemetry below was measured live across the two-node cluster (`Windows 11 i5-11400 Rust GFNI` ↔ `Ubuntu Linux i5-4300U C11 AVX2, Python 3.14.4`) running `CHIMERA-HYPER v4.0.0` 24/7 daemons over Tailscale.
+All cross-host telemetry below was measured live across the two-node cluster (`Windows 11 i5-11400 Rust GFNI` ↔ `Ubuntu Linux i5-4300U C11 AVX2, Python 3.14.4`) running `CHIMERA-HYPER v5.0.0` 24/7 daemons with `phantom_enabled = true`.
 
 ## 1. Automated Verification Suites (Verified After Final Edits)
 
-- **Windows (`python -m unittest discover -s tests -v`)**: **36 / 36 PASS in `57.919s`** (`0` failures, `0` skipped).
-- **Linux (`python3 -m unittest discover -s tests -v`)**: **36 / 36 PASS in `27.749s`** (`0` failures, `0` skipped).
+- **Windows (`python -m unittest discover -s tests -v`)**: **42 / 42 PASS in `56.351s`** (`0` failures, `0` skipped — suites `test_chimera`, `test_hyper`, `test_v2_autopilot`, `test_v3_hypergrid`, `test_v4_hyperos`, `test_v5_phantom`).
+- **Linux (`python3 -m unittest discover -s tests -v`)**: **42 / 42 PASS in `34.539s`** (`0` failures, `0` skipped).
+- All 7 new/updated CLI `--help` entrypoints (`daemon`, `phantom`, `pty`, `fs`, `medic`, `drop`, `context-pack`) verified exit `0` on both Python 3.11 (Windows) and Python 3.14 (Linux).
 
 ## 2. Zero-Weight Memory Footprint (Windows + Linux Daemons)
 
-| Node / Process | Measured Idle `VmRSS` / Working Set | Budget (`80 MB`) | Services Hosted |
+| Node / Process | Measured `VmRSS` / Working Set | Budget (`80 MB`) | Hosted Stack |
 | :--- | :---: | :---: | :--- |
-| **Windows Controller (`pythonw` `:9780` + `:9788`)** | **`10.74 MB`** idle (`27.91 MB` right after heavy eval) | PASS (`13.4%` used) | Cockpit, Beam, RPC, Query, Immortal, Warp, LocalEdgeProxy |
-| **Linux Server Hub (`systemd` `:9780` / TS `:9781`)** | **`45.10 MB`** (`57.62 MB` peak during Sentinel scan) | PASS (`56.4%` used) | Cluster Hub, EdgeGateway, Sentinel, FTS5 Index (`1,943` files), Holo Store |
+| **Windows Controller (`pythonw`)** | **`21.19–26.01 MB`** steady (`32.34 MB` cold start) | PASS (`26.5–40.4%`) | Cockpit `:9780`, Edge + WebDAV `:9788`, Phantom `:2222`/`:9789`, Warp, Beam, Query, Immortal |
+| **Linux Server Hub (`systemd`)** | **`44.38–44.80 MB`** idle (`58.18–58.36 MB` post-FTS5 reindex) | PASS (`55.5–73.0%`) | Cluster Hub `:9780`/TS `:9781`, Phantom UDP `:9710`, EdgeGateway, Sentinel, FTS5 Index, Ghost-PTY/FS/Medic/Portal |
 
-## 3. Verified Live `v4.0` HyperOS Results
+## 3. Before (`v4.0` Tailscale) vs After (`v5.0` PHANTOM-5MS) Live Benchmarks
 
-### Breakthrough #1 — Birthday-Paradox NAT Buster
-- Path tested: Windows (`SYMMETRIC` NAT, staggered STUN mappings across `stun.cloudflare.com:3478` vs `stun.l.google.com:19302`) ↔ Linux (`EASY` NAT).
-- Execution: `192` UDP sockets opened, **`1` punch wave** (`1,148.86 ms` total coordination + probe).
-- Result: **`DIRECT_P2P_PIERCED`** — direct UDP P2P RTT **`5.20 ms`** (samples `[4.79, 5.15, 5.20, 5.45, 5.21] ms`) vs **`222.76 ms`** baseline Tailscale HTTP control RTT (**`42.84x` faster**).
+### Engine #1 — PHANTOM-5MS Encrypted P2P Tunnel (`PH5E`)
+- Tunnel converged automatically on startup to **`PHANTOM_5MS_DIRECT`** (`1` punch wave, **`4.71–6.01 ms`** direct encrypted UDP RTT; `32,924 B` TX / `226,908 B` RX during verification).
+- **Direct HTTP `/api/health` (`n=10` sequential requests)**:
+  - **Tailscale HTTP (`:9780`)**: min `197.89 ms` | p50 `203.18 ms` | mean `205.12 ms` | max `217.79 ms`
+  - **Phantom Encrypted Tunnel (`:9789`)**: min **`7.41 ms`** | p50 **`10.55 ms`** | mean **`13.63 ms`** | max **`24.99 ms`** (**`19.26x` lower p50**, **`15.05x` lower mean**)
+- **Real OpenSSH Execution (`BatchMode=yes`, `echo ... && hostname`)**:
+  - **Tailscale SSH (`:22`)**: `1,248.28 ms`, `1,238.00 ms` (mean `1,243.14 ms`)
+  - **Phantom SSH Tunnel (`127.0.0.1:2222`)**: **`233.41 ms`**, **`214.28 ms`** (mean **`223.85 ms`** — **`5.55x` faster SSH**)
+- **Universal Edge Proxy (`127.0.0.1:9788` routing automatically via `active_peer_base = http://127.0.0.1:9789`)**:
+  - `/chimera/`: **`103.19 ms`** (`66,770 B`, `TELEPATHIC_FOLD_ZDICT`) vs `v4.0` Tailscale `439.80 ms` (**`4.26x` faster**)
+  - `/radar/`: **`86.87 ms`** (`83,336 B`, `TELEPATHIC_ZDICT`) vs `v4.0` Tailscale `486.53 ms` (**`5.60x` faster**)
+  - `/tqouta/`: **`397.64 ms`** (`615,640 B`, `TELEPATHIC_FOLD_ZDICT`) vs `v4.0` Tailscale `1,207.14 ms` (**`3.04x` faster**)
+  - `3` `PREFETCH-HIT-0RTT` local cache hits down to **`2.67 ms`**; aggregate wire **`765,746 B -> 166,624 B`** (**`-78.24%` wire**).
 
-### Breakthrough #2 — Universal HTTP Warp-Edge Proxy (`127.0.0.1:9788`)
-- Fetched 3 independent Linux services from Windows through `LocalEdgeProxy` -> `EdgeGateway`:
-  - `radar`: `82,994 B` decoded (`TELEPATHY-TELEPATHIC_ZDICT`, `486.53 ms`)
-  - `tqouta`: `615,640 B` decoded (`TELEPATHY-TELEPATHIC_FOLD_ZDICT`, `1,207.14 ms`)
-  - `chimera`: `51,434 B` decoded (`TELEPATHY-TELEPATHIC_FOLD_ZDICT`, `439.80 ms`)
-  - Immediate follow-up `GET /chimera/api/status`: **`21,691 B` served with `X-Chimera-Edge: PREFETCH-HIT-0RTT` in `19.08 ms`**.
-- Aggregate wire efficiency: **`750,068 B -> 163,281 B`** (**`-78.23%` bandwidth saved**).
+### Engine #2 — Ghost-PTY Persistent Detachable Shell
+- Spawned interactive `/bin/bash -i` on Linux hub via transparent Windows proxy (`19.6 ms`).
+- Executed `uname -srm && pwd && echo PTY_LIVE_OK`, detached, and reattached from `cursor=0` reading `364` bytes with full prompt + command output in **`28.68 ms`**, then closed cleanly.
 
-### Breakthrough #3 — CHIMERA-SENTINEL Watchdog
-- Probed all `3` configured Linux apps (`chimera` `1.52 ms`, `radar` `1.45 ms`, `tqouta` `6.52 ms` — all `UP HTTP 200`).
-- Checked host disk (`42.57 GB / 108.81 GB` = `39.1%` free) and scanned `12` recent `.log` files (`787.59 ms`), flagging a real `[55x] MAIL_FAIL_502` error burst in production email sync logs.
+### Engine #3 — Ghost-FS & RFC 4918 WebDAV Bridge
+- `PROPFIND http://127.0.0.1:9788/dav/<repo>/` (`Depth: 1`): **`207 Multi-Status`**, `14` XML `<D:response>` entries in **`33.24 ms`**.
+- `GET http://127.0.0.1:9788/dav/<repo>/pyproject.toml`: **`200 OK`**, `1,109 B`, `ETag: "7f6ad83d2342a34f"` in **`12.06 ms`**.
+- `/api/fs/list` returned `13` entries in **`11.19 ms`**; `/api/fs/git-status` verified live across multiple workspace git repositories in **`33.61–74.18 ms`** (while safely reporting non-git status on deployment extracts lacking `.git`).
 
-### Breakthrough #4 — 0-Download SQLite FTS5 + Merkle Search
-- Indexed **all `20` workspace repositories (`1,943` files)** on Linux in a compact **`32,528 KB` (`31.77 MB`)** WAL database (`max_file_bytes=48 KiB`, `max_files_per_repo=250`).
-- Incremental Merkle verification (`skipped_unchanged = 1,943`): **`384–386 ms`** with zero file reads.
-- Cross-host search queries over Tailscale HTTPS:
-  - `"HyperWireReceiver"`: `5` ranked hits (`chimera-tp/...`) in **`2.16 ms`**
-  - `"V_Finance"`: `5` ranked hits (`auto-pull.log`, `HR/AGENTS.md`, `auto-pull.sh`) in **`4.37 ms`**
-  - `"radar"`: `5` ranked hits (`radar_dashboard/...`) in **`5.30 ms`**
+### Engine #4 — CHIMERA-MEDIC Forensic Triage & Playbook Healer
+- **`investigate`** on a `446,480 B` production email sync log (`pattern=MAIL_FAIL_502`): `55` matches extracted in **`4.24 ms`** server (`14.25 ms` E2E), recommending `verify_email_log_tail` + `probe_services`.
+- **Playbooks executed live via Windows proxy**:
+  - `verify_email_log_tail`: inspected `7,935` lines (`2,042` `IMPORTED`, `55` historical `MAIL_FAIL_502`, last OK `IMPORTED 0 / 2 mail phu hop`) in **`24.17 ms`**.
+  - `probe_services`: all `3` configured Linux apps `200 OK` (`chimera` **`1.78 ms`**, `radar` **`1.14 ms`**, `tqouta` **`6.95 ms`**).
+  - `reindex_fts5`: verified **`1,949` files** (`8` updated, `1,941` unchanged, `33,392.0 KB` DB) in **`487.64 ms`**.
 
-### Breakthrough #5 — Holographic GF(256) `(K=2, N=3)` Backup
-- Packed live controller `config.json` (`1,402 B` raw -> `638 B` compressed -> `960 B` per shard) in `258.56 ms` (`peer_synced=true` shipping `shard_1.chshard` to Linux).
-- Observed single-shard Shannon entropies: **`[7.6773, 7.6731, 7.6712]` bits/byte**.
-- Simulated total loss of `shard_0.chshard`: fetched `shard_1` back from Linux and restored `(shard_1 + export_shard_2)` with **`sha256_match=true` in `3.40 ms`**.
+### Engine #5 — Drop-Portal & AI Context Teleporter
+- **Drop-Portal**: Dropped test item on Windows proxy (`12.26 ms`), confirmed visible over Tailscale HTTPS `/api/portal/list` (`seen_over_tailscale_https: true`), and deleted cleanly (`deleted: true`).
+- **AI Context Pack (`/api/context/pack`)**:
+  - Error triage query: **`1,012 chars`** (`1` hit, `1` alert) assembled in **`1.67 ms`**.
+  - Symbol query (`HyperWireReceiver`): **`2,345 chars`** (`4` code excerpts + Sentinel alert + `5 / 1,949` FTS5 hits in `1.31 ms`) assembled in **`2.72 ms`**.
 
-### Foundation & HyperGrid Telemetry (`v4.0.0` Autopilot Cycle)
-- Cluster health score: **`100 / 100`** | Simulated 5% WAN drop speedup: **`29.94x`** | 1 MiB DNA Beam: **`3.72x` (`-95.36%` wire)** | Fluid Log Query: **`7.04x` (`-99.15%` wire)** | Merkle 16-file Sync: **`-96.84%` wire** | Immortal IPv4 Cut: **`true`** | Tailscale HTTPS SSR HTML: **`14,487 B` gzipped in `442.93 ms`**.
+## 4. Core `v5.0` Autopilot Telemetry Cycle (`POST /api/run?sync=1`)
+
+- **Health Score:** **`100 / 100`** | **Bandit Genome:** `G2_LOSSY_ARMOR` (`reward: 7.429`)
+- **GFNI Native Speedup:** **`85.04x`** (`188.55 ms` Python vs `2.22 ms` native Rust GFNI)
+- **Wormhole IPC:** **`4.06 Gbps`** (`33.07 ms` vs `1.91 Gbps` TCP loopback)
+- **5% WAN Drop Immunity:** **`29.22x`** (`27.326 Mbps` vs `0.935 Mbps` TCP)
+- **1 MiB DNA Beam:** **`-95.36%` wire** (`62,400 B` / `1,048,576 B`, **`3.76x`** vs raw TCP)
+- **Fluid Log Query (`1.70 MB` -> `14.4 KB`):** **`-99.15%` wire** (`9,084` hits, **`9.03x`** vs raw TCP)
+- **Merkle 16-file Sync:** **`-96.84%` wire**, SHA-256 `verified_root_match: true` | **Immortal Blackout:** `survived_blackout: true`, `reconnects: 0`

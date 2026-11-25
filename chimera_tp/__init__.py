@@ -1,14 +1,17 @@
-"""CHIMERA-HYPER v4.0: Zero-Weight HyperOS (NAT Buster, Warp Edge Proxy, Sentinel Watchdog, FTS5 Search, Holo GF256 Backup + HyperGrid v3)."""
+"""CHIMERA-HYPER v5.0: PHANTOM-5MS Persistent P2P Tunnel, Ghost-PTY, Ghost-FS WebDAV, Medic Self-Healer & AI Context Drop-Portal."""
 
-__version__ = "4.0.0"
+__version__ = "5.0.0"
 
 from .active_pipe import ActivePipeEngine, ActivePipeResult, ActiveQueryServer, ComputePlan, remote_active_query
 from .autopilot import OpsConfig, TelemetryStore, get_zero_weight_status, run_daily_autopilot
 from .code_search import CodeSearchIndex
 from .dashboard import ChimeraDaemon
 from .dna_vault import DnaCodec, DnaStats, DnaVault, pack_directory, unpack_directory
+from .drop_portal import DropPortalStore, pack_ai_context
 from .edge_proxy import EdgeGateway, LocalEdgeProxy, edge_fetch_remote
 from .fabric import BeamReport, BeamServer, ChimeraFabric, beam_send, beam_send_merkle_patch
+from .ghost_fs import GhostFsEngine, build_propfind_xml
+from .ghost_pty import GhostPtyManager
 from .holo_backup import (
     create_holo_backup,
     list_holo_backups,
@@ -26,9 +29,11 @@ from .hyper_wire import (
     ImmortalMultiPathSender,
     ImmortalReport,
 )
+from .medic import MedicEngine
 from .merkle_sync import MerkleSnapshot, ShadowMerkleIndex, merkle_beam_sync
 from .nat_buster import NatPunchResponder, attempt_direct_punch, discover_nat_profile
 from .native import WormholeChannel, cpu_caps, has_native
+from .phantom_tunnel import PhantomTunnelClient, PhantomTunnelServer, open_packet, seal_packet
 from .probe import EnvironmentProfile, RealmInfo, probe_environment
 from .protocol import ChimeraReceiver, ChimeraSender, FaultProfile, TransferReport
 from .sentinel import SentinelEngine
@@ -50,9 +55,12 @@ __all__ = [
     "DnaStats",
     "DnaVault",
     "DomainDictionary",
+    "DropPortalStore",
     "EdgeGateway",
     "EnvironmentProfile",
     "FaultProfile",
+    "GhostFsEngine",
+    "GhostPtyManager",
     "HedgedRpcClient",
     "HedgedRpcServer",
     "HyperWireReceiver",
@@ -62,9 +70,12 @@ __all__ = [
     "ImmortalMultiPathSender",
     "ImmortalReport",
     "LocalEdgeProxy",
+    "MedicEngine",
     "MerkleSnapshot",
     "NatPunchResponder",
     "OpsConfig",
+    "PhantomTunnelClient",
+    "PhantomTunnelServer",
     "RealmInfo",
     "SentinelEngine",
     "ShadowMerkleIndex",
@@ -78,6 +89,7 @@ __all__ = [
     "attempt_direct_punch",
     "beam_send",
     "beam_send_merkle_patch",
+    "build_propfind_xml",
     "cpu_caps",
     "create_holo_backup",
     "discover_nat_profile",
@@ -86,10 +98,13 @@ __all__ = [
     "has_native",
     "list_holo_backups",
     "merkle_beam_sync",
+    "open_packet",
+    "pack_ai_context",
     "pack_directory",
     "probe_environment",
     "reconstruct_secret_gf256_2of3",
     "restore_holo_backup",
+    "seal_packet",
     "split_secret_gf256_2of3",
     "train_domain_dictionary",
     "unpack_directory",

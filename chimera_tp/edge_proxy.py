@@ -13,8 +13,9 @@ import urllib.error
 import urllib.parse
 import urllib.request
 from collections import OrderedDict
-from typing import Any
+from typing import Any, Callable
 
+from .ghost_fs import build_propfind_xml
 from .telepathy import DomainDictionary, TelepathicCodec, TelepathicStore, train_domain_dictionary
 
 DEFAULT_EDGE_TARGETS: dict[str, dict[str, Any]] = {
@@ -349,10 +350,12 @@ class LocalEdgeProxy:
         targets: dict[str, dict[str, Any]] | None = None,
         telepathy_store: TelepathicStore | None = None,
         cache_ttl_s: float = 10.0,
+        peer_http_resolver: Callable[[], str] | None = None,
     ) -> None:
         self.listen_host = listen_host
         self.listen_port = int(listen_port)
         self.peer_http_base = peer_http_base.rstrip("/")
+        self.peer_http_resolver = peer_http_resolver
         self.targets = targets if targets is not None else DEFAULT_EDGE_TARGETS
         self.telepathy_store = telepathy_store or TelepathicStore(dict_dir=None, max_mem_dicts=8)
         self.cache_ttl_s = max(1.0, float(cache_ttl_s))
@@ -405,6 +408,16 @@ class LocalEdgeProxy:
                 return ref_parts[0], clean
         return None, clean
 
+    def active_peer_base(self) -> str:
+        if self.peer_http_resolver is not None:
+            try:
+                dyn = str(self.peer_http_resolver() or "").strip()
+                if dyn:
+                    return dyn.rstrip("/")
+            except Exception:
+                pass
+        return self.peer_http_base
+
     def stats(self) -> dict[str, Any]:
         with self._lock:
             saved = (
@@ -415,6 +428,7 @@ class LocalEdgeProxy:
             return {
                 "listen": f"http://{self.addr[0]}:{self.addr[1]}",
                 "peer_http_base": self.peer_http_base,
+                "active_peer_base": self.active_peer_base(),
                 "requests": self._requests,
                 "prefetch_hits": self._prefetch_hits,
                 "total_raw_bytes": self._total_raw_bytes,
@@ -441,8 +455,75 @@ class LocalEdgeProxy:
                 except (BrokenPipeError, ConnectionResetError, OSError):
                     pass
 
+            def _handle_dav(self, method: str) -> None:
+                parsed = urllib.parse.urlparse(self.path)
+                rel = urllib.parse.unquote(parsed.path[4:] if parsed.path.startswith("/dav") else "").strip("/")
+                peer_base = proxy_ref.active_peer_base()
+                clen = int(self.headers.get("Content-Length", "0"))
+                req_body = self.rfile.read(clen) if clen > 0 else b""
+                try:
+                    if method == "PROPFIND":
+                        depth = (self.headers.get("Depth") or "1").strip()
+                        try:
+                            st_url = f"{peer_base}/api/fs/list?path={urllib.parse.quote(rel)}&with_self=1"
+                            with urllib.request.urlopen(st_url, timeout=8.0) as r:
+                                lst = json.loads(r.read().decode("utf-8"))
+                            self_ent = lst.get("self_entry") or {"name": rel or "DEV", "is_dir": True, "size": 0, "mtime": time.time()}
+                            children = lst.get("entries", []) if depth != "0" else []
+                        except urllib.error.HTTPError:
+                            rd_url = f"{peer_base}/api/fs/stat?path={urllib.parse.quote(rel)}"
+                            with urllib.request.urlopen(rd_url, timeout=6.0) as r:
+                                self_ent = json.loads(r.read().decode("utf-8"))
+                            children = []
+                        xml = build_propfind_xml(parsed.path, self_ent, children)
+                        self._send(207, "application/xml; charset=utf-8", xml, edge_hdr="GHOSTFS-DAV")
+                        return
+
+                    if method in ("GET", "HEAD"):
+                        rd_url = f"{peer_base}/api/fs/read?path={urllib.parse.quote(rel)}"
+                        with urllib.request.urlopen(rd_url, timeout=8.0) as r:
+                            fobj = json.loads(r.read().decode("utf-8"))
+                        raw = TelepathicCodec().decode(base64.b64decode(fobj["frame_b64"].encode("ascii")))
+                        self.send_response(200)
+                        self.send_header("Content-Type", "text/plain; charset=utf-8" if not fobj.get("is_binary") else "application/octet-stream")
+                        self.send_header("ETag", str(fobj.get("etag", "")))
+                        self.send_header("X-Chimera-Edge", "GHOSTFS-DAV-TELEPATHY")
+                        self.send_header("Content-Length", str(len(raw)))
+                        self.end_headers()
+                        if method == "GET":
+                            self.wfile.write(raw)
+                        return
+
+                    if method == "PUT":
+                        payload = json.dumps(
+                            {
+                                "path": rel,
+                                "content_b64": base64.b64encode(req_body).decode("ascii"),
+                                "expected_etag": (self.headers.get("If-Match") or "").strip(),
+                            }
+                        ).encode("utf-8")
+                        req = urllib.request.Request(
+                            f"{peer_base}/api/fs/write",
+                            data=payload,
+                            headers={"Content-Type": "application/json"},
+                            method="POST",
+                        )
+                        with urllib.request.urlopen(req, timeout=8.0) as r:
+                            _ = r.read()
+                        self._send(201, "text/plain", b"Created\n", edge_hdr="GHOSTFS-DAV")
+                        return
+
+                    self._send(405, "text/plain", b"Method Not Allowed", edge_hdr="DAV")
+                except urllib.error.HTTPError as he:
+                    self._send(int(he.code), "application/json", he.read(), edge_hdr="GHOSTFS-DAV-ERR")
+                except Exception as exc:
+                    self._send(502, "application/json", json.dumps({"error": str(exc)}).encode("utf-8"), edge_hdr="GHOSTFS-DAV-ERR")
+
             def _forward(self, method: str) -> None:
                 parsed = urllib.parse.urlparse(self.path)
+                if parsed.path == "/dav" or parsed.path.startswith("/dav/"):
+                    self._handle_dav(method)
+                    return
                 if method == "GET" and parsed.path == "/_edge_stats":
                     self._send(
                         200,
@@ -459,13 +540,14 @@ class LocalEdgeProxy:
                         f'<small style="color:#94a3b8">(/{html.escape(k)}/ &rarr; {html.escape(str(v.get("url", "")))})</small></li>'
                         for k, v in proxy_ref.targets.items()
                     )
+                    items += '<li><a href="/dav/">Ghost-FS WebDAV (/dav/)</a> <small style="color:#94a3b8">(mount vào Explorer/VSCode)</small></li>'
                     page = (
                         "<!doctype html><html><head><meta charset='utf-8'>"
-                        "<title>CHIMERA v4.0 Edge Accelerator</title>"
+                        "<title>CHIMERA v5.0 PHANTOM Edge</title>"
                         "<style>body{background:#0b0f17;color:#e2e8f0;font-family:sans-serif;padding:24px}"
                         "a{color:#22d3ee;text-decoration:none;font-weight:700}</style></head><body>"
-                        f"<h2>CHIMERA v4.0 Local Edge Proxy</h2>"
-                        f"<p>Peer Gateway: <code>{html.escape(proxy_ref.peer_http_base)}</code> | "
+                        f"<h2>CHIMERA v5.0 Local Edge Proxy</h2>"
+                        f"<p>Active Gateway: <code>{html.escape(st['active_peer_base'])}</code> | "
                         f"Saved: <b>{st['saved_pct']}%</b> | Prefetch Hits: <b>{st['prefetch_hits']}</b></p>"
                         f"<ul>{items}</ul></body></html>"
                     ).encode("utf-8")
@@ -500,7 +582,7 @@ class LocalEdgeProxy:
                 req_body = self.rfile.read(clen) if clen > 0 else b""
                 try:
                     res = edge_fetch_remote(
-                        peer_http_base=proxy_ref.peer_http_base,
+                        peer_http_base=proxy_ref.active_peer_base(),
                         app_id=app_id,
                         path=sub_path,
                         query=parsed.query,
@@ -535,6 +617,23 @@ class LocalEdgeProxy:
                     bytes(res["body"]),
                     edge_hdr=f"TELEPATHY-{res['mode_name'].upper()}",
                 )
+
+            def do_OPTIONS(self) -> None:
+                self.send_response(200)
+                self.send_header("Allow", "OPTIONS, GET, HEAD, PUT, PROPFIND")
+                self.send_header("DAV", "1")
+                self.send_header("MS-Author-Via", "DAV")
+                self.send_header("Content-Length", "0")
+                self.end_headers()
+
+            def do_PROPFIND(self) -> None:
+                self._forward("PROPFIND")
+
+            def do_HEAD(self) -> None:
+                self._forward("HEAD")
+
+            def do_PUT(self) -> None:
+                self._forward("PUT")
 
             def do_GET(self) -> None:
                 self._forward("GET")

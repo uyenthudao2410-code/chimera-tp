@@ -1,22 +1,22 @@
-# Architecture — CHIMERA-HYPER v4.0.0 Zero-Weight HyperOS
+# Architecture — CHIMERA-HYPER v5.0.0 PHANTOM-5MS
 
 ```
 +----------------------------------------------------------------------------------+
-|                CHIMERA-HYPER v4.0 Control & Zero-Weight HyperOS Plane            |
-|   HTTP/1.1 Keep-Alive Cockpit (:9780) | Tailscale HTTPS Hub (:9781)              |
-|   Zero-Weight Guard (~11 MB Win RAM)  | Contextual 24h Link-Weather UCB1 Bandit  |
+|                CHIMERA-HYPER v5.0 PHANTOM-5MS Control & Workbench Plane          |
+|   Windows (:9780 Cockpit | :9788 Edge + /dav/ WebDAV | :2222 SSH | :9789 HTTP)   |
+|   Zero-Weight Guard (~21-32 MB Win RAM) | Transparent Role-Aware Peer Proxy      |
 +----+-------------------+-------------------+-------------------+-----------------+
      |                   |                   |                   |
      v                   v                   v                   v
 +-----------+    +---------------+   +--------------+   +--------------------+
-| NAT Buster|    | Edge Proxy    |   |  Sentinel &  |   | Holographic (2,3)  |
-| STUN + BP |    | :9788 <->     |   | FTS5 Search  |   | GF(256) Backup     |
-| P2P Hole  |    | EdgeGateway   |   |  on Linux    |   | CSPRNG + CHHB1     |
+|PHANTOM-5MS|    | Ghost-PTY &   |   | CHIMERA-MEDIC|   | Drop-Portal &      |
+|PH5E AEAD  |    | Ghost-FS /DAV |   | Forensics +  |   | AI Context Bus     |
+|5ms P2P UDP|    | 256KiB + ETag |   | Holo Pre-Heal|   | CHdrop + FTS5 Pack |
 +-----+-----+    +-------+-------+   +------+-------+   +---------+----------+
       |                  |                  |                     |
       +------------------+------------------+---------------------+
                          |
-                         v  (v3.0 HyperGrid: Merkle CHMRK1, Fluid AQ02, CHTC1, Immortal IPv4+IPv6)
+                         v  (v4.0 HyperOS + v3.0 HyperGrid: NAT Buster, Sentinel, FTS5, Holo, AQ02, CHTC1, Immortal)
 +----------------------------------------------------------------------------------+
 |                        Cross-Platform Silicon Core (Bit-Identical)               |
 |   Windows: Rust cdylib (VGF2P8AFFINEQB GFNI / AVX2 + Win32 Shared Memory Ring)   |
@@ -24,25 +24,30 @@
 +----------------------------------------------------------------------------------+
 ```
 
-## 1. Birthday-Paradox STUN NAT Buster (`chimera_tp/nat_buster.py`)
-- **Zero-Idle Discovery**: `discover_nat_profile()` opens temporary UDP sockets only during probing to classify `EASY` vs `SYMMETRIC` NAT across `DEFAULT_STUN_SERVERS` and measure sequential port deltas.
-- **Coordinated Punching**: `NatPunchResponder` binds an ephemeral anchor socket on the peer, coordinates `(pub_ip, pub_port)` via `POST /api/nat/punch-offer`, and sprays signed `CHNP1` probes over delta predictions + random birthday slots while the initiator opens up to 192 non-blocking sockets (`select.select` chunked in `<= 250` FDs).
-- **Safe Fallback**: Once a handshake completes (`CHNP1`/`CHNP2`), direct RTT is probed (`CHNP3`/`CHNP4`) and all transient sockets close cleanly. If carriers drop external UDP, callers remain on Tailscale seamlessly.
+## 1. PHANTOM-5MS Encrypted P2P Tunnel (`chimera_tp/phantom_tunnel.py`)
+- **Persistent NAT-Punched Carrier**: `PhantomTunnelController` runs an automated `nat_buster` STUN/birthday punch loop on Windows startup to establish `PHANTOM_5MS_DIRECT` (~`5 ms` direct UDP socket) with automatic Tailscale UDP `:9710` fallback (`PhantomTunnelServer`).
+- **PH5E Authenticated Multiplexing**: Each datagram carries a `PH5E` header (`channel_id`, `seq`, `flags`, `nonce`) sealed with a `BLAKE2b` keystream and verified by a `BLAKE2s-128` MAC. Idle loops wait on `select.select(..., 0.25)` so background CPU stays near `0%`.
+- **Multi-Port Loopback Listeners**: Maps local controller TCP ports (`127.0.0.1:2222 -> 127.0.0.1:22` SSH, `127.0.0.1:9789 -> 127.0.0.1:9780` HTTP) restricted on the hub to `phantom_allowed_ports`. `LocalEdgeProxy` queries `peer_http_resolver()` on each miss to dynamically route Edge HTTP and WebDAV requests over `:9789` when direct P2P is healthy.
 
-## 2. Universal HTTP Warp-Edge Proxy (`chimera_tp/edge_proxy.py`)
-- **`EdgeGateway` (Linux Hub)**: Enforces loopback-only upstream URLs (`127.0.0.1`/`localhost`) to accelerate arbitrary local dashboards over `POST /api/edge/fetch`. Automatically trains and attaches missing 16 KiB `DomainDictionary` weights (`CHTC1`/`CHLF1`).
-- **Speculative 0-RTT Prefetching**: On `200 OK` HTML responses, pre-fetches configured or safe `/api/*` endpoints locally on `127.0.0.1` and bundles compressed responses inside the same payload.
-- **`LocalEdgeProxy` (Windows `127.0.0.1:9788`)**: Serves decoded HTML directly and caches prefetched API responses in a bounded 32-entry, 10s-TTL RAM cache (`X-Chimera-Edge: PREFETCH-HIT-0RTT`), routing JS `/api/*` sub-requests cleanly by path prefix or `Referer`.
+## 2. Ghost-PTY Persistent Detachable Shell (`chimera_tp/ghost_pty.py`)
+- **`GhostPtyManager`**: Allocates POSIX PTYs (`pty.openpty()` + `TIOCSWINSZ` resize, pipe fallback on Windows) with background reader threads feeding per-session `256 KiB` ring buffers protected by `threading.Condition`.
+- **Cursor-Indexed Long Poll**: Clients call `/api/pty/read?session_id=...&cursor=N&wait_ms=...`, enabling instant reattachment across browser reloads or momentary network drops without spawning heavy multiplexers.
 
-## 3. CHIMERA-SENTINEL Autonomous Watchdog (`chimera_tp/sentinel.py`)
-- Persists baseline log error template counts in `sentinel.db` (isolated from `telemetry.db` to avoid lock contention).
-- Probes configured loopback service URLs, checks disk/RAM/load metrics, and tail-scans the newest `*.log` files using `log_analytics`, raising alerts on downed services, resource pressure, or sudden error template spikes alongside safe diagnostic advice and optional webhook POSTs.
+## 3. Ghost-FS & RFC 4918 WebDAV Bridge (`chimera_tp/ghost_fs.py`, `chimera_tp/edge_proxy.py`)
+- **`GhostFsEngine`**: Provides contained workspace browsing, UTF-8/binary reads, safe `git status`/`git log -n 5` inspection, and writes (`expected_etag` compare-and-swap via weak SHA-256 prefix ETags, blocking `.git` writes and `..` traversal outside `allowed_query_roots`).
+- **Local WebDAV Mount (`/dav/`)**: `LocalEdgeProxy` translates HTTP `OPTIONS`, `PROPFIND` (`207 Multi-Status` XML via `build_propfind_xml`), `GET`, `HEAD`, and `PUT` directly to `active_peer_base` `/api/fs/*`, allowing native OS browsing and editing with zero local repo mirroring.
 
-## 4. Zero-Download SQLite FTS5 + Merkle Search (`chimera_tp/code_search.py`)
-- Maintains `code_index.db` (`WAL` mode, `unicode61` tokenizer, `bm25()` + `snippet()`) purely on the storage hub.
-- Avoids index bloat via `SEARCH_IGNORE_DIRS`, minified suffix exclusions, `48 KiB` file cap, per-repo quota (`250` files/repo so every repository stays represented), Merkle `(size, mtime_ns)` change detection, and automatic `VACUUM` + WAL checkpoint when `>= 100` stale entries are pruned.
-- Windows clients query `POST /api/search` without copying source trees or indexing locally.
+## 4. CHIMERA-MEDIC Forensics & Playbook Healer (`chimera_tp/medic.py`)
+- **Dossier Triage (`investigate`)**: Tail-scans bounded log bytes (`<= 2 MiB`), extracts `±1` line context snippets for recurring anomalies, and suggests safe remediation playbooks.
+- **Allowlisted Playbooks (`run_playbook`)**: Rejects arbitrary shell strings and runs only curated handlers (`verify_email_log_tail`, `probe_services`, `prune_git_remote`, `holo_snapshot_configs`, `rotate_large_log`, `reindex_fts5`). File rotation triggers mandatory pre-heal GF(256) `(K=2, N=3)` snapshots first.
 
-## 5. Holographic GF(256) `(K=2, N=3)` Micro-Backup (`chimera_tp/holo_backup.py`)
-- Packs target files into `CHHB1` with per-file SHA-256, applies self-contained `TelepathicCodec` compression, and mixes secret bytes with a CSPRNG one-time mask via `gf256_encode_block` using fixed Vandermonde pairs `SHARD_COEFFS = ((1,1), (1,2), (1,3))`.
-- Stores `shard_0.chshard` + `export_shard_2.chshard` locally while shipping `shard_1.chshard` to peer `POST /api/backup/store-shard`. Any 2 shards invert the `2x2` GF(256) system natively via `gf256_decode_matrix` and verify both per-shard and archive-wide SHA-256 digests.
+## 5. Drop-Portal & AI Context Bus (`chimera_tp/drop_portal.py`)
+- **`DropPortalStore`**: Compresses temporary clipboard notes or files with `TelepathicCodec` into `.chdrop` containers with lazy TTL pruning (default `600 s`) and role-transparent controller -> hub routing.
+- **AI Context Teleporter (`pack_ai_context`)**: Combines server-side SQLite `FTS5` `BM25` search hits (`CodeSearchIndex`), bounded `±5/+8` disk file excerpts, matching `Sentinel` alert summaries, and recent git commits into a `< 8 KB` Markdown prompt packet.
+
+---
+
+## Inherited Foundations (`v4.0` HyperOS & `v3.0` HyperGrid)
+- **NAT Buster (`nat_buster.py`)**: RFC 5389 STUN classifier (`EASY`/`SYMMETRIC`) & birthday-paradox puncher.
+- **Warp-Edge Proxy (`edge_proxy.py`)**: Loopback `EdgeGateway` compression (`CHTC1`/`CHLF1`) + speculative 10s-TTL RAM prefetch cache.
+- **Sentinel (`sentinel.py`)**, **FTS5 Code Search (`code_search.py`)**, **Holo GF(256) `(2,3)` Backup (`holo_backup.py`)**, **Merkle Sync (`merkle_sync.py`)**, **Fluid `AQ02` (`active_pipe.py`)**, and **Immortal IPv4+IPv6 RLNC (`hyper_wire.py`)**.

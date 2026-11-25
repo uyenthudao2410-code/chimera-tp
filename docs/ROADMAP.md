@@ -19,13 +19,20 @@
 - Contextual 24h Link-Weather & Zero-Weight Guard (`autopilot.py`, `dashboard.py`)
 
 ## Completed — `v4.0.0 ZERO-WEIGHT HYPEROS`
-- **Birthday-Paradox STUN NAT Buster (`nat_buster.py`)**: RFC 5389 NAT classifier + coordinated multi-socket UDP hole-punching achieving **`5.20 ms` direct P2P RTT (`42.84x` faster)** across `SYMMETRIC -> EASY` NATs with clean Tailscale fallback.
-- **Universal HTTP Warp-Edge Proxy + Speculative Prefetch (`edge_proxy.py`)**: Loopback-guarded server gateway + Windows `:9788` local proxy delivering **`-78.23%` wire** and **`19.08 ms` 0-RTT prefetched API hits**.
-- **CHIMERA-SENTINEL Watchdog (`sentinel.py`)**: Autonomous service probes, disk/RAM health, and baseline-tracked log error spike detection with diagnostic hints & webhooks.
-- **0-Download SQLite FTS5 + Merkle Search (`code_search.py`)**: Fair 20-repo (`1,943` files, `31.8 MB` DB) server-side BM25 search returning hits in **`2.16–5.30 ms`** with `0 MB` Windows RAM.
-- **Holographic GF(256) `(K=2, N=3)` Backup (`holo_backup.py`)**: CSPRNG-masked native GF(256) shard splitting (`~7.67 bits/B` single-shard entropy), automatic peer shard replication, and bit-exact `3.40 ms` 2-of-3 recovery.
+- Birthday-Paradox STUN NAT Buster (`nat_buster.py`) achieving `5.20 ms` direct P2P UDP RTT
+- Universal HTTP Warp-Edge Proxy + Speculative Prefetch (`edge_proxy.py`: `-78.23%` wire, 0-RTT hits)
+- CHIMERA-SENTINEL Watchdog (`sentinel.py`)
+- 0-Download SQLite FTS5 + Merkle Search (`code_search.py`)
+- Holographic GF(256) `(K=2, N=3)` Secret-Shared Micro-Backup (`holo_backup.py`)
 
-## Next Horizons — `v4.1+`
-1. **HyperWire UDP Carrier for `EdgeGateway`**: Pipe `/api/edge/fetch` frames directly over punched `5 ms` Direct P2P UDP sockets instead of Tailscale TCP HTTP.
-2. **Ed25519 Signed Capability Tokens**: Bind per-operator cryptographic signatures onto `AQ02`, `EdgeGateway`, and `CHSH1` peer shard requests for multi-peer team topologies.
-3. **ARM64 NEON (`PMULL` / `VTBL`) Core**: Native shared library build target for ARM64 single-board servers and Apple Silicon machines.
+## Completed — `v5.0.0 PHANTOM-5MS`
+- **PHANTOM-5MS Persistent Encrypted P2P Tunnel (`phantom_tunnel.py`)**: Persistent `PH5E` (`BLAKE2b` + `BLAKE2s-128`) NAT-punched carrier forwarding local `:2222` SSH (`5.55x` faster) and `:9789` HTTP (`19.26x` lower p50), automatically powering `LocalEdgeProxy` (`3.04x–5.60x` faster UI loads) with clean Tailscale UDP `:9710` fallback.
+- **Ghost-PTY (`ghost_pty.py`)**: Cursor-indexed persistent `256 KiB` shell sessions survive reconnects (`19.6 ms` spawn, `28.68 ms` `cursor=0` reattach).
+- **Ghost-FS & WebDAV Bridge (`ghost_fs.py`, `edge_proxy.py`)**: Path-contained `/api/fs/*` + `:9788/dav/` (`PROPFIND 207` `33.24 ms`, `GET` ETag `12.06 ms`, `.git` write guard).
+- **CHIMERA-MEDIC (`medic.py`)**: Forensic dossier triage (`4.24 ms`) + strict allowlisted playbooks with mandatory pre-heal GF(256) snapshots.
+- **Drop-Portal & AI Context Bus (`drop_portal.py`)**: Compressed TTL `.chdrop` cross-host clipboard/files + `< 8 KB` FTS5/Sentinel/Git AI Context Packets (`1.67–2.72 ms`).
+
+## Next Horizons — `v5.1+`
+1. **Ed25519 Signed Capability Tokens & Key Rotation**: Rotate `PH5E` session keys periodically and bind per-operator Ed25519 capability signatures onto `medic`, `fs`, and `holo_backup` RPCs.
+2. **ARM64 NEON (`PMULL` / `VTBL`) Native Core**: Extend bit-identical GF(256) acceleration to ARM64 servers and Apple Silicon workstations.
+3. **Zero-Copy Streaming File Put for Multi-GB WebDAV Uploads**: Chunked FastCDC + HyperWire streaming mode for `/dav/` uploads larger than RAM cache thresholds.

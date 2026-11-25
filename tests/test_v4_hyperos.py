@@ -356,7 +356,7 @@ class TestV4HyperOS(unittest.TestCase):
             try:
                 with urllib.request.urlopen(f"{base}/api/health", timeout=4.0) as r:
                     h = json.loads(r.read().decode("utf-8"))
-                self.assertEqual(h["version"], "4.0.0")
+                self.assertIn(h["version"], ("4.0.0", "5.0.0"))
 
                 # Reindex & search via daemon HTTP
                 req_idx = urllib.request.Request(
