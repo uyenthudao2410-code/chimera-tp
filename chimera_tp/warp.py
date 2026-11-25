@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import math
+import select
 import socket
 import struct
 import threading
@@ -316,6 +317,12 @@ class _WarpEndpointBase:
 
     def _retransmit_loop(self) -> None:
         while not self._stop.is_set():
+            with self._lock:
+                conns_snapshot = list(self._conns.values())
+            if not conns_snapshot:
+                if self._stop.wait(timeout=0.25):
+                    break
+                continue
             now = time.perf_counter()
             to_send: list[tuple[bytes, tuple[str, int]]] = []
             with self._lock:
@@ -461,37 +468,45 @@ class WarpServer(_WarpEndpointBase):
         return self
 
     def _udp_rx_loop(self) -> None:
+        self._sock.setblocking(False)
         while not self._stop.is_set():
             try:
-                pkt, addr = self._sock.recvfrom(65535)
-            except (socket.timeout, ConnectionResetError):
-                continue
-            except OSError:
+                r, _, _ = select.select([self._sock], [], [], 0.25)
+            except (OSError, ValueError):
                 break
-            parsed = _unpack_warp(pkt)
-            if parsed is None:
+            if not r:
                 continue
-            ptype, flags, conn_id, seq, group_id, idx, k, body = parsed
-            with self._lock:
-                conn = self._conns.get(conn_id)
-            peer_udp = addr[:2]
-            if conn is None and ptype in (_W_OPEN, _W_DATA):
-                tcp_fam = _family_for_ip(self.forward_tcp_addr[0])
-                tcp_s = socket.socket(tcp_fam, socket.SOCK_STREAM)
+            while not self._stop.is_set():
                 try:
-                    tcp_s.settimeout(5.0)
-                    tcp_s.connect(self.forward_tcp_addr)
+                    pkt, addr = self._sock.recvfrom(65535)
+                except (BlockingIOError, socket.timeout, ConnectionResetError):
+                    break
                 except OSError:
-                    tcp_s.close()
+                    return
+                parsed = _unpack_warp(pkt)
+                if parsed is None:
                     continue
-                conn = _WarpConn(conn_id=conn_id, tcp_sock=tcp_s, peer_udp=peer_udp)
+                ptype, flags, conn_id, seq, group_id, idx, k, body = parsed
                 with self._lock:
-                    self._conns[conn_id] = conn
-                threading.Thread(target=self._pump_tcp_reader, args=(conn,), daemon=True).start()
-            if conn is None:
-                continue
-            conn.peer_udp = peer_udp
-            self._process_common_pkt(conn, ptype, flags, seq, group_id, idx, k, body)
+                    conn = self._conns.get(conn_id)
+                peer_udp = addr[:2]
+                if conn is None and ptype in (_W_OPEN, _W_DATA):
+                    tcp_fam = _family_for_ip(self.forward_tcp_addr[0])
+                    tcp_s = socket.socket(tcp_fam, socket.SOCK_STREAM)
+                    try:
+                        tcp_s.settimeout(5.0)
+                        tcp_s.connect(self.forward_tcp_addr)
+                    except OSError:
+                        tcp_s.close()
+                        continue
+                    conn = _WarpConn(conn_id=conn_id, tcp_sock=tcp_s, peer_udp=peer_udp)
+                    with self._lock:
+                        self._conns[conn_id] = conn
+                    threading.Thread(target=self._pump_tcp_reader, args=(conn,), daemon=True).start()
+                if conn is None:
+                    continue
+                conn.peer_udp = peer_udp
+                self._process_common_pkt(conn, ptype, flags, seq, group_id, idx, k, body)
 
 
 class WarpClient(_WarpEndpointBase):
@@ -509,7 +524,7 @@ class WarpClient(_WarpEndpointBase):
         self._tcp_srv = socket.socket(_family_for_ip(listen_tcp_addr[0]), socket.SOCK_STREAM)
         self._tcp_srv.bind(listen_tcp_addr)
         self._tcp_srv.listen(32)
-        self._tcp_srv.settimeout(0.05)
+        self._tcp_srv.settimeout(0.25)
         self.listen_addr: tuple[str, int] = self._tcp_srv.getsockname()[:2]
         self._next_conn_id = 1
 
@@ -545,22 +560,30 @@ class WarpClient(_WarpEndpointBase):
             threading.Thread(target=self._pump_tcp_reader, args=(conn,), daemon=True).start()
 
     def _udp_rx_loop(self) -> None:
+        self._sock.setblocking(False)
         while not self._stop.is_set():
             try:
-                pkt, _ = self._sock.recvfrom(65535)
-            except (socket.timeout, ConnectionResetError):
-                continue
-            except OSError:
+                r, _, _ = select.select([self._sock], [], [], 0.25)
+            except (OSError, ValueError):
                 break
-            parsed = _unpack_warp(pkt)
-            if parsed is None:
+            if not r:
                 continue
-            ptype, flags, conn_id, seq, group_id, idx, k, body = parsed
-            with self._lock:
-                conn = self._conns.get(conn_id)
-            if conn is None:
-                continue
-            self._process_common_pkt(conn, ptype, flags, seq, group_id, idx, k, body)
+            while not self._stop.is_set():
+                try:
+                    pkt, _ = self._sock.recvfrom(65535)
+                except (BlockingIOError, socket.timeout, ConnectionResetError):
+                    break
+                except OSError:
+                    return
+                parsed = _unpack_warp(pkt)
+                if parsed is None:
+                    continue
+                ptype, flags, conn_id, seq, group_id, idx, k, body = parsed
+                with self._lock:
+                    conn = self._conns.get(conn_id)
+                if conn is None:
+                    continue
+                self._process_common_pkt(conn, ptype, flags, seq, group_id, idx, k, body)
 
     def close(self) -> None:
         try:

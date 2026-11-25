@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gzip
 import json
 import os
 import random
@@ -11,6 +12,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -399,5 +401,31 @@ class TestChimeraV3HyperGrid(unittest.TestCase):
                 self.assertIn("win-desktop", md)
                 self.assertIn("99.15", md)
                 self.assertIn("A+", md)
+
+                # Verify SSR hydration + gzip + ETag 304 caching
+                req_html = urllib.request.Request(
+                    f"{base}/", headers={"Accept-Encoding": "gzip"}
+                )
+                with urllib.request.urlopen(req_html, timeout=5.0) as resp_h:
+                    self.assertEqual(resp_h.headers.get("Content-Encoding"), "gzip")
+                    html_decoded = gzip.decompress(resp_h.read()).decode("utf-8")
+                    self.assertIn("svhome-hub", html_decoded)
+                    self.assertIn("win-desktop", html_decoded)
+
+                with urllib.request.urlopen(
+                    urllib.request.Request(f"{base}/api/status", headers={"Accept-Encoding": "gzip"}),
+                    timeout=5.0,
+                ) as resp_s:
+                    self.assertEqual(resp_s.headers.get("Content-Encoding"), "gzip")
+                    etag = resp_s.headers.get("ETag")
+                    self.assertTrue(etag)
+                    _ = gzip.decompress(resp_s.read())
+
+                req_304 = urllib.request.Request(
+                    f"{base}/api/status", headers={"If-None-Match": str(etag)}
+                )
+                with self.assertRaises(urllib.error.HTTPError) as ctx304:
+                    urllib.request.urlopen(req_304, timeout=5.0)
+                self.assertEqual(ctx304.exception.code, 304)
             finally:
                 daemon.close()

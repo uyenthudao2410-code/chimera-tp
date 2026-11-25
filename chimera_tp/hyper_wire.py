@@ -6,6 +6,7 @@ import hashlib
 import math
 import os
 import queue
+import select
 import socket
 import struct
 import threading
@@ -195,7 +196,7 @@ class HyperWireReceiver:
                 rem = deadline - time.perf_counter()
                 if rem <= 0:
                     raise TimeoutError("HyperWire timed out waiting for any stream")
-                self._done_cv.wait(timeout=min(rem, 0.05))
+                self._done_cv.wait(timeout=min(rem, 0.25))
             sid = next(iter(self._completed))
             payload, gfni_solves = self._completed.pop(sid)
             self._sessions.pop(sid, None)
@@ -220,27 +221,34 @@ class HyperWireReceiver:
 
     def _rx_loop(self) -> None:
         last_nack_scan = time.perf_counter()
+        self._sock.setblocking(False)
         while not self._stop.is_set():
-            got_pkt = False
-            while not self._stop.is_set():
-                try:
-                    pkt, addr = self._sock.recvfrom(65535)
-                except (socket.timeout, ConnectionResetError):
-                    break
-                except OSError:
-                    return
-                got_pkt = True
-                parsed = _unpack_frame(pkt)
-                if parsed is None:
-                    continue
-                self._handle_frame(addr, *parsed, pkt_len=len(pkt))
+            with self._lock:
+                has_sess = bool(self._sessions)
+            try:
+                r, _, _ = select.select([self._sock], [], [], 0.015 if has_sess else 0.25)
+            except (OSError, ValueError):
+                break
+            if r:
+                while not self._stop.is_set():
+                    try:
+                        pkt, addr = self._sock.recvfrom(65535)
+                    except (BlockingIOError, socket.timeout, ConnectionResetError):
+                        break
+                    except OSError:
+                        return
+                    parsed = _unpack_frame(pkt)
+                    if parsed is None:
+                        continue
+                    self._handle_frame(addr, *parsed, pkt_len=len(pkt))
 
             now = time.perf_counter()
             if (now - last_nack_scan) >= 0.015:
                 last_nack_scan = now
-                self._scan_missing_generations(now)
-            if not got_pkt:
-                time.sleep(0.0005)
+                with self._lock:
+                    has_sess = bool(self._sessions)
+                if has_sess:
+                    self._scan_missing_generations(now)
 
     def _handle_frame(
         self,
@@ -816,7 +824,7 @@ class HedgedRpcServer:
             s = socket.socket(_family_for_ip(ip), socket.SOCK_DGRAM)
             _disable_connreset(s)
             s.bind((ip, port))
-            s.settimeout(0.05)
+            s.settimeout(0.25)
             self._socks.append(s)
             self.addrs.append(s.getsockname()[:2])
         self._stop = threading.Event()
@@ -1112,7 +1120,7 @@ class ImmortalMultiPathReceiver:
                 rem = deadline - time.perf_counter()
                 if rem <= 0:
                     raise TimeoutError("ImmortalMultiPath timed out")
-                self._done_cv.wait(timeout=min(rem, 0.05))
+                self._done_cv.wait(timeout=min(rem, 0.25))
             sid = next(iter(self._completed))
             payload, meta = self._completed.pop(sid)
             self._sessions.pop(sid, None)
@@ -1137,20 +1145,34 @@ class ImmortalMultiPathReceiver:
                 pass
 
     def _rx_loop(self, lane_idx: int, sock: socket.socket) -> None:
+        sock.setblocking(False)
         while not self._stop.is_set():
             try:
-                pkt, addr = sock.recvfrom(65535)
-            except (socket.timeout, ConnectionResetError):
-                continue
-            except OSError:
+                r, _, _ = select.select([sock], [], [], 0.25)
+            except (OSError, ValueError):
                 break
-            parsed = _unpack_frame(pkt)
-            if parsed is None:
+            if not r:
                 continue
-            self._handle_frame(lane_idx, sock, addr, *parsed, pkt_len=len(pkt))
+            while not self._stop.is_set():
+                try:
+                    pkt, addr = sock.recvfrom(65535)
+                except (BlockingIOError, socket.timeout, ConnectionResetError):
+                    break
+                except OSError:
+                    return
+                parsed = _unpack_frame(pkt)
+                if parsed is None:
+                    continue
+                self._handle_frame(lane_idx, sock, addr, *parsed, pkt_len=len(pkt))
 
     def _nack_loop(self) -> None:
-        while not self._stop.wait(timeout=0.018):
+        while not self._stop.is_set():
+            with self._lock:
+                has_sess = bool(self._sessions)
+            if self._stop.wait(timeout=0.018 if has_sess else 0.25):
+                break
+            if not has_sess:
+                continue
             now = time.perf_counter()
             nacks: list[tuple[list[tuple[socket.socket, tuple[Any, ...]]], int, int, int, int, int, int, bytes]] = []
             with self._lock:

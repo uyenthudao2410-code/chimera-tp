@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import gzip
 import hashlib
 import http.server
 import json
@@ -136,6 +137,7 @@ _DASHBOARD_HTML = r"""<!doctype html>
       </select>
       <button class="primary" id="btn-run" onclick="triggerRun()">&#9654; Chạy đánh giá ngay</button>
       <button onclick="openMarkdownReport()">&#128196; Báo cáo (.md)</button>
+      <button onclick="forceRefresh()">&#8635; Làm mới</button>
       <button onclick="triggerMerkle()">&#127795; Merkle 0-RTT Sync</button>
       <button onclick="triggerImmortal()">&#128293; Immortal Cắt IPv4</button>
       <button onclick="triggerBeam()">&#9889; DNA Beam</button>
@@ -239,6 +241,9 @@ _DASHBOARD_HTML = r"""<!doctype html>
 </div>
 
 <script>
+window.__INIT_STATE__ = /*__INIT_STATE__*/null;
+let _lastEtag = /*__INIT_ETAG__*/"";
+
 async function api(path, opts) {
   const res = await fetch(path, opts || {});
   if (!res.ok) throw new Error(await res.text());
@@ -377,6 +382,20 @@ function renderState(st) {
 }
 
 async function refresh() {
+  if (document.hidden) return;
+  try {
+    const headers = _lastEtag ? { 'If-None-Match': _lastEtag } : {};
+    const res = await fetch('/api/status', { headers });
+    if (res.status === 304) return;
+    if (!res.ok) throw new Error(await res.text());
+    const et = res.headers.get('ETag');
+    if (et) _lastEtag = et;
+    renderState(await res.json());
+  } catch (e) { console.error(e); }
+}
+
+async function forceRefresh() {
+  _lastEtag = '';
   try { renderState(await api('/api/status')); } catch (e) { console.error(e); }
 }
 
@@ -443,8 +462,15 @@ document.getElementById('profile-select').addEventListener('change', async (ev) 
   await refresh();
 });
 
-refresh();
-setInterval(refresh, 15000);
+if (window.__INIT_STATE__) {
+  renderState(window.__INIT_STATE__);
+} else {
+  refresh();
+}
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden) refresh();
+});
+setInterval(() => { if (!document.hidden) refresh(); }, 30000);
 </script>
 </body>
 </html>
@@ -454,6 +480,7 @@ setInterval(refresh, 15000);
 class _ThreadingControlServer(http.server.ThreadingHTTPServer):
     allow_reuse_address = True
     daemon_threads = True
+    request_queue_size = 64
 
 
 class ChimeraDaemon:
@@ -474,6 +501,9 @@ class ChimeraDaemon:
         self.auto_seed_on_empty = auto_seed_on_empty
 
         self._run_lock = threading.Lock()
+        self._status_cache_lock = threading.Lock()
+        self._status_cache_ts: float = 0.0
+        self._status_cache_data: tuple[dict[str, Any], bytes, str] | None = None
         self._stop = threading.Event()
         self._beam_srv: BeamServer | None = None
         self._rpc_srv: HedgedRpcServer | None = None
@@ -570,13 +600,47 @@ class ChimeraDaemon:
         host_b = host_b.strip("[]") or "127.0.0.1"
 
         class Handler(http.server.BaseHTTPRequestHandler):
-            def _send_json(self, code: int, obj: Any) -> None:
-                body = json.dumps(obj, ensure_ascii=False).encode("utf-8")
+            protocol_version = "HTTP/1.1"
+            timeout = 15.0
+
+            def _send_bytes(
+                self,
+                code: int,
+                ctype: str,
+                raw: bytes,
+                extra_headers: dict[str, str] | None = None,
+            ) -> None:
+                accept_enc = (self.headers.get("Accept-Encoding") or "").lower()
+                use_gzip = len(raw) >= 512 and "gzip" in accept_enc
+                body = gzip.compress(raw, compresslevel=5) if use_gzip else raw
                 self.send_response(code)
-                self.send_header("Content-Type", "application/json; charset=utf-8")
+                self.send_header("Content-Type", ctype)
+                self.send_header("Vary", "Accept-Encoding")
+                if use_gzip:
+                    self.send_header("Content-Encoding", "gzip")
+                if extra_headers:
+                    for k, v in extra_headers.items():
+                        self.send_header(k, v)
                 self.send_header("Content-Length", str(len(body)))
                 self.end_headers()
-                self.wfile.write(body)
+                try:
+                    self.wfile.write(body)
+                except (BrokenPipeError, ConnectionResetError, OSError):
+                    pass
+
+            def _send_json(
+                self,
+                code: int,
+                obj: Any,
+                extra_headers: dict[str, str] | None = None,
+            ) -> None:
+                body = json.dumps(obj, ensure_ascii=False).encode("utf-8")
+                self._send_bytes(
+                    code,
+                    "application/json; charset=utf-8",
+                    body,
+                    extra_headers=extra_headers,
+                )
 
             def _read_body(self) -> bytes:
                 clen = int(self.headers.get("Content-Length", "0"))
@@ -585,12 +649,17 @@ class ChimeraDaemon:
             def do_GET(self) -> None:
                 parsed = urllib.parse.urlparse(self.path)
                 if parsed.path == "/":
-                    page = _DASHBOARD_HTML.encode("utf-8")
-                    self.send_response(200)
-                    self.send_header("Content-Type", "text/html; charset=utf-8")
-                    self.send_header("Content-Length", str(len(page)))
-                    self.end_headers()
-                    self.wfile.write(page)
+                    _, raw_json, etag = daemon_ref.get_cached_status()
+                    safe_json = raw_json.decode("utf-8").replace("</", "<\\/")
+                    hydrated = _DASHBOARD_HTML.replace(
+                        "/*__INIT_STATE__*/null", safe_json, 1
+                    ).replace("/*__INIT_ETAG__*/\"\"", json.dumps(etag), 1)
+                    self._send_bytes(
+                        200,
+                        "text/html; charset=utf-8",
+                        hydrated.encode("utf-8"),
+                        extra_headers={"Cache-Control": "no-cache"},
+                    )
                     return
                 if parsed.path == "/api/health":
                     self._send_json(
@@ -606,20 +675,34 @@ class ChimeraDaemon:
                     )
                     return
                 if parsed.path == "/api/status":
-                    self._send_json(200, daemon_ref.status_payload())
+                    _, raw_json, etag = daemon_ref.get_cached_status()
+                    inm = (self.headers.get("If-None-Match") or "").strip()
+                    if inm == etag:
+                        self.send_response(304)
+                        self.send_header("ETag", etag)
+                        self.send_header("Cache-Control", "no-cache")
+                        self.send_header("Content-Length", "0")
+                        self.end_headers()
+                        return
+                    self._send_bytes(
+                        200,
+                        "application/json; charset=utf-8",
+                        raw_json,
+                        extra_headers={"ETag": etag, "Cache-Control": "no-cache"},
+                    )
                     return
                 if parsed.path == "/api/cluster/report":
                     qs = urllib.parse.parse_qs(parsed.query)
                     fmt = qs.get("format", ["json"])[0]
-                    st_payload = daemon_ref.status_payload()
+                    st_payload, _, _ = daemon_ref.get_cached_status()
                     if fmt == "md":
                         md_bytes = format_cluster_markdown_report(st_payload).encode("utf-8")
-                        self.send_response(200)
-                        self.send_header("Content-Type", "text/markdown; charset=utf-8")
-                        self.send_header("Content-Disposition", 'inline; filename="chimera_eval_report.md"')
-                        self.send_header("Content-Length", str(len(md_bytes)))
-                        self.end_headers()
-                        self.wfile.write(md_bytes)
+                        self._send_bytes(
+                            200,
+                            "text/markdown; charset=utf-8",
+                            md_bytes,
+                            extra_headers={"Content-Disposition": 'inline; filename="chimera_eval_report.md"'},
+                        )
                         return
                     self._send_json(
                         200,
@@ -703,6 +786,7 @@ class ChimeraDaemon:
                             "CLUSTER",
                             f"Ingested report #{rid} from {body.get('node_name')} score={body.get('health_score')}",
                         )
+                        daemon_ref.invalidate_status_cache()
                         self._send_json(200, {"ok": True, "report_id": rid})
                     except Exception as exc:
                         self._send_json(400, {"error": str(exc)})
@@ -718,6 +802,7 @@ class ChimeraDaemon:
                         daemon_ref.config.active_profile = prof
                         daemon_ref.config.save(daemon_ref.ops_dir)
                         daemon_ref.store.log_event("INFO", "CONFIG", f"Switched profile -> {prof}")
+                        daemon_ref.invalidate_status_cache()
                         self._send_json(200, {"active_profile": prof})
                     except Exception as exc:
                         self._send_json(400, {"error": str(exc)})
@@ -753,6 +838,7 @@ class ChimeraDaemon:
                         daemon_ref.store.log_event(
                             "INFO", "TELEPATHY", f"Trained dict={d.dict_id} ({len(d.zdict)}B) for {domain}"
                         )
+                        daemon_ref.invalidate_status_cache()
                         self._send_json(200, d.to_wire_dict())
                     except Exception as exc:
                         self._send_json(400, {"error": str(exc)})
@@ -803,6 +889,7 @@ class ChimeraDaemon:
                             "MERKLE",
                             f"Sync ws={ws_id} changed={rep1['changed_files']}/{rep1['total_files']} wire={rep1['udp_wire_bytes']}B 2nd_noop={rep2['noop']}({rep2['elapsed_ms']}ms)",
                         )
+                        daemon_ref.invalidate_status_cache()
                         self._send_json(200, rep1)
                     except Exception as exc:
                         self._send_json(500, {"error": str(exc)})
@@ -873,6 +960,7 @@ class ChimeraDaemon:
                             "FLUID",
                             f"op={op} codec={meta.get('codec_mode')} wire={res.wire_bytes}B (-{res.wire_reduction_pct}%) {res.total_ms}ms",
                         )
+                        daemon_ref.invalidate_status_cache()
                         self._send_json(200, out)
                     except Exception as exc:
                         self._send_json(500, {"error": str(exc)})
@@ -928,6 +1016,7 @@ class ChimeraDaemon:
                             "IMMORTAL",
                             f"lanes={irep.lanes_total} killed={irep.lanes_killed} tx={irep.lane_tx_counts} rx={out['lane_rx_counts']} ok={out['peer_sha256_match']}",
                         )
+                        daemon_ref.invalidate_status_cache()
                         self._send_json(200, out)
                     except Exception as exc:
                         self._send_json(500, {"error": str(exc)})
@@ -958,6 +1047,7 @@ class ChimeraDaemon:
                             "LIVE_BEAM",
                             f"Synced {rep.raw_bytes}B in {rep.elapsed_ms}ms (saved {rep.reduction_pct}%)",
                         )
+                        daemon_ref.invalidate_status_cache()
                         self._send_json(200, rep.to_dict())
                     except Exception as exc:
                         self._send_json(500, {"error": str(exc)})
@@ -998,6 +1088,7 @@ class ChimeraDaemon:
                             "LIVE_QUERY",
                             f"needle={needle!r} matched={res.matched_records} wire_saved={res.wire_reduction_pct}% in {res.total_ms}ms",
                         )
+                        daemon_ref.invalidate_status_cache()
                         out = res.to_dict()
                         out.update(meta)
                         self._send_json(200, out)
@@ -1032,6 +1123,7 @@ class ChimeraDaemon:
                                 "note": "8-lane Windows quirks are Windows-specific; Linux runs C AVX2 HyperWire/DNA/Wormhole.",
                             }
                         daemon_ref.store.log_event("INFO", "EXOTIC", json.dumps(res_obj))
+                        daemon_ref.invalidate_status_cache()
                         self._send_json(200, res_obj)
                     except Exception as exc:
                         self._send_json(500, {"error": str(exc)})
@@ -1066,6 +1158,25 @@ class ChimeraDaemon:
         )
         return self
 
+    def invalidate_status_cache(self) -> None:
+        with self._status_cache_lock:
+            self._status_cache_ts = 0.0
+            self._status_cache_data = None
+
+    def get_cached_status(self, ttl_s: float = 15.0) -> tuple[dict[str, Any], bytes, str]:
+        now = time.monotonic()
+        with self._status_cache_lock:
+            if self._status_cache_data is not None and (now - self._status_cache_ts) < ttl_s:
+                return self._status_cache_data
+        payload = self.status_payload()
+        raw_json = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        etag = f'"{hashlib.blake2s(raw_json, digest_size=8).hexdigest()}"'
+        entry = (payload, raw_json, etag)
+        with self._status_cache_lock:
+            self._status_cache_data = entry
+            self._status_cache_ts = time.monotonic()
+        return entry
+
     def status_payload(self) -> dict[str, Any]:
         return {
             "version": "3.0.0",
@@ -1080,9 +1191,11 @@ class ChimeraDaemon:
 
     def run_cycle(self, trigger: str = "manual") -> dict[str, Any]:
         with self._run_lock:
-            return run_daily_autopilot(
+            res = run_daily_autopilot(
                 self.config, self.store, trigger=trigger, ops_dir=self.ops_dir
             )
+            self.invalidate_status_cache()
+            return res
 
     def _scheduler_loop(self) -> None:
         if self.auto_seed_on_empty:

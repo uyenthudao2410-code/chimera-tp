@@ -549,7 +549,7 @@ class ActiveQueryServer:
         except OSError:
             pass
         self._sock.bind((bind_ip, bind_port))
-        self._sock.settimeout(0.05)
+        self._sock.settimeout(0.25)
         self.addr: tuple[str, int] = self._sock.getsockname()[:2]
         self._stop = threading.Event()
         self._lock = threading.Lock()

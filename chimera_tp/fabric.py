@@ -72,7 +72,7 @@ class BeamServer:
         self._ctrl_sock = socket.socket(_family_for_ip(bind_ip), socket.SOCK_DGRAM)
         _disable_connreset(self._ctrl_sock)
         self._ctrl_sock.bind((bind_ip, bind_port))
-        self._ctrl_sock.settimeout(0.05)
+        self._ctrl_sock.settimeout(0.25)
         self.ctrl_addr: tuple[str, int] = self._ctrl_sock.getsockname()[:2]
 
         self._rx = HyperWireReceiver(bind_ip=bind_ip, bind_port=0).start()
@@ -164,7 +164,7 @@ class BeamServer:
     def _rx_wait_loop(self) -> None:
         while not self._stop.is_set():
             try:
-                sid, payload, _ = self._rx.wait_any(timeout_s=0.1)
+                sid, payload, _ = self._rx.wait_any(timeout_s=0.25)
             except TimeoutError:
                 continue
             except Exception:
