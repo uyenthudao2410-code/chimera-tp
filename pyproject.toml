@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "chimera-tp"
-version = "5.0.0"
-description = "CHIMERA-HYPER v5.0: PHANTOM-5MS Persistent P2P Tunnel, Ghost-PTY, Ghost-FS WebDAV, Medic Self-Healer, Drop-Portal & Zero-Weight HyperOS"
+version = "6.0.0"
+description = "CHIMERA-HYPER v6.0: APEX-SYNERGY (PHANTOM-5MS Tunnel, Radar + Tqouta Fusion, Ghost-PTY, Ghost-FS WebDAV, Medic & Drop-Portal)"
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.11"

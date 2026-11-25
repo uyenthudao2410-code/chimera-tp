@@ -1,38 +1,38 @@
-# CHIMERA-HYPER v5.0.0 — PHANTOM-5MS
+# CHIMERA-HYPER v6.0.0 — APEX-SYNERGY
 
-CHIMERA-HYPER (`chimera-tp`) is an autonomous, ultra-lightweight cross-platform transport, encrypted P2P tunnel, remote terminal/WebDAV workbench, forensic remediation, and telemetry fabric connecting Windows (`Rust GFNI/AVX2`) and Linux (`C11 AVX2`) nodes over overlay WANs (Tailscale/WireGuard) with zero desktop bloat.
+CHIMERA-HYPER (`chimera-tp`) is an autonomous, ultra-lightweight cross-platform transport, encrypted P2P tunnel, remote terminal/WebDAV workbench, forensic remediation, and multi-project AI orchestration fabric connecting Windows (`Rust GFNI/AVX2`) and Linux (`C11 AVX2`) nodes over overlay WANs (Tailscale/WireGuard) with zero desktop bloat.
 
-Built on the strict **Zero-Weight Controller** invariant (the 24/7 Windows daemon running the Cockpit, Local Edge Proxy, WebDAV bridge, and encrypted P2P tunnel uses only **~21–32 MB RAM** and ~0% idle CPU), `v5.0 PHANTOM-5MS` promotes the `~5 ms` NAT-punched UDP socket from a one-off probe into a permanent authenticated TCP multi-port tunnel while adding browser-native persistent PTY shells, zero-RAM WebDAV repository mounting, allowlisted log/service remediation, and `< 8 KB` AI context bundling.
+Built on the strict **Zero-Weight Controller** invariant (the 24/7 Windows daemon uses **~14.5–33.1 MB RAM**, and the Linux hub uses **~45.4–46.3 MB RAM**, even during 25 MB encrypted backups), `v6.0 APEX-SYNERGY` fuses the local AI Relay (`Tqouta :12500/:12504`) and Autonomous Bounty Crew (`Radar :8787`) directly onto CHIMERA's `~5 ms` P2P backbone alongside 0-token pre-surgical code mapping, quota-aware throttling, solver burn-loop circuit breaking, 5-second WebDAV patch reviews, and isolated GF(256) `(2,3)` snapshots.
 
 ---
 
-## What's New in `v5.0.0` (Five PHANTOM-5MS Zero-Weight Engines)
+## What's New in `v6.0.0` (Six APEX-SYNERGY Capabilities)
 
-1. **PHANTOM-5MS Persistent Encrypted P2P Tunnel (`chimera_tp/phantom_tunnel.py`)**
-   - Converts the Birthday-Paradox STUN hole punch into a persistent keepalive-driven bidirectional TCP-over-UDP multiplexor (`PH5E` wire framing: per-packet `BLAKE2b` keystream + truncated `BLAKE2s-128` MAC).
-   - Automatically falls back to Tailscale UDP (`:9710`) if symmetric/carrier NAT blocks direct UDP, and automatically feeds `LocalEdgeProxy` (`active_peer_base`) via `peer_http_resolver`.
-   - Forwards **`127.0.0.1:2222 -> peer:22` (SSH)** and **`127.0.0.1:9789 -> peer:9780` (HTTP)** at **`4.71–6.01 ms`** direct UDP RTT:
-     - HTTP `/api/health` (`n=10`): **`7.41 ms` min / `10.55 ms` p50 / `13.63 ms` mean** vs **`203.18 ms` p50** over Tailscale (**`19.26x` faster p50**, **`15.05x` faster mean**).
-     - Real `ssh -p 2222`: **`214.28–233.41 ms`** vs **`1,238.00–1,248.28 ms`** over Tailscale (**`5.55x` faster**).
-     - Edge Proxy `:9788`: `/chimera/` **`103.19 ms`** (`4.26x` vs v4), `/radar/` **`86.87 ms`** (`5.60x`), `/tqouta/` **`397.64 ms`** (`3.04x`), **`2.67 ms`** `PREFETCH-HIT-0RTT` cache hits, and **`-78.24%`** wire savings (`765.7 KB -> 166.6 KB`).
+1. **`PHANTOM-12550` Encrypted AI Relay Tunnel (`chimera_tp/phantom_tunnel.py`, `chimera_tp/dashboard.py`)**
+   - Forwards `127.0.0.1:12550 -> peer:12500` over the `PHANTOM_5MS_DIRECT` (`4.28–6.15 ms` UDP RTT, `PH5E` AEAD) tunnel without colliding with local Windows relay ports (`12500`/`12504`).
+   - Live Windows queries to peer `/v1/models` (`10` models): **`36.63 ms` min / `52.68–53.26 ms` mean** vs **`506.63 ms`** over Tailscale HTTPS (`9.5x` faster); `:9788/tqouta/api/status` serves compressed telemetry in **`24.52–39.99 ms`**.
 
-2. **Ghost-PTY Persistent Detachable Shell (`chimera_tp/ghost_pty.py`)**
-   - Spawns hub interactive shells (`pty.openpty()` on Linux with window-resize `TIOCSWINSZ`, pipe fallback on Windows) backed by a **`256 KiB`** circular byte buffer and `threading.Condition` long-poll cursor synchronization (`/api/pty/create`, `write`, `read`, `resize`, `close`, `list`).
-   - Browser tabs or CLI clients can disconnect and reattach at any byte cursor without losing terminal output (`create` in **`19.6 ms`**, `cursor=0` reattach of `364 B` in **`28.68 ms`**).
+2. **0-Token Pre-Surgical Scout (`ApexSynergyEngine.build_surgical_brief`)**
+   - Performs an instant keyword + symbol scan over repository source files (skipping compiled artifacts, binaries, `.git`, `node_modules`) in **`71.89 ms`** (`102.82 ms` E2E) spending **`0` AI tokens**, generating `CHIMERA_SURGERY_PACK.md` (`< 7.2 KB`) with exact `file:line` excerpts, symbols, test paths, and recent git history.
+   - Live repo test narrowed **`54` source files (`390,409 B`) -> `4,104 B` (`-98.95%` scan volume)** with top-5 ranked targets matching `4 / 4` solution patch files. Integrated via a fail-safe non-invasive hook into workspace brief generation.
 
-3. **Ghost-FS & RFC 4918 WebDAV Bridge (`chimera_tp/ghost_fs.py`, `chimera_tp/edge_proxy.py`)**
-   - Exposes `allowed_query_roots` over `/api/fs/*` (`list`, `stat`, `read`, `write`, `git-status`) AND RFC 4918 WebDAV at `http://127.0.0.1:9788/dav/...` (`OPTIONS`, `PROPFIND`, `GET`, `HEAD`, `PUT`) for native Windows Explorer/editor mapping at `0 MB` local sync cost.
-   - Enforces path traversal blocking, `.git` write denial, and HTTP `If-Match` ETag conflict checking (`409 Conflict` / `412 Precondition Failed`). Live verified: `PROPFIND 207` (`14` entries, **`33.24 ms`**), `GET` with ETag (`1,109 B`, **`12.06 ms`**), Git status (`33.61–74.18 ms`).
+3. **Redacted Quota Arbiter (`ApexSynergyEngine.evaluate_quota_arbiter`)**
+   - Polls live relay fleet health & throughput (`6/6` enabled accounts, `16,755` requests, `11,889` auto-cut requests, **`76.62%` cached token ratio**) and cross-references bounty burn/ship telemetry (`17` clean ships / 30d), strictly stripping all email/label identifiers (`0` email leaks verified live).
+   - Computes dynamic solver policy regimes (`TURBO`, `BALANCED`, `ECO_SURVIVAL`) and can persist atomic `CHIMERA_ARBITER_POLICY.json` hints.
 
-4. **CHIMERA-MEDIC Forensic Triage & Playbook Healer (`chimera_tp/medic.py`)**
-   - `/api/medic/investigate` extracts bounded tail match snippets and ranks safe playbooks (`4.24 ms` server / `14.25 ms` E2E on a `446 KB` production email log with `55` matched lines).
-   - Strictly allowlisted playbooks (`verify_email_log_tail` **`24.17 ms`**, `probe_services` **`1.14–6.95 ms`**, `prune_git_remote`, `holo_snapshot_configs`, `rotate_large_log` with mandatory pre-heal GF(256) `(2,3)` backup, and `reindex_fts5` indexing `1,949` files in **`487.64 ms`**).
+4. **Token-Burn Circuit Breaker (`ApexSynergyEngine.scan_solver_burn_loops` & `trip_circuit_breaker`)**
+   - Tails workspace solver logs (`agy_solver.log`), normalizes repeated tracebacks/errors (stripping timestamps, hex pointers, and line numbers), and triggers `BURN_LOOP_DETECTED` when identical failures repeat or logs bloat without diff output (`13` live workspaces scanned in **`10.85 ms`**).
+   - Tripping the breaker writes `CHIMERA_CIRCUIT_BREAK.json`, drops a diagnostic alert into `Drop-Portal`, and optionally terminates stalled solver subprocesses scoped strictly to that workspace.
 
-5. **Drop-Portal & AI Context Teleporter (`chimera_tp/drop_portal.py`)**
-   - **Drop-Portal**: TTL-expiring ephemeral text/file store (`TelepathicCodec`-compressed `.chdrop` payloads, default `600 s`) synced transparently across nodes (`12.26 ms` drop verified live across Tailscale HTTPS).
-   - **AI Context Pack (`/api/context/pack`)**: Fuses FTS5 BM25 hits (`5 / 1,949` files in `1.31 ms`), `±5/+8` disk excerpts, Sentinel alerts, and recent `git log` into a copy-ready `< 8 KB` Markdown packet in **`1.67–2.72 ms`**.
+5. **5-Second Ready-Bounty WebDAV Review + Browser Index (`chimera_tp/edge_proxy.py`, `/api/synergy/bounties`)**
+   - Fixed browser `GET /dav/` to render an interactive directory index (`200 OK`, `GHOSTFS-DAV-INDEX`) while preserving full RFC 4918 WebDAV (`PROPFIND 207`, `GET`/`PUT` with `ETag` CAS).
+   - Surfaces workspaces holding ready `solution.patch` diffs with `+added / -removed` stats, clickable `/dav/.../solution.patch` links (`200 OK` in `54.16 ms`), and 1-click `Drop-Portal` 5-second mobile review publishing (`26.37 ms`).
 
-*(All `v4.0` HyperOS & `v3.0` HyperGrid engines remain active: STUN NAT Buster, Warp-Edge Proxy, Sentinel Watchdog, SQLite FTS5 Search, Holo GF(256) `(2,3)` Backup, Merkle 0-RTT Sync, Fluid `AQ02`, Telepathic Codec, Immortal IPv4+IPv6 RLNC, and Contextual UCB1.)*
+6. **Isolated Holographic GF(256) `(K=2, N=3)` Vault (`ApexSynergyEngine.backup_apex_vault`, `medic` playbook `holo_snapshot_apex`)**
+   - Packs Tqouta encrypted state files, Radar JSON state, and an atomic read-only SQLite `.backup()` snapshot of `radar.db` (`25,007,290 B -> 5,378,669 B` compressed, `8.00` bits/B shard entropy across 3 shards in **`1,926.59 ms`**).
+   - Automatically isolates >2 MiB GF(256) shard operations into a short-lived worker subprocess so the 24/7 hub daemon RSS stays at **`46.28 MB` (`< 80 MB` Zero-Weight budget)**.
+
+*(All `v5.0` PHANTOM-5MS, `v4.0` HyperOS & `v3.0` HyperGrid engines remain active: `:2222` SSH & `:9789` HTTP P2P tunnel, Ghost-PTY, Ghost-FS WebDAV, Medic, Drop-Portal, NAT Buster, Warp-Edge Proxy, Sentinel Watchdog, FTS5 Search, Holo Backup, Merkle 0-RTT Sync, Fluid `AQ02`, Telepathic Codec, Immortal IPv4+IPv6 RLNC, and Contextual UCB1.)*
 
 ---
 
@@ -40,17 +40,16 @@ Built on the strict **Zero-Weight Controller** invariant (the 24/7 Windows daemo
 
 Measured live between a Windows 11 Controller (`Intel Core i5-11400`, Rust GFNI) and an Ubuntu Linux Hub (`Intel Core i5-4300U`, C11 AVX2 `VPSHUFB`, Python 3.14.4):
 
-| Capability | Baseline (`v4.0` Tailscale / Raw) | CHIMERA-HYPER v5.0 Live (`PHANTOM-5MS`) | Gain |
+| Capability | Baseline | CHIMERA-HYPER v6.0 Live | Gain / Budget |
 | :--- | :--- | :--- | :--- |
-| **Zero-Weight Daemon RSS** | Budget `< 80 MB` | **`21.19–26.01 MB`** Win • **`44.38–58.36 MB`** Linux | Well under `80 MB` cap |
-| **HTTP `/api/health` p50** | `203.18 ms` (mean `205.12 ms`) | **`10.55 ms`** (`7.41 ms` min, `13.63 ms` mean) | **`19.26x` lower p50** |
-| **Real SSH Command (`BatchMode`)** | `1,238.00–1,248.28 ms` (`:22`) | **`214.28–233.41 ms`** (via `127.0.0.1:2222`) | **`5.55x` faster SSH** |
-| **Edge Proxy UIs (`:9788`)** | `/chimera/` `439.8 ms` • `/radar/` `486.5 ms` • `/tqouta/` `1,207.1 ms` | **`103.19 ms`** • **`86.87 ms`** • **`397.64 ms`** (`-78.24%` wire, **`2.67 ms`** 0-RTT hit) | **`3.04x–5.60x` faster UIs** |
-| **Ghost-PTY Shell** | New SSH per command | **`19.6 ms`** create • **`28.68 ms`** `cursor=0` reattach (`364 B`) | Survives network drops |
-| **Ghost-FS + WebDAV (`/dav/`)** | Full repo clone / SFTP sync | `PROPFIND 207` **`33.24 ms`** • `GET` ETag **`12.06 ms`** • Git **`33.61 ms`** | Zero-RAM remote editing |
-| **CHIMERA-MEDIC (`heal`)** | Manual SSH grep & checks | Log triage **`4.24 ms`** • 3/3 probes **`1.14–6.95 ms`** • FTS5 **`487.64 ms`** | Strict allowlisted heals |
-| **Drop-Portal + AI Context** | Slow manual copy/paste | Drop **`12.26 ms`** • `< 8 KB` AI Context Pack **`1.67–2.72 ms`** | Instant AI bug packets |
-| **Autopilot Core Cycle** | Unoptimized WAN | `100/100` health • GFNI **`85.04x`** • WAN 5% **`29.22x`** • Query **`-99.15%`** | `G2_LOSSY_ARMOR` |
+| **Zero-Weight Daemon RSS** | `< 80 MB` cap per node | **`14.50–33.07 MB`** Win • **`45.43–46.28 MB`** Linux | PASS (`< 58%` budget post-25MB vault) |
+| **`PHANTOM-12550` Relay Tunnel** | `506.63 ms` Tailscale HTTPS (`:12504`) | **`36.63 ms` min / `52.68–53.26 ms` mean** (`:12550/v1/models`) | **`9.5x` lower latency**, `0 MB` local relay RAM |
+| **Edge `/tqouta/` Telemetry UI** | `506.63 ms` HTTPS direct | **`24.52–39.99 ms`** (`:9788/tqouta/api/status`) | **`12.7x–20.7x` faster** (`-78.24%` wire on full UI) |
+| **0-Token Surgical Map** | Unbounded multi-turn AI file search | `54` files (`390.4 KB`) -> **`4.10 KB`** in **`71.89 ms`** | **`-98.95%`** pre-filter scan, `0` AI tokens |
+| **Quota Arbiter + Redaction** | Manual inspection | `6/6` accounts OK, `76.62%` cache, `BALANCED` | **`0` emails leaked** (`@` assertion PASS) |
+| **Burn-Loop & 5s PR Review** | Manual workspace SSH/grep | `13` workspaces scanned (`10.85 ms`); `6` ready PRs (`54.16 ms` DAV) | Automated loop guard + browser `/dav/` |
+| **Apex GF(256) Vault (`2/3`)** | Plain local unencrypted copy | `7` targets + `radar.db` (`25.0 MB -> 5.38 MB`, `8.00 b/B`, `1.93 s`) | Subprocess-isolated (`+0.85 MB` daemon delta) |
+| **Core `PHANTOM-5MS` (`v5.0`)** | `203.18 ms` HTTP / `1,243 ms` SSH | HTTP p50 **`10.55 ms`** (`19.26x`) • SSH **`214–233 ms`** (`5.55x`) | Direct UDP **`4.28–6.15 ms`** RTT |
 
 See [docs/EVALUATION.md](docs/EVALUATION.md) and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for full benchmark tables and protocol internals.
 
@@ -70,32 +69,21 @@ chimera-tp ops-init --node-name win-desktop --role controller --peer-name peer-l
 ```
 Runtime config lives strictly under `~/.chimera_ops/` (see [docs/ops_config.example.json](docs/ops_config.example.json)).
 
-### 2. Run 24/7 Daemons & `v5.0` CLI Subcommands
+### 2. Run 24/7 Daemons & `v6.0` CLI Subcommands
 ```bash
-# Start 24/7 Mission-Control Cockpit + Phantom 5ms Tunnel + LocalEdgeProxy + WebDAV
+# Start 24/7 Cockpit + PHANTOM Tunnel (:2222 SSH, :9789 HTTP, :12550 Relay) + LocalEdgeProxy & WebDAV (:9788)
 chimera-tp daemon
 
-# Stand-alone Phantom Tunnel or live SSH over punched P2P
-chimera-tp phantom connect --peer-http http://<PEER_IP>:9780
-ssh -p 2222 <USER>@127.0.0.1
+# Check redacted Tqouta/Radar Synergy status & throttling regime
+chimera-tp synergy status --peer-http http://127.0.0.1:9780
 
-# Stand-alone Windows Local Edge Proxy + /dav/ WebDAV bridge
-chimera-tp edge-proxy --listen 127.0.0.1:9788 --peer-http http://127.0.0.1:9789
+# Generate 0-token pre-surgical brief for a solver workspace
+chimera-tp synergy brief --workspace-dir /path/to/workspaces/issue_1 --title "Bug summary" --inject
 
-# Ghost-PTY remote interactive shell commands
-chimera-tp pty exec "uname -a && uptime" --peer-http http://127.0.0.1:9780
-
-# Ghost-FS remote browse / git status without cloning
-chimera-tp fs ls . --peer-http http://127.0.0.1:9780
-chimera-tp fs git-status my-repo --peer-http http://127.0.0.1:9780
-
-# CHIMERA-MEDIC forensic triage & safe allowlisted heal
-chimera-tp medic investigate --file /path/to/app.log --pattern ERROR --peer-http http://127.0.0.1:9780
-chimera-tp medic heal probe_services --peer-http http://127.0.0.1:9780
-
-# Drop-Portal & AI Context Teleporter
-chimera-tp drop put --title note --text "quick payload" --peer-http http://127.0.0.1:9780
-chimera-tp context-pack "HyperWireReceiver" --peer-http http://127.0.0.1:9780
+# List ready PR patches (with /dav/ URLs), scan burn loops, or trigger GF(256) vault backup
+chimera-tp synergy bounties --peer-http http://127.0.0.1:9780
+chimera-tp synergy burn-scan --peer-http http://127.0.0.1:9780
+chimera-tp synergy vault-backup --peer-http http://127.0.0.1:9780
 ```
 
 ---
@@ -106,14 +94,14 @@ chimera-tp context-pack "HyperWireReceiver" --peer-http http://127.0.0.1:9780
 python -m unittest discover -s tests -v
 ```
 
-- **Windows (`Rust GFNI` + Python 3.11):** **42 / 42 PASS in `56.351s`** (`test_chimera`, `test_hyper`, `test_v2_autopilot`, `test_v3_hypergrid`, `test_v4_hyperos`, `test_v5_phantom`).
-- **Linux (`C11 AVX2` + Python 3.14):** **42 / 42 PASS in `34.539s`** (`test_chimera`, `test_hyper`, `test_v2_autopilot`, `test_v3_hypergrid`, `test_v4_hyperos`, `test_v5_phantom`).
+- **Windows (`Rust GFNI` + Python 3.11):** **48 / 48 PASS in `63.517s`** (`test_chimera`, `test_hyper`, `test_v2_autopilot`, `test_v3_hypergrid`, `test_v4_hyperos`, `test_v5_phantom`, `test_v6_synergy`).
+- **Linux (`C11 AVX2` + Python 3.14):** **48 / 48 PASS in `41.295s`** (`test_chimera`, `test_hyper`, `test_v2_autopilot`, `test_v3_hypergrid`, `test_v4_hyperos`, `test_v5_phantom`, `test_v6_synergy`).
 
 ---
 
 ## Security & Scope Disclaimer
 
 `chimera-tp` enforces multiple defense-in-depth invariants:
-- **PHANTOM-5MS (`PH5E`)**: Every multiplexed UDP frame uses per-packet `BLAKE2b` keystream obfuscation and a truncated `BLAKE2s-128` MAC verified before accept/forward; server TCP dialing is restricted to `phantom_allowed_ports` on loopback (`127.0.0.1`).
-- **EdgeGateway & WebDAV**: Strict loopback SSRF allowlisting (`127.0.0.1`/`localhost`) on `/api/edge/fetch`; RFC 4918 WebDAV `/dav/` and `/api/fs/*` enforce path containment inside `allowed_query_roots`, deny writes into `.git`, and support `If-Match` / `expected_etag` compare-and-swap conflict detection.
-- **Medic & Storage**: `MedicEngine` permits ONLY explicit allowlisted playbooks (`verify_email_log_tail`, `probe_services`, `prune_git_remote`, `holo_snapshot_configs`, `rotate_large_log`, `reindex_fts5`), enforces path containment, takes mandatory pre-heal GF(256) `(2,3)` snapshots before log rotation, runs `sqlite3` analytics read-only (`?mode=ro`), and exposes HTTP traffic strictly on localhost or authenticated Tailscale/WireGuard overlays.
+- **Redacted Telemetry**: `ApexSynergyEngine` strips `email` and personal `label` fields from relay responses (`test_quota_arbiter_regimes_and_email_redaction` asserts zero `@` leaks).
+- **PHANTOM-5MS (`PH5E`)**: Every multiplexed UDP frame uses per-packet `BLAKE2b` keystream obfuscation and a truncated `BLAKE2s-128` MAC; server TCP dialing is restricted to `phantom_allowed_ports` on loopback (`127.0.0.1`).
+- **Containment & Safe Remediation**: Ghost-FS, WebDAV `/dav/`, surgical brief generation, circuit-breaker writes, and Medic playbooks enforce path containment inside `allowed_query_roots`, block `.git` writes, support `ETag` CAS, isolate multi-MB GF(256) vault compression via worker subprocesses with atomic SQLite `.backup()`, and accept only strictly allowlisted Medic playbooks. Always expose inter-node HTTP strictly over localhost or authenticated Tailscale/WireGuard overlays.

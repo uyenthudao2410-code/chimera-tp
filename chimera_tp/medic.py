@@ -48,6 +48,11 @@ PLAYBOOK_CATALOG: dict[str, dict[str, Any]] = {
         "mutating": True,
         "description": "Quét Merkle (size, mtime) cập nhật ngay chỉ mục tìm kiếm code và log.",
     },
+    "holo_snapshot_apex": {
+        "title": "Chụp Két Sắt GF(256) Tqouta + Radar",
+        "mutating": True,
+        "description": "Sao lưu 3 mảnh GF(256) cấu hình Tqouta local-state và SQLite/state của Radar.",
+    },
 }
 
 
@@ -259,6 +264,25 @@ class MedicEngine:
                 raise RuntimeError("CodeSearchIndex not attached")
             roots = [Path(p) for p in (getattr(config, "search_roots", []) or getattr(config, "allowed_query_roots", []) or [self.ops_dir])]
             result = code_search.incremental_index(roots)
+
+        elif playbook_id == "holo_snapshot_apex":
+            from .apex_synergy import ApexSynergyEngine
+
+            syn = ApexSynergyEngine(
+                ops_dir=self.ops_dir,
+                allowed_roots=self._allowed_roots(config),
+                tquota_admin_url=str(getattr(config, "tquota_admin_url", "http://127.0.0.1:12504")),
+                tquota_relay_url=str(getattr(config, "tquota_relay_url", "http://127.0.0.1:12500")),
+                radar_url=str(getattr(config, "radar_url", "http://127.0.0.1:8787")),
+                radar_root=str(getattr(config, "radar_root", "")),
+                tquota_data_dir=str(getattr(config, "tquota_data_dir", "")),
+            )
+            rep_v = syn.backup_apex_vault(
+                backup_root=broot,
+                include_radar_db=not dry_run,
+            )
+            pre_snapshot_id = rep_v["backup"]["backup_id"]
+            result = rep_v
 
         record = {
             "ts_local": ts_local,

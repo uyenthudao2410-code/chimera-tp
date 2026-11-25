@@ -252,8 +252,14 @@ class OpsConfig:
     phantom_fallback_port: int = 9710
     phantom_ssh_port: int = 2222
     phantom_http_port: int = 9789
-    phantom_allowed_ports: list[int] = field(default_factory=lambda: [22, 8787, 9780, 12504])
+    phantom_tquota_port: int = 12550
+    phantom_allowed_ports: list[int] = field(default_factory=lambda: [22, 8787, 9780, 12500, 12504])
     drop_ttl_s: int = 600
+    tquota_admin_url: str = "http://127.0.0.1:12504"
+    tquota_relay_url: str = "http://127.0.0.1:12500"
+    radar_url: str = "http://127.0.0.1:8787"
+    radar_root: str = ""
+    tquota_data_dir: str = ""
 
     def __post_init__(self) -> None:
         if not self.node_name:
@@ -1386,7 +1392,7 @@ def format_cluster_markdown_report(status_payload: dict[str, Any]) -> str:
     now_str = datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")
 
     lines: list[str] = [
-        f"# CHIMERA-HYPER v{status_payload.get('version', '5.0.0')} — Báo Cáo Đánh Giá Cụm",
+        f"# CHIMERA-HYPER v{status_payload.get('version', '6.0.0')} — Báo Cáo Đánh Giá Cụm",
         "",
         f"- **Thời điểm xuất:** `{now_str}`",
         f"- **Xếp hạng cụm:** **{verdict.get('grade', 'N/A')}** (Sức khỏe TB: `{verdict.get('avg_health_score', 0)}/100`, Zero-Weight: `{verdict.get('zero_weight_ok', True)}`)",
@@ -1558,7 +1564,7 @@ def run_daily_autopilot(
     now_utc = datetime.now(timezone.utc).isoformat(timespec="seconds")
     now_local = datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S")
     summary = {
-        "version": "5.0.0",
+        "version": "6.0.0",
         "node_name": config.node_name,
         "role": config.role,
         "ts_utc": now_utc,

@@ -1,4 +1,4 @@
-"""24/7 CHIMERA-HYPER v5.0 PHANTOM-5MS Zero-Weight HyperOS Daemon, Tunnel & Web Cockpit."""
+"""24/7 CHIMERA-HYPER v6.0 APEX-SYNERGY HyperOS Daemon, Tunnel & Web Cockpit."""
 
 from __future__ import annotations
 
@@ -22,6 +22,7 @@ from .active_pipe import (
     ComputePlan,
     remote_active_query,
 )
+from .apex_synergy import ApexSynergyEngine
 from .autopilot import (
     VALID_PROFILES,
     OpsConfig,
@@ -70,7 +71,7 @@ _DASHBOARD_HTML = r"""<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CHIMERA-HYPER v5.0 PHANTOM-5MS HyperOS</title>
+<title>CHIMERA-HYPER v6.0 APEX-SYNERGY HyperOS</title>
 <style>
   :root {
     --bg: #0b0f17;
@@ -189,6 +190,7 @@ _DASHBOARD_HTML = r"""<!doctype html>
       <button class="tab-btn" onclick="showV5Tab('fs', this)">Ghost-FS Explorer</button>
       <button class="tab-btn" onclick="showV5Tab('portal', this)">Drop-Portal &amp; AI Context</button>
       <button class="tab-btn" onclick="showV5Tab('medic', this)">CHIMERA-MEDIC</button>
+      <button class="tab-btn" onclick="showV5Tab('synergy', this)">Radar + Tqouta Synergy</button>
     </div>
     <div id="tab-pty" class="v5-tab">
       <div class="query-bar">
@@ -227,6 +229,16 @@ _DASHBOARD_HTML = r"""<!doctype html>
         <button onclick="medicRun('holo_snapshot_configs')">Chụp GF256 Snapshot</button>
       </div>
       <div class="log-box" id="medic-out" style="max-height:170px;">CHIMERA-MEDIC sẵn sàng phân tích &amp; xử lý an toàn có backup GF(256).</div>
+    </div>
+    <div id="tab-synergy" class="v5-tab" style="display:none;">
+      <div class="query-bar">
+        <button class="primary" onclick="synergyStatus()">Tải Synergy Status</button>
+        <button onclick="synergyBounties()">Soi Kèo Sẵn Nộp (5s)</button>
+        <button onclick="synergyBurnScan()">Quét Burn-Loop</button>
+        <button onclick="synergyVault()">Chụp Két Sắt GF(256)</button>
+      </div>
+      <div id="synergy-bounties" style="margin-bottom:8px;"></div>
+      <div class="log-box" id="synergy-out" style="max-height:190px;">Hợp nhất CHIMERA ↔ Tqouta (:12500/:12504) ↔ Radar (:8787) qua đường hầm 5 ms.</div>
     </div>
   </div>
 
@@ -624,6 +636,63 @@ async function medicRun(pid) {
   document.getElementById('medic-out').textContent = JSON.stringify(r, null, 2);
 }
 
+function _escH(s) {
+  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function synergyStatus() {
+  const box = document.getElementById('synergy-out');
+  box.textContent = 'Đang đọc Tqouta Fleet & Radar Arbiter...';
+  try {
+    const r = await api('/api/synergy/status');
+    box.textContent = JSON.stringify(r, null, 2);
+  } catch (e) { box.textContent = 'Lỗi Synergy: ' + e.message; }
+}
+
+async function synergyBounties() {
+  const box = document.getElementById('synergy-out');
+  const lstEl = document.getElementById('synergy-bounties');
+  box.textContent = 'Đang quét solution.patch sẵn sàng nộp PR...';
+  try {
+    const r = await api('/api/synergy/bounties');
+    const items = r.bounties || [];
+    lstEl.innerHTML = items.slice(0, 8).map(b => {
+      const ds = b.diff_stats || {};
+      const ws = _escH(b.workspace_id);
+      const url = _escH(b.dav_patch_url);
+      return `<div class="cmp-row"><span><b>${ws}</b> <span class="mono">(${ds.files_changed || 0}f +${ds.lines_added || 0}/-${ds.lines_removed || 0}, ${b.mtime_local})</span></span><span><a href="${url}" target="_blank" style="color:var(--cyan);margin-right:10px;">Mở Patch</a><button onclick="synergyBountyDrop('${ws}')">Drop 5s</button></span></div>`;
+    }).join('') || '<div class="meta-line">Chưa có workspace nào có solution.patch.</div>';
+    box.textContent = `Tìm thấy ${r.total_ready || 0} bounty sẵn sàng (${r.elapsed_ms}ms).`;
+  } catch (e) { box.textContent = 'Lỗi Bounties: ' + e.message; }
+}
+
+async function synergyBountyDrop(ws) {
+  const box = document.getElementById('synergy-out');
+  const r = await api('/api/synergy/bounty-drop', {
+    method: 'POST', headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ workspace_id: ws })
+  });
+  box.textContent = `Đã đẩy [${ws}] lên Drop-Portal:\n` + JSON.stringify(r, null, 2);
+}
+
+async function synergyBurnScan() {
+  const box = document.getElementById('synergy-out');
+  box.textContent = 'Đang quét Burn-Loop trong agy_solver.log...';
+  try {
+    const r = await api('/api/synergy/burn-scan');
+    box.textContent = JSON.stringify(r, null, 2);
+  } catch (e) { box.textContent = 'Lỗi Burn-Scan: ' + e.message; }
+}
+
+async function synergyVault() {
+  const box = document.getElementById('synergy-out');
+  box.textContent = 'Đang chụp Két Sắt Holographic GF(256) (Tqouta + Radar DB)...';
+  try {
+    const r = await api('/api/synergy/vault-backup', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
+    box.textContent = JSON.stringify(r, null, 2);
+  } catch (e) { box.textContent = 'Lỗi Vault: ' + e.message; }
+}
+
 function logV4(msg) {
   const el = document.getElementById('v4-console');
   el.style.display = 'block';
@@ -839,6 +908,15 @@ class ChimeraDaemon:
         self.drop_portal = DropPortalStore(
             self.ops_dir / "drop_portal",
             default_ttl_s=int(getattr(self.config, "drop_ttl_s", 600)),
+        )
+        self.synergy = ApexSynergyEngine(
+            ops_dir=self.ops_dir,
+            allowed_roots=self._allowed_roots(),
+            tquota_admin_url=str(getattr(self.config, "tquota_admin_url", "http://127.0.0.1:12504")),
+            tquota_relay_url=str(getattr(self.config, "tquota_relay_url", "http://127.0.0.1:12500")),
+            radar_url=str(getattr(self.config, "radar_url", "http://127.0.0.1:8787")),
+            radar_root=str(getattr(self.config, "radar_root", "")),
+            tquota_data_dir=str(getattr(self.config, "tquota_data_dir", "")),
         )
 
         self._run_lock = threading.Lock()
@@ -1070,7 +1148,7 @@ class ChimeraDaemon:
                         200,
                         {
                             "ok": True,
-                            "version": "5.0.0",
+                            "version": "6.0.0",
                             "node_name": daemon_ref.config.node_name,
                             "role": daemon_ref.config.role,
                             "hardware": cpu_caps(),
@@ -1081,7 +1159,20 @@ class ChimeraDaemon:
                 if parsed.path == "/api/phantom/status":
                     self._send_json(200, daemon_ref.phantom_status())
                     return
-                if parsed.path in ("/api/pty/list", "/api/pty/read", "/api/fs/list", "/api/fs/stat", "/api/fs/read", "/api/fs/git-status", "/api/medic/status", "/api/portal/list", "/api/portal/item"):
+                if parsed.path in (
+                    "/api/pty/list",
+                    "/api/pty/read",
+                    "/api/fs/list",
+                    "/api/fs/stat",
+                    "/api/fs/read",
+                    "/api/fs/git-status",
+                    "/api/medic/status",
+                    "/api/portal/list",
+                    "/api/portal/item",
+                    "/api/synergy/status",
+                    "/api/synergy/bounties",
+                    "/api/synergy/burn-scan",
+                ):
                     qs = urllib.parse.parse_qs(parsed.query)
                     if daemon_ref._should_proxy("local=1" in parsed.query):
                         try:
@@ -1124,6 +1215,14 @@ class ChimeraDaemon:
                                 self._send_bytes(200, str(meta.get("mime", "application/octet-stream")), raw_data)
                             else:
                                 self._send_json(200, {**meta, "data_b64": base64.b64encode(raw_data).decode("ascii")})
+                        elif parsed.path == "/api/synergy/status":
+                            self._send_json(200, daemon_ref.synergy.evaluate_quota_arbiter(apply_policy=False))
+                        elif parsed.path == "/api/synergy/bounties":
+                            lim = int(qs.get("limit", ["25"])[0])
+                            self._send_json(200, daemon_ref.synergy.list_ready_bounties(limit=lim))
+                        elif parsed.path == "/api/synergy/burn-scan":
+                            rep_th = int(qs.get("repeat_threshold", ["3"])[0])
+                            self._send_json(200, daemon_ref.synergy.scan_solver_burn_loops(repeat_threshold=rep_th))
                     except PermissionError as pe:
                         self._send_json(403, {"error": str(pe)})
                     except FileNotFoundError as fnf:
@@ -1225,7 +1324,7 @@ class ChimeraDaemon:
                         200,
                         {
                             "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
-                            "version": "5.0.0",
+                            "version": "6.0.0",
                             "cluster": st_payload.get("cluster", {}),
                             "status": st_payload,
                         },
@@ -1938,6 +2037,12 @@ class ChimeraDaemon:
                     "/api/portal/drop",
                     "/api/portal/delete",
                     "/api/context/pack",
+                    "/api/synergy/surgical-brief",
+                    "/api/synergy/burn-scan",
+                    "/api/synergy/circuit-break",
+                    "/api/synergy/bounty-drop",
+                    "/api/synergy/vault-backup",
+                    "/api/synergy/arbiter",
                 ):
                     raw_b = self._read_body()
                     try:
@@ -2026,6 +2131,60 @@ class ChimeraDaemon:
                                 max_chars=int(body.get("max_chars", 8000)),
                             )
                             self._send_json(200, res)
+                        elif parsed.path == "/api/synergy/surgical-brief":
+                            self._send_json(
+                                200,
+                                daemon_ref.synergy.build_surgical_brief(
+                                    workspace_dir=str(body.get("workspace_dir", "")),
+                                    issue_title=str(body.get("issue_title", "")),
+                                    issue_body=str(body.get("issue_body", "")),
+                                    max_chars=int(body.get("max_chars", 7200)),
+                                    inject=bool(body.get("inject", False)),
+                                ),
+                            )
+                        elif parsed.path == "/api/synergy/burn-scan":
+                            self._send_json(
+                                200,
+                                daemon_ref.synergy.scan_solver_burn_loops(
+                                    workspaces_root=str(body.get("workspaces_root", "")),
+                                    repeat_threshold=int(body.get("repeat_threshold", 3)),
+                                ),
+                            )
+                        elif parsed.path == "/api/synergy/circuit-break":
+                            self._send_json(
+                                200,
+                                daemon_ref.synergy.trip_circuit_breaker(
+                                    workspace_id=str(body.get("workspace_id", "")),
+                                    drop_portal=daemon_ref.drop_portal,
+                                    workspaces_root=str(body.get("workspaces_root", "")),
+                                    repeat_threshold=int(body.get("repeat_threshold", 3)),
+                                    terminate_stuck=bool(body.get("terminate_stuck", False)),
+                                ),
+                            )
+                        elif parsed.path == "/api/synergy/bounty-drop":
+                            self._send_json(
+                                200,
+                                daemon_ref.synergy.publish_bounty_to_portal(
+                                    workspace_id=str(body.get("workspace_id", "")),
+                                    drop_portal=daemon_ref.drop_portal,
+                                    workspaces_root=str(body.get("workspaces_root", "")),
+                                    dav_base=str(body.get("dav_base", "http://127.0.0.1:9788/dav")),
+                                ),
+                            )
+                        elif parsed.path == "/api/synergy/vault-backup":
+                            peer_url = str(body.get("peer_http_base") or (daemon_ref.peer_http_base() if daemon_ref.config.peer_ipv4 else ""))
+                            rep_v = daemon_ref.synergy.backup_apex_vault(
+                                backup_root=daemon_ref.backup_root,
+                                peer_http_base=peer_url,
+                                include_radar_db=bool(body.get("include_radar_db", True)),
+                            )
+                            daemon_ref.invalidate_status_cache()
+                            self._send_json(200, rep_v)
+                        elif parsed.path == "/api/synergy/arbiter":
+                            self._send_json(
+                                200,
+                                daemon_ref.synergy.evaluate_quota_arbiter(apply_policy=bool(body.get("apply_policy", True))),
+                            )
                     except PermissionError as pe:
                         self._send_json(403, {"error": str(pe)})
                     except FileNotFoundError as fnf:
@@ -2059,14 +2218,18 @@ class ChimeraDaemon:
         ).start()
 
         if bool(self.config.phantom_enabled) and self.config.role == "controller" and self.config.peer_ipv4:
+            ph_forwards: dict[int, int] = {
+                int(self.config.phantom_ssh_port): 22,
+                int(self.config.phantom_http_port): int(self.config.peer_dashboard_port),
+            }
+            tq_port = int(getattr(self.config, "phantom_tquota_port", 0))
+            if tq_port > 0:
+                ph_forwards[tq_port] = 12500
             self._phantom_client = PhantomTunnelClient(
                 peer_http_base=self.peer_http_base(),
                 peer_udp_ip=self.config.peer_ipv4,
                 peer_fallback_port=int(self.config.phantom_fallback_port),
-                forwards={
-                    int(self.config.phantom_ssh_port): 22,
-                    int(self.config.phantom_http_port): int(self.config.peer_dashboard_port),
-                },
+                forwards=ph_forwards,
                 local_test_mode=False,
             ).start_listeners()
             if not self._ephemeral_mode:
@@ -2107,7 +2270,7 @@ class ChimeraDaemon:
         self.store.log_event(
             "INFO",
             "DAEMON",
-            f"v5.0 Started on http://{self.http_addr[0]}:{self.http_addr[1]} | RAM={zw['daemon_ram_mb']}MB | Beam={self.config.beam_port} EdgeProxy={self.config.edge_proxy_port} PhantomFB={self._phantom_srv.fallback_port}",
+            f"v6.0 Started on http://{self.http_addr[0]}:{self.http_addr[1]} | RAM={zw['daemon_ram_mb']}MB | Beam={self.config.beam_port} EdgeProxy={self.config.edge_proxy_port} PhantomFB={self._phantom_srv.fallback_port}",
         )
         return self
 
@@ -2144,7 +2307,7 @@ class ChimeraDaemon:
 
     def status_payload(self) -> dict[str, Any]:
         return {
-            "version": "5.0.0",
+            "version": "6.0.0",
             "config": self.config.to_dict(),
             "hardware": cpu_caps(),
             "zero_weight": get_zero_weight_status(),

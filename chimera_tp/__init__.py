@@ -1,8 +1,9 @@
-"""CHIMERA-HYPER v5.0: PHANTOM-5MS Persistent P2P Tunnel, Ghost-PTY, Ghost-FS WebDAV, Medic Self-Healer & AI Context Drop-Portal."""
+"""CHIMERA-HYPER v6.0: APEX-SYNERGY (PHANTOM-5MS, Radar + Tqouta Fusion, Ghost-PTY, Ghost-FS WebDAV, Medic & Drop-Portal)."""
 
-__version__ = "5.0.0"
+__version__ = "6.0.0"
 
 from .active_pipe import ActivePipeEngine, ActivePipeResult, ActiveQueryServer, ComputePlan, remote_active_query
+from .apex_synergy import ApexSynergyEngine
 from .autopilot import OpsConfig, TelemetryStore, get_zero_weight_status, run_daily_autopilot
 from .code_search import CodeSearchIndex
 from .dashboard import ChimeraDaemon
@@ -43,6 +44,7 @@ from .warp import WarpClient, WarpServer
 __all__ = [
     "ActivePipeEngine",
     "ActivePipeResult",
+    "ApexSynergyEngine",
     "BeamReport",
     "BeamServer",
     "ChimeraDaemon",

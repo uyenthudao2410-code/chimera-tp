@@ -291,6 +291,14 @@ def main(argv: list[str] | None = None) -> int:
     p_ctx.add_argument("--repo", default="", help="Optional repo filter")
     p_ctx.add_argument("--peer-http", default="http://127.0.0.1:9780", help="Target daemon HTTP URL")
 
+    # ---- CHIMERA-HYPER v6.0 APEX-SYNERGY Subcommands ----
+    p_syn = sub.add_parser("synergy", help="Radar and Tqouta fusion status, surgical briefs, burn scan, and vault")
+    p_syn.add_argument("action", choices=("status", "bounties", "burn-scan", "brief", "vault-backup"), help="Synergy action")
+    p_syn.add_argument("--workspace-dir", default="", help="Target Radar workspace directory for brief")
+    p_syn.add_argument("--title", default="", help="Issue title for surgical brief")
+    p_syn.add_argument("--inject", action="store_true", help="Inject surgical map into AGENT_SOLVER_BRIEF.md")
+    p_syn.add_argument("--peer-http", default="http://127.0.0.1:9780", help="Target daemon HTTP URL")
+
     # ---- Legacy Research Subcommands (v0.5.0 Multi-Realm Exotic Lanes) ----
     p_probe = sub.add_parser("probe", help="Probe hardware capabilities & Windows network realms")
     p_probe.add_argument("--json", action="store_true", help="Emit probe profile as JSON")
@@ -817,6 +825,40 @@ def main(argv: list[str] | None = None) -> int:
         with urllib.request.urlopen(req, timeout=10.0) as r:
             res = json.loads(r.read().decode("utf-8"))
         print(res.get("markdown", ""))
+        return 0
+
+    if args.command == "synergy":
+        base = args.peer_http.rstrip("/")
+        if args.action == "status":
+            with urllib.request.urlopen(f"{base}/api/synergy/status", timeout=8.0) as r:
+                print(r.read().decode("utf-8"))
+            return 0
+        if args.action == "bounties":
+            with urllib.request.urlopen(f"{base}/api/synergy/bounties", timeout=8.0) as r:
+                print(r.read().decode("utf-8"))
+            return 0
+        if args.action == "burn-scan":
+            with urllib.request.urlopen(f"{base}/api/synergy/burn-scan", timeout=8.0) as r:
+                print(r.read().decode("utf-8"))
+            return 0
+        if args.action == "brief":
+            req = urllib.request.Request(
+                f"{base}/api/synergy/surgical-brief",
+                data=json.dumps({"workspace_dir": args.workspace_dir, "issue_title": args.title, "inject": bool(args.inject)}).encode(),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=15.0) as r:
+                print(r.read().decode("utf-8"))
+            return 0
+        req = urllib.request.Request(
+            f"{base}/api/synergy/vault-backup",
+            data=b"{}",
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with urllib.request.urlopen(req, timeout=30.0) as r:
+            print(r.read().decode("utf-8"))
         return 0
 
     if args.command == "demo":
