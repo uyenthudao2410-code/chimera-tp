@@ -1,6 +1,6 @@
 """CHIMERA-HYPER v6.0: APEX-SYNERGY (PHANTOM-5MS, Radar + Tqouta Fusion, Ghost-PTY, Ghost-FS WebDAV, Medic & Drop-Portal)."""
 
-__version__ = "6.0.0"
+__version__ = "7.0.0"
 
 from .active_pipe import ActivePipeEngine, ActivePipeResult, ActiveQueryServer, ComputePlan, remote_active_query
 from .apex_synergy import ApexSynergyEngine
@@ -40,6 +40,37 @@ from .protocol import ChimeraReceiver, ChimeraSender, FaultProfile, TransferRepo
 from .sentinel import SentinelEngine
 from .telepathy import DomainDictionary, TelepathicCodec, TelepathicStore, train_domain_dictionary
 from .warp import WarpClient, WarpServer
+from .omega_bench import format_omega_markdown, run_omega_benchmark
+from .omega_compute import (
+    NeuralPpmCodec,
+    RemoteRamPool,
+    RemoteRamStore,
+    UepDisplayStream,
+    WasmActivePipe,
+    build_wasm_byte_counter_module,
+)
+from .omega_storage import (
+    GhostBlockEngine,
+    ParasiticDeadDropMesh,
+    RegeneratingMeshVault,
+    SlepianWolfSync,
+    detect_fs_mount_caps,
+)
+from .omega_transport import (
+    GeneticWireEngine,
+    MultiIspBondingEngine,
+    PolymorphicMimicLayer,
+    QuantumChaffShield,
+    RlncRecodingRelay,
+    SiliconDataPlane,
+    VirtualNicBridge,
+    detect_os_tun_caps,
+    hybrid_pq_decaps,
+    hybrid_pq_encaps,
+    hybrid_pq_keypair,
+    x25519_keypair,
+    x25519_shared,
+)
 
 __all__ = [
     "ActivePipeEngine",
@@ -61,6 +92,8 @@ __all__ = [
     "EdgeGateway",
     "EnvironmentProfile",
     "FaultProfile",
+    "GeneticWireEngine",
+    "GhostBlockEngine",
     "GhostFsEngine",
     "GhostPtyManager",
     "HedgedRpcClient",
@@ -74,30 +107,51 @@ __all__ = [
     "LocalEdgeProxy",
     "MedicEngine",
     "MerkleSnapshot",
+    "MultiIspBondingEngine",
     "NatPunchResponder",
+    "NeuralPpmCodec",
     "OpsConfig",
+    "ParasiticDeadDropMesh",
     "PhantomTunnelClient",
     "PhantomTunnelServer",
+    "PolymorphicMimicLayer",
+    "QuantumChaffShield",
     "RealmInfo",
+    "RegeneratingMeshVault",
+    "RemoteRamPool",
+    "RemoteRamStore",
+    "RlncRecodingRelay",
     "SentinelEngine",
     "ShadowMerkleIndex",
+    "SiliconDataPlane",
+    "SlepianWolfSync",
     "TelemetryStore",
     "TelepathicCodec",
     "TelepathicStore",
     "TransferReport",
+    "UepDisplayStream",
+    "VirtualNicBridge",
     "WarpClient",
     "WarpServer",
+    "WasmActivePipe",
     "WormholeChannel",
     "attempt_direct_punch",
     "beam_send",
     "beam_send_merkle_patch",
     "build_propfind_xml",
+    "build_wasm_byte_counter_module",
     "cpu_caps",
     "create_holo_backup",
+    "detect_fs_mount_caps",
+    "detect_os_tun_caps",
     "discover_nat_profile",
     "edge_fetch_remote",
+    "format_omega_markdown",
     "get_zero_weight_status",
     "has_native",
+    "hybrid_pq_decaps",
+    "hybrid_pq_encaps",
+    "hybrid_pq_keypair",
     "list_holo_backups",
     "merkle_beam_sync",
     "open_packet",
@@ -106,8 +160,11 @@ __all__ = [
     "probe_environment",
     "reconstruct_secret_gf256_2of3",
     "restore_holo_backup",
+    "run_omega_benchmark",
     "seal_packet",
     "split_secret_gf256_2of3",
     "train_domain_dictionary",
     "unpack_directory",
+    "x25519_keypair",
+    "x25519_shared",
 ]

@@ -1,28 +1,36 @@
-# Architecture — CHIMERA-HYPER v6.0.0 APEX-SYNERGY
+# Architecture — CHIMERA-HYPER v7.0.0 OMEGA-FABRIC
 
 ```
 +------------------------------------------------------------------------------------+
-|               CHIMERA-HYPER v6.0 APEX-SYNERGY Control & Fusion Plane               |
+|               CHIMERA-HYPER v7.0 OMEGA-FABRIC Control & Protocol Plane             |
 |  Win (:9780 Cockpit | :9788 Edge + /dav/ HTML/DAV | :2222 SSH | :9789 | :12550 v1) |
-|  Zero-Weight Guard (~14.5-33 MB Win / ~46 MB Linux) | Transparent Peer Routing     |
+|  Zero-Weight Guard (32.79 MB Win / 44.40 MB Linux) | Transparent Peer Routing      |
 +----+--------------------+--------------------+--------------------+----------------+
      |                    |                    |                    |
      v                    v                    v                    v
 +-------------+    +---------------+    +--------------+    +------------------------+
-| PHANTOM-5MS |    | APEX-SYNERGY  |    | Ghost-PTY &  |    | Drop-Portal, Medic &   |
-| PH5E AEAD   |    | 0-Tok Brief,  |    | Ghost-FS DAV |    | GF(256) Subprocess     |
-| :12550/v1   |    | Arbiter &Burn |    | 207+HTML Idx |    | Apex Vault (K=2,N=3)   |
+| OMEGA Trans |    | OMEGA Storage |    | OMEGA Compute|    | APEX-SYNERGY & HyperOS |
+| X25519+MLWE |    | Ghost-Block   |    | WASM MVP VM  |    | Ghost-PTY/FS, Medic,   |
+| ChaCha20,   |    | K=3/N=5 Mesh, |    | 4KB Rem-RAM  |    | Drop-Portal, Tqouta/   |
+| Bond,Mimic, |    | Slepian-Wolf, |    | Order-2 PPM, |    | Radar :12550 & K=2/N=3 |
+| Recode,Gene |    | Parasitic $0  |    | UEP Display  |    | Subprocess GF256 Vault |
 +------+------+    +-------+-------+    +------+-------+    +-----------+------------+
        |                   |                   |                        |
        +-------------------+-------------------+------------------------+
                            |
                            v  (v5.0 + v4.0 + v3.0: FTS5, Sentinel, NAT Buster, Merkle, AQ02, CHTC1, Immortal)
 +------------------------------------------------------------------------------------+
-|                        Cross-Platform Silicon Core (Bit-Identical)                 |
-|   Windows: Rust cdylib (VGF2P8AFFINEQB GFNI / AVX2 + Win32 Shared Memory Ring)     |
-|   Linux:   C11 .so    (AVX2 VPSHUFB Split-Nibble GF256 + POSIX /dev/shm Ring)      |
+|                  Bit-Identical Cross-Platform Silicon Core (v7.0)                  |
+|   Windows: Rust cdylib (GFNI/AVX2/AVX-512F + ChaCha20, Recode, PPM, Slepian, SHM)  |
+|   Linux:   C11 .so     (AVX2 VPSHUFB + ChaCha20, Recode, PPM, Slepian, /dev/shm)   |
 +------------------------------------------------------------------------------------+
 ```
+
+## 0. `v7.0.0 OMEGA-FABRIC` Protocol & Systems Modules
+- **Silicon Cryptographic & Coding Primitives (`native/chimera_core`, `native/chimera_core_c`, `chimera_tp/native.py`)**: Exports bit-exact RFC 8439 `chimera_chacha20_xor`, zero-decode `chimera_gf256_recode`, GF(256) `chimera_slepian_syndrome`, and Order-2 context-mixing arithmetic codec `chimera_ppm_compress`/`chimera_ppm_decompress` across Windows Rust and Linux C11 AVX2.
+- **OMEGA Transport (`chimera_tp/omega_transport.py`)**: `SiliconDataPlane` + `VirtualNicBridge` (X25519 + IPv4 framing + honest OS TUN probe), `MultiIspBondingEngine` (0 ms blackout failover), `PolymorphicMimicLayer` (QUIC/WebRTC mimicry), `RlncRecodingRelay`, `HybridPqKem` + `QuantumChaffShield` (Module-LWE + X25519 + chaotic port hopping + chaff-as-RLNC), and `GeneticWireEngine` (12-byte `CHG7` evolving wire DNA).
+- **OMEGA Storage (`chimera_tp/omega_storage.py`)**: `GhostBlockEngine` (4 KB incremental patches + OS WinFsp/FUSE3 probe), `RegeneratingMeshVault` (`K=3, N=5` Cauchy shard healing without plaintext decode), `SlepianWolfSync` (0-RTT blind syndrome delta with Berlekamp-Massey + Chien search), and `ParasiticDeadDropMesh` (hourly Lehmer carrier rotation across public channels).
+- **OMEGA Compute & Display (`chimera_tp/omega_compute.py`, `chimera_tp/omega_bench.py`)**: Sandboxed `WasmActivePipe` WebAssembly 1.0 interpreter (`build_wasm_byte_counter_module`, strict fuel + bounds enforcement), bounded `RemoteRamStore`/`RemoteRamPool` for 4 KB compressed page swap/fault over HTTP/PHANTOM, `NeuralPpmCodec` (shared prior tokenization + LZ residual + native Order-2 arithmetic range coding), `UepDisplayStream` (3x RLNC protection for crisp text/cursor tiles), plus `/api/omega/*` endpoints and `chimera-tp omega`.
 
 ## 1. Unified Fusion Engine (`chimera_tp/apex_synergy.py`)
 - **`PHANTOM-12550` Relay Tunnel**: Extends `PhantomTunnelClient` forwards on the Windows controller with `{phantom_tquota_port: 12500}` (`127.0.0.1:12550 -> 127.0.0.1:12500` on the hub, authorized in `phantom_allowed_ports`), avoiding local Windows port collisions while sharing the hub's warm `Prompt Cache` and account `Pool`.

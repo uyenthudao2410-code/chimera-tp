@@ -38,6 +38,10 @@ from .autopilot import (
 )
 from .code_search import CodeSearchIndex
 from .drop_portal import DropPortalStore, pack_ai_context
+from .omega_bench import run_omega_benchmark
+from .omega_compute import NeuralPpmCodec, RemoteRamStore, WasmActivePipe, build_wasm_byte_counter_module
+from .omega_storage import RegeneratingMeshVault, SlepianWolfSync, detect_fs_mount_caps
+from .omega_transport import GeneticWireEngine, detect_os_tun_caps
 from .edge_proxy import EdgeGateway, LocalEdgeProxy, edge_fetch_remote
 from .fabric import BeamServer, beam_send
 from .ghost_fs import GhostFsEngine
@@ -71,7 +75,7 @@ _DASHBOARD_HTML = r"""<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CHIMERA-HYPER v6.0 APEX-SYNERGY HyperOS</title>
+<title>CHIMERA-HYPER v7.0 OMEGA-FABRIC HyperOS</title>
 <style>
   :root {
     --bg: #0b0f17;
@@ -182,8 +186,8 @@ _DASHBOARD_HTML = r"""<!doctype html>
 
   <div class="card">
     <div class="card-title">
-      <span>PHANTOM-5MS HyperOS Workbench (Terminal • Ghost-FS Explorer • Drop-Portal • AI Context • Medic)</span>
-      <span class="meta-line" id="v5-wb-meta">Zero-Weight v5.0</span>
+      <span>PHANTOM-5MS HyperOS Workbench (Terminal • Ghost-FS Explorer • Drop-Portal • AI Context • Medic • OMEGA-14)</span>
+      <span class="meta-line" id="v5-wb-meta">Omega v7.0</span>
     </div>
     <div class="tab-bar">
       <button class="tab-btn active" onclick="showV5Tab('pty', this)">Ghost-PTY Terminal</button>
@@ -191,6 +195,7 @@ _DASHBOARD_HTML = r"""<!doctype html>
       <button class="tab-btn" onclick="showV5Tab('portal', this)">Drop-Portal &amp; AI Context</button>
       <button class="tab-btn" onclick="showV5Tab('medic', this)">CHIMERA-MEDIC</button>
       <button class="tab-btn" onclick="showV5Tab('synergy', this)">Radar + Tqouta Synergy</button>
+      <button class="tab-btn" onclick="showV5Tab('omega', this)">v7.0 OMEGA-14 Lab</button>
     </div>
     <div id="tab-pty" class="v5-tab">
       <div class="query-bar">
@@ -239,6 +244,17 @@ _DASHBOARD_HTML = r"""<!doctype html>
       </div>
       <div id="synergy-bounties" style="margin-bottom:8px;"></div>
       <div class="log-box" id="synergy-out" style="max-height:190px;">Hợp nhất CHIMERA ↔ Tqouta (:12500/:12504) ↔ Radar (:8787) qua đường hầm 5 ms.</div>
+    </div>
+    <div id="tab-omega" class="v5-tab" style="display:none;">
+      <div class="query-bar">
+        <button class="primary" onclick="omegaBenchmark()">Chạy Benchmark 14 Ý Tưởng</button>
+        <button onclick="omegaStatus()">Capabilities (TUN / FUSE / SIMD)</button>
+        <button onclick="omegaWasmTest()">WASM Active-Pipe AQ03</button>
+        <button onclick="omegaSlepianTest()">0-RTT Slepian-Wolf</button>
+        <button onclick="omegaRamTest()">Remote RAM 4KB</button>
+      </div>
+      <div id="omega-table" style="margin-bottom:8px;"></div>
+      <div class="log-box" id="omega-out" style="max-height:210px;">CHIMERA-HYPER v7.0 OMEGA-FABRIC — Sẵn sàng đánh giá Trước/Sau toàn bộ 14 đột phá giao thức.</div>
     </div>
   </div>
 
@@ -693,6 +709,57 @@ async function synergyVault() {
   } catch (e) { box.textContent = 'Lỗi Vault: ' + e.message; }
 }
 
+async function omegaStatus() {
+  const box = document.getElementById('omega-out');
+  box.textContent = 'Đang kiểm tra khả năng Rust/C11 v7.0, OS TUN/FUSE & Remote RAM...';
+  try {
+    const r = await api('/api/omega/status');
+    box.textContent = JSON.stringify(r, null, 2);
+  } catch (e) { box.textContent = 'Lỗi Omega Status: ' + e.message; }
+}
+
+async function omegaBenchmark() {
+  const box = document.getElementById('omega-out');
+  const tbl = document.getElementById('omega-table');
+  box.textContent = 'Đang chạy kiểm chuẩn thực tế Trước/Sau cho cả 14 ý tưởng (ChaCha20, RLNC Recode, PPM, Slepian-Wolf, WASM, PQ, UEP, Genetic)...';
+  try {
+    const r = await api('/api/omega/benchmark', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
+    const rows = Object.values(r.ideas || {}).map(it =>
+      `<tr><td>${esc(it.name)}</td><td>${esc(it.before)}</td><td><b>${esc(it.after)}</b></td><td style="color:${it.ok ? '#34d399' : '#fb7185'}">${it.ok ? 'PASS' : 'FAIL'}</td></tr>`
+    ).join('');
+    tbl.innerHTML = `<table class="tbl"><thead><tr><th>Đột phá</th><th>Trước (Baseline)</th><th>Sau (CHIMERA v7.0)</th><th>KQ</th></tr></thead><tbody>${rows}</tbody></table>`;
+    box.textContent = JSON.stringify({ verified: r.ideas_verified, total: r.ideas_total, total_ms: r.total_ms, native_v7: r.native_v7 }, null, 2);
+  } catch (e) { box.textContent = 'Lỗi Benchmark 14 ý tưởng: ' + e.message; }
+}
+
+async function omegaWasmTest() {
+  const box = document.getElementById('omega-out');
+  box.textContent = 'Đang chạy module WASM MVP (.wasm) hộp cát không quyền trên node đích...';
+  try {
+    const r = await api('/api/omega/wasm-exec', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
+    box.textContent = JSON.stringify(r, null, 2);
+  } catch (e) { box.textContent = 'Lỗi WASM: ' + e.message; }
+}
+
+async function omegaSlepianTest() {
+  const box = document.getElementById('omega-out');
+  box.textContent = 'Đang chạy đồng bộ mù 0-RTT Slepian-Wolf (Berlekamp-Massey + Chien)...';
+  try {
+    const r = await api('/api/omega/slepian-sync', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
+    box.textContent = JSON.stringify(r, null, 2);
+  } catch (e) { box.textContent = 'Lỗi Slepian-Wolf: ' + e.message; }
+}
+
+async function omegaRamTest() {
+  const box = document.getElementById('omega-out');
+  box.textContent = 'Đang nén & đẩy trang RAM 4KB sang Remote RAM Slab...';
+  try {
+    const put = await api('/api/omega/ram-put', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ page_id: 'ui_demo_4kb', text: 'CHIMERA_REMOTE_RAM_4KB_PAGE_'.repeat(140) }) });
+    const get = await api('/api/omega/ram-get', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ page_id: 'ui_demo_4kb' }) });
+    box.textContent = JSON.stringify({ put, get }, null, 2);
+  } catch (e) { box.textContent = 'Lỗi Remote RAM: ' + e.message; }
+}
+
 function logV4(msg) {
   const el = document.getElementById('v4-console');
   el.style.display = 'block';
@@ -918,6 +985,8 @@ class ChimeraDaemon:
             radar_root=str(getattr(self.config, "radar_root", "")),
             tquota_data_dir=str(getattr(self.config, "tquota_data_dir", "")),
         )
+        self.remote_ram = RemoteRamStore(max_bytes=16 * 1024 * 1024)
+        self.genetic_wire = GeneticWireEngine()
 
         self._run_lock = threading.Lock()
         self._ephemeral_mode = int(self.config.beam_port) == 0 and int(self.config.query_port) == 0
@@ -1148,7 +1217,7 @@ class ChimeraDaemon:
                         200,
                         {
                             "ok": True,
-                            "version": "6.0.0",
+                            "version": "7.0.0",
                             "node_name": daemon_ref.config.node_name,
                             "role": daemon_ref.config.role,
                             "hardware": cpu_caps(),
@@ -1172,6 +1241,7 @@ class ChimeraDaemon:
                     "/api/synergy/status",
                     "/api/synergy/bounties",
                     "/api/synergy/burn-scan",
+                    "/api/omega/status",
                 ):
                     qs = urllib.parse.parse_qs(parsed.query)
                     if daemon_ref._should_proxy("local=1" in parsed.query):
@@ -1223,6 +1293,22 @@ class ChimeraDaemon:
                         elif parsed.path == "/api/synergy/burn-scan":
                             rep_th = int(qs.get("repeat_threshold", ["3"])[0])
                             self._send_json(200, daemon_ref.synergy.scan_solver_burn_loops(repeat_threshold=rep_th))
+                        elif parsed.path == "/api/omega/status":
+                            from .native import v7_native_caps
+
+                            self._send_json(
+                                200,
+                                {
+                                    "ok": True,
+                                    "version": "7.0.0",
+                                    "node_name": daemon_ref.config.node_name,
+                                    "role": daemon_ref.config.role,
+                                    "native_v7": v7_native_caps(),
+                                    "os_tun_caps": detect_os_tun_caps(),
+                                    "fs_mount_caps": detect_fs_mount_caps(),
+                                    "remote_ram": daemon_ref.remote_ram.stats(),
+                                },
+                            )
                     except PermissionError as pe:
                         self._send_json(403, {"error": str(pe)})
                     except FileNotFoundError as fnf:
@@ -1324,7 +1410,7 @@ class ChimeraDaemon:
                         200,
                         {
                             "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
-                            "version": "6.0.0",
+                            "version": "7.0.0",
                             "cluster": st_payload.get("cluster", {}),
                             "status": st_payload,
                         },
@@ -2043,6 +2129,11 @@ class ChimeraDaemon:
                     "/api/synergy/bounty-drop",
                     "/api/synergy/vault-backup",
                     "/api/synergy/arbiter",
+                    "/api/omega/wasm-exec",
+                    "/api/omega/ram-put",
+                    "/api/omega/ram-get",
+                    "/api/omega/slepian-sync",
+                    "/api/omega/regen-vault",
                 ):
                     raw_b = self._read_body()
                     try:
@@ -2185,6 +2276,110 @@ class ChimeraDaemon:
                                 200,
                                 daemon_ref.synergy.evaluate_quota_arbiter(apply_policy=bool(body.get("apply_policy", True))),
                             )
+                        elif parsed.path == "/api/omega/wasm-exec":
+                            wasm_b = (
+                                base64.b64decode(body["wasm_b64"])
+                                if body.get("wasm_b64")
+                                else build_wasm_byte_counter_module(int(body.get("target_byte", 10)))
+                            )
+                            if body.get("input_b64"):
+                                inp_b = base64.b64decode(body["input_b64"])
+                            else:
+                                inp_b = str(body.get("input_text") or ("INFO ok\nERR\n" * 300)).encode("utf-8")
+                            vm = WasmActivePipe(max_steps=int(body.get("max_steps", 2_000_000)))
+                            res = vm.execute_buffer(wasm_b, inp_b, fn_name=str(body.get("fn_name", "filter")))
+                            res["executed_on"] = daemon_ref.config.node_name
+                            self._send_json(200, res)
+                        elif parsed.path == "/api/omega/ram-put":
+                            pid = str(body.get("page_id") or "page_0")
+                            if body.get("comp_hex"):
+                                out = daemon_ref.remote_ram.put_page(
+                                    pid,
+                                    bytes.fromhex(str(body["comp_hex"])),
+                                    raw_len=int(body.get("raw_len") or 4096),
+                                    compressed=True,
+                                )
+                            else:
+                                raw_b = base64.b64decode(body["data_b64"]) if body.get("data_b64") else str(body.get("text", "OMEGA_PAGE")).encode("utf-8")
+                                out = daemon_ref.remote_ram.put_page(pid, raw_b, compressed=False)
+                            out["node_name"] = daemon_ref.config.node_name
+                            self._send_json(200, out)
+                        elif parsed.path == "/api/omega/ram-get":
+                            pid = str(body.get("page_id") or "page_0")
+                            raw_only = bool(body.get("raw_only", False))
+                            got = daemon_ref.remote_ram.get_page(pid, decompress=not raw_only)
+                            if not got.get("ok"):
+                                self._send_json(404, got)
+                            elif raw_only:
+                                self._send_json(
+                                    200,
+                                    {
+                                        "ok": True,
+                                        "page_id": pid,
+                                        "raw_bytes": got["raw_bytes"],
+                                        "stored_bytes": got["stored_bytes"],
+                                        "comp_hex": got["comp"].hex(),
+                                        "sha_blake2s": got["sha_blake2s"],
+                                        "node_name": daemon_ref.config.node_name,
+                                    },
+                                )
+                            else:
+                                self._send_json(
+                                    200,
+                                    {
+                                        "ok": True,
+                                        "page_id": pid,
+                                        "raw_bytes": got["raw_bytes"],
+                                        "stored_bytes": got["stored_bytes"],
+                                        "data_b64": base64.b64encode(got["data"]).decode("ascii"),
+                                        "sha_blake2s": got["sha_blake2s"],
+                                        "node_name": daemon_ref.config.node_name,
+                                    },
+                                )
+                        elif parsed.path == "/api/omega/slepian-sync":
+                            old_b = (
+                                base64.b64decode(body["old_b64"])
+                                if body.get("old_b64")
+                                else str(body.get("old_text") or ("SLEPIAN_SYNC_BASE_" * 400)).encode("utf-8")
+                            )
+                            if body.get("packet_b64"):
+                                pkt = base64.b64decode(body["packet_b64"])
+                                dec = SlepianWolfSync.decode_blind_packet(old_b, pkt)
+                            else:
+                                if body.get("new_b64"):
+                                    new_b = base64.b64decode(body["new_b64"])
+                                else:
+                                    tmp = bytearray(old_b)
+                                    tmp[1024:1056] = b"OMEGA_0RTT_SLEPIAN_BLIND_PATCH_1"
+                                    new_b = bytes(tmp)
+                                pkt = SlepianWolfSync.encode_blind_packet(new_b, block_len=512, max_err_blocks=3)
+                                dec = SlepianWolfSync.decode_blind_packet(old_b, pkt)
+                                dec["bit_exact"] = dec.get("decoded") == new_b
+                            dec_clean = {k: v for k, v in dec.items() if k != "decoded"}
+                            if body.get("return_decoded"):
+                                dec_clean["decoded_b64"] = base64.b64encode(dec.get("decoded", b"")).decode("ascii")
+                            dec_clean["node_name"] = daemon_ref.config.node_name
+                            self._send_json(200, dec_clean)
+                        elif parsed.path == "/api/omega/regen-vault":
+                            raw_b = base64.b64decode(body["data_b64"]) if body.get("data_b64") else str(body.get("text") or ("REGEN_VAULT_SECRET_" * 64)).encode("utf-8")
+                            mv = RegeneratingMeshVault(k=int(body.get("k", 3)), n=int(body.get("n", 5)))
+                            enc = mv.encode_shards(raw_b)
+                            miss_idx = int(body.get("missing_idx", 1))
+                            avail = [s for s in enc["shards"] if s["node_idx"] != miss_idx][: mv.k]
+                            healed = mv.repair_missing_shard(avail, target_node_idx=miss_idx)
+                            rec = mv.decode_shards([healed] + avail[: mv.k - 1])
+                            self._send_json(
+                                200,
+                                {
+                                    "ok": rec == raw_b and healed["sha256"] == enc["shards"][miss_idx]["sha256"],
+                                    "k": mv.k,
+                                    "n": mv.n,
+                                    "healed_node": miss_idx,
+                                    "repair_ms": healed["repair_ms"],
+                                    "entropy": healed["entropy"],
+                                    "shard_bytes": len(healed["data"]),
+                                },
+                            )
                     except PermissionError as pe:
                         self._send_json(403, {"error": str(pe)})
                     except FileNotFoundError as fnf:
@@ -2193,6 +2388,25 @@ class ChimeraDaemon:
                         self._send_json(409, {"error": str(fee)})
                     except Exception as exc:
                         self._send_json(400, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/omega/benchmark":
+                    raw_b = self._read_body()
+                    try:
+                        body = json.loads(raw_b.decode("utf-8") or "{}")
+                    except Exception:
+                        self._send_json(400, {"error": "Invalid JSON body"})
+                        return
+                    try:
+                        peer_base = (
+                            daemon_ref.active_edge_peer_base()
+                            if (daemon_ref.config.role == "controller" and not bool(body.get("local_only", False)))
+                            else ""
+                        )
+                        rep = run_omega_benchmark(peer_http_base=peer_base)
+                        self._send_json(200, rep)
+                    except Exception as exc:
+                        self._send_json(500, {"error": str(exc)})
                     return
 
                 self._send_json(404, {"error": "Not found"})
@@ -2270,7 +2484,7 @@ class ChimeraDaemon:
         self.store.log_event(
             "INFO",
             "DAEMON",
-            f"v6.0 Started on http://{self.http_addr[0]}:{self.http_addr[1]} | RAM={zw['daemon_ram_mb']}MB | Beam={self.config.beam_port} EdgeProxy={self.config.edge_proxy_port} PhantomFB={self._phantom_srv.fallback_port}",
+            f"v7.0 Started on http://{self.http_addr[0]}:{self.http_addr[1]} | RAM={zw['daemon_ram_mb']}MB | Beam={self.config.beam_port} EdgeProxy={self.config.edge_proxy_port} PhantomFB={self._phantom_srv.fallback_port}",
         )
         return self
 
@@ -2307,7 +2521,7 @@ class ChimeraDaemon:
 
     def status_payload(self) -> dict[str, Any]:
         return {
-            "version": "6.0.0",
+            "version": "7.0.0",
             "config": self.config.to_dict(),
             "hardware": cpu_caps(),
             "zero_weight": get_zero_weight_status(),

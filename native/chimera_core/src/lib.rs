@@ -1185,3 +1185,368 @@ pub unsafe extern "C" fn chimera_wormhole_close(h: *mut c_void) {
         CloseHandle(wh.map_handle);
     }
 }
+
+// ---------------------------------------------------------------------------
+// CHIMERA v7.0 OMEGA-FABRIC Extensions (ChaCha20, RLNC Recode, PPM, Slepian)
+// ---------------------------------------------------------------------------
+
+#[inline(always)]
+fn chacha_qr(s: &mut [u32; 16], a: usize, b: usize, c: usize, d: usize) {
+    s[a] = s[a].wrapping_add(s[b]);
+    s[d] = (s[d] ^ s[a]).rotate_left(16);
+    s[c] = s[c].wrapping_add(s[d]);
+    s[b] = (s[b] ^ s[c]).rotate_left(12);
+    s[a] = s[a].wrapping_add(s[b]);
+    s[d] = (s[d] ^ s[a]).rotate_left(8);
+    s[c] = s[c].wrapping_add(s[d]);
+    s[b] = (s[b] ^ s[c]).rotate_left(7);
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn chimera_chacha20_xor(
+    out: *mut u8,
+    inp: *const u8,
+    len: usize,
+    key32: *const u8,
+    nonce12: *const u8,
+    mut counter: u32,
+) {
+    if out.is_null() || inp.is_null() || key32.is_null() || nonce12.is_null() || len == 0 {
+        return;
+    }
+    let key = std::slice::from_raw_parts(key32, 32);
+    let nonce = std::slice::from_raw_parts(nonce12, 12);
+    let mut base = [0u32; 16];
+    base[0] = 0x6170_7865;
+    base[1] = 0x3320_646e;
+    base[2] = 0x7962_2d32;
+    base[3] = 0x6b20_6574;
+    for i in 0..8 {
+        base[4 + i] = u32::from_le_bytes([key[4 * i], key[4 * i + 1], key[4 * i + 2], key[4 * i + 3]]);
+    }
+    for i in 0..3 {
+        base[13 + i] = u32::from_le_bytes([nonce[4 * i], nonce[4 * i + 1], nonce[4 * i + 2], nonce[4 * i + 3]]);
+    }
+
+    let mut off = 0usize;
+    let mut ks = [0u8; 64];
+    while off < len {
+        let mut st = base;
+        st[12] = counter;
+        for _ in 0..10 {
+            chacha_qr(&mut st, 0, 4, 8, 12);
+            chacha_qr(&mut st, 1, 5, 9, 13);
+            chacha_qr(&mut st, 2, 6, 10, 14);
+            chacha_qr(&mut st, 3, 7, 11, 15);
+            chacha_qr(&mut st, 0, 5, 10, 15);
+            chacha_qr(&mut st, 1, 6, 11, 12);
+            chacha_qr(&mut st, 2, 7, 8, 13);
+            chacha_qr(&mut st, 3, 4, 9, 14);
+        }
+        for i in 0..16 {
+            let v = st[i].wrapping_add(if i == 12 { counter } else { base[i] });
+            let b = v.to_le_bytes();
+            ks[4 * i] = b[0];
+            ks[4 * i + 1] = b[1];
+            ks[4 * i + 2] = b[2];
+            ks[4 * i + 3] = b[3];
+        }
+        let chunk = (len - off).min(64);
+        for i in 0..chunk {
+            *out.add(off + i) = *inp.add(off + i) ^ ks[i];
+        }
+        off += chunk;
+        counter = counter.wrapping_add(1);
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn chimera_gf256_recode(
+    out_payload: *mut u8,
+    out_coeffs: *mut u8,
+    payloads_flat: *const u8,
+    coeffs_flat: *const u8,
+    m_in: usize,
+    k: usize,
+    block_len: usize,
+    weights: *const u8,
+) {
+    if out_payload.is_null()
+        || out_coeffs.is_null()
+        || payloads_flat.is_null()
+        || coeffs_flat.is_null()
+        || weights.is_null()
+        || m_in == 0
+        || k == 0
+        || block_len == 0
+    {
+        return;
+    }
+    ptr::write_bytes(out_payload, 0, block_len);
+    ptr::write_bytes(out_coeffs, 0, k);
+    let caps = chimera_cpu_caps();
+    let has_gfni = (caps & 1) != 0;
+    let has_avx2 = (caps & 2) != 0;
+    for i in 0..m_in {
+        let w = *weights.add(i);
+        if w != 0 {
+            gf256_mul_add_impl(out_payload, payloads_flat.add(i * block_len), block_len, w, has_gfni, has_avx2);
+            gf256_mul_add_impl(out_coeffs, coeffs_flat.add(i * k), k, w, has_gfni, has_avx2);
+        }
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn chimera_slepian_syndrome(
+    blocks_flat: *const u8,
+    n_blocks: usize,
+    block_len: usize,
+    alpha: u8,
+    num_parities: usize,
+    out_syndromes: *mut u8,
+) {
+    if blocks_flat.is_null() || out_syndromes.is_null() || n_blocks == 0 || block_len == 0 || num_parities == 0 {
+        return;
+    }
+    let total = num_parities * block_len;
+    ptr::write_bytes(out_syndromes, 0, total);
+    let caps = chimera_cpu_caps();
+    let has_gfni = (caps & 1) != 0;
+    let has_avx2 = (caps & 2) != 0;
+    let mut root = 1u8;
+    for j in 0..num_parities {
+        let syn_j = out_syndromes.add(j * block_len);
+        let mut pow_cur = 1u8;
+        for i in 0..n_blocks {
+            if pow_cur != 0 {
+                gf256_mul_add_impl(syn_j, blocks_flat.add(i * block_len), block_len, pow_cur, has_gfni, has_avx2);
+            }
+            pow_cur = MUL_LUT[pow_cur as usize][root as usize];
+        }
+        root = MUL_LUT[root as usize][alpha as usize];
+    }
+}
+
+struct PpmRangeEnc {
+    low: u64,
+    range: u32,
+    cache: u8,
+    cache_size: u64,
+}
+
+impl PpmRangeEnc {
+    fn new() -> Self {
+        Self {
+            low: 0,
+            range: 0xFFFF_FFFF,
+            cache: 0,
+            cache_size: 1,
+        }
+    }
+
+    #[inline(always)]
+    fn shift_low(&mut self, out: &mut Vec<u8>) {
+        if (self.low as u32) < 0xFF00_0000 || (self.low >> 32) != 0 {
+            let mut temp = self.cache;
+            loop {
+                out.push(temp.wrapping_add((self.low >> 32) as u8));
+                temp = 0xFF;
+                self.cache_size -= 1;
+                if self.cache_size == 0 {
+                    break;
+                }
+            }
+            self.cache = ((self.low >> 24) & 0xFF) as u8;
+        }
+        self.cache_size += 1;
+        self.low = ((self.low as u32) << 8) as u64;
+    }
+
+    #[inline(always)]
+    fn encode_bit(&mut self, bit: u32, prob: u32, out: &mut Vec<u8>) {
+        let p = prob.clamp(1, 4095);
+        let bound = (self.range >> 12) * p;
+        if bit != 0 {
+            self.range = bound;
+        } else {
+            self.low += bound as u64;
+            self.range -= bound;
+        }
+        if self.range < 0x0100_0000 {
+            self.range <<= 8;
+            self.shift_low(out);
+        }
+    }
+
+    fn finish(&mut self, out: &mut Vec<u8>) {
+        for _ in 0..5 {
+            self.shift_low(out);
+        }
+    }
+}
+
+struct PpmRangeDec<'a> {
+    data: &'a [u8],
+    pos: usize,
+    code: u32,
+    range: u32,
+}
+
+impl<'a> PpmRangeDec<'a> {
+    fn new(data: &'a [u8]) -> Self {
+        let mut pos = 1.min(data.len());
+        let mut code = 0u32;
+        for _ in 0..4 {
+            let b = if pos < data.len() {
+                let v = data[pos];
+                pos += 1;
+                v
+            } else {
+                0
+            };
+            code = (code << 8) | (b as u32);
+        }
+        Self {
+            data,
+            pos,
+            code,
+            range: 0xFFFF_FFFF,
+        }
+    }
+
+    #[inline(always)]
+    fn decode_bit(&mut self, prob: u32) -> u32 {
+        let p = prob.clamp(1, 4095);
+        let bound = (self.range >> 12) * p;
+        let bit = if self.code < bound {
+            self.range = bound;
+            1
+        } else {
+            self.code -= bound;
+            self.range -= bound;
+            0
+        };
+        if self.range < 0x0100_0000 {
+            self.range <<= 8;
+            let b = if self.pos < self.data.len() {
+                let v = self.data[self.pos];
+                self.pos += 1;
+                v
+            } else {
+                0
+            };
+            self.code = (self.code << 8) | (b as u32);
+        }
+        bit
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn chimera_ppm_compress(
+    inp: *const u8,
+    inp_len: usize,
+    out: *mut u8,
+    out_cap: usize,
+) -> isize {
+    if out.is_null() || out_cap < 4 {
+        return -1;
+    }
+    let len_b = (inp_len as u32).to_le_bytes();
+    if inp_len == 0 || inp.is_null() {
+        ptr::copy_nonoverlapping(len_b.as_ptr(), out, 4);
+        return 4;
+    }
+    let src = std::slice::from_raw_parts(inp, inp_len);
+    let mut p0 = vec![2048u16; 256];
+    let mut p1 = vec![2048u16; 65536];
+    let mut p2 = vec![2048u16; 262144];
+
+    let mut enc = PpmRangeEnc::new();
+    let mut buf: Vec<u8> = Vec::with_capacity((inp_len / 2).max(64) + 16);
+    buf.extend_from_slice(&len_b);
+
+    let mut prev1 = 0usize;
+    let mut prev2 = 0usize;
+    for &byte_val in src {
+        let mut ctx = 1usize;
+        for k in (0..8).rev() {
+            let c0 = ctx;
+            let c1 = (prev1 << 8) | ctx;
+            let h2 = ((prev2.wrapping_mul(257)) ^ (prev1.wrapping_mul(17))) & 0x3FF;
+            let c2 = (h2 << 8) | ctx;
+            let pr = ((p0[c0] as u32) + 2 * (p1[c1] as u32) + 5 * (p2[c2] as u32)) >> 3;
+            let bit = ((byte_val >> k) & 1) as u32;
+            enc.encode_bit(bit, pr, &mut buf);
+            if bit != 0 {
+                p0[c0] = (p0[c0] as i32 + ((4096 - p0[c0] as i32) >> 5)) as u16;
+                p1[c1] = (p1[c1] as i32 + ((4096 - p1[c1] as i32) >> 5)) as u16;
+                p2[c2] = (p2[c2] as i32 + ((4096 - p2[c2] as i32) >> 5)) as u16;
+            } else {
+                p0[c0] -= p0[c0] >> 5;
+                p1[c1] -= p1[c1] >> 5;
+                p2[c2] -= p2[c2] >> 5;
+            }
+            ctx = (ctx << 1) | (bit as usize);
+        }
+        prev2 = prev1;
+        prev1 = ctx & 0xFF;
+    }
+    enc.finish(&mut buf);
+    if buf.len() > out_cap {
+        return -1;
+    }
+    ptr::copy_nonoverlapping(buf.as_ptr(), out, buf.len());
+    buf.len() as isize
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn chimera_ppm_decompress(
+    inp: *const u8,
+    inp_len: usize,
+    out: *mut u8,
+    out_cap: usize,
+) -> isize {
+    if inp.is_null() || inp_len < 4 {
+        return -1;
+    }
+    let src = std::slice::from_raw_parts(inp, inp_len);
+    let orig_len = u32::from_le_bytes([src[0], src[1], src[2], src[3]]) as usize;
+    if orig_len == 0 {
+        return 0;
+    }
+    if out.is_null() || orig_len > out_cap {
+        return -1;
+    }
+    let mut p0 = vec![2048u16; 256];
+    let mut p1 = vec![2048u16; 65536];
+    let mut p2 = vec![2048u16; 262144];
+
+    let mut dec = PpmRangeDec::new(&src[4..]);
+    let mut prev1 = 0usize;
+    let mut prev2 = 0usize;
+    for i in 0..orig_len {
+        let mut ctx = 1usize;
+        for _ in 0..8 {
+            let c0 = ctx;
+            let c1 = (prev1 << 8) | ctx;
+            let h2 = ((prev2.wrapping_mul(257)) ^ (prev1.wrapping_mul(17))) & 0x3FF;
+            let c2 = (h2 << 8) | ctx;
+            let pr = ((p0[c0] as u32) + 2 * (p1[c1] as u32) + 5 * (p2[c2] as u32)) >> 3;
+            let bit = dec.decode_bit(pr);
+            if bit != 0 {
+                p0[c0] = (p0[c0] as i32 + ((4096 - p0[c0] as i32) >> 5)) as u16;
+                p1[c1] = (p1[c1] as i32 + ((4096 - p1[c1] as i32) >> 5)) as u16;
+                p2[c2] = (p2[c2] as i32 + ((4096 - p2[c2] as i32) >> 5)) as u16;
+            } else {
+                p0[c0] -= p0[c0] >> 5;
+                p1[c1] -= p1[c1] >> 5;
+                p2[c2] -= p2[c2] >> 5;
+            }
+            ctx = (ctx << 1) | (bit as usize);
+        }
+        *out.add(i) = (ctx & 0xFF) as u8;
+        prev2 = prev1;
+        prev1 = ctx & 0xFF;
+    }
+    orig_len as isize
+}

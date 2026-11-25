@@ -35,7 +35,12 @@
 - **Browser WebDAV Index + 5-Second PR Review**: Interactive `GET /dav/` HTML explorer alongside RFC 4918 `PROPFIND 207`, instant `solution.patch` inspection, and `Drop-Portal` review alerts.
 - **Subprocess-Isolated GF(256) Apex Vault**: Atomic SQLite `.backup()` of `radar.db` + relay states (`25.0 MB -> 5.38 MB`, `[8.0, 8.0, 8.0]` entropy) keeping 24/7 hub RSS at `46.28 MB` (`< 80 MB`).
 
-## Next Horizons — `v6.5 / v7.0`
+## Completed — `v7.0.0 OMEGA-FABRIC` (All 14 Protocol Moonshots)
+- **Silicon Data-Plane & Multi-ISP Bonding (`omega_transport.py`, `native/chimera_core*`)**: Bit-exact Rust/C11 RFC 8439 ChaCha20, X25519 + IPv4 Virtual NIC framing (with honest OS TUN probes), `0 ms` multi-ISP failover, polymorphic QUIC/WebRTC DPI mimicry, and native `GF(256)` multi-hop RLNC recoding-in-flight (`chimera_gf256_recode`).
+- **Ghost-Block, Regen Mesh & 0-RTT Information Theory (`omega_storage.py`)**: 4 KB block patching (`-99.64%`), `K=3, N=5` Cauchy regenerating vault with zero-plaintext shard healing, 0-RTT Slepian-Wolf blind delta sync (Berlekamp-Massey + Chien search over native syndromes), and `$0` Serverless Parasitic Dead-Drop Mesh with hourly Lehmer carrier permutation.
+- **Sandboxed WASM AQ03, Compressed Remote RAM, PPM Codec, UEP Display & PQ/Genetic Wire (`omega_compute.py`, `omega_bench.py`)**: Strict fuel/memory WebAssembly 1.0 interpreter (`109 B` `.wasm` module), `REMOTE_HTTP` 4 KB compressed RAM swap/fault (`-94.85%`), Shared-Prior + Native Order-2 Context-Mixing Arithmetic Range Codec (`-6.46%` vs `zlib-9`), `UEP-RLNC` crisp-text protection (`25/25` under `15%` loss), Hybrid Module-LWE+X25519 + Chaff-as-RLNC, and 12-byte `CHG7` Self-Mutating Genetic Wire DNA.
+
+## Next Horizons — `v7.5 / v8.0`
 1. **Dual-Node Active-Active Tqouta Mesh (`:12500` Win ↔ `:12550` Hub)**: Cross-failover local relay pool so rate-limited accounts on one host seamlessly spill to healthy accounts on the peer over 5 ms UDP.
 2. **Cross-Bounty Semantic Patch Memory**: Embed past winning `solution.patch` patterns in FTS5/BM25 so recurring issue classes replay proven structural recipes at 0 tokens.
 3. **Tech-Stack Batching & Prompt-Cache Prefix Pinning**: Schedule queued bounties by shared repository/runtime stack to push Tqouta prompt-cache hit rates from `76.6%` toward `>90%`.

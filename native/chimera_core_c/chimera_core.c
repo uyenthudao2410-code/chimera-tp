@@ -930,3 +930,298 @@ void chimera_wormhole_close(void *hp) {
     }
     free(wh);
 }
+
+/* ------------------------------------------------------------------------- */
+/* CHIMERA v7.0 OMEGA-FABRIC Extensions (ChaCha20, RLNC Recode, PPM, Slepian) */
+/* ------------------------------------------------------------------------- */
+
+static inline uint32_t load_le32(const uint8_t *p) {
+    return ((uint32_t)p[0]) | ((uint32_t)p[1] << 8) | ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
+}
+
+static inline void store_le32(uint8_t *p, uint32_t v) {
+    p[0] = (uint8_t)(v & 0xFFu);
+    p[1] = (uint8_t)((v >> 8) & 0xFFu);
+    p[2] = (uint8_t)((v >> 16) & 0xFFu);
+    p[3] = (uint8_t)((v >> 24) & 0xFFu);
+}
+
+static inline uint32_t rotl32(uint32_t x, unsigned r) {
+    return (x << r) | (x >> (32u - r));
+}
+
+static inline void chacha_qr(uint32_t s[16], int a, int b, int c, int d) {
+    s[a] += s[b]; s[d] = rotl32(s[d] ^ s[a], 16u);
+    s[c] += s[d]; s[b] = rotl32(s[b] ^ s[c], 12u);
+    s[a] += s[b]; s[d] = rotl32(s[d] ^ s[a], 8u);
+    s[c] += s[d]; s[b] = rotl32(s[b] ^ s[c], 7u);
+}
+
+void chimera_chacha20_xor(
+    uint8_t *out,
+    const uint8_t *inp,
+    size_t len,
+    const uint8_t *key32,
+    const uint8_t *nonce12,
+    uint32_t counter
+) {
+    if (!out || !inp || !key32 || !nonce12 || len == 0) return;
+    uint32_t base[16];
+    base[0] = 0x61707865u;
+    base[1] = 0x3320646eu;
+    base[2] = 0x79622d32u;
+    base[3] = 0x6b206574u;
+    for (int i = 0; i < 8; i++) base[4 + i] = load_le32(key32 + 4 * i);
+    base[12] = counter;
+    for (int i = 0; i < 3; i++) base[13 + i] = load_le32(nonce12 + 4 * i);
+
+    size_t off = 0;
+    uint8_t ks[64];
+    while (off < len) {
+        uint32_t st[16];
+        memcpy(st, base, sizeof(st));
+        st[12] = counter;
+        for (int r = 0; r < 10; r++) {
+            chacha_qr(st, 0, 4, 8, 12);
+            chacha_qr(st, 1, 5, 9, 13);
+            chacha_qr(st, 2, 6, 10, 14);
+            chacha_qr(st, 3, 7, 11, 15);
+            chacha_qr(st, 0, 5, 10, 15);
+            chacha_qr(st, 1, 6, 11, 12);
+            chacha_qr(st, 2, 7, 8, 13);
+            chacha_qr(st, 3, 4, 9, 14);
+        }
+        for (int i = 0; i < 16; i++) {
+            uint32_t bv = (i == 12) ? counter : base[i];
+            store_le32(ks + 4 * i, st[i] + bv);
+        }
+        size_t chunk = (len - off) < 64 ? (len - off) : 64;
+        for (size_t i = 0; i < chunk; i++) {
+            out[off + i] = inp[off + i] ^ ks[i];
+        }
+        off += chunk;
+        counter += 1u;
+    }
+}
+
+void chimera_gf256_recode(
+    uint8_t *out_payload,
+    uint8_t *out_coeffs,
+    const uint8_t *payloads_flat,
+    const uint8_t *coeffs_flat,
+    size_t m_in,
+    size_t k,
+    size_t block_len,
+    const uint8_t *weights
+) {
+    if (!out_payload || !out_coeffs || !payloads_flat || !coeffs_flat || !weights || m_in == 0 || k == 0 || block_len == 0) {
+        return;
+    }
+    if (!g_tables_ready) chimera_init_tables();
+    memset(out_payload, 0, block_len);
+    memset(out_coeffs, 0, k);
+    int has_avx2 = (chimera_cpu_caps() & 2u) != 0;
+    for (size_t i = 0; i < m_in; i++) {
+        uint8_t w = weights[i];
+        if (w != 0) {
+            gf256_mul_add_impl(out_payload, payloads_flat + (i * block_len), block_len, w, has_avx2);
+            gf256_mul_add_impl(out_coeffs, coeffs_flat + (i * k), k, w, has_avx2);
+        }
+    }
+}
+
+void chimera_slepian_syndrome(
+    const uint8_t *blocks_flat,
+    size_t n_blocks,
+    size_t block_len,
+    uint8_t alpha,
+    size_t num_parities,
+    uint8_t *out_syndromes
+) {
+    if (!blocks_flat || !out_syndromes || n_blocks == 0 || block_len == 0 || num_parities == 0) {
+        return;
+    }
+    if (!g_tables_ready) chimera_init_tables();
+    memset(out_syndromes, 0, num_parities * block_len);
+    int has_avx2 = (chimera_cpu_caps() & 2u) != 0;
+    uint8_t root = 1u;
+    for (size_t j = 0; j < num_parities; j++) {
+        uint8_t *syn_j = out_syndromes + (j * block_len);
+        uint8_t pow_cur = 1u;
+        for (size_t i = 0; i < n_blocks; i++) {
+            if (pow_cur != 0) {
+                gf256_mul_add_impl(syn_j, blocks_flat + (i * block_len), block_len, pow_cur, has_avx2);
+            }
+            pow_cur = MUL_LUT[pow_cur][root];
+        }
+        root = MUL_LUT[root][alpha];
+    }
+}
+
+typedef struct {
+    uint64_t low;
+    uint32_t range;
+    uint8_t cache;
+    uint64_t cache_size;
+    uint8_t *out;
+    size_t out_pos;
+    size_t out_cap;
+    int overflow;
+} C_PpmEnc;
+
+static inline void ppm_enc_emit(C_PpmEnc *e, uint8_t b) {
+    if (e->out_pos < e->out_cap) {
+        e->out[e->out_pos++] = b;
+    } else {
+        e->overflow = 1;
+    }
+}
+
+static inline void ppm_enc_shift(C_PpmEnc *e) {
+    if ((uint32_t)e->low < 0xFF000000u || (e->low >> 32) != 0u) {
+        uint8_t temp = e->cache;
+        uint8_t carry = (uint8_t)(e->low >> 32);
+        do {
+            ppm_enc_emit(e, (uint8_t)(temp + carry));
+            temp = 0xFFu;
+        } while (--e->cache_size != 0);
+        e->cache = (uint8_t)((e->low >> 24) & 0xFFu);
+    }
+    e->cache_size++;
+    e->low = (uint64_t)((uint32_t)e->low << 8);
+}
+
+static inline void ppm_enc_bit(C_PpmEnc *e, uint32_t bit, uint32_t prob) {
+    if (prob < 1u) prob = 1u;
+    if (prob > 4095u) prob = 4095u;
+    uint32_t bound = (e->range >> 12) * prob;
+    if (bit != 0u) {
+        e->range = bound;
+    } else {
+        e->low += (uint64_t)bound;
+        e->range -= bound;
+    }
+    if (e->range < 0x01000000u) {
+        e->range <<= 8;
+        ppm_enc_shift(e);
+    }
+}
+
+ssize_t chimera_ppm_compress(const uint8_t *inp, size_t inp_len, uint8_t *out, size_t out_cap) {
+    if (!out || out_cap < 4) return -1;
+    store_le32(out, (uint32_t)inp_len);
+    if (inp_len == 0 || !inp) return 4;
+
+    uint16_t *p0 = (uint16_t *)malloc(256 * sizeof(uint16_t));
+    uint16_t *p1 = (uint16_t *)malloc(65536 * sizeof(uint16_t));
+    uint16_t *p2 = (uint16_t *)malloc(262144 * sizeof(uint16_t));
+    if (!p0 || !p1 || !p2) {
+        free(p0); free(p1); free(p2);
+        return -1;
+    }
+    for (size_t i = 0; i < 256; i++) p0[i] = 2048u;
+    for (size_t i = 0; i < 65536; i++) p1[i] = 2048u;
+    for (size_t i = 0; i < 262144; i++) p2[i] = 2048u;
+
+    C_PpmEnc enc = {0u, 0xFFFFFFFFu, 0u, 1u, out, 4u, out_cap, 0};
+    size_t prev1 = 0u, prev2 = 0u;
+    for (size_t idx = 0; idx < inp_len; idx++) {
+        uint8_t byte_val = inp[idx];
+        size_t ctx = 1u;
+        for (int k = 7; k >= 0; k--) {
+            size_t c0 = ctx;
+            size_t c1 = (prev1 << 8) | ctx;
+            size_t h2 = ((prev2 * 257u) ^ (prev1 * 17u)) & 0x3FFu;
+            size_t c2 = (h2 << 8) | ctx;
+            uint32_t pr = ((uint32_t)p0[c0] + 2u * (uint32_t)p1[c1] + 5u * (uint32_t)p2[c2]) >> 3;
+            uint32_t bit = (uint32_t)((byte_val >> k) & 1u);
+            ppm_enc_bit(&enc, bit, pr);
+            if (bit != 0u) {
+                p0[c0] = (uint16_t)((int32_t)p0[c0] + ((4096 - (int32_t)p0[c0]) >> 5));
+                p1[c1] = (uint16_t)((int32_t)p1[c1] + ((4096 - (int32_t)p1[c1]) >> 5));
+                p2[c2] = (uint16_t)((int32_t)p2[c2] + ((4096 - (int32_t)p2[c2]) >> 5));
+            } else {
+                p0[c0] -= (p0[c0] >> 5);
+                p1[c1] -= (p1[c1] >> 5);
+                p2[c2] -= (p2[c2] >> 5);
+            }
+            ctx = (ctx << 1) | (size_t)bit;
+        }
+        prev2 = prev1;
+        prev1 = ctx & 0xFFu;
+    }
+    for (int f = 0; f < 5; f++) ppm_enc_shift(&enc);
+    free(p0); free(p1); free(p2);
+    return enc.overflow ? -1 : (ssize_t)enc.out_pos;
+}
+
+ssize_t chimera_ppm_decompress(const uint8_t *inp, size_t inp_len, uint8_t *out, size_t out_cap) {
+    if (!inp || inp_len < 4) return -1;
+    uint32_t orig_len = load_le32(inp);
+    if (orig_len == 0u) return 0;
+    if (!out || (size_t)orig_len > out_cap) return -1;
+
+    uint16_t *p0 = (uint16_t *)malloc(256 * sizeof(uint16_t));
+    uint16_t *p1 = (uint16_t *)malloc(65536 * sizeof(uint16_t));
+    uint16_t *p2 = (uint16_t *)malloc(262144 * sizeof(uint16_t));
+    if (!p0 || !p1 || !p2) {
+        free(p0); free(p1); free(p2);
+        return -1;
+    }
+    for (size_t i = 0; i < 256; i++) p0[i] = 2048u;
+    for (size_t i = 0; i < 65536; i++) p1[i] = 2048u;
+    for (size_t i = 0; i < 262144; i++) p2[i] = 2048u;
+
+    const uint8_t *stream = inp + 4;
+    size_t slen = inp_len - 4;
+    size_t pos = slen > 0 ? 1u : 0u;
+    uint32_t code = 0u;
+    for (int i = 0; i < 4; i++) {
+        uint8_t b = (pos < slen) ? stream[pos++] : 0u;
+        code = (code << 8) | (uint32_t)b;
+    }
+    uint32_t range = 0xFFFFFFFFu;
+    size_t prev1 = 0u, prev2 = 0u;
+    for (size_t i = 0; i < (size_t)orig_len; i++) {
+        size_t ctx = 1u;
+        for (int b_i = 0; b_i < 8; b_i++) {
+            size_t c0 = ctx;
+            size_t c1 = (prev1 << 8) | ctx;
+            size_t h2 = ((prev2 * 257u) ^ (prev1 * 17u)) & 0x3FFu;
+            size_t c2 = (h2 << 8) | ctx;
+            uint32_t pr = ((uint32_t)p0[c0] + 2u * (uint32_t)p1[c1] + 5u * (uint32_t)p2[c2]) >> 3;
+            if (pr < 1u) pr = 1u;
+            if (pr > 4095u) pr = 4095u;
+            uint32_t bound = (range >> 12) * pr;
+            uint32_t bit;
+            if (code < bound) {
+                range = bound;
+                bit = 1u;
+            } else {
+                code -= bound;
+                range -= bound;
+                bit = 0u;
+            }
+            if (range < 0x01000000u) {
+                range <<= 8;
+                uint8_t nb = (pos < slen) ? stream[pos++] : 0u;
+                code = (code << 8) | (uint32_t)nb;
+            }
+            if (bit != 0u) {
+                p0[c0] = (uint16_t)((int32_t)p0[c0] + ((4096 - (int32_t)p0[c0]) >> 5));
+                p1[c1] = (uint16_t)((int32_t)p1[c1] + ((4096 - (int32_t)p1[c1]) >> 5));
+                p2[c2] = (uint16_t)((int32_t)p2[c2] + ((4096 - (int32_t)p2[c2]) >> 5));
+            } else {
+                p0[c0] -= (p0[c0] >> 5);
+                p1[c1] -= (p1[c1] >> 5);
+                p2[c2] -= (p2[c2] >> 5);
+            }
+            ctx = (ctx << 1) | (size_t)bit;
+        }
+        out[i] = (uint8_t)(ctx & 0xFFu);
+        prev2 = prev1;
+        prev1 = ctx & 0xFFu;
+    }
+    free(p0); free(p1); free(p2);
+    return (ssize_t)orig_len;
+}

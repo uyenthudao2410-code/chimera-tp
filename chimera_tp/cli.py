@@ -299,6 +299,13 @@ def main(argv: list[str] | None = None) -> int:
     p_syn.add_argument("--inject", action="store_true", help="Inject surgical map into AGENT_SOLVER_BRIEF.md")
     p_syn.add_argument("--peer-http", default="http://127.0.0.1:9780", help="Target daemon HTTP URL")
 
+    # ---- CHIMERA-HYPER v7.0 OMEGA-FABRIC Subcommands ----
+    p_om = sub.add_parser("omega", help="OMEGA-FABRIC 14-idea status, benchmark, PPM codec, WASM sandbox, Slepian-Wolf, and regen vault")
+    p_om.add_argument("action", choices=("status", "bench", "ppm", "wasm", "slepian", "regen"), help="Omega action")
+    p_om.add_argument("--input", default="", help="Input text for ppm, wasm, or slepian action")
+    p_om.add_argument("--peer-http", default="http://127.0.0.1:9780", help="Target daemon HTTP URL")
+    p_om.add_argument("--local", action="store_true", help="Run action offline instead of querying daemon")
+
     # ---- Legacy Research Subcommands (v0.5.0 Multi-Realm Exotic Lanes) ----
     p_probe = sub.add_parser("probe", help="Probe hardware capabilities & Windows network realms")
     p_probe.add_argument("--json", action="store_true", help="Emit probe profile as JSON")
@@ -859,6 +866,83 @@ def main(argv: list[str] | None = None) -> int:
         )
         with urllib.request.urlopen(req, timeout=30.0) as r:
             print(r.read().decode("utf-8"))
+        return 0
+
+    if args.command == "omega":
+        import urllib.request
+        from .native import v7_native_caps
+        from .omega_bench import format_omega_markdown, run_omega_benchmark
+        from .omega_compute import NeuralPpmCodec, WasmActivePipe, build_wasm_byte_counter_module
+        from .omega_storage import RegeneratingMeshVault, SlepianWolfSync, detect_fs_mount_caps
+        from .omega_transport import detect_os_tun_caps
+
+        base = args.peer_http.rstrip("/")
+        if args.action == "status":
+            if args.local:
+                print(
+                    json.dumps(
+                        {
+                            "ok": True,
+                            "version": "7.0.0",
+                            "native_v7": v7_native_caps(),
+                            "os_tun_caps": detect_os_tun_caps(),
+                            "fs_mount_caps": detect_fs_mount_caps(),
+                        },
+                        indent=2,
+                    )
+                )
+                return 0
+            with urllib.request.urlopen(f"{base}/api/omega/status", timeout=8.0) as r:
+                print(r.read().decode("utf-8"))
+            return 0
+        if args.action == "bench":
+            if args.local:
+                rep = run_omega_benchmark()
+            else:
+                req = urllib.request.Request(
+                    f"{base}/api/omega/benchmark",
+                    data=b"{}",
+                    headers={"Content-Type": "application/json"},
+                    method="POST",
+                )
+                with urllib.request.urlopen(req, timeout=25.0) as r:
+                    rep = json.loads(r.read().decode("utf-8"))
+            print(format_omega_markdown(rep))
+            return 0
+        if args.action == "ppm":
+            sample = (args.input or '{"node":"hub","status":"OK","latency_ms":4.5}\n' * 120).encode("utf-8")
+            print(json.dumps(NeuralPpmCodec.benchmark(sample), indent=2))
+            return 0
+        if args.action == "wasm":
+            inp_s = args.input or ("INFO ok\nERROR MAIL_502\n" * 200)
+            if args.local:
+                res = WasmActivePipe().execute_buffer(build_wasm_byte_counter_module(ord("\n")), inp_s.encode("utf-8"))
+                print(json.dumps(res, indent=2))
+                return 0
+            req = urllib.request.Request(
+                f"{base}/api/omega/wasm-exec",
+                data=json.dumps({"input_text": inp_s}).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=15.0) as r:
+                print(r.read().decode("utf-8"))
+            return 0
+        if args.action == "slepian":
+            old_b = (args.input or "SLEPIAN_WOLF_SYNC_STREAM_" * 200).encode("utf-8")
+            new_arr = bytearray(old_b)
+            if len(new_arr) > 600:
+                new_arr[512:544] = b"0RTT_SYNDROME_BLIND_REPAIR_TEST!"
+            pkt = SlepianWolfSync.encode_blind_packet(bytes(new_arr), block_len=512, max_err_blocks=3)
+            dec = SlepianWolfSync.decode_blind_packet(old_b, pkt)
+            print(json.dumps({k: v for k, v in dec.items() if k != "decoded"}, indent=2))
+            return 0
+        raw_v = (args.input or "CAUCHY_REGEN_VAULT_SECRET_" * 40).encode("utf-8")
+        mv = RegeneratingMeshVault(k=3, n=5)
+        enc = mv.encode_shards(raw_v)
+        healed = mv.repair_missing_shard([enc["shards"][0], enc["shards"][2], enc["shards"][3]], target_node_idx=1)
+        rec = mv.decode_shards([healed, enc["shards"][3], enc["shards"][4]])
+        print(json.dumps({"ok": rec == raw_v, "repair_ms": healed["repair_ms"], "entropy": healed["entropy"]}, indent=2))
         return 0
 
     if args.command == "demo":

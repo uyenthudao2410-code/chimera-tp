@@ -108,6 +108,26 @@ def _bind_signatures(lib: ctypes.CDLL) -> None:
     lib.chimera_wormhole_close.argtypes = [c_void_p]
     lib.chimera_wormhole_close.restype = None
 
+    if hasattr(lib, "chimera_chacha20_xor"):
+        lib.chimera_chacha20_xor.argtypes = [c_void_p, c_void_p, c_size_t, c_void_p, c_void_p, c_u32]
+        lib.chimera_chacha20_xor.restype = None
+
+    if hasattr(lib, "chimera_gf256_recode"):
+        lib.chimera_gf256_recode.argtypes = [c_void_p, c_void_p, c_void_p, c_void_p, c_size_t, c_size_t, c_size_t, c_void_p]
+        lib.chimera_gf256_recode.restype = None
+
+    if hasattr(lib, "chimera_slepian_syndrome"):
+        lib.chimera_slepian_syndrome.argtypes = [c_void_p, c_size_t, c_size_t, c_u8, c_size_t, c_void_p]
+        lib.chimera_slepian_syndrome.restype = None
+
+    if hasattr(lib, "chimera_ppm_compress"):
+        lib.chimera_ppm_compress.argtypes = [c_void_p, c_size_t, c_void_p, c_size_t]
+        lib.chimera_ppm_compress.restype = c_ssize_t
+
+    if hasattr(lib, "chimera_ppm_decompress"):
+        lib.chimera_ppm_decompress.argtypes = [c_void_p, c_size_t, c_void_p, c_size_t]
+        lib.chimera_ppm_decompress.restype = c_ssize_t
+
 
 _DLL: ctypes.CDLL | None = _discover_and_load_dll()
 
@@ -557,3 +577,278 @@ class WormholeChannel:
             self.close()
         except Exception:
             pass
+
+
+def v7_native_caps() -> dict[str, bool]:
+    return {
+        "chacha20": _DLL is not None and hasattr(_DLL, "chimera_chacha20_xor"),
+        "rlnc_recode": _DLL is not None and hasattr(_DLL, "chimera_gf256_recode"),
+        "ppm_range": _DLL is not None and hasattr(_DLL, "chimera_ppm_compress"),
+        "slepian_syndrome": _DLL is not None and hasattr(_DLL, "chimera_slepian_syndrome"),
+    }
+
+
+def _rotl32(v: int, n: int) -> int:
+    return ((v << n) | (v >> (32 - n))) & 0xFFFFFFFF
+
+
+def _chacha_block_py(key: bytes, nonce: bytes, counter: int) -> bytes:
+    st = list(struct.unpack("<4I8II3I", b"expand 32-byte k" + key + struct.pack("<I", counter) + nonce))
+    init = list(st)
+    for _ in range(10):
+        for a, b, c, d in (
+            (0, 4, 8, 12),
+            (1, 5, 9, 13),
+            (2, 6, 10, 14),
+            (3, 7, 11, 15),
+            (0, 5, 10, 15),
+            (1, 6, 11, 12),
+            (2, 7, 8, 13),
+            (3, 4, 9, 14),
+        ):
+            st[a] = (st[a] + st[b]) & 0xFFFFFFFF
+            st[d] = _rotl32(st[d] ^ st[a], 16)
+            st[c] = (st[c] + st[d]) & 0xFFFFFFFF
+            st[b] = _rotl32(st[b] ^ st[c], 12)
+            st[a] = (st[a] + st[b]) & 0xFFFFFFFF
+            st[d] = _rotl32(st[d] ^ st[a], 8)
+            st[c] = (st[c] + st[d]) & 0xFFFFFFFF
+            st[b] = _rotl32(st[b] ^ st[c], 7)
+    return struct.pack("<16I", *(((st[i] + init[i]) & 0xFFFFFFFF) for i in range(16)))
+
+
+def chacha20_xor(data: bytes | bytearray, key32: bytes, nonce12: bytes, counter: int = 0) -> bytes:
+    """RFC 8439 ChaCha20 XOR stream cipher (native Rust/C11 with pure-Python fallback)."""
+    if len(key32) != 32 or len(nonce12) != 12:
+        raise ValueError("ChaCha20 requires 32-byte key and 12-byte nonce")
+    n = len(data)
+    if n == 0:
+        return b""
+    out = bytearray(n)
+    if _DLL is not None and hasattr(_DLL, "chimera_chacha20_xor"):
+        op, ko = _rw_ptr(out)
+        ip, ki = _ro_ptr(data)
+        kp, kk = _ro_ptr(key32)
+        np, kn = _ro_ptr(nonce12)
+        _DLL.chimera_chacha20_xor(op, ip, n, kp, np, int(counter) & 0xFFFFFFFF)
+        _ = (ko, ki, kk, kn)
+        return bytes(out)
+    ctr = int(counter) & 0xFFFFFFFF
+    mv = bytes(data)
+    for off in range(0, n, 64):
+        ks = _chacha_block_py(key32, nonce12, ctr)
+        chunk = min(64, n - off)
+        for i in range(chunk):
+            out[off + i] = mv[off + i] ^ ks[i]
+        ctr = (ctr + 1) & 0xFFFFFFFF
+    return bytes(out)
+
+
+def gf256_recode(
+    payloads_flat: bytes | bytearray,
+    coeffs_flat: bytes | bytearray,
+    m_in: int,
+    k: int,
+    block_len: int,
+    weights: bytes,
+) -> tuple[bytes, bytes]:
+    """Recombine M coded RLNC packets directly in GF(256) without decoding plaintext."""
+    if m_in <= 0 or k <= 0 or block_len <= 0:
+        return b"", b""
+    if len(weights) < m_in or len(payloads_flat) < m_in * block_len or len(coeffs_flat) < m_in * k:
+        raise ValueError("Invalid buffer lengths for gf256_recode")
+    out_p = bytearray(block_len)
+    out_c = bytearray(k)
+    if _DLL is not None and hasattr(_DLL, "chimera_gf256_recode"):
+        pp_o, k1 = _rw_ptr(out_p)
+        cp_o, k2 = _rw_ptr(out_c)
+        pp_i, k3 = _ro_ptr(payloads_flat)
+        cp_i, k4 = _ro_ptr(coeffs_flat)
+        wp, k5 = _ro_ptr(weights)
+        _DLL.chimera_gf256_recode(pp_o, cp_o, pp_i, cp_i, m_in, k, block_len, wp)
+        _ = (k1, k2, k3, k4, k5)
+        return bytes(out_p), bytes(out_c)
+    for i in range(m_in):
+        w = weights[i]
+        if w != 0:
+            gf256_mul_add(out_p, payloads_flat[i * block_len : (i + 1) * block_len], w)
+            gf256_mul_add(out_c, coeffs_flat[i * k : (i + 1) * k], w)
+    return bytes(out_p), bytes(out_c)
+
+
+def slepian_syndrome(
+    blocks_flat: bytes | bytearray,
+    n_blocks: int,
+    block_len: int,
+    alpha: int = 0x03,
+    num_parities: int = 4,
+) -> bytes:
+    """Compute Reed-Solomon/GF(256) linear syndromes for 0-RTT Slepian-Wolf blind delta sync."""
+    if n_blocks <= 0 or block_len <= 0 or num_parities <= 0:
+        return b""
+    if len(blocks_flat) < n_blocks * block_len:
+        raise ValueError("Invalid buffer size for slepian_syndrome")
+    out = bytearray(num_parities * block_len)
+    if _DLL is not None and hasattr(_DLL, "chimera_slepian_syndrome"):
+        bp, kb = _ro_ptr(blocks_flat)
+        op, ko = _rw_ptr(out)
+        _DLL.chimera_slepian_syndrome(bp, n_blocks, block_len, int(alpha) & 0xFF, num_parities, op)
+        _ = (kb, ko)
+        return bytes(out)
+    root = 1
+    for j in range(num_parities):
+        syn_j = bytearray(block_len)
+        pow_cur = 1
+        for i in range(n_blocks):
+            if pow_cur != 0:
+                gf256_mul_add(syn_j, blocks_flat[i * block_len : (i + 1) * block_len], pow_cur)
+            pow_cur = MUL_BYTES[pow_cur][root]
+        out[j * block_len : (j + 1) * block_len] = syn_j
+        root = MUL_BYTES[root][alpha & 0xFF]
+    return bytes(out)
+
+
+def _ppm_shift_py(st: list[Any], out: bytearray) -> None:
+    low, cache, cache_size = st[0], st[2], st[3]
+    if (low & 0xFFFFFFFF) < 0xFF000000 or (low >> 32) != 0:
+        temp = cache
+        carry = (low >> 32) & 0xFF
+        while True:
+            out.append((temp + carry) & 0xFF)
+            temp = 0xFF
+            cache_size -= 1
+            if cache_size == 0:
+                break
+        cache = (low >> 24) & 0xFF
+    cache_size += 1
+    low = (low & 0xFFFFFFFF) << 8
+    st[0], st[2], st[3] = low, cache, cache_size
+
+
+def ppm_compress(data: bytes | bytearray) -> bytes:
+    """Bit-identical Order-2 Context-Mixing Range Coder (Rust/C11 native with pure-Python parity)."""
+    n = len(data)
+    if n == 0:
+        return b"\x00\x00\x00\x00"
+    raw = bytes(data)
+    if _DLL is not None and hasattr(_DLL, "chimera_ppm_compress"):
+        cap = n + max(64, n // 4) + 32
+        out = bytearray(cap)
+        ip, ki = _ro_ptr(raw)
+        op, ko = _rw_ptr(out)
+        rc = int(_DLL.chimera_ppm_compress(ip, n, op, cap))
+        _ = (ki, ko)
+        if rc >= 4:
+            return bytes(out[:rc])
+
+    p0 = [2048] * 256
+    p1 = [2048] * 65536
+    p2 = [2048] * 262144
+    out_b = bytearray(struct.pack("<I", n))
+    st: list[Any] = [0, 0xFFFFFFFF, 0, 1]
+    prev1 = 0
+    prev2 = 0
+    for byte_val in raw:
+        ctx = 1
+        for k in range(7, -1, -1):
+            c0 = ctx
+            c1 = (prev1 << 8) | ctx
+            c2 = ((((prev2 * 257) ^ (prev1 * 17)) & 0x3FF) << 8) | ctx
+            pr = (p0[c0] + 2 * p1[c1] + 5 * p2[c2]) >> 3
+            if pr < 1:
+                pr = 1
+            elif pr > 4095:
+                pr = 4095
+            bound = (st[1] >> 12) * pr
+            bit = (byte_val >> k) & 1
+            if bit:
+                st[1] = bound
+                p0[c0] += (4096 - p0[c0]) >> 5
+                p1[c1] += (4096 - p1[c1]) >> 5
+                p2[c2] += (4096 - p2[c2]) >> 5
+            else:
+                st[0] += bound
+                st[1] -= bound
+                p0[c0] -= p0[c0] >> 5
+                p1[c1] -= p1[c1] >> 5
+                p2[c2] -= p2[c2] >> 5
+            if st[1] < 0x01000000:
+                st[1] = (st[1] << 8) & 0xFFFFFFFF
+                _ppm_shift_py(st, out_b)
+            ctx = (ctx << 1) | bit
+        prev2 = prev1
+        prev1 = ctx & 0xFF
+    for _ in range(5):
+        _ppm_shift_py(st, out_b)
+    return bytes(out_b)
+
+
+def ppm_decompress(comp: bytes | bytearray) -> bytes:
+    """Decompress bit-identical Order-2 Context-Mixing Range Coder frame."""
+    if len(comp) < 4:
+        raise ValueError("Truncated CHIMERA PPM frame")
+    raw = bytes(comp)
+    orig_len = struct.unpack_from("<I", raw, 0)[0]
+    if orig_len == 0:
+        return b""
+    if _DLL is not None and hasattr(_DLL, "chimera_ppm_decompress"):
+        out = bytearray(orig_len)
+        ip, ki = _ro_ptr(raw)
+        op, ko = _rw_ptr(out)
+        rc = int(_DLL.chimera_ppm_decompress(ip, len(raw), op, orig_len))
+        _ = (ki, ko)
+        if rc == orig_len:
+            return bytes(out)
+
+    p0 = [2048] * 256
+    p1 = [2048] * 65536
+    p2 = [2048] * 262144
+    stream = raw[4:]
+    slen = len(stream)
+    pos = 1 if slen > 0 else 0
+    code = 0
+    for _ in range(4):
+        b = stream[pos] if pos < slen else 0
+        if pos < slen:
+            pos += 1
+        code = ((code << 8) | b) & 0xFFFFFFFF
+    rng = 0xFFFFFFFF
+    out_dec = bytearray(orig_len)
+    prev1 = 0
+    prev2 = 0
+    for i in range(orig_len):
+        ctx = 1
+        for _ in range(8):
+            c0 = ctx
+            c1 = (prev1 << 8) | ctx
+            c2 = ((((prev2 * 257) ^ (prev1 * 17)) & 0x3FF) << 8) | ctx
+            pr = (p0[c0] + 2 * p1[c1] + 5 * p2[c2]) >> 3
+            if pr < 1:
+                pr = 1
+            elif pr > 4095:
+                pr = 4095
+            bound = (rng >> 12) * pr
+            if code < bound:
+                rng = bound
+                bit = 1
+                p0[c0] += (4096 - p0[c0]) >> 5
+                p1[c1] += (4096 - p1[c1]) >> 5
+                p2[c2] += (4096 - p2[c2]) >> 5
+            else:
+                code -= bound
+                rng -= bound
+                bit = 0
+                p0[c0] -= p0[c0] >> 5
+                p1[c1] -= p1[c1] >> 5
+                p2[c2] -= p2[c2] >> 5
+            if rng < 0x01000000:
+                rng = (rng << 8) & 0xFFFFFFFF
+                nb = stream[pos] if pos < slen else 0
+                if pos < slen:
+                    pos += 1
+                code = ((code << 8) | nb) & 0xFFFFFFFF
+            ctx = (ctx << 1) | bit
+        out_dec[i] = ctx & 0xFF
+        prev2 = prev1
+        prev1 = ctx & 0xFF
+    return bytes(out_dec)

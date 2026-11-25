@@ -320,7 +320,7 @@ class TestV5Phantom(unittest.TestCase):
             base = f"http://127.0.0.1:{daemon.http_addr[1]}"
             try:
                 h = json.loads(urllib.request.urlopen(f"{base}/api/health", timeout=4.0).read().decode("utf-8"))
-                self.assertIn(h["version"], ("5.0.0", "6.0.0"))
+                self.assertIn(h["version"], ("5.0.0", "6.0.0", "7.0.0"))
 
                 # FS + Portal + Context Pack + Medic HTTP checks
                 fs_l = json.loads(urllib.request.urlopen(f"{base}/api/fs/list?path=demo", timeout=4.0).read().decode("utf-8"))

@@ -1392,7 +1392,7 @@ def format_cluster_markdown_report(status_payload: dict[str, Any]) -> str:
     now_str = datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S %Z")
 
     lines: list[str] = [
-        f"# CHIMERA-HYPER v{status_payload.get('version', '6.0.0')} — Báo Cáo Đánh Giá Cụm",
+        f"# CHIMERA-HYPER v{status_payload.get('version', '7.0.0')} — Báo Cáo Đánh Giá Cụm",
         "",
         f"- **Thời điểm xuất:** `{now_str}`",
         f"- **Xếp hạng cụm:** **{verdict.get('grade', 'N/A')}** (Sức khỏe TB: `{verdict.get('avg_health_score', 0)}/100`, Zero-Weight: `{verdict.get('zero_weight_ok', True)}`)",
@@ -1564,7 +1564,7 @@ def run_daily_autopilot(
     now_utc = datetime.now(timezone.utc).isoformat(timespec="seconds")
     now_local = datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S")
     summary = {
-        "version": "6.0.0",
+        "version": "7.0.0",
         "node_name": config.node_name,
         "role": config.role,
         "ts_utc": now_utc,
