@@ -201,6 +201,19 @@ class TestV5Phantom(unittest.TestCase):
             ).start()
             try:
                 pbase = f"http://127.0.0.1:{proxy.addr[1]}"
+                with urllib.request.urlopen(f"{pbase}/dav/", timeout=5.0) as ridx:
+                    self.assertEqual(ridx.status, 200)
+                    self.assertIn("text/html", ridx.headers.get("Content-Type", ""))
+                    self.assertIn("repo_a/", ridx.read().decode("utf-8"))
+
+                with urllib.request.urlopen(f"{pbase}/dav/repo_a/", timeout=5.0) as rdir:
+                    self.assertEqual(rdir.status, 200)
+                    self.assertIn("hello.txt", rdir.read().decode("utf-8"))
+
+                with urllib.request.urlopen(f"{pbase}/dav/repo_a", timeout=5.0) as rredir:
+                    self.assertEqual(rredir.status, 200)
+                    self.assertIn("hello.txt", rredir.read().decode("utf-8"))
+
                 req_pf = urllib.request.Request(f"{pbase}/dav/repo_a/", method="PROPFIND", headers={"Depth": "1"})
                 with urllib.request.urlopen(req_pf, timeout=5.0) as rpf:
                     self.assertEqual(rpf.status, 207)

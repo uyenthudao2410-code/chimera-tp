@@ -333,6 +333,67 @@ def edge_fetch_remote(
     }
 
 
+def _fmt_dav_size(num: int) -> str:
+    if num < 1024:
+        return f"{num} B"
+    if num < 1024 * 1024:
+        return f"{num / 1024.0:.1f} KB"
+    return f"{num / (1024.0 * 1024.0):.1f} MB"
+
+
+def _render_dav_dir_html(rel: str, entries: list[dict[str, Any]], active_peer_base: str) -> bytes:
+    """Render an interactive browser directory index for GET /dav/... requests."""
+    parts = [p for p in rel.split("/") if p]
+    crumbs = ['<a href="/dav/">/dav</a>']
+    acc = []
+    for seg in parts:
+        acc.append(urllib.parse.quote(seg, safe=""))
+        crumbs.append(f'<a href="/dav/{"/".join(acc)}/">{html.escape(seg)}</a>')
+
+    rows: list[str] = []
+    if parts:
+        parent_href = "/dav/" if len(parts) == 1 else f'/dav/{"/".join(urllib.parse.quote(p, safe="") for p in parts[:-1])}/'
+        rows.append(
+            f'<tr><td><a class="dir" href="{parent_href}">[DIR] ../</a></td>'
+            f'<td class="mono muted">-</td></tr>'
+        )
+
+    ordered = sorted(entries, key=lambda e: (not bool(e.get("is_dir")), str(e.get("name", "")).lower()))
+    for ent in ordered:
+        name = str(ent.get("name", ""))
+        if not name:
+            continue
+        is_dir = bool(ent.get("is_dir"))
+        sub_rel = "/".join([*parts, name])
+        href = f"/dav/{urllib.parse.quote(sub_rel, safe='/')}" + ("/" if is_dir else "")
+        cls = "dir" if is_dir else "file"
+        label = f"[DIR] {html.escape(name)}/" if is_dir else html.escape(name)
+        sz = "-" if is_dir else _fmt_dav_size(int(ent.get("size", 0)))
+        rows.append(f'<tr><td><a class="{cls}" href="{href}">{label}</a></td><td class="mono">{sz}</td></tr>')
+
+    body_rows = "\n".join(rows) or '<tr><td colspan="2" class="muted">(Thư mục trống)</td></tr>'
+    page = (
+        "<!doctype html><html><head><meta charset='utf-8'>"
+        f"<title>Ghost-FS WebDAV — /dav/{html.escape(rel)}</title>"
+        "<style>body{background:#0b0f17;color:#e2e8f0;font-family:system-ui,sans-serif;padding:24px;max-width:980px;margin:0 auto}"
+        "a{color:#22d3ee;text-decoration:none}a:hover{text-decoration:underline}"
+        "a.dir{color:#38bdf8;font-weight:700}a.file{color:#e2e8f0}"
+        ".meta{background:#111827;border:1px solid #1f2937;border-radius:8px;padding:12px 14px;margin:12px 0;font-size:13px;line-height:1.5}"
+        ".muted{color:#94a3b8}.mono{font-family:ui-monospace,monospace;font-size:12px}"
+        "table{width:100%;border-collapse:collapse;background:#111827;border:1px solid #1f2937;border-radius:8px;overflow:hidden}"
+        "th,td{padding:8px 12px;border-bottom:1px solid #1f2937;text-align:left}"
+        "th{font-size:11px;text-transform:uppercase;color:#94a3b8;background:#0f172a}"
+        "tr:last-child td{border-bottom:none}</style></head><body>"
+        f"<h2>Ghost-FS WebDAV &mdash; {' / '.join(crumbs)}</h2>"
+        f"<div class='meta'>Active Gateway: <code>{html.escape(active_peer_base)}</code> &bull; "
+        "Mount thành ổ mạng Windows: <code>net use Z: http://127.0.0.1:9788/dav</code> "
+        "<span class='muted'>(hoặc dùng Explorer khi dịch vụ WebClient đang bật; WebDAV PROPFIND 207 vẫn hoạt động song song)</span></div>"
+        "<table><thead><tr><th>Tên mục</th><th>Kích thước</th></tr></thead>"
+        f"<tbody>{body_rows}</tbody></table></body></html>"
+    ).encode("utf-8")
+    return page
+
+
 class _ProxyHttpServer(http.server.ThreadingHTTPServer):
     allow_reuse_address = True
     daemon_threads = True
@@ -461,13 +522,22 @@ class LocalEdgeProxy:
                 peer_base = proxy_ref.active_peer_base()
                 clen = int(self.headers.get("Content-Length", "0"))
                 req_body = self.rfile.read(clen) if clen > 0 else b""
+
+                def _fetch_list(target_rel: str) -> dict[str, Any]:
+                    st_url = f"{peer_base}/api/fs/list?path={urllib.parse.quote(target_rel)}&with_self=1"
+                    with urllib.request.urlopen(st_url, timeout=8.0) as r:
+                        return json.loads(r.read().decode("utf-8"))
+
+                def _fetch_read(target_rel: str) -> dict[str, Any]:
+                    rd_url = f"{peer_base}/api/fs/read?path={urllib.parse.quote(target_rel)}"
+                    with urllib.request.urlopen(rd_url, timeout=8.0) as r:
+                        return json.loads(r.read().decode("utf-8"))
+
                 try:
                     if method == "PROPFIND":
                         depth = (self.headers.get("Depth") or "1").strip()
                         try:
-                            st_url = f"{peer_base}/api/fs/list?path={urllib.parse.quote(rel)}&with_self=1"
-                            with urllib.request.urlopen(st_url, timeout=8.0) as r:
-                                lst = json.loads(r.read().decode("utf-8"))
+                            lst = _fetch_list(rel)
                             self_ent = lst.get("self_entry") or {"name": rel or "DEV", "is_dir": True, "size": 0, "mtime": time.time()}
                             children = lst.get("entries", []) if depth != "0" else []
                         except urllib.error.HTTPError:
@@ -480,9 +550,40 @@ class LocalEdgeProxy:
                         return
 
                     if method in ("GET", "HEAD"):
-                        rd_url = f"{peer_base}/api/fs/read?path={urllib.parse.quote(rel)}"
-                        with urllib.request.urlopen(rd_url, timeout=8.0) as r:
-                            fobj = json.loads(r.read().decode("utf-8"))
+                        if parsed.path == "/dav":
+                            self.send_response(302)
+                            self.send_header("Location", "/dav/")
+                            self.send_header("Content-Length", "0")
+                            self.end_headers()
+                            return
+
+                        if rel == "" or parsed.path.endswith("/"):
+                            lst = _fetch_list(rel)
+                            page = _render_dav_dir_html(rel, list(lst.get("entries", [])), peer_base)
+                            self.send_response(200)
+                            self.send_header("Content-Type", "text/html; charset=utf-8")
+                            self.send_header("X-Chimera-Edge", "GHOSTFS-DAV-INDEX")
+                            self.send_header("Content-Length", str(len(page)))
+                            self.end_headers()
+                            if method == "GET":
+                                self.wfile.write(page)
+                            return
+
+                        try:
+                            fobj = _fetch_read(rel)
+                        except urllib.error.HTTPError as read_err:
+                            if int(read_err.code) in (400, 404):
+                                try:
+                                    _fetch_list(rel)
+                                    self.send_response(302)
+                                    self.send_header("Location", f"/dav/{urllib.parse.quote(rel, safe='/')}/")
+                                    self.send_header("Content-Length", "0")
+                                    self.end_headers()
+                                    return
+                                except urllib.error.HTTPError:
+                                    pass
+                            raise read_err
+
                         raw = TelepathicCodec().decode(base64.b64decode(fobj["frame_b64"].encode("ascii")))
                         self.send_response(200)
                         self.send_header("Content-Type", "text/plain; charset=utf-8" if not fobj.get("is_binary") else "application/octet-stream")
