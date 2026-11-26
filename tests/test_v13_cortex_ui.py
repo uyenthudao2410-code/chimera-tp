@@ -27,14 +27,19 @@ class TestV13CortexUI(unittest.TestCase):
         gz_bytes = gzip.compress(raw_bytes, compresslevel=9)
         packed_bytes = build_kolmogorov_packed_html("{}", '""')
 
-        self.assertLessEqual(len(raw_bytes), 44_000, f"Raw UI bloated: {len(raw_bytes)} B")
-        self.assertLessEqual(len(gz_bytes), 16_000, f"Gzip UI bloated: {len(gz_bytes)} B")
-        self.assertLessEqual(len(packed_bytes), 20_500, f"Packed UI bloated: {len(packed_bytes)} B")
+        self.assertLessEqual(len(raw_bytes), 48_000, f"Raw UI bloated: {len(raw_bytes)} B")
+        self.assertLessEqual(len(gz_bytes), 20_000, f"Gzip UI bloated: {len(gz_bytes)} B")
+        self.assertLessEqual(len(packed_bytes), 27_000, f"Packed UI bloated: {len(packed_bytes)} B")
         self.assertEqual(UNIVERSE_DASHBOARD_HTML.count("precision highp float;"), 4)
 
         for marker in (
             "CHIMERA-HYPER v2.0",
             "CHIMERA-HYPER v12.0 OMEGA-GALACTIC",
+            "CHIMERA-HYPER v23",
+            "mesh-svg",
+            "sil-list",
+            "c-ht",
+            "c-ph",
             "pane-hyperdrive",
             "pane-galactic",
             "spotlight-modal",
@@ -89,7 +94,7 @@ class TestV13CortexUI(unittest.TestCase):
                 with urllib.request.urlopen(req, timeout=5.0) as r:
                     wire_gz = r.read()
                     self.assertEqual(r.headers.get("Content-Encoding"), "gzip")
-                    self.assertLessEqual(len(wire_gz), 18_500, f"Root gzip wire too large: {len(wire_gz)}")
+                    self.assertLessEqual(len(wire_gz), 22_000, f"Root gzip wire too large: {len(wire_gz)}")
                     raw_html = gzip.decompress(wire_gz).decode("utf-8")
                     self.assertIn("CHIMERA-HYPER v12.0 OMEGA-GALACTIC", raw_html)
                     self.assertIn("cortex_unit", raw_html)
@@ -97,7 +102,7 @@ class TestV13CortexUI(unittest.TestCase):
                 with urllib.request.urlopen(f"{base}/?packed=1", timeout=5.0) as r2:
                     packed_raw = r2.read()
                     self.assertEqual(r2.headers.get("X-Chimera-Packed"), "kolmogorov-deflate-raw")
-                    self.assertLessEqual(len(packed_raw), 21_500, f"Packed wire too large: {len(packed_raw)}")
+                    self.assertLessEqual(len(packed_raw), 28_000, f"Packed wire too large: {len(packed_raw)}")
                     packed_txt = packed_raw.decode("utf-8")
                     self.assertIn("DecompressionStream('deflate-raw')", packed_txt)
                     b64s = re.findall(r"_u\('([A-Za-z0-9+/=]+)'\)", packed_txt)

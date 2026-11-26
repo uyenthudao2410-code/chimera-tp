@@ -14,6 +14,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from .. import __version__
 from ..autopilot import get_zero_weight_status
 from .autoload import autoload_status
 from .colab_cli_bridge import ColabCliBridge
@@ -128,6 +129,7 @@ class PlatformSubstrate:
             pulse_bus=self.pulse,
             zygote_pool=self.zygote,
             browser_grid=self.browser,
+            colab_bridge=self.colab,
             peer_base_resolver=(
                 daemon.active_edge_peer_base
                 if (not self.ephemeral and daemon.config.peer_ipv4)
@@ -149,6 +151,9 @@ class PlatformSubstrate:
         self._openai_models_ts: float = 0.0
         self._openai_models_cache: list[dict[str, Any]] = []
         self._trim_tick: int = 0
+        self._pulse_beat: int = 0
+        self._unify_check_ts: float = 0.0
+        self._unify_active_cache: bool = False
 
         self._cart_cfg_path = Path(daemon.ops_dir) / "cartridges.json"
         self._cartridge_enabled: dict[str, bool] = {
@@ -257,6 +262,7 @@ class PlatformSubstrate:
         self.ghost.close()
         self.hyper_desk.close()
         self.cosmos.close()
+        self.omega.close()
         self.colab.close()
 
     def merged_apps(self) -> list[dict[str, Any]]:
@@ -315,6 +321,8 @@ class PlatformSubstrate:
             "ok": True,
             "schema": "chimera.capabilities.v1",
             "version": "21.0.0",
+            "package_version": __version__,
+            "cartridge_status_basis": "configuration",
             "node_name": self.daemon.config.node_name,
             "role": self.daemon.config.role,
             "os": platform.system().lower(),
@@ -405,12 +413,12 @@ class PlatformSubstrate:
                 "cosmos_entity": {
                     "status": "active" if self._cartridge_enabled["cosmos_entity"] else "disabled",
                     "endpoint": f"{anchor}/v1/cosmos/status",
-                    "description": "v20 Cosmic Infrastructure Entity: SSI, Zero-Env CAS, Omni-Memory (6 views), Immortal-Net, Immune-OS, Autogen SRE, Swarm OS, Thermo & Genesis",
+                    "description": "Placement planning, local task checkpoints, content-addressed environments, journal views, policy checks and configuration seeds",
                 },
                 "omega_entity": {
                     "status": "active" if self._cartridge_enabled["omega_entity"] else "disabled",
                     "endpoint": f"{anchor}/v1/omega/status",
-                    "description": "v21 Singularity Entity: Ring-1 EPT dedup, Akashic DAG+Fusion, Silicon Alchemy, Precognition, Vampire Cloud, Intent Kernel, Multiverse & Autopoietic DNA",
+                    "description": "Hardware capability probe, userspace buffer deduplication, memoization, CPU/GPU kernels, topology planning and workspace trials",
                 },
             },
         }
@@ -433,16 +441,21 @@ class PlatformSubstrate:
         return written
 
     def pulse_summary(self) -> dict[str, Any]:
+        self._pulse_beat += 1
         apps = self.merged_apps()
         eg = self.egress.stats()
         vg = self.vgpu.status()
         gpu = vg.get("gpu") or {}
-        colab_cu = 0.0
-        try:
-            cs = self.colab.status(refresh=False)
-            colab_cu = float((cs.get("usage") or {}).get("balance_cu") or 0.0)
-        except Exception:
-            pass
+        ccli = vg.get("colab_cli") or {}
+        cauto = ccli.get("autonomous") or {}
+        colab_cu = float(ccli.get("balance_cu") or 0.0)
+        if colab_cu <= 0.0:
+            try:
+                cc = getattr(self.colab, "_status_cache", None)
+                if cc and isinstance(cc, tuple) and len(cc) >= 2 and isinstance(cc[1], dict):
+                    colab_cu = float((cc[1].get("usage") or {}).get("balance_cu") or 0.0)
+            except Exception:
+                pass
         hd = self.hyper_desk.status()
         vram_st = hd.get("vram_swap") or {}
         gov = getattr(self.daemon, "host_governor", None)
@@ -460,8 +473,17 @@ class PlatformSubstrate:
             + float(hd.get("orphans_commit_reclaimed_mb") or 0.0)
             + float(hd.get("hydra_trimmed_mb") or 0.0)
         )
+        now_m = time.monotonic()
+        if (now_m - self._unify_check_ts) >= 30.0:
+            self._unify_check_ts = now_m
+            self._unify_active_cache = (chimera_home_dir() / "unify.json").is_file()
+        with self._openai_models_lock:
+            oai_cnt = len(self._openai_models_cache) or 3
+        host_cpu = hm.get("cpu_pct")
+        real_cpu = round(float(host_cpu), 1) if host_cpu is not None else round(float(th.get("cpu_pct") or 0.0), 1)
         return {
-            "version": "22.0.0",
+            "version": "23.0.0",
+            "heartbeat": self._pulse_beat,
             "anchor_url": self.anchor_url,
             "egress_proxy_url": self.egress.url,
             "apps_online": [a["app"] for a in apps if a.get("online")],
@@ -477,13 +499,25 @@ class PlatformSubstrate:
             "vgpu_ready": vg.get("gpu_ready", False),
             "colab_online": vg.get("colab_online", 0),
             "colab_cu": round(colab_cu, 1),
+            "colab_mode": str(cauto.get("mode_label") or "AUTO:SLEEP"),
+            "colab_warm_reuses": int(cauto.get("warm_reuses") or 0),
+            "colab_auto_reaped": int(cauto.get("auto_reaped") or 0),
+            "colab_execs": int(cauto.get("executions") or 0),
+            "openai_models_count": oai_cnt,
+            "unify_active": self._unify_active_cache,
+            "gpu_name": str(gpu.get("name") or "CPU/Peer"),
             "gpu_temp_c": gpu.get("temp_c"),
             "gpu_util_pct": gpu.get("util_pct"),
-            "vram_free_mb": gpu.get("vram_free_mb"),
+            "vram_total_mb": gpu.get("vram_total_mb") or 0,
+            "vram_used_mb": gpu.get("vram_used_mb") or 0,
+            "vram_free_mb": gpu.get("vram_free_mb") or 0,
+            "host_cpu_pct": real_cpu,
+            "host_free_ram_gb": round(float(hm.get("free_ram_gb") or 0.0), 2),
             "immortal_jobs": self.jobs.stats().get("total_jobs", 0),
             "browser_sessions": self.browser.status().get("active_sessions", 0),
             "zygote_execs": self.zygote.status().get("executions", 0),
             "ghost_runs": self.ghost.status().get("runs", 0),
+            "vault_sql_dbs": int(self.vault_sql.status().get("db_count") or 0),
             "hyper_desk": {
                 "reclaimed_mb": round(reclaimed_mb, 1),
                 "cryo_procs": int(hd.get("cryo_trimmed_procs") or 0),
@@ -497,7 +531,7 @@ class PlatformSubstrate:
             "thermo": {
                 "regime": th.get("regime", "COOL_LOCAL_HYBRID"),
                 "watts": round(float(th.get("est_host_watts") or 0.0), 1),
-                "cpu_pct": round(float(th.get("cpu_pct") or 0.0), 1),
+                "cpu_pct": real_cpu,
                 "ssd_save_pct": round(float((th.get("ssd_barrier") or {}).get("write_reduction_pct") or 0.0), 1),
                 "zero_env_pct": round(float(zenv.get("dedup_saved_pct") or 0.0), 1),
                 "quarantined": len(imm.get("quarantined_actors") or []),
@@ -522,11 +556,6 @@ class PlatformSubstrate:
             return 200, self.capabilities()
 
         if path == "/v1/smi":
-            if not self.ephemeral:
-                try:
-                    self.colab.status(refresh=False)
-                except Exception:
-                    pass
             caps = self.capabilities()
             apps = self.merged_apps()
             known_ports = {int(self.daemon.http_addr[1]), int(self.egress.addr[1])}
@@ -659,7 +688,7 @@ class PlatformSubstrate:
                 return 400, {"error": "missing_key"}
             return 200, self.pulse.kv_get(key)
 
-        if path == "/v1/pulse/stats":
+        if path in ("/v1/pulse", "/v1/pulse/stats"):
             return 200, {"ok": True, "pulse": self.pulse.stats()}
 
         if path == "/v1/search":
@@ -727,7 +756,7 @@ class PlatformSubstrate:
                 "usage_hint": "curl -H 'Host: radar.chimera.local' http://127.0.0.1:9780/api/health",
             }
 
-        # --- v19 CHIMERA-HYPERDESK GET routes ---
+        # --- v19-v23 CHIMERA-HYPERDESK & PHANTOM-SILICON GET routes ---
         if path == "/v1/hyperdesk/status":
             return 200, self.hyper_desk.status()
         if path == "/v1/hyperdesk/diagnose":
@@ -736,6 +765,18 @@ class PlatformSubstrate:
             return 200, {"ok": True, "vram_swap": self.hyper_desk.vram_swap.status()}
         if path == "/v1/hyperdesk/autonomic":
             return 200, self.hyper_desk.get_autonomic_status()
+        if path == "/v1/hyperdesk/mirage/status":
+            return 200, self.hyper_desk.mirage.status()
+        if path == "/v1/hyperdesk/stasis/status":
+            return 200, self.hyper_desk.stasis.status()
+        if path == "/v1/hyperdesk/gpu-fence":
+            return 200, self.hyper_desk.gpu_fence.status()
+        if path == "/v1/hyperdesk/pwm/status":
+            from ..native import native_focus_state, native_pwm_stats
+            return 200, {"ok": True, "pwm": native_pwm_stats(), "focus": native_focus_state()}
+        if path == "/v1/exile/status":
+            probe = (qs.get("probe") or ["0"])[0].lower() in ("1", "true", "yes")
+            return 200, self.hyper_desk.exile.status(probe=probe)
 
         # --- v20 CHIMERA-COSMOS GET routes ---
         if path == "/v1/cosmos/status":
@@ -1207,6 +1248,53 @@ class PlatformSubstrate:
                 if isinstance(body.get("policy"), dict):
                     return 200, self.hyper_desk.update_autonomic_policy(body["policy"])
                 return 200, self.hyper_desk.get_autonomic_status()
+            if path == "/v1/hyperdesk/mirage/promote":
+                return 200, self.hyper_desk.mirage.promote(
+                    str(body.get("path") or ""),
+                    max_repo_gb=float(body.get("max_repo_gb") or 8.0),
+                    dry_run=bool(body.get("dry_run", False)),
+                )
+            if path == "/v1/hyperdesk/mirage/demote":
+                return 200, self.hyper_desk.mirage.demote(str(body.get("path") or ""))
+            if path == "/v1/hyperdesk/mirage/sync":
+                p = body.get("path")
+                return 200, self.hyper_desk.mirage.sync_back(str(p) if p else None)
+            if path == "/v1/hyperdesk/mirage/bench":
+                return 200, self.hyper_desk.mirage.benchmark_dir(
+                    str(body.get("path") or "."),
+                    max_files=int(body.get("max_files") or 200),
+                )
+            if path == "/v1/hyperdesk/stasis/hibernate":
+                return 200, self.hyper_desk.stasis_hibernate(
+                    min_ws_mb=float(body.get("min_ws_mb") or 20.0),
+                    dry_run=bool(body.get("dry_run", False)),
+                )
+            if path == "/v1/hyperdesk/stasis/wake":
+                app_nm = str(body.get("app") or "")
+                if app_nm:
+                    return 200, self.hyper_desk.stasis.wake_family(app_name=app_nm)
+                return 200, self.hyper_desk.stasis.wake_all()
+            if path == "/v1/hyperdesk/gpu-phoenix":
+                return 200, self.hyper_desk.gpu_phoenix(
+                    threshold_commit_mb=float(body.get("threshold_commit_mb") or 1600.0),
+                    allow_recycle=bool(body.get("allow_recycle", False)),
+                )
+            if path == "/v1/hyperdesk/gpu-fence":
+                return 200, self.hyper_desk.gpu_fence.apply_fence(
+                    overwrite_existing=bool(body.get("overwrite_existing", False)),
+                    dry_run=bool(body.get("dry_run", False)),
+                )
+
+        if path == "/v1/exile/run":
+            if not self._cartridge_enabled.get("hyper_desk", True):
+                return 503, {"error": "cartridge_disabled:hyper_desk"}
+            return 200, self.hyper_desk.exile.run(
+                str(body.get("cmd") or ""),
+                cwd=body.get("cwd") or None,
+                target=str(body.get("target") or "auto"),
+                sync_workspace=bool(body.get("sync_workspace", False)),
+                timeout_s=float(body.get("timeout_s") or 120.0),
+            )
 
         # --- v20 CHIMERA-COSMOS POST routes ---
         if path.startswith("/v1/cosmos/"):
@@ -1281,10 +1369,13 @@ class PlatformSubstrate:
             if path == "/v1/omega/benchmark":
                 return 200, self.omega.run_full_entity_benchmark()
             if path == "/v1/omega/intent/compile":
-                return 200, self.omega.compile_intent(
-                    str(body.get("service") or "app"),
-                    dict(body.get("invariants") or {}),
-                )
+                try:
+                    return 200, self.omega.compile_intent(
+                        str(body.get("service") or "app"),
+                        dict(body.get("invariants") or {}),
+                    )
+                except (TypeError, ValueError, OverflowError) as exc:
+                    return 400, {"ok": False, "error": str(exc)}
             if path == "/v1/omega/akashic/eval":
                 return 200, self.omega.akashic_eval(
                     str(body.get("op") or "agg"),
