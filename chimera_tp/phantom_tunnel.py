@@ -961,7 +961,7 @@ class PhantomTunnelClient(_TunnelEndpointMixin):
         pong_stale_s: float = 35.0,
         reconnect_cooldown_s: float = 10.0,
         auto_reconnect: bool = True,
-        fallback_upgrade_interval_s: float = 30.0,
+        fallback_upgrade_interval_s: float = 15.0,
     ) -> None:
         self._init_mux(direction_bit=1, use_fast_wire=use_fast_wire)
         self.peer_http_base = peer_http_base.rstrip("/")
@@ -981,7 +981,7 @@ class PhantomTunnelClient(_TunnelEndpointMixin):
 
         self._stop = threading.Event()
         self._conn_lock = threading.Lock()
-        self._state_lock = threading.Lock()
+        self._state_lock = threading.RLock()
         self._next_cid = 1
 
         self._session_id = 0
@@ -1139,7 +1139,7 @@ class PhantomTunnelClient(_TunnelEndpointMixin):
                 deadline = next_wave + timeout_s
                 while time.perf_counter() < deadline and win_sock is None and not self._stop.is_set():
                     now = time.perf_counter()
-                    if now >= next_wave and waves < 4:
+                    if now >= next_wave and waves < 6:
                         for s in socks:
                             try:
                                 s.sendto(punch_pkt, resp_addr)
@@ -1200,13 +1200,14 @@ class PhantomTunnelClient(_TunnelEndpointMixin):
 
             if preserve_on_fallback_fail:
                 with self._state_lock:
-                    if self._sock is not None and self._mode == "TAILSCALE_FALLBACK":
-                        return {
-                            **self.status(),
-                            "connected": False,
-                            "upgraded": False,
-                            "elapsed_ms": round((time.perf_counter() - t0) * 1000.0, 2),
-                        }
+                    keep_fb = self._sock is not None and self._mode == "TAILSCALE_FALLBACK"
+                if keep_fb:
+                    return {
+                        **self.status(),
+                        "connected": False,
+                        "upgraded": False,
+                        "elapsed_ms": round((time.perf_counter() - t0) * 1000.0, 2),
+                    }
 
             # Fallback cleanly to Tailscale UDP fallback port if punch failed
             fb_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)

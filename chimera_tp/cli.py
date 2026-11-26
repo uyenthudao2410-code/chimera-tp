@@ -384,6 +384,11 @@ def main(argv: list[str] | None = None) -> int:
     p_dns = sub.add_parser("dns", help="Show *.chimera.local registered domains and hosts hint")
     p_dns.add_argument("--anchor", default="", help="Override CHIMERA anchor URL")
 
+    p_gh = sub.add_parser("ghost", help="Run any command in a 0-risk Copy-on-Write reality bubble and inspect diff")
+    p_gh.add_argument("dir", help="Target directory to clone into CoW bubble")
+    p_gh.add_argument("--commit", action="store_true", help="Commit changes back to target directory if exit_code==0")
+    p_gh.add_argument("cmd", nargs=argparse.REMAINDER, help="Command to test (prefix with --)")
+
     # ---- Legacy Research Subcommands (v0.5.0 Multi-Realm Exotic Lanes) ----
     p_probe = sub.add_parser("probe", help="Probe hardware capabilities & Windows network realms")
     p_probe.add_argument("--json", action="store_true", help="Emit probe profile as JSON")
@@ -1323,6 +1328,24 @@ def main(argv: list[str] | None = None) -> int:
         with _urlreq.urlopen(f"{anchor}/v1/dns/hosts-hint", timeout=4.0) as resp:
             print(json.dumps(json.loads(resp.read().decode("utf-8")), indent=2, ensure_ascii=False))
         return 0
+
+    if args.command == "ghost":
+        from .platform import GhostBubbleEngine
+
+        cmd = list(args.cmd or [])
+        if cmd and cmd[0] == "--":
+            cmd = cmd[1:]
+        if not cmd:
+            print("Usage: chimera-tp ghost <dir> [--commit] -- <command...>", file=sys.stderr)
+            return 2
+        eng = GhostBubbleEngine()
+        res = eng.run_bubble(args.dir, cmd, auto_discard=False)
+        if args.commit and res["exit_code"] == 0:
+            res["commit_result"] = eng.commit(res["bubble_id"])
+        else:
+            res["discard_result"] = eng.discard(res["bubble_id"])
+        print(json.dumps(res, indent=2, ensure_ascii=False))
+        return int(res["exit_code"])
 
     if args.command == "run":
         import subprocess

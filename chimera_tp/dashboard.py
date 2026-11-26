@@ -24,7 +24,6 @@ from .active_pipe import (
     ComputePlan,
     remote_active_query,
 )
-from .apex_synergy import ApexSynergyEngine
 from .autopilot import (
     VALID_PROFILES,
     OpsConfig,
@@ -40,42 +39,79 @@ from .autopilot import (
 )
 from .code_search import CodeSearchIndex
 from .drop_portal import DropPortalStore, pack_ai_context
-from .omega_bench import run_omega_benchmark
-from .omega_compute import NeuralPpmCodec, RemoteRamStore, WasmActivePipe, build_wasm_byte_counter_module
-from .omega_storage import RegeneratingMeshVault, SlepianWolfSync, detect_fs_mount_caps
-from .omega_transport import GeneticWireEngine, detect_os_tun_caps
-from .singularity_airgap_crypto import (
-    AirGapFountainBridge,
-    PlausibleDeniabilityVault,
-    PrivateInfoRetrievalEngine,
-    build_deterministic_pir_db,
-)
-from .singularity_bench import run_singularity_benchmark
-from .singularity_kolmogorov_swarm import KolmogorovGrammarCodec, SwarmAnycastMesh
-from .singularity_time_crdt import MerkleCrdtShadowTwin, SpeculativeTimeWarpEngine
 from .native import v12_native_caps, v9_native_caps
-from .v10_outlaw_engines import ProceduralTarpitLabyrinth
-from .v10_sovereign_crypto import FrostThreshold2of3
-from .v10_sovereign_runtime import WasmLiveTeleportEngine
-from .v11_autopoietic_systems import ActiveMatterCell
-from .v12_bench import run_galactic_benchmark
-from .v12_galactic_engines import HyperdimensionalVsaMesh
-from .v9_app_index import (
-    LiveClusterIndexer,
-    RemoteAppStreamEngine,
-    SharedCasTurboCache,
-    UniversalInstantHub,
-    probe_hw_encoders,
-)
-from .v9_bench import run_hyperdrive_benchmark
-from .v9_nvme_grid import (
-    UnifiedHardwareGrid,
-    VirtualNvmeFabric,
-    WorkspaceHandOffManager,
-    execute_whitelisted_kernel,
-    probe_accelerators,
-    probe_mount_drivers,
-)
+
+
+# Phantom-Demand Lazy Loader: keeps cold v6-v12 lab modules out of RAM until explicitly invoked!
+_LAZY_EXPORTS: dict[str, tuple[str, str]] = {
+    "ApexSynergyEngine": (".apex_synergy", "ApexSynergyEngine"),
+    "run_omega_benchmark": (".omega_bench", "run_omega_benchmark"),
+    "NeuralPpmCodec": (".omega_compute", "NeuralPpmCodec"),
+    "RemoteRamStore": (".omega_compute", "RemoteRamStore"),
+    "WasmActivePipe": (".omega_compute", "WasmActivePipe"),
+    "build_wasm_byte_counter_module": (".omega_compute", "build_wasm_byte_counter_module"),
+    "RegeneratingMeshVault": (".omega_storage", "RegeneratingMeshVault"),
+    "SlepianWolfSync": (".omega_storage", "SlepianWolfSync"),
+    "detect_fs_mount_caps": (".omega_storage", "detect_fs_mount_caps"),
+    "GeneticWireEngine": (".omega_transport", "GeneticWireEngine"),
+    "detect_os_tun_caps": (".omega_transport", "detect_os_tun_caps"),
+    "AirGapFountainBridge": (".singularity_airgap_crypto", "AirGapFountainBridge"),
+    "PlausibleDeniabilityVault": (".singularity_airgap_crypto", "PlausibleDeniabilityVault"),
+    "PrivateInfoRetrievalEngine": (".singularity_airgap_crypto", "PrivateInfoRetrievalEngine"),
+    "build_deterministic_pir_db": (".singularity_airgap_crypto", "build_deterministic_pir_db"),
+    "run_singularity_benchmark": (".singularity_bench", "run_singularity_benchmark"),
+    "KolmogorovGrammarCodec": (".singularity_kolmogorov_swarm", "KolmogorovGrammarCodec"),
+    "SwarmAnycastMesh": (".singularity_kolmogorov_swarm", "SwarmAnycastMesh"),
+    "MerkleCrdtShadowTwin": (".singularity_time_crdt", "MerkleCrdtShadowTwin"),
+    "SpeculativeTimeWarpEngine": (".singularity_time_crdt", "SpeculativeTimeWarpEngine"),
+    "ProceduralTarpitLabyrinth": (".v10_outlaw_engines", "ProceduralTarpitLabyrinth"),
+    "FrostThreshold2of3": (".v10_sovereign_crypto", "FrostThreshold2of3"),
+    "WasmLiveTeleportEngine": (".v10_sovereign_runtime", "WasmLiveTeleportEngine"),
+    "ActiveMatterCell": (".v11_autopoietic_systems", "ActiveMatterCell"),
+    "run_galactic_benchmark": (".v12_bench", "run_galactic_benchmark"),
+    "HyperdimensionalVsaMesh": (".v12_galactic_engines", "HyperdimensionalVsaMesh"),
+    "LiveClusterIndexer": (".v9_app_index", "LiveClusterIndexer"),
+    "RemoteAppStreamEngine": (".v9_app_index", "RemoteAppStreamEngine"),
+    "SharedCasTurboCache": (".v9_app_index", "SharedCasTurboCache"),
+    "UniversalInstantHub": (".v9_app_index", "UniversalInstantHub"),
+    "probe_hw_encoders": (".v9_app_index", "probe_hw_encoders"),
+    "run_hyperdrive_benchmark": (".v9_bench", "run_hyperdrive_benchmark"),
+    "UnifiedHardwareGrid": (".v9_nvme_grid", "UnifiedHardwareGrid"),
+    "VirtualNvmeFabric": (".v9_nvme_grid", "VirtualNvmeFabric"),
+    "WorkspaceHandOffManager": (".v9_nvme_grid", "WorkspaceHandOffManager"),
+    "execute_whitelisted_kernel": (".v9_nvme_grid", "execute_whitelisted_kernel"),
+    "probe_accelerators": (".v9_nvme_grid", "probe_accelerators"),
+    "probe_mount_drivers": (".v9_nvme_grid", "probe_mount_drivers"),
+}
+
+
+class _LazyRef:
+    """Transparent callable/class proxy importing heavy lab modules strictly on first access."""
+
+    def __init__(self, name: str, mod_rel: str, attr: str) -> None:
+        self._name = name
+        self._mod_rel = mod_rel
+        self._attr = attr
+        self._target: Any = None
+
+    def _resolve(self) -> Any:
+        if self._target is None:
+            import importlib
+
+            mod = importlib.import_module(self._mod_rel, package=__package__)
+            self._target = getattr(mod, self._attr)
+            globals()[self._name] = self._target
+        return self._target
+
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
+        return self._resolve()(*args, **kwargs)
+
+    def __getattr__(self, item: str) -> Any:
+        return getattr(self._resolve(), item)
+
+
+for _lname, (_lmod, _lattr) in _LAZY_EXPORTS.items():
+    globals()[_lname] = _LazyRef(_lname, _lmod, _lattr)
 from .edge_proxy import EdgeGateway, LocalEdgeProxy, edge_fetch_remote
 from .fabric import BeamServer, beam_send
 from .ghost_fs import GhostFsEngine
@@ -160,18 +196,10 @@ class ChimeraDaemon:
             self.ops_dir / "drop_portal",
             default_ttl_s=int(getattr(self.config, "drop_ttl_s", 600)),
         )
-        self.synergy = ApexSynergyEngine(
-            ops_dir=self.ops_dir,
-            allowed_roots=self._allowed_roots(),
-            tquota_admin_url=str(getattr(self.config, "tquota_admin_url", "http://127.0.0.1:12504")),
-            tquota_relay_url=str(getattr(self.config, "tquota_relay_url", "http://127.0.0.1:12500")),
-            radar_url=str(getattr(self.config, "radar_url", "http://127.0.0.1:8787")),
-            radar_root=str(getattr(self.config, "radar_root", "")),
-            tquota_data_dir=str(getattr(self.config, "tquota_data_dir", "")),
-        )
-        self.remote_ram = RemoteRamStore(max_bytes=16 * 1024 * 1024)
-        self.genetic_wire = GeneticWireEngine()
-        self.time_warp = SpeculativeTimeWarpEngine()
+        self._synergy: Any = None
+        self._remote_ram: Any = None
+        self._genetic_wire: Any = None
+        self._time_warp: Any = None
         self._pir_lock = threading.Lock()
         self._pir_slab: bytes | None = None
         self._v9_lock = threading.Lock()
@@ -222,6 +250,38 @@ class ChimeraDaemon:
         self._threads: list[threading.Thread] = []
         self.http_addr: tuple[str, int] = ("127.0.0.1", 0)
         self.platform = PlatformSubstrate(self)
+
+    @property
+    def synergy(self) -> Any:
+        if self._synergy is None:
+            self._synergy = ApexSynergyEngine(
+                ops_dir=self.ops_dir,
+                allowed_roots=self._allowed_roots(),
+                tquota_admin_url=str(getattr(self.config, "tquota_admin_url", "http://127.0.0.1:12504")),
+                tquota_relay_url=str(getattr(self.config, "tquota_relay_url", "http://127.0.0.1:12500")),
+                radar_url=str(getattr(self.config, "radar_url", "http://127.0.0.1:8787")),
+                radar_root=str(getattr(self.config, "radar_root", "")),
+                tquota_data_dir=str(getattr(self.config, "tquota_data_dir", "")),
+            )
+        return self._synergy
+
+    @property
+    def remote_ram(self) -> Any:
+        if self._remote_ram is None:
+            self._remote_ram = RemoteRamStore(max_bytes=16 * 1024 * 1024)
+        return self._remote_ram
+
+    @property
+    def genetic_wire(self) -> Any:
+        if self._genetic_wire is None:
+            self._genetic_wire = GeneticWireEngine()
+        return self._genetic_wire
+
+    @property
+    def time_warp(self) -> Any:
+        if self._time_warp is None:
+            self._time_warp = SpeculativeTimeWarpEngine()
+        return self._time_warp
 
     def record_flow(
         self,
@@ -2644,6 +2704,7 @@ class ChimeraDaemon:
         t_sched.start()
         self._threads.extend([t_http, t_sched])
         self.trinity.refresh_async(ttl_s=0.0)
+        gc.collect()
         zw = get_zero_weight_status()
         self.store.log_event(
             "INFO",

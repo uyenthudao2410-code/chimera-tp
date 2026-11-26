@@ -184,6 +184,8 @@ class ZygoteWorkerPool:
             try:
                 if self._helper.stdin:
                     self._helper.stdin.close()
+                if self._helper.stdout:
+                    self._helper.stdout.close()
                 self._helper.terminate()
                 self._helper.wait(timeout=1.5)
             except Exception:

@@ -89,3 +89,57 @@ Tất cả **22 tệp** trong phạm vi đồng bộ đã được sao chép t�
    - Cả 2 chiều PHANTOM-5MS (`Win ⇄ svhome`) đều hoạt động ổn định qua `12550` / `12551` & `9789` / `9790` với `gossipErrors: 0`.
    - Số dư Colab hiện tại sau toàn bộ đợt benchmark vẫn giữ nguyên **`2,350.15 CU`**, **`Active assignments: 0`**.
    - **Bảo mật:** Không ghi nhận email cá nhân, IP công khai thô hay token xác thực nào trong báo cáo hoặc mã nguồn đồng bộ (`0` vi phạm kiểm tra regex).
+
+---
+
+## 6. Trinity v17.1 Hardening, 75/75 Radar Parity & Live Production Proofs
+
+Sau khi nghiệm thu v17, hệ thống được gia cố thêm bản vá **Trinity v17.1** để đóng 4 lỗ hổng vận hành thực tế (đồng bộ 100% Radar `app/*.py`, tự động nối lại PHANTOM + dập triệt để bão retransmit khi khởi động lại daemon, chạy Node trên `/tmp` ngoài `/dev/shm` `noexec`, và chế độ headless Lean `codex exec` không kéo `cua-repl`).
+
+### 6.1 Các bản vá v17.1 đã triển khai & đồng bộ `Win ⇄ svhome`
+1. **Đồng bộ toàn bộ Radar `75/75` `app/*.py` + hermetic test fixture:**
+   - Kéo 14 module `app/*.py` mới hơn từ `svhome` về Windows (`agency_closer.py`, `approval_dispatch.py`, `commerce_feed.py`, `commerce_policy.py`, `competitor_intel.py`, `experience_memory.py`, `learning_content.py`, `makefun_optimizer.py`, `mcp_growth_scout.py`, `security_hunter.py`, `self_debate.py`, `self_upgrade.py`, `shadow_bounty.py`, `submission_journal.py`) và đồng bộ ngược lại mọi bản sửa v17.1.
+   - Kiểm tra SHA-256 chuẩn hóa LF trên toàn bộ **`75/75` tệp `radar_dashboard/app/*.py`**: `win_only=0`, `sv_only=0`, **`MISMATCH_COUNT=0`**.
+   - Trong [test_dashboard.py](file:///E:/DEV/Chat/radar_dashboard/app/tests/test_dashboard.py) (`_prepare_temp_radar_dir`), cố định `cfg.setdefault("guardrails", {})["min_makefun_pool_usd"] = 100.0` cho fixture test `$100`, giữ nguyên ngưỡng sản xuất `150.0` trong `job_radar/config.json` của `svhome` và đưa bộ test Radar trên cả 2 node lên **`51/51 PASSED`**.
+2. **Chimera Watchdog Tự nối lại + Fix bão retransmit `506 MB` & Deadlock `_state_lock`:**
+   - Trong [phantom_tunnel.py](file:///E:/dev/chimera-tp/chimera_tp/phantom_tunnel.py): thêm keepalive `10s`, watchdog `pong_stale_s=35s`, cooldown `10s`, tái đấm full budget (`192` sockets, `900` sprays, `6` waves, `3.5s`), cơ chế nâng cấp tự động không gián đoạn `TAILSCALE_FALLBACK -> PHANTOM_5MS_DIRECT` mỗi `15s`, và dọn session fallback rảnh `> 120s` trên server.
+   - Khi kiểm chứng thực tế phát hiện sự cố **bão retransmit `506 MB` UDP (`CLOSE-WAIT` kẹt trên `12551`/`9790`)** và **deadlock `_state_lock`** lúc chuyển phiên: đã thêm `_reset_conns_for_new_session()` khi tạo session mới trong `connect()`, trả `_P_CLOSE` cho `conn_id` mồ côi ở cả Server & Client, giới hạn `inflight <= 32` (`recv(16384)`), áp dụng exponential backoff + ngưỡng tử `_retransmit_pending()` (`max 24/tick`, `6/stream`, `_P_OPEN` tối đa `12` lần / `8s`, `tx_buffer` treo `> 15s`, reaper `CLOSE-WAIT` `> 6s`), giới hạn `_P_NACK` (`0.08s`, cửa sổ `16`), đồng thời chuyển `_state_lock` sang `RLock` và gọi `self.status()` ngoài lock ở nhánh `preserve_on_fallback_fail`.
+   - Bổ sung `test_06`, `test_07`, `test_08` trong [test_v15_trinity_cortex.py](file:///E:/dev/chimera-tp/tests/test_v15_trinity_cortex.py).
+3. **Colab Node `/tmp` Exec & Lọc đường dẫn Monorepo ([colab_cli_orchestrator.py](file:///E:/DEV/Chat/radar_dashboard/app/colab_cli_orchestrator.py)):**
+   - `REMOTE_BATCH_RUNNER_PY` tự chuyển `is_node_job` sang `/tmp/chimera_verify_node` (tránh `/dev/shm` gắn cờ `noexec`), dùng cache `NPM_CONFIG_CACHE="/tmp/trinity_npm_cache"`, cấp `os.chmod(..., 0o755)` cho `node_modules/.bin/*`, và lọc chặt `node_tests` theo `fp_cf.relative_to(pkg_dir)`.
+4. **Headless Lean `codex exec` diệt treo `cua-repl` ([crew.py](file:///E:/DEV/Chat/radar_dashboard/app/crew.py), [self_upgrade.py](file:///E:/DEV/Chat/radar_dashboard/app/self_upgrade.py)):**
+   - Thêm `build_lean_codex_exec_cmd(...)` dùng `--ignore-user-config -c openai_base_url="http://127.0.0.1:12500/v1" [-c model_catalog_json="..."] --ephemeral --dangerously-bypass-approvals-and-sandbox --skip-git-repo-check` (tuyệt đối không gắn `--model`/`-m`/`--effort`) cho `_run_codex_stdin` và `self_upgrade.py`, giữ nguyên `makefun_runner.py` không có `-c` theo ràng buộc hồi quy `test_ai_solvable_channels.py`.
+
+### 6.2 Kết quả Kiểm thử Đơn vị (v17.1 Final)
+
+| Kho mã nguồn | Bộ kiểm thử | Windows | `svhome` | Parity SHA-256 (LF) |
+| :--- | :--- | :--- | :--- | :--- |
+| **Chimera-TP** | `tests.test_v5_phantom` + `tests.test_v15_trinity_cortex` (`14` tests gồm `test_06..test_08`) | **14/14 OK** (`23.224s`) | **14/14 OK** (`26.317s`) | `phantom_tunnel.py` (`2547ec7609b9038c`) & `test_v15_trinity_cortex.py` (`0e5354e6da5656d2`) khớp `True` |
+| **Radar** | `5` bộ: `test_godmode_v15` (`6`), `test_breakthrough_upgrades` (`8`), `test_ai_solvable_channels` (`8`), `test_closed_loop_self_upgrade` (`11`), `test_dashboard` (`18`) | **51/51 PASSED** (`18/18` `test_dashboard` sau sửa cuối `8.08s`; full 51 trên Win trước sửa cuối `21.44s`) | **51/51 PASSED** (`17.31s`) | **75/75** `app/*.py` + `test_godmode_v15.py` + `test_dashboard.py` khớp `True` (`MISMATCH_COUNT=0`) |
+| **Tquota** | `4` bộ Hyperdrive + Trinity (`TC-8` Codex idle peer & export) | **33/33 PASS** (`2.23s`) | **33/33 PASS** (`4.50s`) | Đồng nhất từ v17 |
+
+### 6.3 Ba Bằng chứng Sản xuất Thực tế (Live Production Proofs)
+
+1. **Live Proof #1 — Tự động khôi phục PHANTOM `5ms` & Dập bão retransmit (0 thao tác tay):**
+   - Khởi động lại duy nhất `chimera-hyper-daemon.service` trên `svhome`. Không gọi `/api/phantom/connect`, Windows tự phát hiện mất pong và đấm lại **`PHANTOM_5MS_DIRECT`** sau **`30s`** (`rtt: 7.11 ms -> 4.27 ms`, `punches_ok=2`, `reconnect_count=1`, `svhome` xác nhận `punched: true`).
+   - Reverse-PHANTOM trên `svhome` phục vụ lại tức thì: `http://127.0.0.1:12551/healthz` trả **`43,016 B`** JSON HTTP **`200`** trong **`95.4 ms`**; `http://127.0.0.1:9790/api/health` trả **`517 B`** HTTP **`200`** trong **`13.73 ms`**.
+   - Kiểm tra delta `2s` sau CURL: **`tx_delta = 0 B`, `rx_delta = 0 B`** (`tx_total = 31,990 B`, giảm **`15,819x`** so với mức bão `506,066,692 B` trước bản vá).
+   - Tquota Hive `/api/hive/status?sync=1` trên `svhome` khôi phục sạch về `via: http://127.0.0.1:12551`, `transport: "PHANTOM_5MS"`, `availableSlots: 50`, **`gossipErrors: 0`**.
+2. **Live Proof #2 — Colab Node `/tmp` Exec (Chấm dứt hoàn toàn `rc=126`):**
+   - Xếp hàng và drain **`8/8`** patch trên Colab `CPU_HIGH_MEM` (`allow_heavy_gpu: false`, `keep_session: false`, `stopped: True`):
+     - **`3/8` ĐẠT `verified_for_pr=True` (`test_rc=0`):** `autobrr/dashbrr#231` (`npm test --silent` — trước đây lỗi, nay verified thật), `KyaniteHQ/threadsift#725`, `bad-antics/lateralus-lang#947`.
+     - **`5/8` `test_rc=1`** đều là lỗi test/assertion thật trong mã nguồn ứng viên (`RitualDev-Lab/mcp-monetize#3`, `HHS/simpler-grants-gov#6832`, `Fortigi/IdentityAtlas#1683`, `bad-antics/lateralus-lang#998`, `odiseo159-beep/mergit#25`), với bộ lọc `IdentityAtlas` đã loại sạch file `app/ui/...` khỏi lệnh `vitest` của `app/api`.
+     - **Tỷ lệ `test_rc=126` / `Permission denied`: `0/8`**.
+   - Kiểm tra `/colab usage </dev/null` ngay sau drain: **`Active assignments: 0`**, số dư **`2,350.14 CU`**, `Usage rate: 0.00/hr`.
+3. **Live Proof #3 — Headless Lean `_run_codex_stdin` Zero-`cua-repl` trên `svhome`:**
+   - Gọi trực tiếp `app.crew._run_codex_stdin(...)` kèm thread giám sát `ps -eo args` mỗi `0.15s` (`48` mẫu): trả `rc=0`, đáp chuẩn `'OK'` (`17,372` tokens) trong **`8,006.5 ms`**, **`cua_seen=False`**, và **`lingering_cua=0`**.
+
+### 6.4 Trạng thái Hạ tầng Trực tuyến Hiện tại (Snapshot cuối phiên)
+
+| Thành phần | Windows (Controller / Peer) | `svhome` (24/7 Single-Master Server) | Đánh giá sẵn sàng |
+| :--- | :--- | :--- | :--- |
+| **Chimera-TP** | `ChimeraHyperDashboard` chạy nền (`PHANTOM_5MS_DIRECT`, RTT **`4.27 ms`**, `ram=25.9 MB`, VSA **`152`** mục / recall `0.926 ms`) | `chimera-hyper-daemon.service` **`active`** (`38.6 MB` RSS, reverse `12551->12500` & `9790->9780`, VSA **`151`** mục / recall **`0.564 ms`**) | **Đạt 100%** — 2 chiều `PHANTOM_5MS`, tự reconnect không bão UDP |
+| **Tquota (Codex-First)** | `1.2.9-local` (`PID 32404`, `66.7 MB` peer RSS, `5` tài khoản `chatgpt` + `2` `antigravity`, `gossipErrors: 0`) | `tquota.service` **`active`** (`395.8 MB` systemd RSS, `4` tài khoản `chatgpt` hoạt động + `1` cách ly, định tuyến `PHANTOM_5MS` `via 127.0.0.1:12551`, `gossipErrors: 0`) | **Đạt 100% Codex-first** (không đụng phần Antigravity) |
+| **Radar Sovereign** | Tắt có chủ đích (Standby; `WIN_RADAR_UP=False`, tránh xung đột single-master) | `radar-dashboard.service` **`active`** (`467.5 MB` systemd RSS, chế độ `SOVEREIGN_24X7`, **`151`** patch crystal, **`8`** Necromancer proofs mới nhất, Colab **`2,350.14 CU`** / `Active: 0`) | **Đạt & tự hành 24/7** trên `svhome`; 5 patch `test_rc=1` cần crew tự sửa vòng sau trước khi mở draft PR |
+
+*(Ghi chú tồn đọng ngoài phạm vi v17.1: trên Windows còn 4 unit test nền cũ ở `test_daily_kpi_review`, `test_gemini_video_studio`, `test_internet_scout`, `test_tquota_breakthrough_resilience` và 1 case `tquota-offline-startup-recovery:258` đã ghi nhận từ trước khi mở v17, không thuộc chuỗi v17/v17.1.)*

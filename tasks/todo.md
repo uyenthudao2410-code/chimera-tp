@@ -179,3 +179,14 @@
   - **`*.chimera.local` Host-Header Reverse Proxy (`substrate.py`, `dashboard.py`):** Xác minh `Host: radar.chimera.local` (`HTTP 200`, `86.9 KB`) và `Host: tqouta.chimera.local` (`HTTP 200`, `625.4 KB`, `55.5 ms`) xuyên `win-desktop → svhome`.
   - **Cartridge #11 `CHIMERA-VAULT-SQL` (`vault_sql.py`):** Đồng bộ `svhome_telemetry` (`106 KB → 8.8 KB`, `-91.7%`; lần 2 `0 B` unchanged), truy vấn cục bộ trên Windows **`1.344 ms`**.
   - **`VGPU` Zero-RAM Backend Probe (`vgpu_gateway.py`):** Báo cáo trung thực `backends` không nạp nặng `torch` vào daemon (`win-desktop` RAM **`19.29 MB`**, `svhome` **`75.87 MB`**; `9/9 PASS` Win, `5/5 PASS` Linux).
+
+
+---
+
+## Wave 7 — `v18.0.0 PERFECTION` (12 Cartridges, 4-Tier Colab+PTX VGPU, Lazy RAM Shedding, DLP+UCB1, Folded-Cavity RLNC & Ghost Bubble)
+- [x] **Phantom-Demand Lazy Loader (`dashboard.py`):** Chuyển toàn bộ lab `v6–v12` sang lazy import + `@property` + `gc.collect()` → giảm RAM `svhome` từ **`75.87 MB` → `57.86 MB` (`-18.01 MB`, `-23.7%`)**; `win-desktop` **`31.82 / 80 MB`**.
+- [x] **4-Tier Colab Pro + `nvcuda.dll` PTX JIT VGPU (`vgpu_gateway.py`, `nvcuda_ptx.py`, `scripts/chimera_colab_vgpu_worker.py`):** Ưu tiên Colab Pro CUDA (`workstation_impact="0%"` bảo vệ máy Windows làm việc) + chạy kernel PTX JIT thật trên GTX 1650 `sm_7.5` (`kernel_ms=0.73 ms`, `0.0 MB` VRAM giữ lại).
+- [x] **Zero-Leak Egress DLP + UCB1 Domain Bandit + Live `radar` Traffic (`egress_membrane.py`, `substrate.py`):** Chặn rò khóa `< 50 µs` (`403 X-Chimera-DLP: BLOCKED`), `31` request thật của `radar` chạy sống qua `:9781` trên `svhome`, `win-desktop` thấy `[ONLINE] radar@svhome` & `tqouta@svhome`.
+- [x] **Live `30 MB radar.db` Sync (`vault_sql.py`):** `31.05 MB → 6.35 MB` (`4.89x`), lần 2 `0 B` unchanged, truy vấn cục bộ Windows **`4.745 ms`** (`53` bảng).
+- [x] **Cristae Folded-Cavity SC-RLNC (`folded_cavity_rlnc.py`) & Cartridge #12 `CHIMERA-GHOST` (`ghost_bubble.py`):** Chịu mất `31.4%` gói (`100%` SHA-256 trong `4.098 ms`, `16 KB` L2) + CoW dry-run bubble commit/discard trên cả 2 OS.
+- [x] **Verification:** `17/17 PASS` Windows (`test_v18` + `test_v17` + `test_v15`), `4/4 PASS` `svhome` Linux.

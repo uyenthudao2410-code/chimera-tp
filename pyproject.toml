@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "chimera-tp"
-version = "17.0.0"
-description = "CHIMERA-HYPER v17.0.0 — Universal Personal Infrastructure Brain & Platform Substrate (PHANTOM-5MS, CHIMERA-CONNECT, 10 Hot Cartridges, Native Rust/C11 SIMD)"
+version = "18.0.0"
+description = "CHIMERA-HYPER v18.0.0 — Personal Infrastructure Brain & Open Platform Substrate (12 Hot Cartridges, 4-Tier Colab+PTX VGPU, DLP Egress, Vault-SQL, Folded-Cavity RLNC, Ghost Bubble)"
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.11"

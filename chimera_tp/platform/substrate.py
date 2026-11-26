@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import platform
+import threading
 import time
 import urllib.parse
 from datetime import datetime
@@ -24,6 +25,8 @@ from .discovery import (
 )
 from .egress_membrane import EgressMembraneProxy
 from .flight_recorder import DisklessSecretVault, FlightRecorderBlackBox
+from .folded_cavity_rlnc import CristaeFoldedCavityRLNC
+from .ghost_bubble import GhostBubbleEngine
 from .hybrid_search import HybridPlatformSearch
 from .immortal_jobs import ImmortalJobEngine
 from .pulse_bus import PulseBus
@@ -103,6 +106,10 @@ class PlatformSubstrate:
                 else None
             ),
         )
+        self.ghost = GhostBubbleEngine(work_root=Path(daemon.ops_dir) / "ghost_bubbles")
+        self._peer_apps_lock = threading.Lock()
+        self._peer_apps_ts: float = 0.0
+        self._peer_apps_cache: list[dict[str, Any]] = []
 
         self._cart_cfg_path = Path(daemon.ops_dir) / "cartridges.json"
         self._cartridge_enabled: dict[str, bool] = {
@@ -117,6 +124,7 @@ class PlatformSubstrate:
             "browser_grid": True,
             "zygote_canary": True,
             "vault_sql": True,
+            "ghost_bubble": True,
         }
         self._load_cartridge_config()
         self._beacon_paths: list[Path] = []
@@ -171,6 +179,49 @@ class PlatformSubstrate:
         self.jobs.close()
         self.browser.close()
         self.zygote.close()
+        self.ghost.close()
+
+    def merged_apps(self) -> list[dict[str, Any]]:
+        """Merge local app registry with live ONLINE apps from peer node (e.g. svhome radar/tqouta visible on Windows)."""
+        local = self.registry.list_apps()
+        if self.ephemeral or not self.daemon.config.peer_ipv4:
+            return local
+        now = time.monotonic()
+        with self._peer_apps_lock:
+            cached = list(self._peer_apps_cache)
+            stale = (now - self._peer_apps_ts) >= 10.0
+        if stale:
+            try:
+                import urllib.request as _ur
+
+                pbase = self.daemon.active_edge_peer_base().rstrip("/")
+                if pbase:
+                    opener = _ur.build_opener(_ur.ProxyHandler({}))
+                    with opener.open(f"{pbase}/v1/apps/list", timeout=1.5) as r:
+                        rem = json.loads(r.read().decode("utf-8"))
+                    cached = list(rem.get("apps") or [])
+                    with self._peer_apps_lock:
+                        self._peer_apps_cache = cached
+                        self._peer_apps_ts = now
+            except Exception:
+                pass
+        by_name = {a["app"]: dict(a) for a in local}
+        peer_label = self.daemon.config.peer_name or "peer"
+        for ra in cached:
+            name = ra.get("app")
+            if not name:
+                continue
+            if name in by_name:
+                if (not by_name[name].get("online")) and ra.get("online"):
+                    by_name[name]["online"] = True
+                    by_name[name]["pid"] = ra.get("pid", 0)
+                    by_name[name]["attach_mode"] = f"{ra.get('attach_mode', 'peer')}@{peer_label}"
+                    by_name[name]["last_seen"] = ra.get("last_seen", "")
+            else:
+                item = dict(ra)
+                item["attach_mode"] = f"{ra.get('attach_mode', 'peer')}@{peer_label}"
+                by_name[name] = item
+        return [by_name[k] for k in sorted(by_name.keys())]
 
     @property
     def anchor_url(self) -> str:
@@ -185,7 +236,7 @@ class PlatformSubstrate:
         return {
             "ok": True,
             "schema": "chimera.capabilities.v1",
-            "version": "17.0.0",
+            "version": "18.0.0",
             "node_name": self.daemon.config.node_name,
             "role": self.daemon.config.role,
             "os": platform.system().lower(),
@@ -261,7 +312,12 @@ class PlatformSubstrate:
                 "vault_sql": {
                     "status": "active" if self._cartridge_enabled["vault_sql"] else "disabled",
                     "endpoint": f"{anchor}/v1/vault-sql/query",
-                    "description": "Single-writer WAL-safe SQLite cross-node replica fabric (<0.3ms local reads)",
+                    "description": "Single-writer WAL-safe SQLite cross-node replica fabric (<1.4ms local reads)",
+                },
+                "ghost_bubble": {
+                    "status": "active" if self._cartridge_enabled["ghost_bubble"] else "disabled",
+                    "endpoint": f"{anchor}/v1/ghost/run",
+                    "description": "Unprivileged Copy-on-Write dry-run reality bubble with atomic commit/discard",
                 },
             },
         }
@@ -284,10 +340,10 @@ class PlatformSubstrate:
         return written
 
     def pulse_summary(self) -> dict[str, Any]:
-        apps = self.registry.list_apps()
+        apps = self.merged_apps()
         eg = self.egress.stats()
         return {
-            "version": "17.0.0",
+            "version": "18.0.0",
             "anchor_url": self.anchor_url,
             "egress_proxy_url": self.egress.url,
             "apps_online": [a["app"] for a in apps if a.get("online")],
@@ -295,14 +351,17 @@ class PlatformSubstrate:
             "apps_total": len(apps),
             "egress_requests": eg.get("requests_total", 0),
             "egress_hit_pct": eg.get("hit_rate_pct", 0.0),
+            "egress_dlp_blocked": eg.get("dlp_blocked", 0),
             "egress_bytes_saved": eg.get("bytes_saved", 0),
             "pulse_seq": self.pulse.stats().get("latest_seq", 0),
             "search_docs": self.search.stats().get("docs", 0),
             "blackbox_frames": self.blackbox.stats().get("buffered_frames", 0),
             "vgpu_ready": self.vgpu.status().get("gpu_ready", False),
+            "colab_online": self.vgpu.status().get("colab_online", 0),
             "immortal_jobs": self.jobs.stats().get("total_jobs", 0),
             "browser_sessions": self.browser.status().get("active_sessions", 0),
             "zygote_execs": self.zygote.status().get("executions", 0),
+            "ghost_runs": self.ghost.status().get("runs", 0),
         }
 
     def handle_get(self, parsed: urllib.parse.ParseResult, headers: Any) -> tuple[int, dict[str, Any]] | None:
@@ -314,7 +373,7 @@ class PlatformSubstrate:
 
         if path == "/v1/smi":
             caps = self.capabilities()
-            apps = self.registry.list_apps()
+            apps = self.merged_apps()
             known_ports = {int(self.daemon.http_addr[1]), int(self.egress.addr[1])}
             known_ports |= {int(a.get("port") or 0) for a in apps if int(a.get("port") or 0) > 0}
             unlinked = self.port_scanner.scan(exclude_ports=known_ports)[:12]
@@ -324,6 +383,7 @@ class PlatformSubstrate:
                 "apps": apps,
                 "unlinked_ports": unlinked,
                 "egress": self.egress.stats(),
+                "egress_domains": self.egress.domain_bandit_stats()[:10],
                 "pulse": self.pulse.stats(),
                 "search": self.search.stats(),
                 "blackbox": self.blackbox.stats(),
@@ -335,6 +395,7 @@ class PlatformSubstrate:
                 "zygote": self.zygote.status(),
                 "canary": self.canary.stats(),
                 "vault_sql": self.vault_sql.status(),
+                "ghost": self.ghost.status(),
                 "cartridge_toggles": dict(self._cartridge_enabled),
             }
 
@@ -350,6 +411,15 @@ class PlatformSubstrate:
 
         if path == "/v1/egress/stats":
             return 200, {"ok": True, "egress": self.egress.stats()}
+
+        if path == "/v1/egress/domains":
+            return 200, {"ok": True, "domains": self.egress.domain_bandit_stats()}
+
+        if path == "/v1/vgpu/workers/list":
+            return 200, {"ok": True, "workers": self.vgpu.list_remote_workers()}
+
+        if path == "/v1/ghost/status":
+            return 200, self.ghost.status()
 
         if path == "/v1/cassettes":
             cid = (qs.get("id") or [""])[0]
@@ -682,6 +752,46 @@ class PlatformSubstrate:
             except Exception as exc:
                 return 404, {"error": str(exc)}
 
+        if path == "/v1/vgpu/workers/register":
+            try:
+                return 200, self.vgpu.register_remote_worker(body)
+            except Exception as exc:
+                return 400, {"error": str(exc)}
+
+        if path == "/v1/vgpu/ptx-bench":
+            n = max(64, min(262144, int(body.get("n") or 16384)))
+            va = [float((i % 13) - 6) for i in range(n)]
+            vb = [float((i % 7) - 3) for i in range(n)]
+            return 200, self.vgpu.run_ptx_kernel_if_eligible(va, vb, force=bool(body.get("force", False)))
+
+        if path == "/v1/rlnc/folded-bench":
+            return 200, CristaeFoldedCavityRLNC.run_benchmark(
+                payload_bytes=max(1024, min(65536, int(body.get("payload_bytes") or 16384))),
+                loss_rate=max(0.05, min(0.45, float(body.get("loss_rate") or 0.32))),
+            )
+
+        if path == "/v1/ghost/run":
+            if not self._cartridge_enabled.get("ghost_bubble", True):
+                return 503, {"error": "cartridge_disabled:ghost_bubble"}
+            try:
+                return 200, self.ghost.run_bubble(
+                    target_dir=str(body.get("target_dir") or ""),
+                    cmd=body.get("cmd") or "",
+                    timeout_s=float(body.get("timeout_s") or 30.0),
+                    auto_discard=bool(body.get("auto_discard", False)),
+                )
+            except Exception as exc:
+                return 400, {"error": str(exc)}
+
+        if path == "/v1/ghost/commit":
+            try:
+                return 200, self.ghost.commit(str(body.get("bubble_id") or ""))
+            except Exception as exc:
+                return 404, {"error": str(exc)}
+
+        if path == "/v1/ghost/discard":
+            return 200, self.ghost.discard(str(body.get("bubble_id") or ""))
+
         return None
 
     def handle_host_proxy(
@@ -762,11 +872,13 @@ def render_smi(smi_data: dict[str, Any]) -> str:
     zg = smi_data.get("zygote") or {}
     cn = smi_data.get("canary") or {}
     vq = smi_data.get("vault_sql") or {}
+    gh = smi_data.get("ghost") or {}
     gpu = vg.get("gpu") or {}
+    colab_n = int(vg.get("colab_online", 0))
     gpu_desc = (
-        f"{gpu.get('name','GPU')[:22]} {gpu.get('util_pct',0)}% {gpu.get('temp_c',0)}C free={gpu.get('vram_free_mb',0)}MB"
+        f"Colab:{colab_n} | {gpu.get('name','GPU')[:18]} {gpu.get('util_pct',0)}% {gpu.get('temp_c',0)}C"
         if gpu.get("present")
-        else "CPU-AVX2 / peer-offload"
+        else f"Colab:{colab_n} | CPU-AVX2 / peer-offload"
     )
     apps = smi_data.get("apps") or []
     unlinked = smi_data.get("unlinked_ports") or []
@@ -780,7 +892,7 @@ def render_smi(smi_data: dict[str, Any]) -> str:
         f"| Autold : {'INSTALLED' if (caps.get('autoload') or {}).get('installed') else 'OFF (run: chimera-tp autoload install)':<66} |",
         "+" + "-" * 78 + "+",
         "| CARTRIDGES                                                                   |",
-        f"|  [ON] egress_membrane : req={eg.get('requests_total',0):<5} hit={eg.get('hit_rate_pct',0):>5.1f}% coal={eg.get('coalesced_hits',0):<4} saved={eg.get('bytes_saved',0):>8} B |",
+        f"|  [ON] egress_membrane : req={eg.get('requests_total',0):<5} hit={eg.get('hit_rate_pct',0):>5.1f}% dlp={eg.get('dlp_blocked',0):<3} saved={eg.get('bytes_saved',0):>8} B |",
         f"|  [ON] pulse_bus       : seq={pl.get('latest_seq',0):<5} buf={pl.get('buffered_events',0):<4} kv={pl.get('kv_entries',0):<4} relayed={pl.get('relayed_to_peer',0):<6} |",
         f"|  [ON] hybrid_search   : docs={sr.get('docs',0):<5} ns={sr.get('namespaces',0):<4} q={sr.get('queries',0):<5} avx2_vsa={str(sr.get('vsa_avx2_enabled')):<7} |",
         f"|  [ON] flight_recorder : frames={bb.get('buffered_frames',0):<4}/{bb.get('max_frames',0):<4} freezes={bb.get('freezes',0):<4} (0-disk-write ring)   |",
@@ -789,6 +901,7 @@ def render_smi(smi_data: dict[str, Any]) -> str:
         f"|  [ON] browser_grid    : bin={str(br.get('binary_found',False)):<5} running={str(br.get('running',False)):<5} sessions={br.get('active_sessions',0):<3} (0MB idle)  |",
         f"|  [ON] zygote_canary   : mode={zg.get('mode','?'):<17} execs={zg.get('executions',0):<4} canary_runs={cn.get('runs',0):<3} |",
         f"|  [ON] vault_sql       : dbs={vq.get('db_count',0):<4} syncs={vq.get('syncs',0):<4} queries={vq.get('queries',0):<5} saved={vq.get('bytes_saved',0):>7} B |",
+        f"|  [ON] ghost_bubble    : open={gh.get('open_bubbles',0):<3} runs={gh.get('runs',0):<4} commits={gh.get('commits',0):<4} discards={gh.get('discards',0):<4}   |",
         "+" + "-" * 78 + "+",
         f"| ATTACHED & LINKED APPS ({len(apps)})                                                   |",
     ]

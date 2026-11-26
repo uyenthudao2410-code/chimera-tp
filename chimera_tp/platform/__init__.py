@@ -15,9 +15,12 @@ from .discovery import (
 )
 from .egress_membrane import EgressMembraneProxy
 from .flight_recorder import DisklessSecretVault, FlightRecorderBlackBox
+from .folded_cavity_rlnc import CristaeFoldedCavityRLNC
+from .ghost_bubble import GhostBubbleEngine
 from .hybrid_search import HybridPlatformSearch
 from .immortal_jobs import ImmortalJobEngine
 from .mcp_server import handle_mcp_request, serve_mcp_stdio
+from .nvcuda_ptx import NvCudaPtxEngine
 from .pulse_bus import PulseBus
 from .substrate import PlatformSubstrate, render_smi
 from .vault_sql import VaultSqlFabric
@@ -28,11 +31,14 @@ __all__ = [
     "AppRegistry",
     "CanaryTwinJudge",
     "ChimeraClient",
+    "CristaeFoldedCavityRLNC",
     "DisklessSecretVault",
     "EgressMembraneProxy",
     "FlightRecorderBlackBox",
+    "GhostBubbleEngine",
     "HybridPlatformSearch",
     "ImmortalJobEngine",
+    "NvCudaPtxEngine",
     "PassivePortScanner",
     "PlatformSubstrate",
     "PulseBus",

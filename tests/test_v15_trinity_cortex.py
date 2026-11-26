@@ -547,6 +547,74 @@ class TestV15TrinityCortex(unittest.TestCase):
             rev_backend.shutdown()
             rev_backend.server_close()
 
+    def test_08_preserve_on_fallback_fail_no_deadlock(self) -> None:
+        # Allocate an unused UDP port that never responds to hole-punching
+        import socket as _sock
+        dead_udp = _sock.socket(_sock.AF_INET, _sock.SOCK_DGRAM)
+        dead_udp.bind(("127.0.0.1", 0))
+        dead_port = int(dead_udp.getsockname()[1])
+        dead_udp.close()
+
+        class _FailPunchOfferHandler(http.server.BaseHTTPRequestHandler):
+            def do_POST(self) -> None:
+                length = int(self.headers.get("Content-Length") or 0)
+                _ = self.rfile.read(length)
+                resp = json.dumps({
+                    "ok": True,
+                    "responder_pub_ip": "127.0.0.1",
+                    "responder_pub_port": dead_port,
+                    "fallback_port": dead_port,
+                }).encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(resp)))
+                self.end_headers()
+                self.wfile.write(resp)
+
+            def log_message(self, *_args: object) -> None:
+                pass
+
+        offer_srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), _FailPunchOfferHandler)
+        offer_srv.daemon_threads = True
+        threading.Thread(target=offer_srv.serve_forever, daemon=True).start()
+        offer_port = int(offer_srv.server_address[1])
+
+        cli = PhantomTunnelClient(
+            peer_http_base=f"http://127.0.0.1:{offer_port}",
+            peer_udp_ip="127.0.0.1",
+            peer_fallback_port=dead_port,
+            forwards={},
+            local_test_mode=True,
+            auto_reconnect=False,
+        )
+        fb_sock = _sock.socket(_sock.AF_INET, _sock.SOCK_DGRAM)
+        fb_sock.bind(("127.0.0.1", 0))
+        cli._sock = fb_sock
+        cli._peer_addr = ("127.0.0.1", dead_port)
+        cli._mode = "TAILSCALE_FALLBACK"
+        out: dict[str, Any] = {}
+        try:
+            def _run() -> None:
+                out["res"] = cli.connect(
+                    local_test_mode=True,
+                    num_sockets=8,
+                    spray_count=8,
+                    timeout_s=0.3,
+                    preserve_on_fallback_fail=True,
+                )
+
+            th = threading.Thread(target=_run, daemon=True)
+            th.start()
+            th.join(timeout=3.0)
+            self.assertFalse(th.is_alive(), "connect(preserve_on_fallback_fail=True) deadlocked on _state_lock")
+            self.assertFalse(out["res"]["connected"])
+            self.assertFalse(out["res"]["upgraded"])
+            self.assertEqual(cli.status()["mode"], "TAILSCALE_FALLBACK")
+        finally:
+            cli.close()
+            offer_srv.shutdown()
+            offer_srv.server_close()
+
 
 if __name__ == "__main__":
     unittest.main()

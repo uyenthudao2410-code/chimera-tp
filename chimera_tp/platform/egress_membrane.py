@@ -7,6 +7,8 @@ import hashlib
 import http.client
 import http.server
 import json
+import math
+import re
 import select
 import socket
 import ssl
@@ -16,6 +18,11 @@ import urllib.parse
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Callable
+
+
+_DLP_SECRET_RE = re.compile(
+    r"(ghp_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|sk-[A-Za-z0-9]{20,}|AIza[A-Za-z0-9_\-]{25,}|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----)"
+)
 
 
 _HOP_BY_HOP = {
@@ -82,11 +89,15 @@ class EgressMembraneProxy:
             "bytes_saved": 0,
             "bytes_served": 0,
             "cassettes_recorded": 0,
+            "dlp_blocked": 0,
             "hit_ms_sum": 0.0,
             "miss_ms_sum": 0.0,
             "miss_count": 0,
             "per_app": {},
         }
+        self._domains: dict[str, dict[str, Any]] = {}
+        self.dlp_enabled: bool = True
+        self.dlp_allow_hosts: set[str] = {"127.0.0.1", "localhost", "::1", "api.github.com", "api.openai.com", "generativelanguage.googleapis.com"}
 
         self._httpd: _ProxyServer | None = None
         self._thread: threading.Thread | None = None
@@ -454,6 +465,32 @@ class EgressMembraneProxy:
 
         self._bump(app, requests_total=1)
 
+        # 0. Zero-Leak Egress Cryptographic DLP Sentinel (<50 us)
+        target_host = (urllib.parse.urlsplit(url).hostname or "").lower()
+        if self.dlp_enabled and target_host and target_host not in self.dlp_allow_hosts:
+            probe_blob = url + "\n" + req_body[:8192].decode("utf-8", errors="ignore")
+            m_dlp = _DLP_SECRET_RE.search(probe_blob)
+            if m_dlp:
+                self._bump(app, dlp_blocked=1)
+                ms = (time.perf_counter() - t0) * 1000.0
+                body_blk = json.dumps(
+                    {
+                        "error": "chimera_dlp_secret_leak_blocked",
+                        "host": target_host,
+                        "app": app,
+                        "pattern_prefix": m_dlp.group(1)[:6] + "***",
+                    }
+                ).encode("utf-8")
+                self._send_reply(
+                    handler,
+                    403,
+                    [("Content-Type", "application/json"), ("X-Chimera-DLP", "BLOCKED")],
+                    body_blk,
+                    "DLP_BLOCKED",
+                    ms,
+                )
+                return
+
         if bypass:
             self._bump(app, bypass_count=1)
             st, hdrs, body, _ = self._upstream_fetch(method, url, req_headers, req_body, allow_retry=False)
@@ -533,6 +570,7 @@ class EgressMembraneProxy:
                 sf_slot["result"] = (st, hdrs, body, retries)
             ms = (time.perf_counter() - t0) * 1000.0
             self._bump(app, bytes_served=len(body), miss_ms_sum=ms, miss_count=1)
+            self._record_domain_ucb1(target_host, st, ms)
             if self.on_flow is not None:
                 try:
                     self.on_flow(
@@ -620,3 +658,42 @@ class EgressMembraneProxy:
         st["avg_hit_ms"] = round(st["hit_ms_sum"] / max(1, int(st["cache_hits"]) + int(st["coalesced_hits"])), 3)
         st["avg_miss_ms"] = round(st["miss_ms_sum"] / max(1, int(st["miss_count"])), 2)
         return st
+
+    def _record_domain_ucb1(self, domain: str, status: int, ms: float) -> None:
+        if not domain:
+            return
+        with self._stats_lock:
+            d = self._domains.setdefault(domain, {"requests": 0, "ok": 0, "errors": 0, "rate_limits": 0, "ms_sum": 0.0})
+            d["requests"] += 1
+            d["ms_sum"] += ms
+            if status == 429:
+                d["rate_limits"] += 1
+            elif status >= 500 or status == 0:
+                d["errors"] += 1
+            else:
+                d["ok"] += 1
+
+    def domain_bandit_stats(self) -> list[dict[str, Any]]:
+        with self._stats_lock:
+            total_n = max(1, sum(d["requests"] for d in self._domains.values()))
+            out: list[dict[str, Any]] = []
+            for dom, d in self._domains.items():
+                n = max(1, d["requests"])
+                avg_ms = d["ms_sum"] / n
+                succ_rate = d["ok"] / n
+                # UCB1 health score combining success rate, inverse latency, and exploration term
+                ucb1 = succ_rate * (100.0 / (100.0 + avg_ms)) + 0.25 * math.sqrt(math.log(total_n + 1.0) / n)
+                circuit = "OPEN" if (n >= 3 and (d["errors"] + d["rate_limits"]) / n >= 0.7) else "CLOSED"
+                out.append(
+                    {
+                        "domain": dom,
+                        "requests": d["requests"],
+                        "ok": d["ok"],
+                        "errors": d["errors"],
+                        "rate_limits": d["rate_limits"],
+                        "avg_ms": round(avg_ms, 2),
+                        "ucb1_score": round(ucb1, 4),
+                        "circuit": circuit,
+                    }
+                )
+            return sorted(out, key=lambda x: x["ucb1_score"], reverse=True)
