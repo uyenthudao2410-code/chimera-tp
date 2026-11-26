@@ -1638,3 +1638,613 @@ pub unsafe extern "C" fn chimera_fsk_demod_bits(
     }
     n_syms
 }
+
+// -----------------------------------------------------------------------------
+// CHIMERA v9.0 HYPERDRIVE Extensions (LZ4 SIMD, Batch ChaCha20, Search, Tiles)
+// -----------------------------------------------------------------------------
+
+#[inline(always)]
+unsafe fn lz4_write_ext_len(dst: *mut u8, op: &mut usize, dst_cap: usize, mut rem: usize) -> bool {
+    while rem >= 255 {
+        if *op >= dst_cap {
+            return false;
+        }
+        *dst.add(*op) = 255;
+        *op += 1;
+        rem -= 255;
+    }
+    if *op >= dst_cap {
+        return false;
+    }
+    *dst.add(*op) = rem as u8;
+    *op += 1;
+    true
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn chimera_lz4_compress(
+    src: *const u8,
+    src_len: usize,
+    dst: *mut u8,
+    dst_cap: usize,
+) -> isize {
+    if src_len == 0 {
+        return 0;
+    }
+    if src.is_null() || dst.is_null() || dst_cap < 4 || src_len > (u32::MAX as usize) {
+        return -1;
+    }
+    let len_le = (src_len as u32).to_le_bytes();
+    ptr::copy_nonoverlapping(len_le.as_ptr(), dst, 4);
+    let mut op = 4usize;
+
+    let mut ht = [-1i32; 4096];
+    let mut ip = 0usize;
+    let mut anchor = 0usize;
+
+    if src_len >= 13 {
+        let mflimit = src_len - 12;
+        let matchlimit = src_len - 5;
+        while ip <= mflimit {
+            let v = ptr::read_unaligned(src.add(ip) as *const u32).to_le();
+            let hh = ((v.wrapping_mul(2654435761u32)) >> 20) as usize & 0xFFF;
+            let ref_pos = ht[hh];
+            ht[hh] = ip as i32;
+
+            if ref_pos >= 0 {
+                let ru = ref_pos as usize;
+                let off = ip - ru;
+                if off >= 1
+                    && off <= 65535
+                    && ptr::read_unaligned(src.add(ru) as *const u32).to_le() == v
+                {
+                    let mut ml = 4usize;
+                    while ip + ml < matchlimit && *src.add(ru + ml) == *src.add(ip + ml) {
+                        ml += 1;
+                    }
+                    let lit_len = ip - anchor;
+                    let mc = ml - 4;
+                    if op >= dst_cap {
+                        return -1;
+                    }
+                    let tok_l = lit_len.min(15);
+                    let tok_m = mc.min(15);
+                    *dst.add(op) = ((tok_l << 4) | tok_m) as u8;
+                    op += 1;
+                    if lit_len >= 15 && !lz4_write_ext_len(dst, &mut op, dst_cap, lit_len - 15) {
+                        return -1;
+                    }
+                    if op + lit_len + 2 > dst_cap {
+                        return -1;
+                    }
+                    if lit_len > 0 {
+                        ptr::copy_nonoverlapping(src.add(anchor), dst.add(op), lit_len);
+                        op += lit_len;
+                    }
+                    *dst.add(op) = (off & 0xFF) as u8;
+                    *dst.add(op + 1) = ((off >> 8) & 0xFF) as u8;
+                    op += 2;
+                    if mc >= 15 && !lz4_write_ext_len(dst, &mut op, dst_cap, mc - 15) {
+                        return -1;
+                    }
+                    ip += ml;
+                    anchor = ip;
+                    continue;
+                }
+            }
+            ip += 1;
+        }
+    }
+
+    let last_lit = src_len - anchor;
+    if op >= dst_cap {
+        return -1;
+    }
+    let tok_l = last_lit.min(15);
+    *dst.add(op) = (tok_l << 4) as u8;
+    op += 1;
+    if last_lit >= 15 && !lz4_write_ext_len(dst, &mut op, dst_cap, last_lit - 15) {
+        return -1;
+    }
+    if op + last_lit > dst_cap {
+        return -1;
+    }
+    if last_lit > 0 {
+        ptr::copy_nonoverlapping(src.add(anchor), dst.add(op), last_lit);
+        op += last_lit;
+    }
+    op as isize
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn chimera_lz4_decompress(
+    src: *const u8,
+    src_len: usize,
+    dst: *mut u8,
+    dst_cap: usize,
+) -> isize {
+    if src_len == 0 {
+        return 0;
+    }
+    if src.is_null() || src_len < 4 {
+        return -1;
+    }
+    let s = std::slice::from_raw_parts(src, src_len);
+    let orig_len = u32::from_le_bytes([s[0], s[1], s[2], s[3]]) as usize;
+    if orig_len == 0 {
+        return if src_len == 4 { 0 } else { -1 };
+    }
+    if dst.is_null() || orig_len > dst_cap {
+        return -1;
+    }
+
+    let mut ip = 4usize;
+    let mut op = 0usize;
+    while ip < src_len {
+        let tok = s[ip];
+        ip += 1;
+        let mut lit_len = (tok >> 4) as usize;
+        if lit_len == 15 {
+            loop {
+                if ip >= src_len {
+                    return -1;
+                }
+                let b = s[ip] as usize;
+                ip += 1;
+                if lit_len > orig_len - op {
+                    return -1;
+                }
+                lit_len += b;
+                if b < 255 {
+                    break;
+                }
+            }
+        }
+        if ip + lit_len > src_len || op + lit_len > orig_len {
+            return -1;
+        }
+        if lit_len > 0 {
+            ptr::copy_nonoverlapping(src.add(ip), dst.add(op), lit_len);
+            ip += lit_len;
+            op += lit_len;
+        }
+        if ip >= src_len {
+            break;
+        }
+        if ip + 2 > src_len {
+            return -1;
+        }
+        let off = (s[ip] as usize) | ((s[ip + 1] as usize) << 8);
+        ip += 2;
+        if off == 0 || off > op {
+            return -1;
+        }
+        let mut ml = ((tok & 0x0F) as usize) + 4;
+        if (tok & 0x0F) == 15 {
+            loop {
+                if ip >= src_len {
+                    return -1;
+                }
+                let b = s[ip] as usize;
+                ip += 1;
+                if ml > orig_len - op {
+                    return -1;
+                }
+                ml += b;
+                if b < 255 {
+                    break;
+                }
+            }
+        }
+        if op + ml > orig_len {
+            return -1;
+        }
+        let mpos = op - off;
+        for k in 0..ml {
+            *dst.add(op + k) = *dst.add(mpos + k);
+        }
+        op += ml;
+    }
+    if ip == src_len && op == orig_len {
+        orig_len as isize
+    } else {
+        -1
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn chimera_batch_chacha20_xor(
+    bufs_flat: *mut u8,
+    packet_len: usize,
+    n_packets: usize,
+    key32: *const u8,
+    base_nonce8: *const u8,
+) {
+    if bufs_flat.is_null() || key32.is_null() || base_nonce8.is_null() || packet_len == 0 || n_packets == 0 {
+        return;
+    }
+    let n8 = std::slice::from_raw_parts(base_nonce8, 8);
+    let base_val = u64::from_be_bytes([n8[0], n8[1], n8[2], n8[3], n8[4], n8[5], n8[6], n8[7]]);
+    let mut nonce12 = [b'P', b'H', b'9', b'N', 0, 0, 0, 0, 0, 0, 0, 0];
+    for i in 0..n_packets {
+        let v = base_val.wrapping_add(i as u64).to_be_bytes();
+        nonce12[4..12].copy_from_slice(&v);
+        let p = bufs_flat.add(i * packet_len);
+        chimera_chacha20_xor(p, p, packet_len, key32, nonce12.as_ptr(), 1);
+    }
+}
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx2")]
+unsafe fn simd_search_avx2(
+    hay: *const u8,
+    hay_len: usize,
+    needle: *const u8,
+    needle_len: usize,
+    out_offsets: *mut u32,
+    max_matches: usize,
+) -> usize {
+    let limit = hay_len - needle_len + 1;
+    let first = _mm256_set1_epi8(*needle as i8);
+    let last = _mm256_set1_epi8(*needle.add(needle_len - 1) as i8);
+    let mut i = 0usize;
+    let mut count = 0usize;
+
+    while i + 32 <= limit {
+        let b0 = _mm256_loadu_si256(hay.add(i) as *const __m256i);
+        let b1 = _mm256_loadu_si256(hay.add(i + needle_len - 1) as *const __m256i);
+        let eq = _mm256_and_si256(_mm256_cmpeq_epi8(b0, first), _mm256_cmpeq_epi8(b1, last));
+        let mut mask = _mm256_movemask_epi8(eq) as u32;
+        while mask != 0 {
+            let bit = mask.trailing_zeros() as usize;
+            let pos = i + bit;
+            let mut ok = true;
+            if needle_len > 2 {
+                let mut k = 1usize;
+                while k < needle_len - 1 {
+                    if *hay.add(pos + k) != *needle.add(k) {
+                        ok = false;
+                        break;
+                    }
+                    k += 1;
+                }
+            }
+            if ok {
+                if !out_offsets.is_null() && count < max_matches {
+                    *out_offsets.add(count) = pos as u32;
+                }
+                count += 1;
+            }
+            mask &= mask - 1;
+        }
+        i += 32;
+    }
+
+    while i < limit {
+        let mut ok = *hay.add(i) == *needle && *hay.add(i + needle_len - 1) == *needle.add(needle_len - 1);
+        if ok && needle_len > 2 {
+            let mut k = 1usize;
+            while k < needle_len - 1 {
+                if *hay.add(i + k) != *needle.add(k) {
+                    ok = false;
+                    break;
+                }
+                k += 1;
+            }
+        }
+        if ok {
+            if !out_offsets.is_null() && count < max_matches {
+                *out_offsets.add(count) = i as u32;
+            }
+            count += 1;
+        }
+        i += 1;
+    }
+    count
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn chimera_simd_search_count(
+    haystack: *const u8,
+    hay_len: usize,
+    needle: *const u8,
+    needle_len: usize,
+    out_offsets: *mut u32,
+    max_matches: usize,
+) -> usize {
+    if haystack.is_null() || needle.is_null() || needle_len == 0 || needle_len > hay_len {
+        return 0;
+    }
+    #[cfg(target_arch = "x86_64")]
+    if std::arch::is_x86_feature_detected!("avx2") {
+        return simd_search_avx2(haystack, hay_len, needle, needle_len, out_offsets, max_matches);
+    }
+    let limit = hay_len - needle_len + 1;
+    let mut count = 0usize;
+    let hay_s = std::slice::from_raw_parts(haystack, hay_len);
+    let ndl_s = std::slice::from_raw_parts(needle, needle_len);
+    for i in 0..limit {
+        if &hay_s[i..i + needle_len] == ndl_s {
+            if !out_offsets.is_null() && count < max_matches {
+                *out_offsets.add(count) = i as u32;
+            }
+            count += 1;
+        }
+    }
+    count
+}
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx2")]
+unsafe fn tile_is_equal_avx2(p: *const u8, c: *const u8, len: usize) -> bool {
+    let mut i = 0usize;
+    while i + 32 <= len {
+        let vp = _mm256_loadu_si256(p.add(i) as *const __m256i);
+        let vc = _mm256_loadu_si256(c.add(i) as *const __m256i);
+        let x = _mm256_xor_si256(vp, vc);
+        if _mm256_testz_si256(x, x) == 0 {
+            return false;
+        }
+        i += 32;
+    }
+    while i < len {
+        if *p.add(i) != *c.add(i) {
+            return false;
+        }
+        i += 1;
+    }
+    true
+}
+
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx2")]
+unsafe fn tile_xor_copy_avx2(dst: *mut u8, p: *const u8, c: *const u8, len: usize) {
+    let mut i = 0usize;
+    while i + 32 <= len {
+        let vp = _mm256_loadu_si256(p.add(i) as *const __m256i);
+        let vc = _mm256_loadu_si256(c.add(i) as *const __m256i);
+        _mm256_storeu_si256(dst.add(i) as *mut __m256i, _mm256_xor_si256(vp, vc));
+        i += 32;
+    }
+    while i < len {
+        *dst.add(i) = *p.add(i) ^ *c.add(i);
+        i += 1;
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn chimera_tile_diff_xor(
+    prev: *const u8,
+    curr: *const u8,
+    n_tiles: usize,
+    tile_bytes: usize,
+    out_mask: *mut u8,
+    out_delta: *mut u8,
+    max_delta: usize,
+) -> isize {
+    if n_tiles == 0 || tile_bytes == 0 {
+        return 0;
+    }
+    if prev.is_null() || curr.is_null() || out_mask.is_null() {
+        return -1;
+    }
+    let has_avx2 = {
+        #[cfg(target_arch = "x86_64")]
+        {
+            std::arch::is_x86_feature_detected!("avx2")
+        }
+        #[cfg(not(target_arch = "x86_64"))]
+        {
+            false
+        }
+    };
+    let mut written = 0usize;
+    for t in 0..n_tiles {
+        let off = t * tile_bytes;
+        let p = prev.add(off);
+        let c = curr.add(off);
+        let same = if has_avx2 {
+            #[cfg(target_arch = "x86_64")]
+            {
+                tile_is_equal_avx2(p, c, tile_bytes)
+            }
+            #[cfg(not(target_arch = "x86_64"))]
+            {
+                false
+            }
+        } else {
+            let mut eq = true;
+            for k in 0..tile_bytes {
+                if *p.add(k) != *c.add(k) {
+                    eq = false;
+                    break;
+                }
+            }
+            eq
+        };
+        if same {
+            *out_mask.add(t) = 0;
+        } else {
+            *out_mask.add(t) = 1;
+            if out_delta.is_null() || written + tile_bytes > max_delta {
+                return -1;
+            }
+            let d = out_delta.add(written);
+            if has_avx2 {
+                #[cfg(target_arch = "x86_64")]
+                tile_xor_copy_avx2(d, p, c, tile_bytes);
+            } else {
+                for k in 0..tile_bytes {
+                    *d.add(k) = *p.add(k) ^ *c.add(k);
+                }
+            }
+            written += tile_bytes;
+        }
+    }
+    written as isize
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn chimera_vsa_bind_xor(
+    a: *const u8,
+    b: *const u8,
+    out: *mut u8,
+    len: usize,
+) {
+    if a.is_null() || b.is_null() || out.is_null() || len == 0 {
+        return;
+    }
+    let mut i = 0usize;
+    #[cfg(target_arch = "x86_64")]
+    if std::arch::is_x86_feature_detected!("avx2") {
+        while i + 32 <= len {
+            let va = _mm256_loadu_si256(a.add(i) as *const __m256i);
+            let vb = _mm256_loadu_si256(b.add(i) as *const __m256i);
+            _mm256_storeu_si256(out.add(i) as *mut __m256i, _mm256_xor_si256(va, vb));
+            i += 32;
+        }
+    }
+    while i < len {
+        *out.add(i) = *a.add(i) ^ *b.add(i);
+        i += 1;
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn chimera_vsa_hamming(a: *const u8, b: *const u8, len: usize) -> usize {
+    if a.is_null() || b.is_null() || len == 0 {
+        return 0;
+    }
+    let sa = std::slice::from_raw_parts(a, len);
+    let sb = std::slice::from_raw_parts(b, len);
+    let mut tot = 0usize;
+    let mut i = 0usize;
+    while i + 8 <= len {
+        let va = u64::from_le_bytes(sa[i..i + 8].try_into().unwrap());
+        let vb = u64::from_le_bytes(sb[i..i + 8].try_into().unwrap());
+        tot += (va ^ vb).count_ones() as usize;
+        i += 8;
+    }
+    while i < len {
+        tot += (sa[i] ^ sb[i]).count_ones() as usize;
+        i += 1;
+    }
+    tot
+}
+
+#[inline(always)]
+fn ch_fold_q16(v: i64) -> i32 {
+    ((v + 1_048_576).rem_euclid(2_097_152) - 1_048_576) as i32
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn chimera_chaos_step_q16(
+    state: *mut i32,
+    drive: *const u8,
+    out_ks: *mut u8,
+    len: usize,
+    coupling_q16: i32,
+) {
+    if state.is_null() || drive.is_null() || out_ks.is_null() || len == 0 {
+        return;
+    }
+    let mut x = *state.add(0) as i64;
+    let mut y = *state.add(1) as i64;
+    let mut z = *state.add(2) as i64;
+    let c = coupling_q16.clamp(0, 65_536) as i64;
+    let dt: i64 = 655;
+
+    for i in 0..len {
+        let d_q16 = ((*drive.add(i) as i32 - 128) << 11) as i64;
+        let xd = x + ((c * (d_q16 - x)) >> 16);
+        let nx = ch_fold_q16(xd + ((10 * (y - xd) * dt) >> 16) + ((z ^ (y >> 3)) & 0x7FFF)) as i64;
+        let ny = ch_fold_q16(y + ((((xd * (1_835_008 - z)) >> 16) - y) * dt >> 16) + (d_q16 >> 2)) as i64;
+        let nz = ch_fold_q16(
+            z + ((((xd * y) >> 16) - ((z * 174_762) >> 16)) * dt >> 16) + ((nx >> 2) & 0xFFFF),
+        ) as i64;
+
+        let nx_u = (nx as i32) as u32;
+        let ny_u = (ny as i32) as u32;
+        let nz_u = (nz as i32) as u32;
+        let mut mix = (nx_u ^ (ny_u >> 5) ^ (nz_u >> 11) ^ (nx_u << 7)).wrapping_mul(2_654_435_761);
+        mix ^= mix >> 16;
+        *out_ks.add(i) = (mix.wrapping_mul(2_246_822_519) >> 24) as u8;
+
+        x = nx;
+        y = ny;
+        z = nz;
+    }
+    *state.add(0) = x as i32;
+    *state.add(1) = y as i32;
+    *state.add(2) = z as i32;
+}
+
+#[inline(always)]
+fn ch_splitmix64(state: &mut u64) -> u64 {
+    *state = state.wrapping_add(0x9E37_79B9_7F4A_7C15);
+    let mut z = *state;
+    z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
+    z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
+    z ^ (z >> 31)
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn chimera_babel_mine(
+    target: *const u8,
+    len: usize,
+    start_seed: u64,
+    n_candidates: u32,
+    out_best_seed: *mut u64,
+    out_best_dist: *mut u32,
+) {
+    if target.is_null() || len == 0 || n_candidates == 0 {
+        if !out_best_seed.is_null() {
+            *out_best_seed = start_seed;
+        }
+        if !out_best_dist.is_null() {
+            *out_best_dist = len as u32;
+        }
+        return;
+    }
+    let tgt = std::slice::from_raw_parts(target, len);
+    let mut best_dist: u32 = (len as u32).saturating_add(1);
+    let mut best_seed: u64 = start_seed;
+
+    for k in 0..n_candidates {
+        let seed = start_seed.wrapping_add(k as u64);
+        let mut s = seed;
+        let mut dist: u32 = 0;
+        let mut i = 0usize;
+        let mut aborted = false;
+        while i < len {
+            let w = ch_splitmix64(&mut s).to_le_bytes();
+            let take = (len - i).min(8);
+            for j in 0..take {
+                if w[j] != tgt[i + j] {
+                    dist += 1;
+                    if dist >= best_dist {
+                        aborted = true;
+                        break;
+                    }
+                }
+            }
+            if aborted {
+                break;
+            }
+            i += take;
+        }
+        if !aborted && dist < best_dist {
+            best_dist = dist;
+            best_seed = seed;
+            if best_dist == 0 {
+                break;
+            }
+        }
+    }
+    if !out_best_seed.is_null() {
+        *out_best_seed = best_seed;
+    }
+    if !out_best_dist.is_null() {
+        *out_best_dist = best_dist;
+    }
+}

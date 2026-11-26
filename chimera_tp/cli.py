@@ -313,6 +313,67 @@ def main(argv: list[str] | None = None) -> int:
     p_sg.add_argument("--peer-http", default="http://127.0.0.1:9780", help="Target daemon HTTP URL")
     p_sg.add_argument("--local", action="store_true", help="Run action offline instead of querying daemon")
 
+    # ---- CHIMERA-HYPER v9.0 HYPERDRIVE Subcommands ----
+    p_hd = sub.add_parser("hyperdrive", help="HYPERDRIVE v9.0 6-idea status, bench, search, grid, nvme, stream, fusion, and hub")
+    p_hd.add_argument("action", choices=("status", "bench", "dataplane", "nvme", "grid", "fusion", "stream", "search", "hub"), help="Hyperdrive action")
+    p_hd.add_argument("--query", default="PhantomTunnel", help="Search query or hub message")
+    p_hd.add_argument("--peer-http", default="http://127.0.0.1:9780", help="Target daemon HTTP URL")
+    p_hd.add_argument("--local", action="store_true", help="Run action offline instead of querying daemon")
+
+    # ---- CHIMERA-HYPER v12.0 OMEGA-GALACTIC Subcommands (Wave 2-4 / 29 Ideas) ----
+    p_gl = sub.add_parser("galactic", help="OMEGA-GALACTIC v10-v12 29-idea status, bench, frost, teleport, tarpit, babel, immune, vsa, bennett, slp")
+    p_gl.add_argument(
+        "action",
+        choices=("status", "bench", "frost", "teleport", "tarpit", "babel", "immune", "vsa", "bennett", "slp"),
+        help="Galactic action",
+    )
+    p_gl.add_argument("--wave", default="all", choices=("all", "v10", "v11", "v12"), help="Wave filter for galactic bench")
+    p_gl.add_argument("--path", default="/env/prod/vault_keys.yml", help="Synthetic path for stateless tarpit inspection")
+    p_gl.add_argument("--peer-http", default="http://127.0.0.1:9780", help="Target daemon HTTP URL")
+    p_gl.add_argument("--local", action="store_true", help="Run action offline instead of querying daemon")
+
+    # ---- CHIMERA-CONNECT v16.0 Open Platform Substrate Subcommands ----
+    p_smi = sub.add_parser("smi", help="nvidia-smi style overview of CHIMERA Anchor, Cartridges, Egress-Membrane & Linked Apps")
+    p_smi.add_argument("--anchor", default="", help="Override CHIMERA anchor URL (default: auto-discover runtime.json)")
+    p_smi.add_argument("--json", action="store_true", help="Output raw JSON telemetry")
+
+    p_link = sub.add_parser("link", help="Link an existing project to CHIMERA-CONNECT (generates chimera.manifest.json + auto-attach)")
+    p_link.add_argument("path", nargs="?", default=".", help="Project directory to link")
+    p_link.add_argument("--app", default="", help="Override application name")
+    p_link.add_argument("--port", type=int, default=0, help="Optional service port")
+    p_link.add_argument("--qos", default="interactive", choices=("realtime", "interactive", "batch", "scavenger"), help="QoS class")
+
+    p_init = sub.add_parser("init", help="Initialize a new project with chimera.manifest.json + zero-lock-in chimera_bridge.py")
+    p_init.add_argument("path", nargs="?", default=".", help="Project directory")
+    p_init.add_argument("--app", default="", help="Application name")
+    p_init.add_argument("--port", type=int, default=0, help="Optional service port")
+    p_init.add_argument("--no-bridge", action="store_true", help="Skip generating chimera_bridge.py")
+
+    p_run = sub.add_parser("run", help="Run any command inside CHIMERA-CONNECT (zero-code proxy, env & live registration)")
+    p_run.add_argument("--app", default="", help="Application name (default: current directory name)")
+    p_run.add_argument("--port", type=int, default=0, help="Optional service port")
+    p_run.add_argument("--qos", default="interactive", help="QoS priority class")
+    p_run.add_argument("--no-proxy", action="store_true", help="Do not inject HTTP_PROXY/HTTPS_PROXY")
+    p_run.add_argument("cmd", nargs=argparse.REMAINDER, help="Command to execute (prefix with --)")
+
+    p_al = sub.add_parser("autoload", help="Install/remove/check zero-code Python chimera_autoload.pth hook")
+    p_al.add_argument("action", choices=("install", "uninstall", "status"), help="Autoload action")
+
+    p_mcp = sub.add_parser("mcp", help="Run stdio JSON-RPC 2.0 CHIMERA-MCP server for AI coding agents")
+    p_mcp.add_argument("--anchor", default="", help="Override CHIMERA anchor URL")
+
+    p_cart = sub.add_parser("cartridge", help="List, enable, or disable hot-loadable CHIMERA Cartridges")
+    p_cart.add_argument("action", choices=("list", "enable", "disable"), help="Cartridge action")
+    p_cart.add_argument("name", nargs="?", default="", help="Cartridge name (for enable/disable)")
+    p_cart.add_argument("--anchor", default="", help="Override CHIMERA anchor URL")
+
+    p_can = sub.add_parser("canary", help="Run Zero-Downtime Canary Twin comparison between baseline and canary URLs")
+    p_can.add_argument("baseline_url", help="Current live baseline URL")
+    p_can.add_argument("canary_url", help="New candidate canary URL")
+    p_can.add_argument("--paths", default="/", help="Comma-separated paths to compare")
+    p_can.add_argument("--samples", type=int, default=5, help="Number of paired samples")
+    p_can.add_argument("--anchor", default="", help="Override CHIMERA anchor URL")
+
     # ---- Legacy Research Subcommands (v0.5.0 Multi-Realm Exotic Lanes) ----
     p_probe = sub.add_parser("probe", help="Probe hardware capabilities & Windows network realms")
     p_probe.add_argument("--json", action="store_true", help="Emit probe profile as JSON")
@@ -1008,6 +1069,279 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         print(json.dumps(SwarmAnycastMesh.run_benchmark(), indent=2))
         return 0
+
+    if args.command == "hyperdrive":
+        import urllib.parse
+        import urllib.request
+        from .native import v9_native_caps
+        from .v9_app_index import LiveClusterIndexer, RemoteAppStreamEngine
+        from .v9_bench import format_hyperdrive_markdown, run_hyperdrive_benchmark
+        from .v9_dataplane import MultiWanSpeedFusionEngine, NativeDataPlaneEngine
+        from .v9_nvme_grid import UnifiedHardwareGrid, VirtualNvmeFabric
+
+        base = args.peer_http.rstrip("/")
+        if args.action == "status":
+            if args.local:
+                print(json.dumps({"ok": True, "version": "9.0.0", "native_v9": v9_native_caps()}, indent=2))
+                return 0
+            with urllib.request.urlopen(f"{base}/api/hyperdrive/status", timeout=8.0) as r:
+                print(r.read().decode("utf-8"))
+            return 0
+        if args.action == "bench":
+            if args.local:
+                rep = run_hyperdrive_benchmark()
+            else:
+                req = urllib.request.Request(
+                    f"{base}/api/hyperdrive/benchmark",
+                    data=b"{}",
+                    headers={"Content-Type": "application/json"},
+                    method="POST",
+                )
+                with urllib.request.urlopen(req, timeout=45.0) as r:
+                    rep = json.loads(r.read().decode("utf-8"))
+            print(format_hyperdrive_markdown(rep))
+            return 0
+        if args.action == "dataplane":
+            print(json.dumps(NativeDataPlaneEngine.run_benchmark(), indent=2))
+            return 0
+        if args.action == "nvme":
+            print(json.dumps(VirtualNvmeFabric.run_benchmark(), indent=2))
+            return 0
+        if args.action == "grid":
+            print(json.dumps(UnifiedHardwareGrid.run_benchmark(), indent=2))
+            return 0
+        if args.action == "fusion":
+            print(json.dumps(MultiWanSpeedFusionEngine.run_benchmark(), indent=2))
+            return 0
+        if args.action == "stream":
+            print(json.dumps(RemoteAppStreamEngine.run_benchmark(), indent=2))
+            return 0
+        if args.action == "search":
+            if args.local:
+                idx = LiveClusterIndexer([Path.cwd()])
+                idx.build_index(max_files=300)
+                print(json.dumps(idx.search(args.query), indent=2))
+                return 0
+            with urllib.request.urlopen(f"{base}/api/hyperdrive/search?q={urllib.parse.quote(args.query)}", timeout=6.0) as r:
+                print(r.read().decode("utf-8"))
+            return 0
+        with urllib.request.urlopen(f"{base}/api/hyperdrive/hub", timeout=6.0) as r:
+            print(r.read().decode("utf-8"))
+        return 0
+
+    if args.command == "galactic":
+        import urllib.parse
+        import urllib.request
+        from .native import v12_native_caps, v9_native_caps
+        from .v10_outlaw_engines import ProceduralTarpitLabyrinth
+        from .v10_sovereign_crypto import FrostThreshold2of3
+        from .v10_sovereign_runtime import WasmLiveTeleportEngine
+        from .v11_organism_mesh import BabelPointerCodec, ImmuneProtocolOrganism
+        from .v12_bench import format_galactic_markdown, run_galactic_benchmark
+        from .v12_galactic_engines import HolographicSlpEngine, HyperdimensionalVsaMesh, ReversibleBennettVM
+
+        base = args.peer_http.rstrip("/")
+        if args.action == "status":
+            if args.local:
+                print(json.dumps({"ok": True, "version": "12.0.0", "native_v9": v9_native_caps(), "native_v12": v12_native_caps()}, indent=2))
+                return 0
+            with urllib.request.urlopen(f"{base}/api/galactic/status", timeout=8.0) as r:
+                print(r.read().decode("utf-8"))
+            return 0
+        if args.action == "bench":
+            if args.local:
+                rep = run_galactic_benchmark(wave=args.wave)
+            else:
+                req = urllib.request.Request(
+                    f"{base}/api/galactic/benchmark",
+                    data=json.dumps({"wave": args.wave}).encode("utf-8"),
+                    headers={"Content-Type": "application/json"},
+                    method="POST",
+                )
+                with urllib.request.urlopen(req, timeout=60.0) as r:
+                    rep = json.loads(r.read().decode("utf-8"))
+            print(format_galactic_markdown(rep))
+            return 0
+        if args.action == "tarpit":
+            if args.local:
+                print(json.dumps({"ok": True, "stateless": True, **ProceduralTarpitLabyrinth().inspect_path(args.path)}, indent=2))
+                return 0
+            rel = "/" + str(args.path or "").lstrip("/")
+            with urllib.request.urlopen(f"{base}/api/galactic/tarpit{urllib.parse.quote(rel)}", timeout=8.0) as r:
+                print(r.read().decode("utf-8"))
+            return 0
+        if args.action == "vsa":
+            if args.local:
+                print(json.dumps(HyperdimensionalVsaMesh.run_benchmark(), indent=2))
+                return 0
+            req = urllib.request.Request(
+                f"{base}/api/galactic/vsa-query",
+                data=b"{}",
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=15.0) as r:
+                print(r.read().decode("utf-8"))
+            return 0
+        if args.action == "frost":
+            print(json.dumps(FrostThreshold2of3.run_benchmark(peer_http_base="" if args.local else base), indent=2))
+            return 0
+        if args.action == "teleport":
+            print(json.dumps(WasmLiveTeleportEngine.run_benchmark(peer_http_base="" if args.local else base), indent=2))
+            return 0
+        if args.action == "babel":
+            print(json.dumps(BabelPointerCodec.run_benchmark(), indent=2))
+            return 0
+        if args.action == "immune":
+            print(json.dumps(ImmuneProtocolOrganism.run_benchmark(), indent=2))
+            return 0
+        if args.action == "bennett":
+            print(json.dumps(ReversibleBennettVM.run_benchmark(), indent=2))
+            return 0
+        print(json.dumps(HolographicSlpEngine.run_benchmark(), indent=2))
+        return 0
+
+    if args.command == "smi":
+        import urllib.request as _urlreq
+        from .platform import discover_runtime_file, render_smi
+
+        rt = discover_runtime_file()
+        anchor = (args.anchor or (rt or {}).get("anchor_url") or "http://127.0.0.1:9780").rstrip("/")
+        try:
+            with _urlreq.urlopen(f"{anchor}/v1/smi", timeout=4.0) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+        except Exception as exc:
+            print(json.dumps({"ok": False, "anchor": anchor, "error": str(exc)}, indent=2), file=sys.stderr)
+            return 1
+        if args.json:
+            print(json.dumps(data, indent=2, ensure_ascii=False))
+        else:
+            print(render_smi(data))
+        return 0
+
+    if args.command == "link":
+        from .platform import link_project
+
+        res = link_project(
+            project_dir=args.path,
+            app_name=args.app or None,
+            port=args.port or None,
+            qos=args.qos,
+        )
+        print(json.dumps(res, indent=2, ensure_ascii=False))
+        return 0
+
+    if args.command == "init":
+        from .platform import init_project
+
+        res = init_project(
+            project_dir=args.path,
+            app_name=args.app or None,
+            port=args.port or None,
+            with_bridge=not args.no_bridge,
+        )
+        print(json.dumps(res, indent=2, ensure_ascii=False))
+        return 0
+
+    if args.command == "autoload":
+        from .platform import autoload_status, install_autoload, uninstall_autoload
+
+        if args.action == "install":
+            print(json.dumps(install_autoload(), indent=2, ensure_ascii=False))
+        elif args.action == "uninstall":
+            print(json.dumps(uninstall_autoload(), indent=2, ensure_ascii=False))
+        else:
+            print(json.dumps(autoload_status(), indent=2, ensure_ascii=False))
+        return 0
+
+    if args.command == "mcp":
+        from .platform import serve_mcp_stdio
+
+        return serve_mcp_stdio(anchor_url=args.anchor or None)
+
+    if args.command == "cartridge":
+        import urllib.request as _urlreq
+        from .platform import discover_runtime_file
+
+        rt = discover_runtime_file()
+        anchor = (args.anchor or (rt or {}).get("anchor_url") or "http://127.0.0.1:9780").rstrip("/")
+        if args.action == "list":
+            with _urlreq.urlopen(f"{anchor}/v1/cartridges", timeout=4.0) as resp:
+                print(json.dumps(json.loads(resp.read().decode("utf-8")), indent=2))
+            return 0
+        body = json.dumps({"name": args.name, "enabled": args.action == "enable"}).encode("utf-8")
+        req = _urlreq.Request(f"{anchor}/v1/cartridges", data=body, headers={"Content-Type": "application/json"}, method="POST")
+        with _urlreq.urlopen(req, timeout=4.0) as resp:
+            print(json.dumps(json.loads(resp.read().decode("utf-8")), indent=2))
+        return 0
+
+    if args.command == "canary":
+        import urllib.request as _urlreq
+        from .platform import discover_runtime_file
+
+        rt = discover_runtime_file()
+        anchor = (args.anchor or (rt or {}).get("anchor_url") or "http://127.0.0.1:9780").rstrip("/")
+        paths = [p.strip() for p in args.paths.split(",") if p.strip()]
+        body = json.dumps(
+            {"baseline_url": args.baseline_url, "canary_url": args.canary_url, "paths": paths, "samples": args.samples}
+        ).encode("utf-8")
+        req = _urlreq.Request(f"{anchor}/v1/canary/compare", data=body, headers={"Content-Type": "application/json"}, method="POST")
+        with _urlreq.urlopen(req, timeout=15.0) as resp:
+            res = json.loads(resp.read().decode("utf-8"))
+        print(json.dumps(res, indent=2, ensure_ascii=False))
+        return 0 if res.get("verdict") == "PROMOTE" else 1
+
+    if args.command == "run":
+        import subprocess
+        import urllib.request as _urlreq
+        from .platform import discover_runtime_file
+
+        cmd = list(args.cmd or [])
+        if cmd and cmd[0] == "--":
+            cmd = cmd[1:]
+        if not cmd:
+            print("Usage: chimera-tp run --app <name> -- <command...>", file=sys.stderr)
+            return 2
+        rt = discover_runtime_file() or {}
+        anchor = str(rt.get("anchor_url") or os.environ.get("CHIMERA_URL") or "http://127.0.0.1:9780").rstrip("/")
+        proxy = str(rt.get("egress_proxy_url") or "")
+        app_name = args.app or Path.cwd().name
+        env = dict(os.environ)
+        env["CHIMERA_URL"] = anchor
+        env["CHIMERA_APP"] = app_name
+        env["CHIMERA_AUTO"] = "1"
+        if rt.get("_runtime_path"):
+            env["CHIMERA_RUNTIME"] = str(rt["_runtime_path"])
+        if rt.get("boot_token"):
+            env["CHIMERA_TOKEN"] = str(rt["boot_token"])
+        if proxy and not args.no_proxy:
+            env["HTTP_PROXY"] = proxy
+            env["HTTPS_PROXY"] = proxy
+            np = env.get("NO_PROXY", "")
+            peer_ip = str(rt.get("peer_ipv4") or "").strip()
+            extras = "127.0.0.1,localhost,::1,.chimera.local" + (f",{peer_ip}" if peer_ip else "")
+            env["NO_PROXY"] = f"{np},{extras}" if np else extras
+        try:
+            body = json.dumps(
+                {
+                    "app": app_name,
+                    "pid": os.getpid(),
+                    "cwd": str(Path.cwd()),
+                    "port": int(args.port or 0),
+                    "qos": str(args.qos),
+                    "attach_mode": "chimera_run",
+                }
+            ).encode("utf-8")
+            req = _urlreq.Request(
+                f"{anchor}/v1/apps/register",
+                data=body,
+                headers={"Content-Type": "application/json", "X-Chimera-App": app_name},
+                method="POST",
+            )
+            _urlreq.urlopen(req, timeout=0.8).read()
+        except Exception:
+            pass
+        return int(subprocess.call(cmd, env=env))
 
     if args.command == "demo":
         from .demo import run_demo

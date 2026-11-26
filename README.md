@@ -1,155 +1,154 @@
-# CHIMERA-HYPER v8.0.0 — Hướng Dẫn Dễ Hiểu (Cũng Dùng Được Dù Không Chuyên Công Nghệ)
+# CHIMERA-HYPER v17.0.0 — Personal Infrastructure Brain & Open Platform Substrate
 
-> **Tóm tắt 1 câu:** **CHIMERA-HYPER (`chimera-tp`)** là *"đường cao tốc riêng + bộ trợ lý siêu nhẹ"* nối thẳng **máy tính Windows trước mặt bạn** với **máy chủ Linux đặt ở nhà (chạy 24/7)** thành như một chiếc máy tính liền mạch — **nhanh gấp ~5.5–19 lần**, **chống mất kết nối/nghẽn mạng**, và **cắt mạnh tiền token AI + bảo vệ dữ liệu**.
-
----
-
-## 1. CHIMERA-HYPER thực sự dùng để làm gì trong đời thực?
-
-Nếu bạn nâng cấp nhiều phiên bản nhưng chưa hình dung bức tranh tổng thể: hãy tưởng tượng bạn đang ngồi ở ngoài (cầm laptop/PC Windows), còn toàn bộ đồ nghề nặng (kho code, AI Relay `Tqouta`, hệ thống săn/giải bounty `Radar`) nằm trên máy chủ ở nhà.
-
-Trước đây, mỗi lần từ Windows chui về máy ở nhà qua VPN thường (như Tailscale relay), mọi thứ giống như **đi qua cầu một làn giữa giờ cao điểm**: mở web chậm nửa giây (`~506 ms`), gửi lệnh SSH khựng từng nhịp (`~1.2 giây`), đổi một dòng nhỏ trong file lớn phải đẩy lại, AI đọc nhầm log là đốt sạch hạn mức token.
-
-**CHIMERA-HYPER sinh ra để giải quyết đúng 3 vấn đề gốc rễ đó:**
-1. **Đục một đường hầm thẳng P2P riêng (`~5.8 ms` RTT)** nối trực tiếp hai máy với nhau ở tốc độ gần như mạng LAN trong nhà, mã hóa toàn bộ.
-2. **Giảm tối đa lượng dữ liệu & token phải chạy qua mạng** (chỉ truyền phần thay đổi, nén dữ liệu trước khi đi dây, lọc log ngay tại máy chủ rồi mới trả kết quả, soi sẵn đúng file cần sửa tốn `0` token AI).
-3. **Siêu nhẹ ("Zero-Weight"):** toàn bộ phần mềm chạy ngầm 24/7 trên Windows chỉ tốn **`32.79 MB` RAM** và trên Linux chỉ **`44.40 MB` RAM** — nhẹ hơn cả một tab Chrome/Edge bình thường (giới hạn an toàn đặt ở `80 MB`).
+> **1-Line Summary:** **CHIMERA-HYPER (`chimera-tp`)** unifies a **Windows Workstation** (`Rust GFNI/AVX-512F`, `NVIDIA GTX 1650`) and a **24/7 Linux Home Server** (`C11 AVX2`, `FUSE3`) over a **`~6 ms` authenticated P2P UDP tunnel (`PHANTOM-5MS`)** — and exposes an **NVIDIA/CUDA-style Open Platform Substrate (`CHIMERA-CONNECT` + 10 Hot-Loadable Cartridges)** so every project on the machine automatically discovers, attaches to, and accelerates on top of it while staying **Zero-Weight (`< 80 MB` RAM)**.
 
 ---
 
-## 2. Năm lợi ích thực tế đang âm thầm chạy giúp bạn 24/7
+## 1. Architecture Overview (5-Layer Open Substrate)
 
-Đây là những thứ đang trực tiếp phục vụ bạn mỗi ngày ngay lúc này:
-
-### 1) Đường truyền thẳng `~5.8 ms` — Mọi thao tác về nhà mượt như ngồi cạnh máy
-- Mở kết nối AI Relay `Tqouta` từ Windows về nhà qua cổng `127.0.0.1:12550`: phản hồi chỉ khoảng **`36.6–53.3 ms`** thay vì **`506.6 ms`** qua Tailscale HTTPS — **nhanh hơn `9.5 lần`**.
-- Mở web quản lý / API nội bộ qua hầm (`127.0.0.1:9789`): **nhanh hơn tới `19.26 lần`**; mở cửa sổ dòng lệnh SSH (`cổng 2222`): **nhanh hơn `5.55 lần`**.
-
-### 2) Bảng điều khiển & Duyệt file máy chủ ngay trên trình duyệt Windows
-Không cần nhớ lệnh Linux hay cài phần mềm FTP rườm rà:
-- Mở **`http://127.0.0.1:9780`** để xem toàn bộ sức khỏe 2 máy, log lỗi, bật tìm kiếm và chạy kiểm tra chỉ bằng 1 nút bấm.
-- Mở **`http://127.0.0.1:9788/dav/`** ngay trên Chrome/Edge để duyệt thư mục máy chủ, bấm xem file `.patch` kết quả như đang mở một trang web/ổ đĩa bình thường.
-- Có sẵn **Drop-Portal** (quăng nhanh đoạn chữ, ảnh, file giữa Windows ↔ Linux không cần gửi qua Zalo/Telegram/Google Drive) và **Ghost-PTY** (cửa sổ dòng lệnh giữ phiên: lỡ rớt Wi-Fi, kết nối lại vẫn còn nguyên màn hình đang chạy dở).
-
-### 3) Tiết kiệm tiền & chống "đốt token" cho `Radar` và `Tqouta`
-- **Bản đồ phẫu thuật 0 token (`Surgical Map`):** Thay vì để AI tự mò đọc hàng chục file tốn hàng nghìn token, CHIMERA quét chớp nhoáng kho code trong **`71.89 ms` (`0` token)** và khoanh gọn từ **`54` file (`390.4 KB`) xuống còn `4.1 KB` (`-98.95%`)** đúng ngay chỗ cần sửa.
-- **Cầu dao ngắt vòng lặp đốt token (`Burn-Loop Circuit Breaker`):** Tự soi log của `Radar`; nếu thấy AI kẹt vào một lỗi lặp đi lặp lại không tiến triển (`13` workspace quét mất `10.85 ms`), hệ thống lập tức ngắt phanh để tránh cháy quota.
-- **Trọng tài điều phối (`Quota Arbiter`):** Tự theo dõi `Tqouta` (`76.62%` tỉ lệ cache) và tự hạ/nâng tốc độ giải (`TURBO` / `BALANCED` / `ECO_SURVIVAL`), đồng thời **che sạch toàn bộ địa chỉ email (`0` rò rỉ)**.
-- **Duyệt kèo sẵn nộp trong 5 giây:** Gom các workspace đã có `solution.patch` ra thành danh sách click-là-xem.
-
-### 4) Két sắt "xé mảnh nhiễu trắng" bảo vệ dữ liệu (`GF(256)`)
-- Đóng gói trạng thái `Tqouta` + dữ liệu `Radar` (`25.0 MB` nén còn `5.38 MB`) rồi trộn toán học thành các mảnh nhiễu trắng tuyệt đối (`8.00 bits/B`).
-- Hiểu đơn giản như chia mật mã thành 3 phong bì: **nhặt được 1 phong bì hoàn toàn vô nghĩa**, mất 1 máy vẫn lấy 2 phong bì còn lại ghép nguyên vẹn bản gốc; toàn bộ việc nặng chạy trong tiến trình phụ nên không làm phình RAM của daemon chính.
-
-### 5) Bác sĩ trực máy chủ (`CHIMERA-MEDIC` & `Sentinel`)
-- Tự theo dõi dịch vụ, soi vết lỗi bất thường trong log và cung cấp sẵn các nút sửa lỗi an toàn có chụp bản sao lưu trước khi đụng vào cấu hình.
-
----
-
-## 3. Giải mã 14 nâng cấp `v7.0 OMEGA-FABRIC` bằng ngôn ngữ đời thường
-
-Phiên bản `v7.0` bổ sung **14 động cơ công nghệ cốt lõi** ở tầng giao thức bên dưới ([docs/MOONSHOT_VAULT.md](docs/MOONSHOT_VAULT.md)) giúp hệ thống **tự chống nghẽn, tự chữa lành, chạy được ngay cả khi mạng bị bóp hay đứt một đường**, cụ thể chia thành 4 nhóm dễ hiểu:
-
-### Nhóm A — Mạng siêu bền, gộp đường truyền & qua mặt bóp băng thông
-1. **Đường truyền mật mã lõi Rust/C11 & Card mạng ảo (`Virtual NIC + ChaCha20`):** Đóng gói và mã hóa dữ liệu kiểu `IPv4/ChaCha20` bằng ngôn ngữ tốc độ cao sát phần cứng. *Lưu ý trung thực về quyền máy:* hệ thống tự dò driver (`Wintun` trên Windows, quyền nâng cao trên Linux); khi máy bạn đang chạy ở quyền người dùng thường không dùng quyền Admin/Root, CHIMERA tự chuyển mượt sang chế độ an toàn không cần cài driver kernel.
-2. **Gộp nhiều đường mạng (`Multi-ISP RLNC Bonding`):** Khi bạn dùng song song Wi-Fi + 4G phát từ điện thoại, dữ liệu được trộn phương trình đi cả hai đường. Thử nghiệm giật đứt đột ngột 1 đường giữa chừng: **độ trễ chuyển mạch `0 ms`** (sống sót qua 5 gói rơi liên tiếp trong `2.25 ms`, không bị rớt kết nối như mạng thường).
-3. **Ngụy trang đa hình (`Polymorphic QUIC/WebRTC`):** Gặp mạng công ty hoặc Wi-Fi công cộng chặn/bóp lưu lượng lạ, CHIMERA tự "thay áo" gói tin giả dạng y hệt cuộc gọi WebRTC (`270 B`) hoặc luồng HTTP/3 QUIC để đi lọt.
-4. **Trung chuyển trộn mã trên đường bay (`RLNC Recoding-in-Flight`):** Máy trung gian có thể pha trộn lại các gói tin bị rơi rớt ngay trên đường truyền (`0.962 ms`) **mà không bao giờ giải mã xem được nội dung thật** bên trong.
-
-### Nhóm B — Đồng bộ thông minh: Không bao giờ gửi lại những gì bên kia đã có
-5. **Vá từng mẩu `4 KB` (`Ghost-Block`):** Sửa một chút trong file lớn (`26,624 B`), thay vì tải lại cả file như cách cũ, CHIMERA chỉ gửi đúng miếng `4 KB` bị đổi — thu gọn còn **`95 B` (tiết kiệm `99.64%` lưu lượng)**. Trên máy chưa bật ổ đĩa ảo `WinFsp`/`FUSE`, hệ thống tự động chạy ở chế độ đồng bộ theo khối cực nhẹ.
-6. **Kho phân tán tự vá (`Self-Healing Mesh K=3, N=5`):** Chia dữ liệu ra 5 nơi (mỗi mảnh vô nghĩa nếu đứng một mình). Nếu 1–2 nơi hỏng ổ cứng, chỉ cần **3 nơi còn sống** tự vá lại thành mảnh mới thay thế trong **`0.05 ms`** mà không cần gom toàn bộ bản gốc về một chỗ.
-7. **Đồng bộ mù một chiều không cần hỏi qua lại (`0-RTT Slepian-Wolf`):** Bình thường 2 máy phải nhắn tin hỏi *"Mày đang giữ bản nào? Khác dòng nào?"* mất `1–2` lượt đi về. Nay máy gửi bắn thẳng một "bản tóm tắt toán học" (`3,124 B`) — máy nhận tự đối chiếu với file cũ sẵn có để khôi phục chính xác từng bit dữ liệu mới (**tiết kiệm `56.61%–72.60%` dung lượng chỉ trong 1 lượt gửi**).
-8. **Kênh liên lạc ký sinh `$0` (`Parasitic Dead-Drop Mesh`):** Trường hợp xấu nhất là cả VPN lẫn kết nối thẳng đều bị tường lửa chặn, tin nhắn điều khiển vẫn có thể chia nhỏ, xoay vòng ngẫu nhiên theo giờ (`Lehmer`) gửi rải lên 5 kênh công cộng độc lập — **chết mất `2/5` kênh vẫn ghép lại được tin trong `0.37 ms`**.
-
-### Nhóm C — Gửi "robot tí hon" đến tận nơi & Mượn RAM qua dây mạng `5 ms`
-9. **Chạy mã hộp cát ngay bên cạnh file gốc (`WASM Active-Pipe AQ03`):** Thay vì kéo cả file log `16,800 B` về máy bạn rồi mới tìm kiếm, Windows chỉ gửi một đoạn mã hộp cát **WebAssembly bé `109 B`** (bị khóa kín không thể đụng file bừa bãi hay vào mạng) sang chạy thẳng trên Linux (`0.72 ms`), đếm xong kết quả rồi mới gửi về mỗi con số.
-10. **Mượn RAM nén qua hầm `5 ms` (`Compressed 4 KB Remote RAM`):** Các ô nhớ RAM `4 KB` ít dùng được nén siêu nhỏ (thử nghiệm **`16,384 B` nén còn `843 B`, tiết kiệm `94.85%`**) rồi đẩy thẳng qua đường hầm `5 ms` gửi tạm sang RAM dư trên máy Linux thay vì đẩy xuống ổ cứng chậm chạp (`REMOTE_HTTP`, đo thực tế giữa 2 máy hết `163.05 ms`).
-
-### Nhóm D — Nén nhỏ hơn chuẩn `zip`, giữ chữ nét khi mạng lag & bảo mật tương lai
-11. **Nén thông minh đoán trước dữ liệu (`Order-2 PPM Range Codec`):** Đã được học sẵn quy luật của các dòng log/JSON kỹ thuật, nén **`16,559 B` xuống còn `608 B`** — **nhỏ hơn cả mức nén cao nhất `zlib-9` (`650 B`) thêm `6.46%`**, chạy bit-y-hệt trên cả hai máy.
-12. **Hiển thị màn hình chống đứng chữ (`UEP-RLNC Display`):** Khi mạng chập chờn rơi `15%` gói tin (ngồi xe, thang máy), phần chữ đọc và con trỏ chuột được ưu tiên bảo vệ gấp 3 lần nền xung quanh — tỷ lệ chữ giữ sắc nét tăng từ **`11/25` (44%) lên `25/25` (100%)**.
-13. **Khóa hậu lượng tử + Ngụy trang có ích (`Hybrid MLWE+X25519 & Chaff-RLNC`):** Kết hợp mật mã cổ điển và lưới toán học hậu lượng tử (`672 B`), đồng thời biến các gói "nhiễu đánh lạc hướng kẻ nghe lén" thành các gói mang **mã sửa lỗi thật** (tự vá luôn `3/12` gói bị rơi miễn phí).
-14. **Giao thức tự tiến hóa gen (`Self-Mutating Genetic Wire`):** Thay vì dùng mãi 1 cấu hình cứng, bộ lõi tự thử nghiệm kích thước gói, tỉ lệ dự phòng, nhịp gửi qua 14 thế hệ (nâng điểm thích nghi từ **`0.01 -> 87.007`**) rồi nhét gọn cấu hình tối ưu vào phần đầu gói xác nhận chỉ **`12 B`**.
+```text
+  [Legacy Apps: Radar, Tqouta]   [New Apps: chimera.connect()]   [AI Coding Agents]
+               │                              │                          │
+               └──────────────────────────────┴──────────────────────────┘
+                                              ▼
+ ┌─────────────────────────────────────────────────────────────────────────────────┐
+ │  CHIMERA-CONNECT — Single-Anchor Auto-Discovery & Zero-Code Attach              │
+ │  • Single Anchor : http://127.0.0.1:9780  (/.well-known/chimera.json, /v1/*)    │
+ │  • Egress Proxy  : http://127.0.0.1:9781  (HTTP_PROXY / HTTPS_PROXY drop-in)    │
+ │  • OS Beacons    : ~/.chimera/runtime.json  +  ~/.chimera/AGENTS_INFRA.md       │
+ │  • Auto-Attach   : chimera_autoload.pth (<0.3ms) + chimera-tp link/init/run/mcp │
+ └────────────────────────────────────────────┬────────────────────────────────────┘
+                                              ▼
+ ┌─────────────────────────────────────────────────────────────────────────────────┐
+ │  10 HOT-LOADABLE SILICON CARTRIDGES (chimera-tp cartridge enable/disable)       │
+ │  1. connect          6. diskless_secrets  (In-RAM XOR vault, 0 B plaintext)     │
+ │  2. egress_membrane  7. vgpu_pareto       (GTX 1650 sharing + <50ms auto-yield) │
+ │  3. pulse            8. immortal_jobs     (SQLite WAL crash-resumable steps)    │
+ │  4. hybrid_search    9. browser_grid      (0 MB idle lazy shared Chromium CDP)  │
+ │  5. blackbox        10. zygote_canary     (Linux CoW fork + Canary Twin judge)  │
+ └────────────────────────────────────────────┬────────────────────────────────────┘
+                                              ▼
+ ┌─────────────────────────────────────────────────────────────────────────────────┐
+ │  CORE TRANSPORT, CRYPTO & COMPUTE FABRIC (v1–v15: Native Rust + C11 AVX2 SIMD)  │
+ │  • PHANTOM-5MS Direct UDP Tunnel & PH9N 0-Copy Data-Plane (2.9 Gbps, LZ4 SIMD)  │
+ │  • 10,000-bit Kanerva VSA AVX2 • FROST 2-of-3 • Live WASM Teleport • 0-KB Tarpit│
+ │  • Virtual NVMe Fabric • 946 FPS UEP Stream • HostYieldGovernor • 3D Cortex UI  │
+ └─────────────────────────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## 3b. Giải mã 7 nâng cấp biên giới `v8.0 SINGULARITY` (Kèm giới hạn trung thực)
+## 2. Live Verified BEFORE vs AFTER Metrics (`win-desktop` ↔ `svhome`)
 
-Phiên bản `v8.0` đi xa hơn một bước nữa khi chạm vào các bài toán ngoại tuyến, cách ly mạng, truy vấn mù và nén cấu trúc — mỗi tính năng đều được kiểm tra bằng bài toán đối kháng khắc nghiệt:
+Measured live across **Windows (`Rust GFNI/AVX-512F`, GTX 1650, Python 3.11)** and **Linux `svhome` (`C11 AVX2`, Python 3.14)** connected over `PHANTOM_5MS_DIRECT` (`~6.1 ms` UDP RTT):
 
-1. **Chạy đoán trước độ trễ âm (`Speculative Time-Warp`):** Theo dõi chuỗi thao tác vừa làm để tải nháp file sắp mở vào RAM trước khi bạn bấm. Đo live qua hầm `5 ms`: lần bấm kế tiếp phản hồi **`0.0106 ms` thay vì `10.169 ms` (`959.3x`)**, trúng **`11/12` (`91.67%`)**, `0` dữ liệu cũ. *Hạn chế thực tế:* Nếu bạn bấm nhảy cóc hoàn toàn ngẫu nhiên, đoán sẽ trượt — nên hệ thống có phanh tự động (`auto-throttle`) tự tắt đầu cơ khi tỉ lệ trúng dưới `25%` để không tốn băng thông.
-2. **Làm việc ngoại tuyến tự hòa nhập (`Merkle-CRDT Shadow-Twin`):** Cho phép sửa khi mất mạng rồi tự ghép bằng đồng hồ nhân quả (`HLC` + `BLAKE2s` Merkle Root) thay vì bị từ chối lỗi `409`. Xáo trộn `20` thứ tự đến khác nhau đều hội tụ ra cùng `1` gốc. *Hạn chế:* Nếu 2 người sửa đè cùng `1` dòng khi mất mạng, bản đến sau thắng làm bản chính và bản thua được lưu vào nhật ký kiểm toán chứ không tự viết lại ý nghĩa câu văn.
-3. **Truyền file không cần Wi-Fi hay dây mạng (`Air-Gap Ultrasonic & Optical Fountain`):** Bắn gói tin mã `GF(256)` một chiều bằng sóng âm `18.0/19.2 kHz` hoặc khung 2D nhấp nháy. Vẫn khôi phục `100%` dù bị nhiễu `6 dB AWGN` + mất `33%` khung âm thanh / `30%` khung hình. *Hạn chế:* Tốc độ âm thanh `~1,200 bps` chỉ phù hợp gửi khóa bí mật, cấu hình ngắn (`< 16 KB`), không dùng cho file video nặng.
-4. **Truy vấn mù từ xa (`2-Server Blind IT-PIR`):** Nhờ chia truy vấn thành `2` mẫu nhiễu ngẫu nhiên gửi sang 2 kho bản sao độc lập (Windows + Linux), bạn lấy được đúng `1` dòng từ kho **`1 MiB` (`2,048` bản ghi)** mà từng máy riêng lẻ không biết bạn hỏi dòng nào — chỉ tốn **`1,536 B` trên dây (`-99.85%`)**, tốc độ quét native **`10.03 GB/s`**. *Hạn chế:* Yêu cầu `2` máy giữ bản sao không cấu kết và phải quét qua toàn bộ tập bản ghi mỗi lần hỏi.
-5. **Két sắt "Hai Sự Thật" (`Plausible Deniability Dual-Vault`):** Cùng một tệp két Cauchy `16,384 B`: Mật khẩu 1 mở tài liệu công việc bình thường, Mật khẩu 2 mở bí mật ẩn bên trong. Kiểm định đối sánh `10` két đơn và `10` két kép có dung lượng bằng hệt nhau, độ hỗn loạn `7.9888` vs `7.9887 b/B`, không phân biệt được bằng thống kê. *Hạn chế:* Phải chừa sẵn dung lượng cố định ban đầu cho két ẩn.
-6. **Nén ngữ pháp cột vượt chuẩn (`Kolmogorov Grammar Wire Codec`):** Tách khung lặp của log/JSONL, nén cột số bằng sai phân `delta-zigzag` trước khi đưa qua bộ mã Order-2 native. Với `1,000` dòng JSONL thay đổi liên tục (`81,091 B`), nén còn **`1,889 B` — nhỏ hơn `zlib-9` (`6,917 B`) `72.69%`, nhỏ hơn `lzma` (`2,728 B`) `30.76%` và nhỏ hơn `PPM v7` (`5,600 B`) `66.27%`**. *Hạn chế:* Nếu gặp dữ liệu hoàn toàn ngẫu nhiên (`16 KB`), codec tự nhận biết và lùi sạch về bản gốc chỉ cộng thêm `+1 byte` (`+0.0061%`).
-7. **Lưới 3 nút tự rẽ đường & cứu hộ (`Swarm RLNC Anycast & Failover`):** Khi đường thẳng bị đứt/suy hao nặng (`35%` mất gói), dữ liệu được nút thứ 3 pha trộn mã `GF(256)` (`8/8` tới đích với `0` byte plaintext lộ ở relay) và tự dựng lại trạng thái từ `3/5` mảnh Cauchy trong **`1.1 ms`**. *Hạn chế:* Để rẽ đường vật lý ngoài Internet thật, bạn cần thêm tối thiểu 1 máy/VPS thứ 3 tham gia cụm; hiện mới kiểm chứng trên mạng giả lập 3 socket nội bộ.
-
----
-
-## 4. Bảng tóm tắt Trước & Sau đo thực tế trên hệ thống thật
-
-Tất cả số liệu dưới đây được đo trực tiếp giữa **PC Windows** (`Rust GFNI/AVX-512F`, Python 3.11) và **Linux Home Server** (`C11 AVX2`, Python 3.14.4) nối qua `PHANTOM_5MS_DIRECT` (**`5.81 ms`** RTT):
-
-| Hạng mục kiểm chứng | Trước đây / Đối thủ | Sau khi có CHIMERA-HYPER v8.0.0 | Đánh giá |
+| Capability | Baseline / Legacy | CHIMERA-HYPER v17.0.0 (Live) | Measured Gain |
 | :--- | :--- | :--- | :---: |
-| **Bộ nhớ RAM chạy ngầm 24/7** | Tốn nặng nếu chạy app desktop | **`33.04 MB`** (Win) • **`47.14 MB`** (Linux) — dưới trần `80 MB` | Đạt |
-| **Độ khớp lõi Windows ↔ Linux** | Dễ lệch giữa 2 hệ điều hành | **Khớp từng bit SHA-256 (`6/6` hàm native lõi Rust = C11 AVX2)** | Đạt |
-| **Tốc độ gọi AI `Tqouta` & Time-Warp** | `506.63 ms` HTTPS • `10.17 ms` HTTP | `Tqouta` `36–53 ms` (`9.5x`) • Time-Warp **`0.0106 ms` (`959x`, `11/12`)** | Cực nhanh |
-| **Soi đường dẫn code (`Radar`)** | AI tự mò, tốn nhiều lượt token | **`390.4 KB -> 4.10 KB` (`-98.95%`)** trong `71.89 ms`, `0` token | Tiết kiệm triệt để |
-| **Kiểm chuẩn sống v7.0 & v8.0** | Chạy đơn lẻ thiếu kiểm tra đối kháng | v7.0 **`14/14` PASS** • v8.0 **`7/7` PASS** (xuyên hầm `5.81 ms`) | Đạt 100% |
-| **Nén log JSONL / HTTP (`Kolmogorov`)** | `zlib-9`: `6,917 B` / `lzma`: `2,728 B` | JSONL **`1,889 B` (`-72.69%` vs z9)** • HTTP **`1,102 B` (`-50.09%` vs lzma)** | Vượt trội log/JSON |
-| **Truy vấn mù `1 MiB` & Két 2 lớp** | Kéo cả DB / 1 mật khẩu lộ sạch | PIR **`1,536 B` wire (`-99.85%`, `10.03 GB/s`)** • Két Chi2 lệch `6.29` | Riêng tư tuyệt đối |
-| **Kiểm thử tự động toàn dự án** | — | **`62 / 62` bài test PASS** trên cả Windows (`74.3s`) và Linux (`51.5s`) | Ổn định cả 2 đầu |
+| **Platform Auto-Discovery** | `404` / manual ports | **`/.well-known/chimera.json` (`7.36 ms`)** + `runtime.json` + `chimera-mcp` | Zero-config attach |
+| **Burst `16x` Concurrent HTTP GET** | `16` upstream calls (`573.57 ms`) | **`1` upstream call (`67.86 ms`)** via Singleflight (`:9781`) | **`-93.8%` load (`8.45x`)** |
+| **Repeated HTTP GET (`10x` avg)** | `69.72 ms` | **`11.87 ms`** via Membrane TTL/ETag Cache | **`5.9x` faster** |
+| **Transient `429` Rate-Limit** | `0 / 1` (app crashes) | **`1 / 1` (`100%` auto-rescued)** + `5xx` Wire-Cassette | Zero flaky drops |
+| **Cross-Host Event Bus (`Pulse`)** | Polling / Redis (`>100 MB`) | **`win-desktop → svhome` `relayed_ok=True` (`< 3 MB` RAM)** | Zero-Redis pub/sub |
+| **Namespaced Hybrid Search** | 3 separate internal APIs | **`2.16 ms`** (`BM25 FTS5 + 10,000-bit AVX2 VSA`) | Unified `/v1/search` |
+| **VGPU Pareto + OpenAI Embeddings** | Idle GTX 1650 unshared | **Cold `12.54 ms` → Warm `0.06 ms` (`$0`)**, `< 50 ms` yield | **`209x` cache hit** |
+| **Immortal-Job Crash Resume** | Re-run from step 1 | **Resumes at step `3/4`**, `dup_skipped=True` | **`-75%` wasted work** |
+| **Shared Browser-Grid (CDP)** | `~1 GB` per Chrome instance | **`0.0 MB` RAM when idle**, lazy shared CDP + media block | On-demand zero-RAM |
+| **Zygote Worker (`svhome` Linux)** | `python3` spawn `~60–150 ms` | **`7.435 ms` (`os.fork()` Copy-on-Write, 50 items)** | **`~10x–20x` faster** |
+| **Native `PH9N` Tunnel & UI Stream** | `481 Mbps` / `3.6 MB/frame` | **`2,631.7 Mbps` (`5.47x`)** • **`1,164 FPS` (`-99.96%` wire)** | Bit-exact Rust = C11 |
+| **24/7 Daemon RAM (`< 80 MB` cap)** | Heavy desktop suites | **`38.43 MB` (Win)** • **`52.16 MB` (`svhome`)** | **Zero-Weight PASS** |
 
-Chi tiết kỹ thuật sâu hơn xem thêm tại [docs/EVALUATION.md](docs/EVALUATION.md), [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), [docs/MOONSHOT_VAULT.md](docs/MOONSHOT_VAULT.md) và [docs/ROADMAP.md](docs/ROADMAP.md).
+Full detailed audit & remaining architectural recommendations: [docs/reports/CHIMERA_V17_PLATFORM_SUBSTRATE_AUDIT.md](docs/reports/CHIMERA_V17_PLATFORM_SUBSTRATE_AUDIT.md).
 
 ---
 
-## 5. Cách dùng hàng ngày (Không cần biết lập trình)
+## 3. Quick Start — Connecting Projects in 30 Seconds
 
-Khi hai máy đã bật sẵn dịch vụ chạy ngầm, bạn chỉ cần mở trình duyệt trên Windows:
+### Inspect Live Cluster Health (like `nvidia-smi`)
+```bash
+python -m chimera_tp smi
+```
 
-- **Bảng điều khiển trung tâm (Xem RAM, log, bấm test 7 công nghệ v8.0 & 14 công nghệ v7.0):**
-  👉 Mở trình duyệt vào **`http://127.0.0.1:9780`** -> chọn tab **v8.0 SINGULARITY Lab**, **v7.0 OMEGA-14 Lab** hoặc **Radar + Tqouta Synergy**.
-- **Xem thư mục & kết quả file patch trên máy chủ ở nhà:**
-  👉 Mở trình duyệt vào **`http://127.0.0.1:9788/dav/`**.
+### Attach an Existing Project (Zero Code Changes)
+```bash
+# Install zero-code Python autoload hook once (<0.3ms overhead when unlinked)
+python -m chimera_tp autoload install
 
-Nếu bạn muốn kiểm tra nhanh bằng dòng lệnh (`PowerShell` hoặc `Terminal`):
+# Link any existing repo once -> generates chimera.manifest.json & auto-attaches on future runs
+python -m chimera_tp link /path/to/your_project --app my-app --port 8080
+
+# Or wrap any ad-hoc command directly inside the substrate
+python -m chimera_tp run --app my-tool -- python app.py
+```
+
+### Initialize a New Project (Zero Vendor Lock-In)
+```bash
+python -m chimera_tp init /path/to/new_project --app next-app
+```
+Use the zero-dependency SDK inside Python (automatically falls back cleanly if Chimera is not running):
+```python
+from chimera_tp.platform.client import connect, is_available
+
+brain = connect(app="next-app")
+resp = brain.fetch("https://api.example.com/data")               # Singleflight + Cache + 429 Shield
+brain.pulse_publish("events.ready", {"ok": True})                # Cross-host Pub/Sub (<5ms)
+hits = brain.search("query text", namespace="next-app")          # Hybrid BM25 + AVX2 VSA (<3ms)
+emb  = brain.embed(["hello world"], dim=256)                     # OpenAI-compat VGPU/AVX2 ($0)
+```
+
+### Hot-Toggle Cartridges, Run Canary Judge & Connect AI Agents
+```bash
+python -m chimera_tp cartridge list
+python -m chimera_tp cartridge disable browser_grid
+python -m chimera_tp cartridge enable browser_grid
+
+# Zero-downtime Canary Twin comparison (PROMOTE / ROLLBACK)
+python -m chimera_tp canary http://127.0.0.1:8080 http://127.0.0.1:8081 --paths /health --samples 5
+
+# Expose 8 live infrastructure tools to AI Coding Agents over stdio MCP
+python -m chimera_tp mcp
+```
+
+---
+
+## 4. Living 3D Command Center (`PHANTOM-CORTEX v17.0`)
+
+Open **`http://127.0.0.1:9780`** (or the self-unpacking Kolmogorov capsule at **`http://127.0.0.1:9780/?packed=1`**, `~15 KB` wire):
+* **Unified Real-Time Causal 3D Topology:** Visualizes `WIN-DESKTOP ⇄ Singularity + 10,000-bit VSA Halo ⇄ SVHOME Hub + 0-KB Tarpit` driven by live `/api/pulse` telemetry, linked apps, VGPU state, Egress hit rate, and real cross-host RPC arcs (`WASM Teleport`, `FROST 2-of-3`, `CHMC 3-Strike`, `VSA Blast/Reconstruct`).
+* **`Tab` Key (`0-GPU` Tactical Mode):** Halts `requestAnimationFrame` (`0%` GPU) and renders a live SVG schematic for daily work.
+* **`Ctrl+K` / `Ctrl+Space`:** Unified Spotlight search across the cluster.
+
+---
+
+## 5. Installation & Verification
 
 ```bash
-# Chạy kiểm chuẩn đối kháng 7 đột phá v8.0 xuyên hầm 5 ms (bao gồm 2-Server PIR & Time-Warp)
-chimera-tp singularity bench --peer-http http://127.0.0.1:9780
+# 1. Build native SIMD core (Rust on Windows / C11 AVX2 on Linux)
+python scripts/build_native.py
 
-# Xem trạng thái phần cứng SIMD v8.0 hoặc thử từng động cơ v8.0 offline
-chimera-tp singularity status --peer-http http://127.0.0.1:9780
-chimera-tp singularity pir
-chimera-tp singularity kolmogorov
-chimera-tp singularity crdt
-chimera-tp singularity dual-vault
+# 2. Initialize server (Linux) and controller (Windows)
+chimera-tp ops-init --node-name peer-linux --role server --bind 0.0.0.0:9780 --allow-root /path/to/dev
+chimera-tp ops-init --node-name win-desktop --role controller --peer-name peer-linux --peer-ipv4 <PEER_TAILSCALE_IP> --bind 127.0.0.1:9780
 
-# Chạy kiểm tra thực tế toàn bộ 14 công nghệ v7.0 & trạng thái Radar + Tqouta
-chimera-tp omega bench --peer-http http://127.0.0.1:9780
-chimera-tp synergy status --peer-http http://127.0.0.1:9780
+# 3. Start 24/7 Zero-Weight daemon
+chimera-tp daemon
 
-# Tự chạy toàn bộ 62 bài kiểm tra tự động
+# 4. Run full automated verification suite
 python -m unittest discover -s tests -v
 ```
 
-### Tự cài đặt từ đầu trên máy mới (nếu cần)
-```bash
-python scripts/build_native.py
-chimera-tp ops-init --node-name peer-linux --role server --bind 0.0.0.0:9780 --watched-file /path/to/app.log --allow-root /path/to/dev
-chimera-tp ops-init --node-name win-desktop --role controller --peer-name peer-linux --peer-ipv4 <PEER_TAILSCALE_IPV4> --peer-ipv6 <PEER_TAILSCALE_IPV6> --bind 127.0.0.1:9780
-chimera-tp daemon
-```
-Mẫu file cấu hình nằm tại [docs/ops_config.example.json](docs/ops_config.example.json) (cấu hình thực tế trên máy được lưu riêng tại `~/.chimera_ops/`).
+---
+
+## 6. Repository Map & Documentation
+
+* **`chimera_tp/platform/`** — `v16–v17` Open Platform Substrate (`discovery.py`, `client.py`, `autoload.py`, `mcp_server.py`, `egress_membrane.py`, `pulse_bus.py`, `hybrid_search.py`, `flight_recorder.py`, `vgpu_gateway.py`, `immortal_jobs.py`, `browser_grid.py`, `zygote_canary.py`, `substrate.py`).
+* **`chimera_tp/`** — Core transport (`phantom_tunnel.py`, `v9_dataplane.py`, `gf256.py`), native SIMD bridge (`native.py`), sovereign & galactic engines (`v9_*`–`v12_*`), `host_governor.py`, `sentinel.py`, `medic.py`, `dashboard.py`, `universe_ui.py`.
+* **`native/`** — Bit-identical Rust (`chimera_core`) & C11 (`chimera_core_c`) SIMD accelerators.
+* **Docs & Plans:** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) • [docs/EVALUATION.md](docs/EVALUATION.md) • [docs/MOONSHOT_VAULT.md](docs/MOONSHOT_VAULT.md) • [docs/ROADMAP.md](docs/ROADMAP.md) • [docs/reports/CHIMERA_V17_PLATFORM_SUBSTRATE_AUDIT.md](docs/reports/CHIMERA_V17_PLATFORM_SUBSTRATE_AUDIT.md).
 
 ---
 
-## 6. Nguyên tắc An toàn & Quyền riêng tư
+## 7. Security & Privacy Guarantees
 
-- **Không lộ thông tin nhạy cảm:** Toàn bộ phản hồi quota đều che địa chỉ email và nhãn tài khoản cá nhân; kiểm tra rà soát mã nguồn xác nhận **0 rò rỉ IP thật hay khóa bí mật** trước khi đồng bộ lên kho lưu trữ.
-- **Khóa vùng truy cập (`Containment`):** WebDAV `/dav/`, bộ đọc file, WASM hộp cát và `CHIMERA-MEDIC` chỉ được phép chạm vào đúng các thư mục đã cấp phép trong `allowed_query_roots`, chặn ghi đè `.git` và giới hạn tài nguyên CPU/RAM để bảo vệ máy chủ chạy 24/7.
-- **Khuyến nghị triển khai:** Luôn đặt dịch vụ đằng sau localhost hoặc mạng riêng ảo đã xác thực (như Tailscale/WireGuard), không mở thẳng cổng điều khiển ra Internet công cộng.
+* **Zero Secret Leakage:** Egress proxy strips auth headers before recording `.cassette` error traces; `DisklessSecretVault` keeps secrets XOR-masked in RAM only (`0` plaintext bytes on disk) gated by loopback + per-boot token + app allowlist.
+* **Loopback-First Exposure:** `EgressMembraneProxy` (`127.0.0.1:9781`) and `SharedBrowserGrid` CDP bind strictly to loopback; always run the control plane behind authenticated private overlays (Tailscale / WireGuard), never exposed publicly.
+* **Containment:** File access, WebDAV, WASM sandboxes, and `CHIMERA-MEDIC` strictly enforce `allowed_query_roots` and reject path traversal or `.git` tampering.

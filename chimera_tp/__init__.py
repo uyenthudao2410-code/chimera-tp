@@ -1,6 +1,6 @@
-"""CHIMERA-HYPER v6.0: APEX-SYNERGY (PHANTOM-5MS, Radar + Tqouta Fusion, Ghost-PTY, Ghost-FS WebDAV, Medic & Drop-Portal)."""
+"""CHIMERA-HYPER v12.0.0 OMEGA-GALACTIC (Hyperdrive + Sovereign + Organism + Galactic)."""
 
-__version__ = "8.0.0"
+__version__ = "12.0.0"
 
 from .active_pipe import ActivePipeEngine, ActivePipeResult, ActiveQueryServer, ComputePlan, remote_active_query
 from .apex_synergy import ApexSynergyEngine
@@ -33,8 +33,32 @@ from .hyper_wire import (
 from .medic import MedicEngine
 from .merkle_sync import MerkleSnapshot, ShadowMerkleIndex, merkle_beam_sync
 from .nat_buster import NatPunchResponder, attempt_direct_punch, discover_nat_profile
-from .native import WormholeChannel, cpu_caps, has_native
-from .phantom_tunnel import PhantomTunnelClient, PhantomTunnelServer, open_packet, seal_packet
+from .native import (
+    WormholeChannel,
+    babel_mine,
+    batch_chacha20_xor,
+    chaos_step_q16,
+    cpu_caps,
+    has_native,
+    lz4_compress,
+    lz4_decompress,
+    simd_search_count,
+    tile_apply_xor,
+    tile_diff_xor,
+    v9_native_caps,
+    v12_native_caps,
+    vsa_bind_xor,
+    vsa_hamming,
+)
+from .phantom_tunnel import (
+    PhantomTunnelClient,
+    PhantomTunnelServer,
+    open_any_packet,
+    open_packet,
+    open_packet_fast,
+    seal_packet,
+    seal_packet_fast,
+)
 from .probe import EnvironmentProfile, RealmInfo, probe_environment
 from .protocol import ChimeraReceiver, ChimeraSender, FaultProfile, TransferReport
 from .sentinel import SentinelEngine
@@ -80,6 +104,44 @@ from .singularity_airgap_crypto import (
 from .singularity_bench import format_singularity_markdown, run_singularity_benchmark
 from .singularity_kolmogorov_swarm import KolmogorovGrammarCodec, SwarmAnycastMesh
 from .singularity_time_crdt import HlcClock, MerkleCrdtReplica, MerkleCrdtShadowTwin, SpeculativeTimeWarpEngine
+from .v9_app_index import LiveClusterIndexer, RemoteAppStreamEngine, SharedCasTurboCache, UniversalInstantHub
+from .v9_bench import format_hyperdrive_markdown, run_hyperdrive_benchmark
+from .v9_dataplane import MultiWanSpeedFusionEngine, NativeDataPlaneEngine, ZeroCopyPacketRing
+from .v9_nvme_grid import MetadataTreeMirror, UnifiedHardwareGrid, VirtualNvmeFabric, WorkspaceHandOffManager
+from .v10_outlaw_engines import (
+    CausalTimeTravelFabric,
+    DctStegoDrive,
+    EtherDelayLineVault,
+    GeoTopologyFuzzyAuth,
+    ProceduralTarpitLabyrinth,
+    ScavengerGridScheduler,
+    WasmProgramSynthesizer,
+)
+from .v10_sovereign_crypto import FrostThreshold2of3, Gf256MpcEngine, InlineBitRotHealer
+from .v10_sovereign_runtime import AsymmetricKalmanBondEngine, VerifiableTraceProver, WasmLiveTeleportEngine
+from .v11_autopoietic_systems import (
+    ActiveMatterCell,
+    AutopoieticKernelEngine,
+    SplitBrainOrchestrator,
+    ThermodynamicResourceMarket,
+    UnifiedCausalRealityStream,
+)
+from .v11_organism_mesh import (
+    BabelPointerCodec,
+    CoupledChaoticWire,
+    DataGravityPlanner,
+    GravitationalOverlayRouter,
+    ImmuneProtocolOrganism,
+    MultiverseExecutor,
+)
+from .v12_bench import format_galactic_markdown, run_galactic_benchmark
+from .v12_galactic_engines import (
+    AlienDialectEngine,
+    CausalOriginTeleporter,
+    HolographicSlpEngine,
+    HyperdimensionalVsaMesh,
+    ReversibleBennettVM,
+)
 
 __all__ = [
     "ActivePipeEngine",
@@ -116,13 +178,17 @@ __all__ = [
     "ImmortalMultiPathSender",
     "ImmortalReport",
     "KolmogorovGrammarCodec",
+    "LiveClusterIndexer",
     "LocalEdgeProxy",
     "MedicEngine",
     "MerkleCrdtReplica",
     "MerkleCrdtShadowTwin",
     "MerkleSnapshot",
+    "MetadataTreeMirror",
     "MultiIspBondingEngine",
+    "MultiWanSpeedFusionEngine",
     "NatPunchResponder",
+    "NativeDataPlaneEngine",
     "NeuralPpmCodec",
     "OpsConfig",
     "ParasiticDeadDropMesh",
@@ -134,11 +200,13 @@ __all__ = [
     "QuantumChaffShield",
     "RealmInfo",
     "RegeneratingMeshVault",
+    "RemoteAppStreamEngine",
     "RemoteRamPool",
     "RemoteRamStore",
     "RlncRecodingRelay",
     "SentinelEngine",
     "ShadowMerkleIndex",
+    "SharedCasTurboCache",
     "SiliconDataPlane",
     "SlepianWolfSync",
     "SpeculativeTimeWarpEngine",
@@ -148,12 +216,18 @@ __all__ = [
     "TelepathicStore",
     "TransferReport",
     "UepDisplayStream",
+    "UnifiedHardwareGrid",
+    "UniversalInstantHub",
     "VirtualNicBridge",
+    "VirtualNvmeFabric",
     "WarpClient",
     "WarpServer",
     "WasmActivePipe",
+    "WorkspaceHandOffManager",
     "WormholeChannel",
+    "ZeroCopyPacketRing",
     "attempt_direct_punch",
+    "batch_chacha20_xor",
     "beam_send",
     "beam_send_merkle_patch",
     "build_deterministic_pir_db",
@@ -165,6 +239,7 @@ __all__ = [
     "detect_os_tun_caps",
     "discover_nat_profile",
     "edge_fetch_remote",
+    "format_hyperdrive_markdown",
     "format_omega_markdown",
     "format_singularity_markdown",
     "get_zero_weight_status",
@@ -173,19 +248,65 @@ __all__ = [
     "hybrid_pq_encaps",
     "hybrid_pq_keypair",
     "list_holo_backups",
+    "lz4_compress",
+    "lz4_decompress",
     "merkle_beam_sync",
+    "open_any_packet",
     "open_packet",
+    "open_packet_fast",
     "pack_ai_context",
     "pack_directory",
     "probe_environment",
     "reconstruct_secret_gf256_2of3",
     "restore_holo_backup",
+    "run_hyperdrive_benchmark",
     "run_omega_benchmark",
     "run_singularity_benchmark",
     "seal_packet",
+    "seal_packet_fast",
+    "simd_search_count",
     "split_secret_gf256_2of3",
+    "tile_apply_xor",
+    "tile_diff_xor",
     "train_domain_dictionary",
     "unpack_directory",
+    "v9_native_caps",
     "x25519_keypair",
     "x25519_shared",
+    "ActiveMatterCell",
+    "AlienDialectEngine",
+    "AsymmetricKalmanBondEngine",
+    "AutopoieticKernelEngine",
+    "BabelPointerCodec",
+    "CausalOriginTeleporter",
+    "CausalTimeTravelFabric",
+    "CoupledChaoticWire",
+    "DataGravityPlanner",
+    "DctStegoDrive",
+    "EtherDelayLineVault",
+    "FrostThreshold2of3",
+    "GeoTopologyFuzzyAuth",
+    "Gf256MpcEngine",
+    "GravitationalOverlayRouter",
+    "HolographicSlpEngine",
+    "HyperdimensionalVsaMesh",
+    "ImmuneProtocolOrganism",
+    "InlineBitRotHealer",
+    "MultiverseExecutor",
+    "ProceduralTarpitLabyrinth",
+    "ReversibleBennettVM",
+    "ScavengerGridScheduler",
+    "SplitBrainOrchestrator",
+    "ThermodynamicResourceMarket",
+    "UnifiedCausalRealityStream",
+    "VerifiableTraceProver",
+    "WasmLiveTeleportEngine",
+    "WasmProgramSynthesizer",
+    "babel_mine",
+    "chaos_step_q16",
+    "format_galactic_markdown",
+    "run_galactic_benchmark",
+    "v12_native_caps",
+    "vsa_bind_xor",
+    "vsa_hamming",
 ]

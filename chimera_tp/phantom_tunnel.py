@@ -19,6 +19,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from .hyper_wire import _disable_connreset
+from .native import chacha20_xor, lz4_compress, lz4_decompress
 from .nat_buster import (
     DEFAULT_STUN_SERVERS,
     _MAGIC_ACK,
@@ -32,6 +33,10 @@ from .nat_buster import (
 # Authenticated outer envelope: magic(4s="PH5E"), session_id(I), dir_and_seq_nonce(8s)
 _ENV_HDR = struct.Struct("!4sI8s")
 _ENV_MAGIC = b"PH5E"
+_ENV_MAGIC_V9 = b"PH9N"
+# Fast v9 outer header: magic(4s="PH9N"), session_id(I), flags(B: bit0=LZ4), dir_and_seq_nonce(8s)
+_PH9_HDR = struct.Struct("!4sIB8s")
+_PH9_FLAG_LZ4 = 1
 _TAG_LEN = 16
 
 # Reliable multiplexed inner frame header (12 bytes):
@@ -45,6 +50,7 @@ _P_NACK = 5
 _P_CLOSE = 6
 _P_PING = 7
 _P_PONG = 8
+_REV_CONN_MASK = 0x80000000
 
 _CHUNK_MAX = 1080  # Fits comfortably inside 1280 B overlay / PPPoE MTUs with headers
 
@@ -95,6 +101,60 @@ def open_packet(session_key: bytes, packet: bytes) -> tuple[int, bytes, bytes] |
     return sid, nonce, _xor_bytes(ct, ks)
 
 
+def seal_packet_fast(
+    session_key: bytes,
+    session_id: int,
+    nonce: bytes,
+    plaintext: bytes,
+    compress: bool = True,
+) -> bytes:
+    """CHIMERA v9 PH9N envelope: optional native LZ4 + RFC8439 ChaCha20 C-ABI + BLAKE2s-128 MAC."""
+    body = plaintext
+    flags = 0
+    if compress and len(plaintext) >= 96:
+        comp = lz4_compress(plaintext)
+        if 0 < len(comp) < len(plaintext):
+            body = comp
+            flags = _PH9_FLAG_LZ4
+    n8 = nonce[:8].ljust(8, b"\x00")
+    hdr = _PH9_HDR.pack(_ENV_MAGIC_V9, session_id & 0xFFFFFFFF, flags, n8)
+    k32 = session_key[:32] if len(session_key) >= 32 else hashlib.sha256(session_key).digest()
+    ct = chacha20_xor(body, k32, _ENV_MAGIC_V9 + n8, counter=1)
+    tag = hashlib.blake2s(hdr + ct, key=session_key, digest_size=_TAG_LEN).digest()
+    return hdr + ct + tag
+
+
+def open_packet_fast(session_key: bytes, packet: bytes) -> tuple[int, bytes, bytes] | None:
+    """Verify BLAKE2s-128 MAC, decrypt PH9N ChaCha20 payload in 1 C-ABI call, and optional LZ4 decode."""
+    min_len = _PH9_HDR.size + _TAG_LEN
+    if len(packet) < min_len:
+        return None
+    magic, sid, flags, n8 = _PH9_HDR.unpack_from(packet, 0)
+    if magic != _ENV_MAGIC_V9:
+        return None
+    ct_and_hdr = packet[:-_TAG_LEN]
+    tag = packet[-_TAG_LEN:]
+    expected_tag = hashlib.blake2s(ct_and_hdr, key=session_key, digest_size=_TAG_LEN).digest()
+    if not hmac.compare_digest(tag, expected_tag):
+        return None
+    ct = packet[_PH9_HDR.size : -_TAG_LEN]
+    k32 = session_key[:32] if len(session_key) >= 32 else hashlib.sha256(session_key).digest()
+    pt = chacha20_xor(ct, k32, _ENV_MAGIC_V9 + n8, counter=1)
+    if flags & _PH9_FLAG_LZ4:
+        try:
+            pt = lz4_decompress(pt)
+        except ValueError:
+            return None
+    return sid, n8, pt
+
+
+def open_any_packet(session_key: bytes, packet: bytes) -> tuple[int, bytes, bytes] | None:
+    """Decode either v9 native PH9N or legacy v5 PH5E authenticated packet seamlessly."""
+    if len(packet) >= 4 and packet[:4] == _ENV_MAGIC_V9:
+        return open_packet_fast(session_key, packet)
+    return open_packet(session_key, packet)
+
+
 def _pack_inner(ptype: int, flags: int, conn_id: int, seq: int, aux: int = 0, body: bytes = b"") -> bytes:
     return _PH_HDR.pack(ptype & 0xFF, flags & 0xFF, conn_id & 0xFFFFFFFF, seq & 0xFFFFFFFF, aux & 0xFFFF) + body
 
@@ -123,13 +183,15 @@ class _TunnelStream:
     closed: bool = False
     tx_eof_local: bool = False
     rx_eof_sent: bool = False
+    prefer_v9: bool = False
 
 
 class _TunnelEndpointMixin:
     """Shared multiplexed TCP<->UDP reliability & encryption engine for Phantom Server/Client."""
 
-    def _init_mux(self, direction_bit: int) -> None:
+    def _init_mux(self, direction_bit: int, use_fast_wire: bool = False) -> None:
         self._dir_bit = direction_bit & 1
+        self._use_fast_wire = bool(use_fast_wire)
         self._tx_counter = 0
         self._mux_lock = threading.Lock()
         self._conns: dict[int, _TunnelStream] = {}
@@ -143,12 +205,17 @@ class _TunnelEndpointMixin:
         key: bytes,
         sid: int,
         inner: bytes,
+        fast: bool | None = None,
     ) -> None:
         with self._mux_lock:
             self._tx_counter += 1
             val = (self._dir_bit << 63) | (self._tx_counter & ((1 << 63) - 1))
             nonce = struct.pack("!Q", val)
-        wire = seal_packet(key, sid, nonce, inner)
+        use_fast = self._use_fast_wire if fast is None else bool(fast)
+        if use_fast:
+            wire = seal_packet_fast(key, sid, nonce, inner, compress=(len(inner) >= 96 and inner[0] != _P_DATA))
+        else:
+            wire = seal_packet(key, sid, nonce, inner)
         try:
             sock.sendto(wire, addr)
             with self._mux_lock:
@@ -200,7 +267,7 @@ class _TunnelEndpointMixin:
                         stream.next_tx_seq += 1
                         stream.tx_buffer[seq] = (flags, wire_piece, time.perf_counter())
                     pkt = _pack_inner(_P_DATA, flags, stream.conn_id, seq, 0, wire_piece)
-                    self._send_encrypted(sock, addr, key, sid, pkt)
+                    self._send_encrypted(sock, addr, key, sid, pkt, fast=stream.prefer_v9 or None)
         finally:
             with self._mux_lock:
                 stream.tx_eof_local = True
@@ -209,7 +276,7 @@ class _TunnelEndpointMixin:
             sock, addr, key, sid = get_transport()
             if sock is not None and addr is not None:
                 pkt = _pack_inner(_P_FIN, 0, stream.conn_id, fin_seq, 0, b"")
-                self._send_encrypted(sock, addr, key, sid, pkt)
+                self._send_encrypted(sock, addr, key, sid, pkt, fast=stream.prefer_v9 or None)
 
     def _flush_rx_in_order(self, stream: _TunnelStream) -> None:
         while stream.rx_next_seq in stream.rx_chunks:
@@ -256,13 +323,13 @@ class _TunnelEndpointMixin:
                     stream.rx_chunks[seq] = plain
                 self._flush_rx_in_order(stream)
                 ack_seq = stream.rx_next_seq
-            self._send_encrypted(sock, addr, key, sid, _pack_inner(_P_ACK, 0, stream.conn_id, ack_seq))
+            self._send_encrypted(sock, addr, key, sid, _pack_inner(_P_ACK, 0, stream.conn_id, ack_seq), fast=stream.prefer_v9 or None)
         elif ptype == _P_FIN:
             with self._mux_lock:
                 stream.rx_fin_seq = seq
                 self._flush_rx_in_order(stream)
                 ack_seq = stream.rx_next_seq
-            self._send_encrypted(sock, addr, key, sid, _pack_inner(_P_ACK, 0, stream.conn_id, ack_seq))
+            self._send_encrypted(sock, addr, key, sid, _pack_inner(_P_ACK, 0, stream.conn_id, ack_seq), fast=stream.prefer_v9 or None)
         elif ptype == _P_ACK:
             with self._mux_lock:
                 stream.open_acked = True
@@ -353,6 +420,7 @@ class _ServerSession:
     peer_udp: tuple[str, int] | None = None
     last_rx: float = field(default_factory=time.monotonic)
     conns: dict[int, _TunnelStream] = field(default_factory=dict)
+    prefer_v9: bool = False
 
 
 class PhantomTunnelServer(_TunnelEndpointMixin):
@@ -362,16 +430,23 @@ class PhantomTunnelServer(_TunnelEndpointMixin):
         self,
         fallback_port: int = 9710,
         allowed_forward_ports: list[int] | None = None,
+        reverse_forwards: dict[int, int] | None = None,
+        reverse_listen_host: str = "127.0.0.1",
     ) -> None:
         self._init_mux(direction_bit=0)
         self.fallback_port = int(fallback_port)
         self.allowed_forward_ports: set[int] = set(
             allowed_forward_ports if allowed_forward_ports is not None else [22, 8787, 9780, 12504]
         )
+        self.reverse_forwards: dict[int, int] = dict(reverse_forwards or {})
+        self.reverse_listen_host = str(reverse_listen_host or "127.0.0.1")
         self._stop = threading.Event()
         self._sess_lock = threading.Lock()
         self._sessions: OrderedDict[int, _ServerSession] = OrderedDict()
         self._fallback_sock: socket.socket | None = None
+        self._rev_srvs: list[tuple[int, int, socket.socket]] = []
+        self.reverse_bound_ports: dict[int, int] = {}
+        self._next_rev_cid = 1
         self._threads: list[threading.Thread] = []
         self.fallback_addr: tuple[str, int] = ("0.0.0.0", self.fallback_port)
 
@@ -392,7 +467,78 @@ class PhantomTunnelServer(_TunnelEndpointMixin):
             t_fb = threading.Thread(target=self._fallback_loop, daemon=True)
             t_fb.start()
             self._threads.append(t_fb)
+        for loc_p, rem_p in self.reverse_forwards.items():
+            srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            srv.bind((self.reverse_listen_host, int(loc_p)))
+            srv.listen(32)
+            srv.settimeout(0.25)
+            actual_p = int(srv.getsockname()[1])
+            self.reverse_bound_ports[int(rem_p)] = actual_p
+            self._rev_srvs.append((actual_p, int(rem_p), srv))
+            t_rev = threading.Thread(target=self._reverse_accept_loop, args=(srv, int(rem_p)), daemon=True)
+            t_rev.start()
+            self._threads.append(t_rev)
         return self
+
+    def _active_reverse_transport(
+        self,
+    ) -> tuple[socket.socket | None, tuple[str, int] | None, bytes, int, _ServerSession | None]:
+        with self._sess_lock:
+            cands = list(reversed(self._sessions.values()))
+            for s in cands:
+                if s.sock is not None and s.peer_udp is not None and s.punched:
+                    return s.sock, s.peer_udp, s.key, s.session_id, s
+            for s in cands:
+                sock = s.sock or self._fallback_sock
+                if sock is not None and s.peer_udp is not None:
+                    return sock, s.peer_udp, s.key, s.session_id, s
+        return None, None, b"", 0, None
+
+    def _reverse_accept_loop(self, srv: socket.socket, remote_port: int) -> None:
+        while not self._stop.is_set():
+            try:
+                cli, _ = srv.accept()
+            except socket.timeout:
+                continue
+            except OSError:
+                break
+            try:
+                cli.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+            except OSError:
+                pass
+            sock, addr, key, sid, sess = self._active_reverse_transport()
+            if sock is None or addr is None or sess is None:
+                try:
+                    cli.close()
+                except OSError:
+                    pass
+                continue
+            with self._mux_lock:
+                cid = (self._next_rev_cid & 0x7FFFFFFF) | _REV_CONN_MASK
+                self._next_rev_cid += 1
+                stream = _TunnelStream(
+                    conn_id=cid,
+                    tcp_sock=cli,
+                    open_acked=False,
+                    open_target_port=remote_port,
+                    last_open_tx=time.perf_counter(),
+                    prefer_v9=bool(sess.prefer_v9),
+                )
+                sess.conns[cid] = stream
+            self._send_encrypted(
+                sock,
+                addr,
+                key,
+                sid,
+                _pack_inner(_P_OPEN, 0, cid, 0, remote_port),
+                fast=bool(sess.prefer_v9),
+            )
+            threading.Thread(
+                target=self._pump_tcp_stream,
+                args=(stream, lambda s_obj=sess: (s_obj.sock or self._fallback_sock, s_obj.peer_udp, s_obj.key, s_obj.session_id), self._stop),
+                daemon=True,
+            ).start()
 
     def accept_offer(self, offer: dict[str, Any]) -> dict[str, Any]:
         token = str(offer.get("token", "")).strip().lower()
@@ -493,6 +639,7 @@ class PhantomTunnelServer(_TunnelEndpointMixin):
         sock: socket.socket,
         src: tuple[str, int],
         inner: bytes,
+        prefer_v9: bool = False,
     ) -> None:
         parsed = _unpack_inner(inner)
         if parsed is None:
@@ -500,9 +647,12 @@ class PhantomTunnelServer(_TunnelEndpointMixin):
         ptype, flags, conn_id, seq, aux, body = parsed
         sess.last_rx = time.monotonic()
         sess.peer_udp = src
+        if prefer_v9:
+            sess.prefer_v9 = True
+        use_fast = sess.prefer_v9
 
         if ptype == _P_PING:
-            self._send_encrypted(sock, src, sess.key, sess.session_id, _pack_inner(_P_PONG, 0, 0, seq, 0, body))
+            self._send_encrypted(sock, src, sess.key, sess.session_id, _pack_inner(_P_PONG, 0, 0, seq, 0, body), fast=use_fast)
             return
         if ptype == _P_PONG:
             return
@@ -512,10 +662,10 @@ class PhantomTunnelServer(_TunnelEndpointMixin):
             with self._mux_lock:
                 existing = sess.conns.get(conn_id)
             if existing is not None:
-                self._send_encrypted(sock, src, sess.key, sess.session_id, _pack_inner(_P_ACK, 0, conn_id, 0))
+                self._send_encrypted(sock, src, sess.key, sess.session_id, _pack_inner(_P_ACK, 0, conn_id, 0), fast=use_fast)
                 return
             if target_port not in self.allowed_forward_ports:
-                self._send_encrypted(sock, src, sess.key, sess.session_id, _pack_inner(_P_CLOSE, 0, conn_id, 0))
+                self._send_encrypted(sock, src, sess.key, sess.session_id, _pack_inner(_P_CLOSE, 0, conn_id, 0), fast=use_fast)
                 return
             tcp_s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             try:
@@ -523,12 +673,12 @@ class PhantomTunnelServer(_TunnelEndpointMixin):
                 tcp_s.connect(("127.0.0.1", target_port))
             except OSError:
                 tcp_s.close()
-                self._send_encrypted(sock, src, sess.key, sess.session_id, _pack_inner(_P_CLOSE, 0, conn_id, 0))
+                self._send_encrypted(sock, src, sess.key, sess.session_id, _pack_inner(_P_CLOSE, 0, conn_id, 0), fast=use_fast)
                 return
-            stream = _TunnelStream(conn_id=conn_id, tcp_sock=tcp_s, open_acked=True, open_target_port=target_port)
+            stream = _TunnelStream(conn_id=conn_id, tcp_sock=tcp_s, open_acked=True, open_target_port=target_port, prefer_v9=use_fast)
             with self._mux_lock:
                 sess.conns[conn_id] = stream
-            self._send_encrypted(sock, src, sess.key, sess.session_id, _pack_inner(_P_ACK, 0, conn_id, 0))
+            self._send_encrypted(sock, src, sess.key, sess.session_id, _pack_inner(_P_ACK, 0, conn_id, 0), fast=use_fast)
             threading.Thread(
                 target=self._pump_tcp_stream,
                 args=(stream, lambda: (sess.sock or self._fallback_sock, sess.peer_udp, sess.key, sess.session_id), self._stop),
@@ -540,6 +690,7 @@ class PhantomTunnelServer(_TunnelEndpointMixin):
             stream = sess.conns.get(conn_id)
         if stream is None:
             return
+        stream.prefer_v9 = stream.prefer_v9 or use_fast
         self._handle_stream_frame(stream, ptype, flags, seq, body, sock, src, sess.key, sess.session_id)
 
     def _run_direct_session(
@@ -588,11 +739,11 @@ class PhantomTunnelServer(_TunnelEndpointMixin):
                             except OSError:
                                 pass
                         break
-                    dec = open_packet(sess.key, pkt)
+                    dec = open_any_packet(sess.key, pkt)
                     if dec is not None and dec[0] == sess.session_id:
                         sess.punched = True
                         sess.peer_udp = src_addr
-                        self._dispatch_inner_server(sess, sock, src_addr, dec[2])
+                        self._dispatch_inner_server(sess, sock, src_addr, dec[2], prefer_v9=(pkt[:4] == _ENV_MAGIC_V9))
                         break
 
             if not sess.punched:
@@ -626,9 +777,9 @@ class PhantomTunnelServer(_TunnelEndpointMixin):
                             except OSError:
                                 pass
                             continue
-                        dec = open_packet(sess.key, pkt)
+                        dec = open_any_packet(sess.key, pkt)
                         if dec is not None and dec[0] == sess.session_id:
-                            self._dispatch_inner_server(sess, sock, src_addr, dec[2])
+                            self._dispatch_inner_server(sess, sock, src_addr, dec[2], prefer_v9=(pkt[:4] == _ENV_MAGIC_V9))
                 if sess.conns and sess.peer_udp is not None:
                     self._retransmit_pending(sess.conns, sock, sess.peer_udp, sess.key, sess.session_id)
         finally:
@@ -658,15 +809,15 @@ class PhantomTunnelServer(_TunnelEndpointMixin):
                     if len(pkt) < _ENV_HDR.size + _TAG_LEN:
                         continue
                     magic, sid, _ = _ENV_HDR.unpack_from(pkt, 0)
-                    if magic != _ENV_MAGIC:
+                    if magic not in (_ENV_MAGIC, _ENV_MAGIC_V9):
                         continue
                     with self._sess_lock:
                         sess = self._sessions.get(sid)
                     if sess is None:
                         continue
-                    dec = open_packet(sess.key, pkt)
+                    dec = open_any_packet(sess.key, pkt)
                     if dec is not None:
-                        self._dispatch_inner_server(sess, sock, (src[0], int(src[1])), dec[2])
+                        self._dispatch_inner_server(sess, sock, (src[0], int(src[1])), dec[2], prefer_v9=(magic == _ENV_MAGIC_V9))
             with self._sess_lock:
                 fb_list = [s for s in self._sessions.values() if s.sock is None and s.peer_udp is not None and s.conns]
             for s in fb_list:
@@ -686,6 +837,7 @@ class PhantomTunnelServer(_TunnelEndpointMixin):
         return {
             "fallback_port": self.fallback_port,
             "allowed_forward_ports": sorted(self.allowed_forward_ports),
+            "reverse_listeners": dict(self.reverse_bound_ports),
             "sessions": active,
             "bytes_tx": self._bytes_tx,
             "bytes_rx": self._bytes_rx,
@@ -693,6 +845,11 @@ class PhantomTunnelServer(_TunnelEndpointMixin):
 
     def close(self) -> None:
         self._stop.set()
+        for _, _, srv in self._rev_srvs:
+            try:
+                srv.close()
+            except OSError:
+                pass
         with self._sess_lock:
             for s in self._sessions.values():
                 self._close_session_obj(s)
@@ -717,14 +874,27 @@ class PhantomTunnelClient(_TunnelEndpointMixin):
         forwards: dict[int, int] | None = None,
         listen_host: str = "127.0.0.1",
         local_test_mode: bool = False,
+        use_fast_wire: bool = True,
+        allowed_reverse_ports: list[int] | None = None,
+        keepalive_interval_s: float = 10.0,
+        pong_stale_s: float = 35.0,
+        reconnect_cooldown_s: float = 10.0,
+        auto_reconnect: bool = True,
     ) -> None:
-        self._init_mux(direction_bit=1)
+        self._init_mux(direction_bit=1, use_fast_wire=use_fast_wire)
         self.peer_http_base = peer_http_base.rstrip("/")
         self.peer_udp_ip = peer_udp_ip
         self.peer_fallback_port = int(peer_fallback_port)
         self.forwards: dict[int, int] = dict(forwards if forwards is not None else {2222: 22, 9789: 9780})
         self.listen_host = listen_host
         self.local_test_mode = local_test_mode
+        self.allowed_reverse_ports: set[int] = set(
+            allowed_reverse_ports if allowed_reverse_ports is not None else [9780, 12500, 12504]
+        )
+        self._keepalive_interval_s = max(0.05, float(keepalive_interval_s))
+        self._pong_stale_s = max(0.2, float(pong_stale_s))
+        self._reconnect_cooldown_s = max(0.1, float(reconnect_cooldown_s))
+        self._auto_reconnect = bool(auto_reconnect)
 
         self._stop = threading.Event()
         self._conn_lock = threading.Lock()
@@ -738,6 +908,9 @@ class PhantomTunnelClient(_TunnelEndpointMixin):
         self._mode = "DISCONNECTED"
         self._direct_rtt_ms = 0.0
         self._punches_ok = 0
+        self._reconnect_count = 0
+        self._last_reconnect_attempt = 0.0
+        self._reconnecting = False
         self._last_pong = 0.0
         self._last_ping_sent: dict[int, float] = {}
         self._pending_pong: threading.Event | None = None
@@ -978,18 +1151,50 @@ class PhantomTunnelClient(_TunnelEndpointMixin):
                 out.append(round((time.perf_counter() - t0) * 1000.0, 2))
         return out
 
+    def _trigger_auto_reconnect(self, reason: str = "pong_stale") -> None:
+        with self._state_lock:
+            now_m = time.monotonic()
+            if self._stop.is_set() or self._reconnecting or not self._auto_reconnect:
+                return
+            if (now_m - self._last_reconnect_attempt) < self._reconnect_cooldown_s:
+                return
+            self._reconnecting = True
+            self._last_reconnect_attempt = now_m
+
+        def _worker() -> None:
+            try:
+                res = self.connect(
+                    local_test_mode=self.local_test_mode,
+                    num_sockets=16 if self.local_test_mode else 96,
+                    spray_count=64 if self.local_test_mode else 600,
+                    timeout_s=3.0,
+                )
+                if res.get("connected"):
+                    with self._state_lock:
+                        self._reconnect_count += 1
+            except Exception:
+                pass
+            finally:
+                with self._state_lock:
+                    self._reconnecting = False
+
+        threading.Thread(target=_worker, daemon=True, name=f"phantom-reconn-{reason}").start()
+
     def _udp_io_loop(self) -> None:
-        next_keepalive = time.monotonic() + 12.0
+        next_keepalive = time.monotonic() + self._keepalive_interval_s
         while not self._stop.is_set():
             with self._state_lock:
                 sock, addr, key, sid = self._sock, self._peer_addr, self._session_key, self._session_id
+                punches_ok = self._punches_ok
             if sock is None or addr is None:
+                if self._auto_reconnect and punches_ok > 0:
+                    self._trigger_auto_reconnect("disconnected")
                 self._stop.wait(timeout=0.25)
                 continue
 
             has_conns = bool(self._conns)
             try:
-                r, _, _ = select.select([sock], [], [], 0.008 if has_conns else 0.25)
+                r, _, _ = select.select([sock], [], [], 0.008 if has_conns else min(0.25, self._keepalive_interval_s))
             except (OSError, ValueError):
                 time.sleep(0.05)
                 continue
@@ -1002,7 +1207,7 @@ class PhantomTunnelClient(_TunnelEndpointMixin):
                         break
                     with self._mux_lock:
                         self._bytes_rx += len(pkt)
-                    dec = open_packet(key, pkt)
+                    dec = open_any_packet(key, pkt)
                     if dec is None or dec[0] != sid:
                         continue
                     inner = _unpack_inner(dec[2])
@@ -1020,6 +1225,40 @@ class PhantomTunnelClient(_TunnelEndpointMixin):
                             if self._pending_pong is not None:
                                 self._pending_pong.set()
                         continue
+                    if ptype == _P_OPEN:
+                        target_port = int(_aux)
+                        with self._mux_lock:
+                            existing = self._conns.get(conn_id)
+                        if existing is not None:
+                            self._send_encrypted(sock, addr, key, sid, _pack_inner(_P_ACK, 0, conn_id, 0))
+                            continue
+                        if target_port not in self.allowed_reverse_ports:
+                            self._send_encrypted(sock, addr, key, sid, _pack_inner(_P_CLOSE, 0, conn_id, 0))
+                            continue
+                        tcp_s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                        try:
+                            tcp_s.settimeout(2.0)
+                            tcp_s.connect(("127.0.0.1", target_port))
+                        except OSError:
+                            tcp_s.close()
+                            self._send_encrypted(sock, addr, key, sid, _pack_inner(_P_CLOSE, 0, conn_id, 0))
+                            continue
+                        stream = _TunnelStream(
+                            conn_id=conn_id,
+                            tcp_sock=tcp_s,
+                            open_acked=True,
+                            open_target_port=target_port,
+                            prefer_v9=bool(self._use_fast_wire),
+                        )
+                        with self._mux_lock:
+                            self._conns[conn_id] = stream
+                        self._send_encrypted(sock, addr, key, sid, _pack_inner(_P_ACK, 0, conn_id, 0))
+                        threading.Thread(
+                            target=self._pump_tcp_stream,
+                            args=(stream, lambda: (self._sock, self._peer_addr, self._session_key, self._session_id), self._stop),
+                            daemon=True,
+                        ).start()
+                        continue
                     with self._mux_lock:
                         stream = self._conns.get(conn_id)
                     if stream is not None:
@@ -1030,9 +1269,14 @@ class PhantomTunnelClient(_TunnelEndpointMixin):
 
             now = time.monotonic()
             if now >= next_keepalive:
-                next_keepalive = now + 12.0
+                next_keepalive = now + self._keepalive_interval_s
                 ping = _pack_inner(_P_PING, 0, 0, int(now) & 0xFFFF, 0, struct.pack("!Q", int(time.perf_counter_ns() // 1000)))
                 self._send_encrypted(sock, addr, key, sid, ping)
+            with self._state_lock:
+                lp = self._last_pong
+                p_ok = self._punches_ok
+            if self._auto_reconnect and p_ok > 0 and lp > 0.0 and (now - lp) >= self._pong_stale_s:
+                self._trigger_auto_reconnect("pong_stale")
 
     def disconnect(self) -> dict[str, Any]:
         with self._state_lock:
@@ -1048,6 +1292,7 @@ class PhantomTunnelClient(_TunnelEndpointMixin):
 
     def status(self) -> dict[str, Any]:
         with self._state_lock:
+            pong_age = round(time.monotonic() - self._last_pong, 1) if self._last_pong else None
             return {
                 "connected": self._sock is not None and self._mode != "DISCONNECTED",
                 "mode": self._mode,
@@ -1058,7 +1303,10 @@ class PhantomTunnelClient(_TunnelEndpointMixin):
                 "tx_bytes": self._bytes_tx,
                 "rx_bytes": self._bytes_rx,
                 "punches_ok": self._punches_ok,
-                "last_pong_age_s": round(time.monotonic() - self._last_pong, 1) if self._last_pong else None,
+                "reconnect_count": self._reconnect_count,
+                "reconnecting": self._reconnecting,
+                "pong_stale": bool(self._last_pong and (time.monotonic() - self._last_pong) >= self._pong_stale_s),
+                "last_pong_age_s": pong_age,
             }
 
     def close(self) -> None:

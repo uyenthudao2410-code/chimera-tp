@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import base64
+from collections import deque
+import gc
 import gzip
 import hashlib
 import http.server
@@ -51,10 +53,36 @@ from .singularity_airgap_crypto import (
 from .singularity_bench import run_singularity_benchmark
 from .singularity_kolmogorov_swarm import KolmogorovGrammarCodec, SwarmAnycastMesh
 from .singularity_time_crdt import MerkleCrdtShadowTwin, SpeculativeTimeWarpEngine
+from .native import v12_native_caps, v9_native_caps
+from .v10_outlaw_engines import ProceduralTarpitLabyrinth
+from .v10_sovereign_crypto import FrostThreshold2of3
+from .v10_sovereign_runtime import WasmLiveTeleportEngine
+from .v11_autopoietic_systems import ActiveMatterCell
+from .v12_bench import run_galactic_benchmark
+from .v12_galactic_engines import HyperdimensionalVsaMesh
+from .v9_app_index import (
+    LiveClusterIndexer,
+    RemoteAppStreamEngine,
+    SharedCasTurboCache,
+    UniversalInstantHub,
+    probe_hw_encoders,
+)
+from .v9_bench import run_hyperdrive_benchmark
+from .v9_nvme_grid import (
+    UnifiedHardwareGrid,
+    VirtualNvmeFabric,
+    WorkspaceHandOffManager,
+    execute_whitelisted_kernel,
+    probe_accelerators,
+    probe_mount_drivers,
+)
 from .edge_proxy import EdgeGateway, LocalEdgeProxy, edge_fetch_remote
 from .fabric import BeamServer, beam_send
 from .ghost_fs import GhostFsEngine
 from .ghost_pty import GhostPtyManager
+from .host_governor import HostYieldGovernor
+from .trinity_bridge import TrinityCommandBridge
+from .vsa_memory_service import SharedVsaMemoryService
 from .holo_backup import (
     create_holo_backup,
     list_holo_backups,
@@ -73,940 +101,14 @@ from .merkle_sync import (
 from .nat_buster import NatPunchResponder, attempt_direct_punch, discover_nat_profile
 from .native import cpu_caps
 from .phantom_tunnel import PhantomTunnelClient, PhantomTunnelServer
+from .platform import PlatformSubstrate
 from .probe import probe_environment
 from .protocol import ChimeraReceiver, ChimeraSender, FaultProfile
 from .sentinel import SentinelEngine
 from .telepathy import DomainDictionary, TelepathicStore, train_domain_dictionary
 from .warp import WarpServer
 
-_DASHBOARD_HTML = r"""<!doctype html>
-<html lang="vi">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>CHIMERA-HYPER v8.0 SINGULARITY HyperOS</title>
-<style>
-  :root {
-    --bg: #0b0f17;
-    --card: #121826;
-    --card2: #182032;
-    --border: rgba(148,163,184,0.18);
-    --fg: #e2e8f0;
-    --muted: #94a3b8;
-    --cyan: #22d3ee;
-    --green: #34d399;
-    --amber: #fbbf24;
-    --red: #f87171;
-    --purple: #a78bfa;
-    --mono: ui-monospace, "Cascadia Code", Consolas, monospace;
-    --sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  }
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { background: var(--bg); color: var(--fg); font-family: var(--sans); font-size: 13px; line-height: 1.45; padding: 18px; }
-  .shell { max-width: 1280px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
-  .topbar {
-    display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 12px;
-    background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 14px 18px;
-  }
-  .brand h1 { font-size: 17px; font-weight: 700; letter-spacing: 0.02em; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-  .badge { font-family: var(--mono); font-size: 11px; padding: 2px 8px; border-radius: 999px; background: rgba(34,211,238,0.14); color: var(--cyan); border: 1px solid rgba(34,211,238,0.3); }
-  .badge.ok { background: rgba(52,211,153,0.14); color: var(--green); border-color: rgba(52,211,153,0.35); }
-  .badge.warn { background: rgba(251,191,36,0.14); color: var(--amber); border-color: rgba(251,191,36,0.35); }
-  .meta-line { color: var(--muted); font-size: 11.5px; font-family: var(--mono); margin-top: 4px; }
-
-  .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-  button, select, input {
-    font-family: inherit; font-size: 12px; border-radius: 8px; border: 1px solid var(--border);
-    background: var(--card2); color: var(--fg); padding: 7px 12px; outline: none;
-  }
-  button { cursor: pointer; font-weight: 600; transition: 0.15s ease; }
-  button:hover { border-color: var(--cyan); background: #1e293b; }
-  button.primary { background: rgba(34,211,238,0.18); border-color: rgba(34,211,238,0.5); color: #67e8f9; }
-  button:disabled { opacity: 0.5; cursor: wait; }
-
-  .grid-4 { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-  .grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-  @media (max-width: 900px) { .grid-4, .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-  @media (max-width: 580px) { .grid-4, .grid-2 { grid-template-columns: 1fr; } }
-
-  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 15px 17px; }
-  .card-title { font-size: 12.5px; font-weight: 700; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-  .kpi-val { font-size: 24px; font-weight: 800; font-family: var(--mono); line-height: 1.15; }
-  .kpi-sub { font-size: 11.5px; color: var(--muted); margin-top: 4px; }
-
-  table { width: 100%; border-collapse: collapse; font-size: 12px; }
-  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); }
-  th { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; }
-  td.mono { font-family: var(--mono); }
-
-  .query-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
-  .query-bar input { flex: 1; min-width: 120px; font-family: var(--mono); }
-  .log-box {
-    background: #090d14; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px;
-    font-family: var(--mono); font-size: 11px; max-height: 220px; overflow: auto; white-space: pre-wrap;
-  }
-  .cmp-row { display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
-  .cmp-row:last-child { border-bottom: none; }
-  .tab-bar { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
-  .tab-btn.active { background: rgba(34,211,238,0.2); border-color: var(--cyan); color: #67e8f9; }
-</style>
-</head>
-<body>
-<div class="shell">
-  <div class="topbar">
-    <div class="brand">
-      <h1>
-        CHIMERA-HYPER v5.0 PHANTOM-5MS
-        <span class="badge" id="node-badge">...</span>
-        <span class="badge ok" id="zw-badge">RAM -- MB</span>
-        <span class="badge ok" id="phantom-badge">TUNNEL ...</span>
-        <span class="badge ok" id="sched-badge">DAILY ...</span>
-      </h1>
-      <div class="meta-line" id="hw-meta">Probing hardware &amp; zero-weight telemetry...</div>
-    </div>
-    <div class="controls">
-      <select id="profile-select" title="Contextual Bandit Policy">
-        <option value="auto-darwin">auto-darwin (24h Contextual UCB1)</option>
-        <option value="max-speed">max-speed (Turbo Pipeline)</option>
-        <option value="lossy-armor">lossy-armor (Proactive GFNI)</option>
-        <option value="exotic-v05">exotic-v05 (Multi-Realm)</option>
-      </select>
-      <button class="primary" id="btn-run" onclick="triggerRun()">&#9654; Chạy đánh giá ngay</button>
-      <button onclick="openMarkdownReport()">&#128196; Báo cáo (.md)</button>
-      <button onclick="forceRefresh()">&#8635; Làm mới</button>
-      <button onclick="triggerPhantomConnect()">&#9889; Kết nối 5ms</button>
-      <button onclick="triggerNatBust()">&#128640; NAT Buster</button>
-      <button onclick="triggerEdgeTest()">&#127760; Edge Warp</button>
-      <button onclick="triggerHoloBackup()">&#128272; Holo GF256</button>
-      <button onclick="triggerMerkle()">&#127795; Merkle</button>
-      <button onclick="triggerImmortal()">&#128293; Immortal</button>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">
-      <span>Tailscale Cluster Hub — Sức Khỏe Toàn Cụm &amp; PHANTOM-5MS Console</span>
-      <span class="badge ok" id="cluster-grade">HẠNG: ...</span>
-    </div>
-    <div class="kpi-sub" id="cluster-highlights" style="margin-bottom:10px;">Đang nạp báo cáo từ các node trong mạng Tailscale...</div>
-    <div class="grid-2" id="cluster-nodes"></div>
-    <div class="log-box" id="v4-console" style="margin-top:10px;max-height:130px;display:none;"></div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">
-      <span>PHANTOM-5MS HyperOS Workbench (Terminal • Ghost-FS Explorer • Drop-Portal • AI Context • Medic • OMEGA-14 • SINGULARITY)</span>
-      <span class="meta-line" id="v5-wb-meta">Singularity v8.0</span>
-    </div>
-    <div class="tab-bar">
-      <button class="tab-btn active" onclick="showV5Tab('pty', this)">Ghost-PTY Terminal</button>
-      <button class="tab-btn" onclick="showV5Tab('fs', this)">Ghost-FS Explorer</button>
-      <button class="tab-btn" onclick="showV5Tab('portal', this)">Drop-Portal &amp; AI Context</button>
-      <button class="tab-btn" onclick="showV5Tab('medic', this)">CHIMERA-MEDIC</button>
-      <button class="tab-btn" onclick="showV5Tab('synergy', this)">Radar + Tqouta Synergy</button>
-      <button class="tab-btn" onclick="showV5Tab('omega', this)">v7.0 OMEGA-14 Lab</button>
-      <button class="tab-btn" onclick="showV5Tab('singularity', this)">v8.0 SINGULARITY Lab</button>
-    </div>
-    <div id="tab-pty" class="v5-tab">
-      <div class="query-bar">
-        <button class="primary" onclick="ptyCreate()">Mở Bash PTY</button>
-        <input id="pty-cmd" value="uname -a && uptime" placeholder="Nhập lệnh gửi vào Ghost-PTY (svhome)...">
-        <button onclick="ptySendCmd()">Gửi lệnh</button>
-        <button onclick="ptyPoll()">Đọc tiếp</button>
-        <span class="meta-line" id="pty-id-lbl">Chưa mở PTY</span>
-      </div>
-      <div class="log-box" id="pty-out" style="max-height:170px;">Nhấn "Mở Bash PTY" để mở terminal persistent trên svhome (không rớt khi đổi mạng).</div>
-    </div>
-    <div id="tab-fs" class="v5-tab" style="display:none;">
-      <div class="query-bar">
-        <input id="fs-path" value="" placeholder="Thư mục con hoặc đường dẫn file (để trống = root DEV)">
-        <button class="primary" onclick="fsList()">Duyệt Thư Mục</button>
-        <button onclick="fsGitStatus()">Git Status</button>
-      </div>
-      <div class="log-box" id="fs-out" style="max-height:170px;">Chưa tải danh sách Ghost-FS.</div>
-    </div>
-    <div id="tab-portal" class="v5-tab" style="display:none;">
-      <div class="query-bar">
-        <input id="portal-title" value="Ghi chú nhanh" placeholder="Tiêu đề Drop" style="max-width:160px;">
-        <input id="portal-text" value="" placeholder="Nội dung clipboard muốn chuyển tức thì...">
-        <button class="primary" onclick="portalDrop()">Gửi Drop (TTL 10m)</button>
-        <input id="ctx-q" value="MAIL_FAIL_502" placeholder="Triệu chứng/Từ khóa gom AI Context..." style="max-width:210px;">
-        <button onclick="packAiContext()">Gom AI Context (&lt;8KB)</button>
-      </div>
-      <div class="log-box" id="portal-out" style="max-height:170px;">Chưa có mục Drop hoặc Context Pack nào.</div>
-    </div>
-    <div id="tab-medic" class="v5-tab" style="display:none;">
-      <div class="query-bar">
-        <input id="medic-pattern" value="FAIL" placeholder="Mẫu lỗi cần điều tra (vd: FAIL, ERROR)">
-        <button class="primary" onclick="medicInvestigate()">Điều tra Pháp Y</button>
-        <button onclick="medicRun('verify_email_log_tail')">Quét Log Email</button>
-        <button onclick="medicRun('probe_services')">Probe Dịch Vụ</button>
-        <button onclick="medicRun('holo_snapshot_configs')">Chụp GF256 Snapshot</button>
-      </div>
-      <div class="log-box" id="medic-out" style="max-height:170px;">CHIMERA-MEDIC sẵn sàng phân tích &amp; xử lý an toàn có backup GF(256).</div>
-    </div>
-    <div id="tab-synergy" class="v5-tab" style="display:none;">
-      <div class="query-bar">
-        <button class="primary" onclick="synergyStatus()">Tải Synergy Status</button>
-        <button onclick="synergyBounties()">Soi Kèo Sẵn Nộp (5s)</button>
-        <button onclick="synergyBurnScan()">Quét Burn-Loop</button>
-        <button onclick="synergyVault()">Chụp Két Sắt GF(256)</button>
-      </div>
-      <div id="synergy-bounties" style="margin-bottom:8px;"></div>
-      <div class="log-box" id="synergy-out" style="max-height:190px;">Hợp nhất CHIMERA ↔ Tqouta (:12500/:12504) ↔ Radar (:8787) qua đường hầm 5 ms.</div>
-    </div>
-    <div id="tab-omega" class="v5-tab" style="display:none;">
-      <div class="query-bar">
-        <button class="primary" onclick="omegaBenchmark()">Chạy Benchmark 14 Ý Tưởng</button>
-        <button onclick="omegaStatus()">Capabilities (TUN / FUSE / SIMD)</button>
-        <button onclick="omegaWasmTest()">WASM Active-Pipe AQ03</button>
-        <button onclick="omegaSlepianTest()">0-RTT Slepian-Wolf</button>
-        <button onclick="omegaRamTest()">Remote RAM 4KB</button>
-      </div>
-      <div id="omega-table" style="margin-bottom:8px;"></div>
-      <div class="log-box" id="omega-out" style="max-height:210px;">CHIMERA-HYPER v7.0 OMEGA-FABRIC — Sẵn sàng đánh giá Trước/Sau toàn bộ 14 đột phá giao thức.</div>
-    </div>
-    <div id="tab-singularity" class="v5-tab" style="display:none;">
-      <div class="query-bar">
-        <button class="primary" onclick="singularityBenchmark()">Chạy Benchmark Đối Kháng 7 Đột Phá v8.0</button>
-        <button onclick="singularityStatus()">Trạng Thái v8.0</button>
-        <button onclick="singularityPirTest()">Truy Vấn Mù PIR</button>
-        <button onclick="singularityKolmogorovTest()">Nén Kolmogorov</button>
-        <button onclick="singularityCrdtTest()">Hòa Nhập CRDT</button>
-        <button onclick="singularityDualVaultTest()">Két 2 Sự Thật</button>
-      </div>
-      <div id="singularity-table" style="margin-bottom:8px;"></div>
-      <div class="log-box" id="singularity-out" style="max-height:220px;">CHIMERA-HYPER v8.0 SINGULARITY — Sẵn sàng kiểm chuẩn đối kháng Time-Warp, CRDT, Siêu âm Air-Gap, PIR mù, Két 2 lớp, Kolmogorov &amp; Swarm 3 nút.</div>
-    </div>
-  </div>
-
-  <div class="grid-2">
-    <div class="card">
-      <div class="card-title">
-        <span>0-Download Instant Search (SQLite FTS5 + Merkle)</span>
-        <span class="meta-line" id="search-meta">0 files</span>
-      </div>
-      <div class="query-bar">
-        <input id="search-q" value="ERROR" placeholder="Tìm trong toàn bộ code &amp; log (vd: HyperWire, V_Finance)...">
-        <input id="search-repo" value="" placeholder="Repo (tùy chọn)" style="max-width:140px;">
-        <button class="primary" onclick="triggerSearch()">&#128269; Tìm</button>
-        <button onclick="triggerReindex()">&#128260; Reindex</button>
-      </div>
-      <div class="log-box" id="search-out">Nhập từ khóa để tìm BM25 trên svhome mà không tốn RAM Windows.</div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">
-        <span>CHIMERA-SENTINEL — Watchdog Tự Hành &amp; Dịch Vụ</span>
-        <span class="badge ok" id="sentinel-badge">...</span>
-      </div>
-      <div class="controls" style="justify-content:space-between;margin-bottom:8px;">
-        <div class="meta-line" id="sentinel-res">Đang chờ quét dịch vụ, đĩa &amp; log...</div>
-        <button onclick="triggerSentinel()">&#128737; Quét Sentinel</button>
-      </div>
-      <div id="sentinel-svcs" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px;"></div>
-      <div class="log-box" id="sentinel-out" style="max-height:150px;">Chưa có cảnh báo.</div>
-    </div>
-  </div>
-
-  <div class="grid-4">
-    <div class="card">
-      <div class="card-title">Sức Khỏe &amp; Zero-Weight</div>
-      <div class="kpi-val" id="kpi-health" style="color:var(--green)">--</div>
-      <div class="kpi-sub" id="kpi-health-sub">CHIMERA-HYPER v2.0 / v3.0 API</div>
-    </div>
-    <div class="card">
-      <div class="card-title">Mạng WAN 5% Rớt Gói</div>
-      <div class="kpi-val" id="kpi-wan" style="color:var(--cyan)">--</div>
-      <div class="kpi-sub" id="kpi-wan-sub">RLNC GFNI/AVX2 vs TCP</div>
-    </div>
-    <div class="card">
-      <div class="card-title">Telepathic + DNA Beam</div>
-      <div class="kpi-val" id="kpi-beam" style="color:var(--purple)">--</div>
-      <div class="kpi-sub" id="kpi-beam-sub">Giảm dây truyền tải thực tế</div>
-    </div>
-    <div class="card">
-      <div class="card-title">Merkle Sync &amp; Link RTT</div>
-      <div class="kpi-val" id="kpi-shm" style="color:var(--amber)">--</div>
-      <div class="kpi-sub" id="kpi-shm-sub">0-RTT Hash &amp; Immortal Lanes</div>
-    </div>
-  </div>
-
-  <div class="grid-2">
-    <div class="card">
-      <div class="card-title">
-        <span>Đối chiếu Trước vs Sau (Zero-Weight HyperGrid v3.0)</span>
-        <span class="meta-line" id="latest-ts"></span>
-      </div>
-      <div id="compare-panel"><div class="meta-line">Nhấn "Chạy đánh giá ngay" để lấy số đo trực tiếp...</div></div>
-    </div>
-
-    <div class="card">
-      <div class="card-title">
-        <span>Fluid Compute Pushdown &amp; Telepathic Wire (Chạy tại Peer)</span>
-        <span class="meta-line" id="query-badge">AQ02 UDP 9704</span>
-      </div>
-      <div class="query-bar">
-        <select id="q-op">
-          <option value="log_analytics">log_analytics (Mẫu lỗi &amp; Theo giờ)</option>
-          <option value="filter_lines">filter_lines (Lọc từ khóa + Telepathy)</option>
-          <option value="multi_grep">multi_grep (Quét file / thư mục)</option>
-          <option value="sqlite_query">sqlite_query (Read-Only DB Peer)</option>
-          <option value="remote_digest">remote_digest (Hash nhanh trên Peer)</option>
-        </select>
-        <input id="q-needle" value="ERROR" placeholder="Từ khóa / SQL (SELECT ...)">
-        <input id="q-file" value="" placeholder="File/Thư mục đích (mặc định log)">
-        <button class="primary" onclick="triggerFluid()">&#128269; Chạy Fluid Pushdown</button>
-      </div>
-      <div class="log-box" id="query-out">Sẵn sàng chạy lệnh tính toán trực tiếp trên svhome mà không tốn RAM Windows.</div>
-    </div>
-  </div>
-
-  <div class="grid-2">
-    <div class="card">
-      <div class="card-title">
-        <span>24h Link Weather &amp; Thời Điểm Đồng Bộ Tốt Nhất</span>
-        <span class="meta-line" id="weather-rec">Đề xuất: ...</span>
-      </div>
-      <table>
-        <thead><tr><th>Khung giờ</th><th>Mẫu</th><th>RTT p50</th><th>WAN</th><th>Genome Tốt</th></tr></thead>
-        <tbody id="weather-tbody"></tbody>
-      </table>
-    </div>
-
-    <div class="card">
-      <div class="card-title">
-        <span>Contextual Darwinian Genome Leaderboard</span>
-        <span class="meta-line" id="trend-count">0 runs</span>
-      </div>
-      <table>
-        <thead><tr><th>Genome</th><th>Pulls</th><th>Avg Reward</th><th>Params</th></tr></thead>
-        <tbody id="genome-tbody"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <div class="card">
-    <div class="card-title">
-      <span>Xu hướng &amp; Nhật ký Hoạt động Tự động</span>
-      <span class="meta-line" id="services-meta"></span>
-    </div>
-    <svg id="trend-svg" viewBox="0 0 900 130" style="width:100%;height:130px;display:block;margin-bottom:8px;"></svg>
-    <div class="log-box" id="events-box">Loading...</div>
-  </div>
-</div>
-
-<script>
-window.__INIT_STATE__ = /*__INIT_STATE__*/null;
-let _lastEtag = /*__INIT_ETAG__*/"";
-
-async function api(path, opts) {
-  const res = await fetch(path, opts || {});
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
-}
-
-function renderTrend(history) {
-  const svg = document.getElementById('trend-svg');
-  document.getElementById('trend-count').textContent = history.length + ' phiên';
-  if (!history.length) {
-    svg.innerHTML = '<text x="450" y="65" text-anchor="middle" fill="#64748b" font-size="12">Chưa có lịch sử chạy</text>';
-    return;
-  }
-  const W = 900, H = 130, L = 36, R = 16, T = 14, B = 22;
-  const pw = W - L - R, ph = H - T - B;
-  let html = '';
-  for (let g of [0, 50, 100]) {
-    const y = T + ph - (g / 100) * ph;
-    html += `<line x1="${L}" y1="${y}" x2="${W-R}" y2="${y}" stroke="rgba(148,163,184,0.16)" stroke-dasharray="3 3"/>`;
-    html += `<text x="${L-6}" y="${y+4}" text-anchor="end" fill="#94a3b8" font-size="10" font-family="monospace">${g}</text>`;
-  }
-  const n = history.length;
-  const maxWan = Math.max(25, ...history.map(h => h.wan_5pct_speedup || 0));
-  const ptsH = [], ptsW = [];
-  history.forEach((h, i) => {
-    const x = n === 1 ? L + pw / 2 : L + (i / (n - 1)) * pw;
-    const yh = T + ph - (Math.min(100, h.health_score) / 100) * ph;
-    const yw = T + ph - (Math.min(maxWan, h.wan_5pct_speedup) / maxWan) * ph;
-    ptsH.push(`${x.toFixed(1)},${yh.toFixed(1)}`);
-    ptsW.push(`${x.toFixed(1)},${yw.toFixed(1)}`);
-  });
-  html += `<polyline fill="none" stroke="#34d399" stroke-width="2" points="${ptsH.join(' ')}"/>`;
-  html += `<polyline fill="none" stroke="#22d3ee" stroke-width="1.8" stroke-dasharray="4 2" points="${ptsW.join(' ')}"/>`;
-  html += `<text x="${L}" y="${H-5}" fill="#34d399" font-size="10">● Health</text>`;
-  html += `<text x="${L+75}" y="${H-5}" fill="#22d3ee" font-size="10">--- WAN Speedup (max ${maxWan.toFixed(0)}x)</text>`;
-  svg.innerHTML = html;
-}
-
-function renderState(st) {
-  const cfg = st.config || {};
-  const hw = st.hardware || {};
-  const zw = st.zero_weight || {};
-  document.getElementById('node-badge').textContent = `${cfg.node_name || 'node'} (${cfg.role || 'ctrl'})`;
-  const zwEl = document.getElementById('zw-badge');
-  zwEl.textContent = `RAM ${zw.daemon_ram_mb || 0}MB • Free ${zw.host_free_ram_gb || 0}GB`;
-  zwEl.className = 'badge ' + (zw.zero_weight_ok !== false ? 'ok' : 'warn');
-  document.getElementById('sched-badge').textContent = `DAILY ${cfg.daily_time || '08:00'} • ${st.today_daily_done ? 'ĐÃ CHẠY' : 'CHỜ LỊCH'}`;
-  document.getElementById('hw-meta').textContent =
-    `HW: native=${hw.native} gfni=${hw.gfni} avx2=${hw.avx2} | Peer: ${cfg.peer_name || '-'} (${cfg.peer_ipv4 || 'local'}) | Dicts: ${(st.telepathy_dicts||[]).length}`;
-  document.getElementById('profile-select').value = cfg.active_profile || 'auto-darwin';
-  document.getElementById('services-meta').textContent =
-    `Beam=${cfg.beam_port} RPC=${cfg.rpc_v4_port}/${cfg.rpc_v6_port} Query=${cfg.query_port} Immortal=${cfg.immortal_v4_port}/${cfg.immortal_v6_port}`;
-  if (!document.getElementById('q-file').value && cfg.watched_query_file) {
-    document.getElementById('q-file').placeholder = cfg.watched_query_file;
-  }
-
-  const db = st.telemetry || {};
-  const cl = st.cluster || {};
-  const verdict = cl.evaluation_verdict || {};
-  const clBadge = document.getElementById('cluster-grade');
-  clBadge.textContent = `HẠNG: ${verdict.grade || '--'} • TB ${verdict.avg_health_score || 0}/100`;
-  clBadge.className = 'badge ' + ((verdict.grade === 'A+' || verdict.grade === 'A') ? 'ok' : 'warn');
-  document.getElementById('cluster-highlights').textContent =
-    (verdict.highlights || []).join(' • ') || 'Chưa có báo cáo cross-host; bấm "Chạy đánh giá ngay" từ Windows để đẩy lên Hub.';
-
-  const clNodes = cl.nodes || [];
-  document.getElementById('cluster-nodes').innerHTML = clNodes.length ? clNodes.map(n => `
-    <div style="background:var(--card2);border:1px solid var(--border);border-radius:10px;padding:11px 13px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
-        <strong class="mono">${n.node_name} <span class="badge">${n.role}</span></strong>
-        <span class="badge ${n.health_score>=85?'ok':'warn'}">${n.health_score}/100</span>
-      </div>
-      <div class="meta-line">RAM: ${n.daemon_ram_mb} MB | WAN 5%: ${n.wan_5pct_speedup}x | GF(256): ${n.gfni_speedup}x | SHM: ${n.wormhole_gbps} Gbps</div>
-      <div class="meta-line">${n.peer_reachable ? `Cross-Host Beam: ${n.beam_speedup}x | Query: -${n.query_saved_pct}% (${n.query_speedup}x) | Merkle: -${n.merkle_saved_pct}%` : 'Node Hub Server (nhận dữ liệu qua Tailscale)'} • ${n.ts_local}</div>
-    </div>
-  `).join('') : '<div class="meta-line">Chưa có node nào ghi vào cluster_reports.</div>';
-
-  const latest = db.latest;
-  const eff = (latest && latest.peer && latest.peer.reachable) ? latest : (cl.latest_cross_host || latest);
-  if (eff) {
-    document.getElementById('latest-ts').textContent = `${eff.ts_local} (${eff.node_name || ''} • ${eff.time_bucket || ''}) • ${eff.genome_id}`;
-    const sc = eff.health_score;
-    const hEl = document.getElementById('kpi-health');
-    hEl.textContent = `${sc}/100`;
-    hEl.style.color = sc >= 85 ? 'var(--green)' : 'var(--amber)';
-    const lzw = eff.zero_weight || zw;
-    document.getElementById('kpi-health-sub').textContent = `Daemon ${lzw.daemon_ram_mb} MB / ${lzw.host_threads} threads • Hub ${zw.daemon_ram_mb || 0} MB`;
-
-    const loc = eff.local || {};
-    document.getElementById('kpi-wan').textContent = `${loc.wan_5pct_speedup || 0}x`;
-    document.getElementById('kpi-wan-sub').textContent = `GFNI/AVX2 ${loc.wan_5pct_chimera_mbps} vs TCP ${loc.wan_5pct_tcp_mbps} Mbps`;
-
-    const pr = eff.peer || {};
-    if (pr.reachable) {
-      document.getElementById('kpi-beam').textContent = `-${pr.query_saved_pct}% dây`;
-      document.getElementById('kpi-beam-sub').textContent = `Beam -${pr.beam_saved_pct}% (${pr.beam_speedup}x) • ${pr.query_codec_mode || 'zlib'}`;
-      const mk = pr.merkle || {};
-      document.getElementById('kpi-shm').textContent = `${pr.rtt_p50_ms} ms`;
-      document.getElementById('kpi-shm-sub').textContent = mk.verified_root_match ? `Merkle -${mk.total_reduction_pct}% | SHM ${loc.wormhole_gbps}Gbps` : `SHM ${loc.wormhole_gbps} Gbps`;
-    } else {
-      document.getElementById('kpi-beam').textContent = `-${loc.telepathy_vs_raw_pct || 0}%`;
-      document.getElementById('kpi-beam-sub').textContent = `Telepathy local (${loc.telepathy_vs_zlib_pct || 0}% < zlib)`;
-      document.getElementById('kpi-shm').textContent = `${loc.wormhole_gbps} Gbps`;
-      document.getElementById('kpi-shm-sub').textContent = `TCP loopback: ${loc.tcp_loopback_gbps} Gbps`;
-    }
-
-    let cmp = '';
-    cmp += `<div class="cmp-row"><span>Lõi Silicon GF(256) (${eff.node_name})</span><span class="mono">Python ${loc.gfni_py_ms}ms &rarr; <b>Native ${loc.gfni_native_ms}ms (${loc.gfni_speedup}x)</b></span></div>`;
-    cmp += `<div class="cmp-row"><span>Telepathic Local Dict</span><span class="mono">Zlib ${loc.telepathy_zlib_bytes}B &rarr; <b>CHTC1 ${loc.telepathy_wire_bytes}B (-${loc.telepathy_vs_raw_pct}%)</b></span></div>`;
-    cmp += `<div class="cmp-row"><span>WAN 5% Drop</span><span class="mono">TCP ${loc.wan_5pct_tcp_mbps} Mbps &rarr; <b>RLNC ${loc.wan_5pct_chimera_mbps} Mbps (${loc.wan_5pct_speedup}x)</b></span></div>`;
-    if (pr.reachable) {
-      cmp += `<div class="cmp-row"><span>Live Telepathic Query (${pr.query_codec_mode})</span><span class="mono">TCP ${pr.query_tcp_ms}ms &rarr; <b>${pr.query_chimera_ms}ms (${pr.query_wire_bytes}B / -${pr.query_saved_pct}%)</b></span></div>`;
-      if (pr.merkle && pr.merkle.verified_root_match) {
-        cmp += `<div class="cmp-row"><span>Live Merkle 16-file Sync</span><span class="mono">${pr.merkle.total_bytes}B &rarr; <b>${pr.merkle.udp_wire_bytes}B (-${pr.merkle.total_reduction_pct}% / ${pr.merkle.elapsed_ms}ms)</b></span></div>`;
-      }
-      if (pr.immortal && pr.immortal.ok) {
-        cmp += `<div class="cmp-row"><span>Immortal Cắt IPv4 Giữa Dòng</span><span class="mono">TX ${JSON.stringify(pr.immortal.lane_tx)} &rarr; <b>Sống 100% (0 reconnect, ${pr.immortal.elapsed_ms}ms)</b></span></div>`;
-      }
-    }
-    document.getElementById('compare-panel').innerHTML = cmp;
-  }
-
-  renderTrend(db.history || []);
-  document.getElementById('weather-rec').textContent = `Giờ sạch nhất: ${db.recommended_sync_window || 'NIGHT_CLEAN'} (Hiện tại: ${db.active_bucket || ''})`;
-  document.getElementById('weather-tbody').innerHTML = (db.link_weather || []).map(w =>
-    `<tr><td class="mono">${w.bucket}</td><td class="mono">${w.samples}</td><td class="mono">${w.ema_rtt_ms}ms</td><td class="mono">${w.ema_wan_speedup}x</td><td class="mono" style="color:var(--green)">${w.best_genome || '-'}</td></tr>`
-  ).join('');
-
-  document.getElementById('genome-tbody').innerHTML = (db.genomes || []).map(g => {
-    const p = g.params || {};
-    return `<tr><td class="mono">${g.genome_id}</td><td class="mono">${g.pulls}</td><td class="mono" style="color:var(--cyan)">${g.avg_reward.toFixed(2)}</td><td class="mono">k=${p.gen_k} loss=${p.loss_hint}</td></tr>`;
-  }).join('');
-
-  const evs = (db.events || []).map(e => `[${e.ts_local}] [${e.level}] [${e.category}] ${e.message}`).join('\n');
-  document.getElementById('events-box').textContent = evs || 'No events recorded yet.';
-
-  const cs = st.code_search || {};
-  document.getElementById('search-meta').textContent =
-    `${cs.indexed_files || 0} files / ${cs.repos_count || 0} repos (${cs.db_size_kb || 0} KB)`;
-
-  const sent = st.sentinel || {};
-  const sb = document.getElementById('sentinel-badge');
-  const sStat = sent.status || 'PENDING';
-  sb.textContent = `SENTINEL: ${sStat}`;
-  sb.className = 'badge ' + (sStat === 'OK' ? 'ok' : 'warn');
-  const sRes = sent.resources || {};
-  document.getElementById('sentinel-res').textContent =
-    sRes.disk_free_gb !== undefined
-      ? `Disk trống: ${sRes.disk_free_gb}/${sRes.disk_total_gb}GB (${sRes.disk_free_pct}%) | Scan: ${sent.ts_local || '-'}`
-      : 'Bấm "Quét Sentinel" để kiểm tra toàn hệ thống.';
-  document.getElementById('sentinel-svcs').innerHTML = (sent.services || []).map(s =>
-    `<span class="badge ${s.up ? 'ok' : 'warn'}">${s.app_id}: ${s.up ? 'UP ' + s.latency_ms + 'ms' : 'DOWN'}</span>`
-  ).join('');
-  const sAlerts = sent.alerts || sent.recent_alerts || [];
-  document.getElementById('sentinel-out').textContent = sAlerts.length
-    ? sAlerts.slice(0, 6).map(a => `[${a.severity}] ${a.title}\n  ${a.detail}\n  Gợi ý: ${a.diagnosis}`).join('\n---\n')
-    : 'Hệ thống khỏe mạnh — chưa ghi nhận cảnh báo bất thường.';
-
-  const ph = st.phantom || {};
-  const phCli = ph.client || null;
-  const phEl = document.getElementById('phantom-badge');
-  if (phCli && phCli.connected) {
-    phEl.textContent = `TUNNEL ${phCli.mode === 'PHANTOM_5MS_DIRECT' ? 'P2P ' + phCli.direct_rtt_ms + 'ms' : 'FALLBACK'}`;
-    phEl.className = 'badge ' + (phCli.mode === 'PHANTOM_5MS_DIRECT' ? 'ok' : 'warn');
-  } else {
-    const sc = ((ph.server || {}).sessions || []).length;
-    phEl.textContent = sc ? `PHANTOM SESSIONS: ${sc}` : 'PHANTOM READY';
-    phEl.className = 'badge';
-  }
-}
-
-let _ptySid = '';
-let _ptyCursor = 0;
-
-function showV5Tab(name, btn) {
-  document.querySelectorAll('.v5-tab').forEach(el => el.style.display = 'none');
-  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-  document.getElementById('tab-' + name).style.display = 'block';
-  btn.classList.add('active');
-}
-
-async function triggerPhantomConnect() {
-  logV4('Đang đục & gắn kết PHANTOM-5MS Authenticated Tunnel...');
-  try {
-    const r = await api('/api/phantom/connect', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
-    logV4(`PHANTOM: connected=${r.connected} mode=${r.mode} RTT=${r.direct_rtt_ms}ms listeners=${JSON.stringify(r.listeners)}`);
-    await forceRefresh();
-  } catch (e) { logV4('PHANTOM lỗi: ' + e.message); }
-}
-
-async function ptyCreate() {
-  const r = await api('/api/pty/create', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
-  _ptySid = r.session_id; _ptyCursor = 0;
-  document.getElementById('pty-id-lbl').textContent = `PTY=${_ptySid}`;
-  document.getElementById('pty-out').textContent = `Mở session ${_ptySid} tại ${r.cwd}\n`;
-  setTimeout(ptyPoll, 250);
-}
-
-async function ptySendCmd() {
-  if (!_ptySid) await ptyCreate();
-  const cmd = (document.getElementById('pty-cmd').value || '') + '\n';
-  await api('/api/pty/write', {
-    method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ session_id: _ptySid, text: cmd })
-  });
-  setTimeout(ptyPoll, 250);
-}
-
-async function ptyPoll() {
-  if (!_ptySid) return;
-  const r = await api(`/api/pty/read?session_id=${encodeURIComponent(_ptySid)}&cursor=${_ptyCursor}&wait_ms=250`);
-  if (r.text) {
-    const box = document.getElementById('pty-out');
-    box.textContent += r.text;
-    box.scrollTop = box.scrollHeight;
-  }
-  _ptyCursor = r.next_cursor;
-}
-
-async function fsList(optPath) {
-  if (optPath !== undefined) document.getElementById('fs-path').value = optPath;
-  const p = document.getElementById('fs-path').value || '';
-  const r = await api(`/api/fs/list?path=${encodeURIComponent(p)}`);
-  document.getElementById('fs-out').textContent =
-    `Root=${r.root} | Path=/${r.rel_path} (${r.count} mục, ${r.elapsed_ms}ms)\n` +
-    (r.entries || []).slice(0, 60).map(e => `${e.is_dir ? '[DIR ]' : '[FILE]'} ${e.rel_path} (${e.size} B)`).join('\n');
-}
-
-async function fsGitStatus() {
-  const p = document.getElementById('fs-path').value || 'chimera-tp';
-  const r = await api(`/api/fs/git-status?repo=${encodeURIComponent(p)}`);
-  document.getElementById('fs-out').textContent = `[git ${r.repo}]\n${r.status_text || '(clean)'}\n--- Commits ---\n${r.recent_commits}`;
-}
-
-async function portalDrop() {
-  const title = document.getElementById('portal-title').value || 'drop';
-  const text = document.getElementById('portal-text').value || '';
-  const r = await api('/api/portal/drop', {
-    method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ title, text })
-  });
-  const lst = await api('/api/portal/list');
-  document.getElementById('portal-out').textContent =
-    `Đã gửi [${r.item_id}] (${r.raw_bytes}B -> ${r.wire_bytes}B, -${r.saved_pct}%)\n--- Danh sách Drop (${(lst.items||[]).length}) ---\n` +
-    (lst.items || []).map(x => `[${x.item_id}] ${x.title} (${x.raw_bytes}B, còn ${x.remaining_s}s): ${x.preview}`).join('\n');
-}
-
-async function packAiContext() {
-  const q = document.getElementById('ctx-q').value || 'ERROR';
-  const r = await api('/api/context/pack', {
-    method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ query: q })
-  });
-  document.getElementById('portal-out').textContent =
-    `AI Context Pack (${r.chars} chars, hits=${r.hits_used}, alerts=${r.alerts_used}, ${r.elapsed_ms}ms):\n\n${r.markdown}`;
-}
-
-async function medicInvestigate() {
-  const pat = document.getElementById('medic-pattern').value || 'ERROR';
-  const r = await api('/api/medic/investigate', {
-    method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ pattern: pat })
-  });
-  document.getElementById('medic-out').textContent = JSON.stringify(r, null, 2);
-}
-
-async function medicRun(pid) {
-  const r = await api('/api/medic/heal', {
-    method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ playbook_id: pid, params: { dry_run: true } })
-  });
-  document.getElementById('medic-out').textContent = JSON.stringify(r, null, 2);
-}
-
-function _escH(s) {
-  return String(s || '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-
-async function synergyStatus() {
-  const box = document.getElementById('synergy-out');
-  box.textContent = 'Đang đọc Tqouta Fleet & Radar Arbiter...';
-  try {
-    const r = await api('/api/synergy/status');
-    box.textContent = JSON.stringify(r, null, 2);
-  } catch (e) { box.textContent = 'Lỗi Synergy: ' + e.message; }
-}
-
-async function synergyBounties() {
-  const box = document.getElementById('synergy-out');
-  const lstEl = document.getElementById('synergy-bounties');
-  box.textContent = 'Đang quét solution.patch sẵn sàng nộp PR...';
-  try {
-    const r = await api('/api/synergy/bounties');
-    const items = r.bounties || [];
-    lstEl.innerHTML = items.slice(0, 8).map(b => {
-      const ds = b.diff_stats || {};
-      const ws = _escH(b.workspace_id);
-      const url = _escH(b.dav_patch_url);
-      return `<div class="cmp-row"><span><b>${ws}</b> <span class="mono">(${ds.files_changed || 0}f +${ds.lines_added || 0}/-${ds.lines_removed || 0}, ${b.mtime_local})</span></span><span><a href="${url}" target="_blank" style="color:var(--cyan);margin-right:10px;">Mở Patch</a><button onclick="synergyBountyDrop('${ws}')">Drop 5s</button></span></div>`;
-    }).join('') || '<div class="meta-line">Chưa có workspace nào có solution.patch.</div>';
-    box.textContent = `Tìm thấy ${r.total_ready || 0} bounty sẵn sàng (${r.elapsed_ms}ms).`;
-  } catch (e) { box.textContent = 'Lỗi Bounties: ' + e.message; }
-}
-
-async function synergyBountyDrop(ws) {
-  const box = document.getElementById('synergy-out');
-  const r = await api('/api/synergy/bounty-drop', {
-    method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ workspace_id: ws })
-  });
-  box.textContent = `Đã đẩy [${ws}] lên Drop-Portal:\n` + JSON.stringify(r, null, 2);
-}
-
-async function synergyBurnScan() {
-  const box = document.getElementById('synergy-out');
-  box.textContent = 'Đang quét Burn-Loop trong agy_solver.log...';
-  try {
-    const r = await api('/api/synergy/burn-scan');
-    box.textContent = JSON.stringify(r, null, 2);
-  } catch (e) { box.textContent = 'Lỗi Burn-Scan: ' + e.message; }
-}
-
-async function synergyVault() {
-  const box = document.getElementById('synergy-out');
-  box.textContent = 'Đang chụp Két Sắt Holographic GF(256) (Tqouta + Radar DB)...';
-  try {
-    const r = await api('/api/synergy/vault-backup', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
-    box.textContent = JSON.stringify(r, null, 2);
-  } catch (e) { box.textContent = 'Lỗi Vault: ' + e.message; }
-}
-
-async function omegaStatus() {
-  const box = document.getElementById('omega-out');
-  box.textContent = 'Đang kiểm tra khả năng Rust/C11 v7.0, OS TUN/FUSE & Remote RAM...';
-  try {
-    const r = await api('/api/omega/status');
-    box.textContent = JSON.stringify(r, null, 2);
-  } catch (e) { box.textContent = 'Lỗi Omega Status: ' + e.message; }
-}
-
-async function omegaBenchmark() {
-  const box = document.getElementById('omega-out');
-  const tbl = document.getElementById('omega-table');
-  box.textContent = 'Đang chạy kiểm chuẩn thực tế Trước/Sau cho cả 14 ý tưởng (ChaCha20, RLNC Recode, PPM, Slepian-Wolf, WASM, PQ, UEP, Genetic)...';
-  try {
-    const r = await api('/api/omega/benchmark', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
-    const rows = Object.values(r.ideas || {}).map(it =>
-      `<tr><td>${esc(it.name)}</td><td>${esc(it.before)}</td><td><b>${esc(it.after)}</b></td><td style="color:${it.ok ? '#34d399' : '#fb7185'}">${it.ok ? 'PASS' : 'FAIL'}</td></tr>`
-    ).join('');
-    tbl.innerHTML = `<table class="tbl"><thead><tr><th>Đột phá</th><th>Trước (Baseline)</th><th>Sau (CHIMERA v7.0)</th><th>KQ</th></tr></thead><tbody>${rows}</tbody></table>`;
-    box.textContent = JSON.stringify({ verified: r.ideas_verified, total: r.ideas_total, total_ms: r.total_ms, native_v7: r.native_v7 }, null, 2);
-  } catch (e) { box.textContent = 'Lỗi Benchmark 14 ý tưởng: ' + e.message; }
-}
-
-async function omegaWasmTest() {
-  const box = document.getElementById('omega-out');
-  box.textContent = 'Đang chạy module WASM MVP (.wasm) hộp cát không quyền trên node đích...';
-  try {
-    const r = await api('/api/omega/wasm-exec', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
-    box.textContent = JSON.stringify(r, null, 2);
-  } catch (e) { box.textContent = 'Lỗi WASM: ' + e.message; }
-}
-
-async function omegaSlepianTest() {
-  const box = document.getElementById('omega-out');
-  box.textContent = 'Đang chạy đồng bộ mù 0-RTT Slepian-Wolf (Berlekamp-Massey + Chien)...';
-  try {
-    const r = await api('/api/omega/slepian-sync', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
-    box.textContent = JSON.stringify(r, null, 2);
-  } catch (e) { box.textContent = 'Lỗi Slepian-Wolf: ' + e.message; }
-}
-
-async function omegaRamTest() {
-  const box = document.getElementById('omega-out');
-  box.textContent = 'Đang nén & đẩy trang RAM 4KB sang Remote RAM Slab...';
-  try {
-    const put = await api('/api/omega/ram-put', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ page_id: 'ui_demo_4kb', text: 'CHIMERA_REMOTE_RAM_4KB_PAGE_'.repeat(140) }) });
-    const get = await api('/api/omega/ram-get', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ page_id: 'ui_demo_4kb' }) });
-    box.textContent = JSON.stringify({ put, get }, null, 2);
-  } catch (e) { box.textContent = 'Lỗi Remote RAM: ' + e.message; }
-}
-
-async function singularityStatus() {
-  const box = document.getElementById('singularity-out');
-  box.textContent = 'Đang kiểm tra phần cứng SIMD PIR/FSK & v8.0 SINGULARITY...';
-  try {
-    const r = await api('/api/singularity/status');
-    box.textContent = JSON.stringify(r, null, 2);
-  } catch (e) { box.textContent = 'Lỗi Singularity Status: ' + e.message; }
-}
-
-async function singularityBenchmark() {
-  const box = document.getElementById('singularity-out');
-  const tbl = document.getElementById('singularity-table');
-  box.textContent = 'Đang chạy đánh giá đối kháng cả 7 ý tưởng v8.0 (bao gồm 2-Server PIR & Speculative qua hầm 5 ms)...';
-  try {
-    const r = await api('/api/singularity/benchmark', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
-    const rows = Object.values(r.ideas || {}).map(it =>
-      `<tr><td>${esc(it.name)}</td><td>${esc(it.before)}</td><td><b>${esc(it.after)}</b></td><td style="color:${it.ok ? '#34d399' : '#fb7185'}">${it.ok ? 'PASS' : 'FAIL'}</td></tr>`
-    ).join('');
-    tbl.innerHTML = `<table class="tbl"><thead><tr><th>Đột phá v8.0</th><th>Trước / Baseline</th><th>Đo thực tế (v8.0 SINGULARITY)</th><th>KQ</th></tr></thead><tbody>${rows}</tbody></table>`;
-    box.textContent = JSON.stringify({ verified: r.ideas_verified, total: r.ideas_total, total_ms: r.total_ms, native_v8: r.native_v8 }, null, 2);
-  } catch (e) { box.textContent = 'Lỗi Benchmark v8.0: ' + e.message; }
-}
-
-async function singularityPirTest() {
-  const box = document.getElementById('singularity-out');
-  box.textContent = 'Đang thử truy vấn mù IT-PIR trên slab 1 MiB...';
-  try {
-    const r = await api('/api/singularity/pir-shard', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
-    box.textContent = JSON.stringify(r, null, 2);
-  } catch (e) { box.textContent = 'Lỗi PIR: ' + e.message; }
-}
-
-async function singularityKolmogorovTest() {
-  const box = document.getElementById('singularity-out');
-  box.textContent = 'Đang đo nén Kolmogorov vs zlib-9 / lzma / PPM v7 trên 3 bộ dữ liệu...';
-  try {
-    const r = await api('/api/singularity/kolmogorov', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
-    box.textContent = JSON.stringify(r, null, 2);
-  } catch (e) { box.textContent = 'Lỗi Kolmogorov: ' + e.message; }
-}
-
-async function singularityCrdtTest() {
-  const box = document.getElementById('singularity-out');
-  box.textContent = 'Đang trộn Merkle-CRDT offline theo 20 thứ tự xáo trộn...';
-  try {
-    const r = await api('/api/singularity/crdt-merge', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
-    box.textContent = JSON.stringify(r, null, 2);
-  } catch (e) { box.textContent = 'Lỗi CRDT: ' + e.message; }
-}
-
-async function singularityDualVaultTest() {
-  const box = document.getElementById('singularity-out');
-  box.textContent = 'Đang kiểm định pháp y thống kê Két Hai Sự Thật (10 đơn vs 10 kép)...';
-  try {
-    const r = await api('/api/singularity/dual-vault', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
-    box.textContent = JSON.stringify(r, null, 2);
-  } catch (e) { box.textContent = 'Lỗi Dual-Vault: ' + e.message; }
-}
-
-function logV4(msg) {
-  const el = document.getElementById('v4-console');
-  el.style.display = 'block';
-  el.textContent = msg;
-}
-
-async function triggerSearch() {
-  const q = document.getElementById('search-q').value || '';
-  const repo = document.getElementById('search-repo').value || '';
-  const out = document.getElementById('search-out');
-  out.textContent = 'Đang tìm BM25 FTS5...';
-  try {
-    const r = await api('/api/search', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ query: q, repo, limit: 10 })
-    });
-    document.getElementById('search-meta').textContent = `${r.indexed_files} files • ${r.elapsed_ms}ms`;
-    out.textContent = r.hits && r.hits.length
-      ? `Tìm thấy ${r.total_hits} kết quả (${r.elapsed_ms}ms):\n` +
-        r.hits.map(h => `[${h.repo}] ${h.rel_path} (score=${h.score})\n  ${h.snippet}`).join('\n')
-      : `Không có kết quả cho "${q}" (${r.elapsed_ms}ms).`;
-  } catch (e) { out.textContent = 'Lỗi: ' + e.message; }
-}
-
-async function triggerReindex() {
-  const out = document.getElementById('search-out');
-  out.textContent = 'Đang cập nhật Merkle FTS5 index...';
-  try {
-    const r = await api('/api/search/reindex', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
-    out.textContent = `Reindex OK: ${r.total_files} files | updated=${r.updated} skipped=${r.skipped_unchanged} removed=${r.removed} DB=${r.db_size_kb}KB trong ${r.elapsed_ms}ms`;
-    await forceRefresh();
-  } catch (e) { out.textContent = 'Lỗi: ' + e.message; }
-}
-
-async function triggerSentinel() {
-  try {
-    const r = await api('/api/sentinel/scan', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
-    logV4(`Sentinel [${r.status}] trong ${r.elapsed_ms}ms | Cảnh báo=${r.alert_count} | Dịch vụ=${(r.services||[]).length}`);
-    await forceRefresh();
-  } catch (e) { logV4('Sentinel lỗi: ' + e.message); }
-}
-
-async function triggerNatBust() {
-  logV4('Đang chạy STUN + Birthday-Paradox NAT Buster...');
-  try {
-    const r = await api('/api/nat/bust', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
-    logV4(`NAT Buster: punched=${r.punched} mode=${r.fallback_mode} | LocalNAT=${(r.local_nat||{}).nat_type} | TailscaleRTT=${r.tailscale_rtt_ms}ms | DirectRTT=${r.direct_rtt_p50_ms}ms | ${r.diagnosis}`);
-    await forceRefresh();
-  } catch (e) { logV4('NAT Buster lỗi: ' + e.message); }
-}
-
-async function triggerEdgeTest() {
-  logV4('Đang test Universal Warp-Edge Gateway + Speculative Prefetch...');
-  try {
-    const r = await api('/api/edge/fetch', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({ app_id: 'chimera', path: '/', allow_prefetch: true })
-    });
-    logV4(`Edge Gateway [${r.app_id}]: raw=${r.raw_bytes}B -> wire=${r.wire_bytes}B (-${r.saved_vs_raw_pct}%, ${r.mode_name}) | Prefetched=${Object.keys(r.prefetched||{}).length} endpoints trong ${r.server_exec_ms}ms`);
-    await forceRefresh();
-  } catch (e) { logV4('Edge lỗi: ' + e.message); }
-}
-
-async function triggerHoloBackup() {
-  logV4('Đang tạo Holographic GF(256) (K=2, N=3) Backup...');
-  try {
-    const r = await api('/api/backup/create', { method: 'POST', headers: {'Content-Type':'application/json'}, body: '{}' });
-    logV4(`Holo Backup [${r.backup_id}]: files=${(r.files||[]).length} raw=${r.raw_bytes}B -> shard=${r.shard_bytes}B | Entropy=[${(r.entropies||[]).join(', ')}] | PeerSynced=${r.peer_synced} | SHA=${(r.orig_sha256||'').slice(0,16)}... (${r.elapsed_ms}ms)`);
-    await forceRefresh();
-  } catch (e) { logV4('Holo Backup lỗi: ' + e.message); }
-}
-
-async function refresh() {
-  if (document.hidden) return;
-  try {
-    const headers = _lastEtag ? { 'If-None-Match': _lastEtag } : {};
-    const res = await fetch('/api/status', { headers });
-    if (res.status === 304) return;
-    if (!res.ok) throw new Error(await res.text());
-    const et = res.headers.get('ETag');
-    if (et) _lastEtag = et;
-    renderState(await res.json());
-  } catch (e) { console.error(e); }
-}
-
-async function forceRefresh() {
-  _lastEtag = '';
-  try { renderState(await api('/api/status')); } catch (e) { console.error(e); }
-}
-
-async function triggerRun() {
-  const b = document.getElementById('btn-run');
-  b.disabled = true; b.textContent = 'Đang chạy...';
-  try { await api('/api/run?sync=1', { method: 'POST' }); await refresh(); }
-  catch (e) { alert('Lỗi: ' + e.message); }
-  finally { b.disabled = false; b.textContent = '▶ Chạy đánh giá ngay'; }
-}
-
-function openMarkdownReport() {
-  window.open('/api/cluster/report?format=md', '_blank');
-}
-
-async function triggerBeam() {
-  try {
-    const res = await api('/api/live-beam', { method: 'POST' });
-    alert(`DNA Beam: ${res.udp_wire_bytes}B / ${res.raw_bytes}B (-${res.reduction_pct}%) trong ${res.elapsed_ms}ms`);
-    await refresh();
-  } catch (e) { alert(e.message); }
-}
-
-async function triggerMerkle() {
-  try {
-    const res = await api('/api/live-merkle', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({}) });
-    alert(`Merkle Sync: root=${res.remote_root_hash}\nChanged=${res.changed_files}/${res.total_files} files | UDP Wire=${res.udp_wire_bytes}B (-${res.total_reduction_pct}%)\n2nd 0-RTT Pass noop=${res.second_pass_noop} in ${res.second_pass_ms}ms`);
-    await refresh();
-  } catch (e) { alert(e.message); }
-}
-
-async function triggerImmortal() {
-  try {
-    const res = await api('/api/live-immortal', { method: 'POST' });
-    alert(`Immortal Multi-Path Chaos Survival!\nSurvived Blackout: ${res.survived_blackout}\nLane TX: ${JSON.stringify(res.lane_tx_counts)}\nLane RX (Peer): ${JSON.stringify(res.lane_rx_counts)}\nReconnects: ${res.reconnects} | Time: ${res.elapsed_ms}ms`);
-    await refresh();
-  } catch (e) { alert(e.message); }
-}
-
-async function triggerFluid() {
-  const op = document.getElementById('q-op').value;
-  const val = document.getElementById('q-needle').value || '';
-  const fpath = document.getElementById('q-file').value || '';
-  const out = document.getElementById('query-out');
-  out.textContent = 'Đang chạy Fluid Pushdown trực tiếp trên peer...';
-  try {
-    const body = { op, file_path: fpath, needle: val, patterns: [val], sql: val, use_telepathy: true };
-    const res = await api('/api/live-fluid', {
-      method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
-    });
-    out.textContent =
-      `[${res.op}] Codec=${res.codec_mode} | Raw=${res.raw_bytes}B -> Uncomp=${res.uncompressed_output_bytes}B -> Zlib=${res.plain_zlib_bytes}B -> Wire=${res.wire_bytes}B (-${res.wire_reduction_pct}%)\n` +
-      `P0=${res.preview_first_ms}ms | Total=${res.total_ms}ms | ServerExec=${res.server_exec_ms}ms | Matched=${res.matched_records}\n--- Output Preview ---\n` +
-      (res.output_preview_text || (res.preview_items || []).join('\n'));
-    await refresh();
-  } catch (e) { out.textContent = 'Lỗi: ' + e.message; }
-}
-
-document.getElementById('profile-select').addEventListener('change', async (ev) => {
-  await api('/api/profile', {
-    method: 'POST', headers: {'Content-Type':'application/json'},
-    body: JSON.stringify({ active_profile: ev.target.value })
-  });
-  await refresh();
-});
-
-if (window.__INIT_STATE__) {
-  renderState(window.__INIT_STATE__);
-} else {
-  refresh();
-}
-document.addEventListener('visibilitychange', () => {
-  if (!document.hidden) refresh();
-});
-setInterval(() => { if (!document.hidden) refresh(); }, 30000);
-</script>
-</body>
-</html>
-"""
+from .universe_ui import UNIVERSE_DASHBOARD_HTML as _DASHBOARD_HTML, build_kolmogorov_packed_html
 
 
 class _ThreadingControlServer(http.server.ThreadingHTTPServer):
@@ -1053,6 +155,7 @@ class ChimeraDaemon:
         self.ghost_pty = GhostPtyManager()
         self.ghost_fs = GhostFsEngine(fs_root)
         self.medic = MedicEngine(self.ops_dir)
+        self.vsa_memory = SharedVsaMemoryService(db_path=self.ops_dir / "vsa_memory.db")
         self.drop_portal = DropPortalStore(
             self.ops_dir / "drop_portal",
             default_ttl_s=int(getattr(self.config, "drop_ttl_s", 600)),
@@ -1071,6 +174,12 @@ class ChimeraDaemon:
         self.time_warp = SpeculativeTimeWarpEngine()
         self._pir_lock = threading.Lock()
         self._pir_slab: bytes | None = None
+        self._v9_lock = threading.Lock()
+        self._v9_nvme: VirtualNvmeFabric | None = None
+        self._v9_indexer: LiveClusterIndexer | None = None
+        self._v9_cas: SharedCasTurboCache | None = None
+        self._v9_hub: UniversalInstantHub | None = None
+        self._v9_handoff: WorkspaceHandOffManager | None = None
 
         self._run_lock = threading.Lock()
         self._ephemeral_mode = int(self.config.beam_port) == 0 and int(self.config.query_port) == 0
@@ -1078,6 +187,28 @@ class ChimeraDaemon:
         self._status_cache_ts: float = 0.0
         self._status_cache_data: tuple[dict[str, Any], bytes, str] | None = None
         self._last_nat_result: dict[str, Any] | None = None
+        self._flow_lock = threading.Lock()
+        self.host_governor = HostYieldGovernor(role=self.config.role)
+        _peer_radar = (
+            f"http://{self.config.peer_ipv4}:8787"
+            if self.config.role == "controller" and self.config.peer_ipv4
+            else ""
+        )
+        self.trinity = TrinityCommandBridge(
+            governor=self.host_governor,
+            tquota_admin_url=str(getattr(self.config, "tquota_admin_url", "http://127.0.0.1:12504")),
+            radar_url=str(getattr(self.config, "radar_url", "http://127.0.0.1:8787")),
+            peer_radar_url=_peer_radar,
+            peer_trinity_resolver=(self.active_edge_peer_base if self.config.role == "controller" else None),
+            ephemeral_mode=self._ephemeral_mode,
+            on_flow=self.record_flow,
+        )
+        self._flow_seq: int = 0
+        self._flow_ring: deque[dict[str, Any]] = deque(maxlen=28)
+        self._peer_health_lock = threading.Lock()
+        self._peer_health_ts: float = 0.0
+        self._peer_health_busy: bool = False
+        self._peer_health_cache: dict[str, Any] | None = None
         self._stop = threading.Event()
         self._beam_srv: BeamServer | None = None
         self._rpc_srv: HedgedRpcServer | None = None
@@ -1090,6 +221,78 @@ class ChimeraDaemon:
         self._httpd: _ThreadingControlServer | None = None
         self._threads: list[threading.Thread] = []
         self.http_addr: tuple[str, int] = ("127.0.0.1", 0)
+        self.platform = PlatformSubstrate(self)
+
+    def record_flow(
+        self,
+        lane: str,
+        src: str,
+        dst: str,
+        op: str,
+        wire_bytes: int = 0,
+        elapsed_ms: float = 0.0,
+        detail: str = "",
+        ok: bool = True,
+    ) -> dict[str, Any]:
+        with self._flow_lock:
+            self._flow_seq += 1
+            ev = {
+                "id": self._flow_seq,
+                "ts": datetime.now().astimezone().strftime("%H:%M:%S"),
+                "lane": lane,
+                "src": src,
+                "dst": dst,
+                "op": op,
+                "bytes": int(wire_bytes),
+                "ms": round(float(elapsed_ms), 2),
+                "detail": detail[:140],
+                "ok": bool(ok),
+            }
+            self._flow_ring.append(ev)
+            return ev
+
+    def list_flows(self, limit: int = 16) -> list[dict[str, Any]]:
+        with self._flow_lock:
+            items = list(self._flow_ring)
+        return list(reversed(items[-max(1, limit) :]))
+
+    def get_cached_peer_health(self) -> dict[str, Any] | None:
+        if self.config.role != "controller" or self._ephemeral_mode or not self.config.peer_ipv4:
+            return None
+        now = time.monotonic()
+        with self._peer_health_lock:
+            cached = self._peer_health_cache
+            need_refresh = (now - self._peer_health_ts) > 4.0 and not self._peer_health_busy
+            if need_refresh:
+                self._peer_health_busy = True
+
+        if need_refresh:
+            def _probe_peer() -> None:
+                res: dict[str, Any]
+                try:
+                    t0 = time.perf_counter()
+                    base = self.active_edge_peer_base()
+                    with urllib.request.urlopen(f"{base}/api/health", timeout=1.2) as r:
+                        data = json.loads(r.read().decode("utf-8"))
+                    res = {
+                        "online": True,
+                        "node_name": data.get("node_name", self.config.peer_name or "svhome"),
+                        "version": data.get("version"),
+                        "hardware": data.get("hardware", {}),
+                        "native_v9": data.get("native_v9", {}),
+                        "native_v12": data.get("native_v12", {}),
+                        "zero_weight": data.get("zero_weight", {}),
+                        "probe_ms": round((time.perf_counter() - t0) * 1000.0, 2),
+                    }
+                except Exception as exc:
+                    res = {"online": False, "node_name": self.config.peer_name or "svhome", "error": str(exc)[:80]}
+                with self._peer_health_lock:
+                    self._peer_health_cache = res
+                    self._peer_health_ts = time.monotonic()
+                    self._peer_health_busy = False
+
+            threading.Thread(target=_probe_peer, daemon=True, name="chimera-peer-probe").start()
+        return cached
 
     def active_edge_peer_base(self) -> str:
         if self._phantom_client is not None:
@@ -1098,6 +301,11 @@ class ChimeraDaemon:
                 loc_p = (st.get("listeners") or {}).get(int(self.config.peer_dashboard_port))
                 if loc_p:
                     return f"http://127.0.0.1:{loc_p}"
+        if self._phantom_srv is not None:
+            st = self._phantom_srv.stats()
+            rev_p = (st.get("reverse_listeners") or {}).get(int(self.config.peer_dashboard_port or 9780))
+            if rev_p and any(bool(s.get("punched")) for s in (st.get("sessions") or [])):
+                return f"http://127.0.0.1:{rev_p}"
         return self.peer_http_base()
 
     def _should_proxy(self, is_local_flag: bool = False) -> bool:
@@ -1124,9 +332,25 @@ class ChimeraDaemon:
             url = f"{b}{path_and_query}"
             headers = {"Content-Type": "application/json"} if method == "POST" else {}
             req = urllib.request.Request(url, data=body_bytes if method == "POST" else None, headers=headers, method=method)
+            t0 = time.perf_counter()
             try:
                 with urllib.request.urlopen(req, timeout=timeout_s) as r:
-                    return int(r.status), str(r.headers.get("Content-Type", "application/json")), r.read()
+                    rb = r.read()
+                    sc = int(r.status)
+                    ms = (time.perf_counter() - t0) * 1000.0
+                    p_clean = path_and_query.split("?", 1)[0]
+                    lane = "tarpit" if "/tarpit" in p_clean else "phantom"
+                    self.record_flow(
+                        lane,
+                        self.config.node_name,
+                        self.config.peer_name or "svhome",
+                        p_clean,
+                        wire_bytes=len(rb) + len(body_bytes or b""),
+                        elapsed_ms=ms,
+                        detail=f"HTTP {sc} via {'PH5M' if b != self.peer_http_base() else 'DIRECT'}",
+                        ok=sc < 400,
+                    )
+                    return sc, str(r.headers.get("Content-Type", "application/json")), rb
             except urllib.error.HTTPError as he:
                 return int(he.code), str(he.headers.get("Content-Type", "application/json")), he.read()
             except Exception as exc:
@@ -1155,6 +379,52 @@ class ChimeraDaemon:
         if self.config.peer_ipv4:
             return f"http://{self.config.peer_ipv4}:{self.config.peer_dashboard_port}"
         return f"http://127.0.0.1:{self.http_addr[1]}"
+
+    def _get_v9_nvme(self) -> VirtualNvmeFabric:
+        with self._v9_lock:
+            if self._v9_nvme is None:
+                self._v9_nvme = VirtualNvmeFabric(root=self.ghost_fs.root_dir, max_cache_bytes=4 * 1024 * 1024)
+            return self._v9_nvme
+
+    def _get_v9_indexer(self) -> LiveClusterIndexer:
+        with self._v9_lock:
+            if self._v9_indexer is None:
+                if (
+                    not self.config.search_roots
+                    and not self.config.allowed_query_roots
+                    and self.ghost_fs.root_dir == Path.home()
+                ):
+                    roots = [Path(__file__).resolve().parents[1]]
+                else:
+                    roots = [self.ghost_fs.root_dir]
+                    repo_cand = self.ghost_fs.root_dir / "chimera-tp"
+                    if repo_cand.is_dir():
+                        roots.insert(0, repo_cand)
+                    else:
+                        for p in self._allowed_roots():
+                            if p not in roots:
+                                roots.append(p)
+                self._v9_indexer = LiveClusterIndexer(roots=roots[:4], max_corpus_bytes=1536 * 1024)
+                self._v9_indexer.build_index(max_files=200)
+            return self._v9_indexer
+
+    def _get_v9_cas(self) -> SharedCasTurboCache:
+        with self._v9_lock:
+            if self._v9_cas is None:
+                self._v9_cas = SharedCasTurboCache(max_bytes=4 * 1024 * 1024)
+            return self._v9_cas
+
+    def _get_v9_hub(self) -> UniversalInstantHub:
+        with self._v9_lock:
+            if self._v9_hub is None:
+                self._v9_hub = UniversalInstantHub(max_items=64)
+            return self._v9_hub
+
+    def _get_v9_handoff(self) -> WorkspaceHandOffManager:
+        with self._v9_lock:
+            if self._v9_handoff is None:
+                self._v9_handoff = WorkspaceHandOffManager(max_tasks=64)
+            return self._v9_handoff
 
     def start(self) -> "ChimeraDaemon":
         ephemeral_mode = int(self.config.beam_port) == 0 and int(self.config.query_port) == 0
@@ -1283,8 +553,33 @@ class ChimeraDaemon:
 
             def do_GET(self) -> None:
                 parsed = urllib.parse.urlparse(self.path)
+                if parsed.path == "/.well-known/chimera.json" or parsed.path.startswith("/v1/"):
+                    plat_res = daemon_ref.platform.handle_get(parsed, self.headers)
+                    if plat_res is not None:
+                        self._send_json(plat_res[0], plat_res[1])
+                        return
                 if parsed.path == "/":
-                    _, raw_json, etag = daemon_ref.get_cached_status()
+                    payload, raw_json, etag = daemon_ref.get_cached_status()
+                    if "packed=1" in parsed.query:
+                        cfg_d = payload.get("config") or {}
+                        ph_d = payload.get("phantom") or {}
+                        boot_obj = {
+                            "version": payload.get("version"),
+                            "config": {"node_name": cfg_d.get("node_name"), "role": cfg_d.get("role")},
+                            "hardware": payload.get("hardware"),
+                            "zero_weight": payload.get("zero_weight"),
+                            "phantom": {"client": ph_d.get("client")} if ph_d.get("client") else {},
+                            "cluster": {"summary": (payload.get("cluster") or {}).get("summary", {})},
+                        }
+                        safe_boot = json.dumps(boot_obj, ensure_ascii=False, separators=(",", ":")).replace("</", "<\\/")
+                        packed_raw = build_kolmogorov_packed_html(safe_boot, '""')
+                        self._send_bytes(
+                            200,
+                            "text/html; charset=utf-8",
+                            packed_raw,
+                            extra_headers={"Cache-Control": "no-cache", "X-Chimera-Packed": "kolmogorov-deflate-raw"},
+                        )
+                        return
                     safe_json = raw_json.decode("utf-8").replace("</", "<\\/")
                     hydrated = _DASHBOARD_HTML.replace(
                         "/*__INIT_STATE__*/null", safe_json, 1
@@ -1301,16 +596,142 @@ class ChimeraDaemon:
                         200,
                         {
                             "ok": True,
-                            "version": "8.0.0",
+                            "version": "12.0.0",
                             "node_name": daemon_ref.config.node_name,
                             "role": daemon_ref.config.role,
                             "hardware": cpu_caps(),
+                            "native_v9": v9_native_caps(),
+                            "native_v12": v12_native_caps(),
                             "zero_weight": get_zero_weight_status(),
+                        },
+                    )
+                    return
+                if parsed.path == "/api/pulse":
+                    _, _, etag = daemon_ref.get_cached_status()
+                    sent_st = daemon_ref.sentinel.latest_status() or {}
+                    recent_ev = daemon_ref.store.get_dashboard_state(limit=1).get("events", [])
+                    self._send_json(
+                        200,
+                        {
+                            "ok": True,
+                            "ts_ms": int(time.time() * 1000),
+                            "ts_local": datetime.now().astimezone().strftime("%H:%M:%S"),
+                            "zero_weight": get_zero_weight_status(),
+                            "phantom": daemon_ref.phantom_status(),
+                            "sentinel_status": sent_st.get("status", "PENDING"),
+                            "sentinel_services": sent_st.get("services", []),
+                            "latest_event": recent_ev[0] if recent_ev else None,
+                            "portal_count": len(daemon_ref.drop_portal.list_items()),
+                            "pty_sessions": len(daemon_ref.ghost_pty.list_sessions()),
+                            "status_etag": etag,
+                            "peer": daemon_ref.get_cached_peer_health(),
+                            "flows": daemon_ref.list_flows(limit=16),
+                            "edge": daemon_ref.edge_stats(),
+                            "trinity": daemon_ref.trinity.pulse_summary(),
+                            "platform": daemon_ref.platform.pulse_summary(),
+                        },
+                        extra_headers={"Cache-Control": "no-store"},
+                    )
+                    return
+                if parsed.path == "/api/galactic/tarpit" or parsed.path.startswith("/api/galactic/tarpit/"):
+                    if daemon_ref._should_proxy("local=1" in parsed.query):
+                        try:
+                            sc, ct, rb = daemon_ref.proxy_request("GET", self.path, timeout_s=8.0)
+                            self._send_bytes(sc, ct, rb)
+                        except Exception as exc:
+                            self._send_json(502, {"error": str(exc)})
+                        return
+                    rel = parsed.path[len("/api/galactic/tarpit"):] or "/"
+                    t0_tp = time.perf_counter()
+                    tp_data = ProceduralTarpitLabyrinth().inspect_path(rel)
+                    daemon_ref.record_flow(
+                        "tarpit",
+                        "probe",
+                        daemon_ref.config.node_name,
+                        "TARPIT_0KB",
+                        wire_bytes=len(tp_data.get("content", "") or ""),
+                        elapsed_ms=(time.perf_counter() - t0_tp) * 1000.0,
+                        detail=f"path={rel} disk=0B",
+                        ok=True,
+                    )
+                    self._send_json(
+                        200,
+                        {
+                            "ok": True,
+                            "node_name": daemon_ref.config.node_name,
+                            "stateless": True,
+                            **tp_data,
+                        },
+                    )
+                    return
+
+                if parsed.path == "/api/hyperdrive/search":
+                    qs = urllib.parse.parse_qs(parsed.query)
+                    q = qs.get("q", [""])[0]
+                    limit = max(1, min(50, int(qs.get("limit", ["20"])[0])))
+                    local_only = "local=1" in parsed.query
+                    res = daemon_ref._get_v9_indexer().search(q, limit=limit)
+                    hits = [{"node": daemon_ref.config.node_name, **h} for h in res.get("hits", [])]
+                    tot_matches = int(res.get("total_matches", 0))
+                    if not local_only and daemon_ref._should_proxy(False):
+                        try:
+                            pq = f"/api/hyperdrive/search?q={urllib.parse.quote(q)}&limit={limit}&local=1"
+                            sc, _, rb = daemon_ref.proxy_request("GET", pq, timeout_s=4.0)
+                            if sc == 200:
+                                pr = json.loads(rb.decode("utf-8"))
+                                p_name = pr.get("node_name", daemon_ref.config.peer_name or "peer")
+                                hits.extend({"node": p_name, **h} for h in pr.get("hits", []))
+                                tot_matches += int(pr.get("total_matches", 0))
+                        except Exception:
+                            pass
+                    daemon_ref.record_flow(
+                        "phantom",
+                        daemon_ref.config.node_name,
+                        daemon_ref.config.peer_name or daemon_ref.config.node_name,
+                        "SPOTLIGHT",
+                        wire_bytes=max(32, len(q) + tot_matches * 64),
+                        elapsed_ms=float(res.get("elapsed_ms", 0.0)),
+                        detail=f"q={q!r} hits={tot_matches}",
+                        ok=True,
+                    )
+                    self._send_json(
+                        200,
+                        {
+                            "ok": True,
+                            "node_name": daemon_ref.config.node_name,
+                            "query": q,
+                            "indexed_files": res.get("indexed_files", 0),
+                            "total_matches": tot_matches,
+                            "hits": hits[:limit],
+                            "elapsed_ms": res.get("elapsed_ms", 0.0),
                         },
                     )
                     return
                 if parsed.path == "/api/phantom/status":
                     self._send_json(200, daemon_ref.phantom_status())
+                    return
+                if parsed.path == "/api/vsa/stats":
+                    self._send_json(200, daemon_ref.vsa_memory.stats())
+                    return
+                if parsed.path == "/api/vsa/export":
+                    qs = urllib.parse.parse_qs(parsed.query)
+                    dom = (qs.get("domain") or [""])[0].strip() or None
+                    lim = int((qs.get("limit") or ["500"])[0] or 500)
+                    self._send_json(
+                        200,
+                        {"ok": True, "items": daemon_ref.vsa_memory.export_items(domain=dom, limit=lim)},
+                    )
+                    return
+                if parsed.path == "/api/trinity/governor":
+                    self._send_json(200, daemon_ref.host_governor.evaluate_state())
+                    return
+                if parsed.path == "/api/trinity/status":
+                    self._send_json(200, daemon_ref.trinity.snapshot(refresh=True))
+                    return
+                if parsed.path == "/api/trinity/proofs":
+                    qs = urllib.parse.parse_qs(parsed.query)
+                    lim = int((qs.get("limit") or ["20"])[0] or 20)
+                    self._send_json(200, daemon_ref.trinity.list_proofs(limit=lim))
                     return
                 if parsed.path in (
                     "/api/pty/list",
@@ -1327,6 +748,13 @@ class ChimeraDaemon:
                     "/api/synergy/burn-scan",
                     "/api/omega/status",
                     "/api/singularity/status",
+                    "/api/hyperdrive/status",
+                    "/api/hyperdrive/nvme-meta",
+                    "/api/hyperdrive/nvme-block",
+                    "/api/hyperdrive/cas",
+                    "/api/hyperdrive/hub",
+                    "/api/hyperdrive/handoff",
+                    "/api/galactic/status",
                 ):
                     qs = urllib.parse.parse_qs(parsed.query)
                     if daemon_ref._should_proxy("local=1" in parsed.query):
@@ -1408,6 +836,113 @@ class ChimeraDaemon:
                                     "native_v8": v8_native_caps(),
                                     "pir_db_loaded": daemon_ref._pir_slab is not None,
                                     "time_warp_throttled": daemon_ref.time_warp.throttled,
+                                    "zero_weight": get_zero_weight_status(),
+                                },
+                            )
+                        elif parsed.path == "/api/hyperdrive/status":
+                            self._send_json(
+                                200,
+                                {
+                                    "ok": True,
+                                    "version": "12.0.0",
+                                    "node_name": daemon_ref.config.node_name,
+                                    "role": daemon_ref.config.role,
+                                    "native_v9": v9_native_caps(),
+                                    "mount_drivers": probe_mount_drivers(),
+                                    "accelerators": probe_accelerators(),
+                                    "hw_encoders": probe_hw_encoders(),
+                                    "cas_stats": daemon_ref._get_v9_cas().stats(),
+                                    "hub_count": len(daemon_ref._get_v9_hub().list_items(limit=64)),
+                                    "zero_weight": get_zero_weight_status(),
+                                },
+                            )
+                        elif parsed.path == "/api/hyperdrive/nvme-meta":
+                            raw_root = qs.get("root", [""])[0]
+                            target_root = daemon_ref._assert_path_allowed(raw_root) if raw_root else daemon_ref.ghost_fs.root_dir
+                            nvme = daemon_ref._get_v9_nvme()
+                            cnt = nvme.mirror.scan_root(target_root, max_entries=1024)
+                            self._send_json(
+                                200,
+                                {
+                                    "ok": True,
+                                    "node_name": daemon_ref.config.node_name,
+                                    "root": str(target_root),
+                                    "count": cnt,
+                                    "entries": nvme.mirror.export_snapshot(limit=512),
+                                },
+                            )
+                        elif parsed.path == "/api/hyperdrive/nvme-block":
+                            raw_path = qs.get("path", [""])[0]
+                            if not raw_path:
+                                raise ValueError("path query parameter is required")
+                            cand = daemon_ref._assert_path_allowed(raw_path)
+                            if ".git" in cand.parts:
+                                raise PermissionError("Access to .git denied")
+                            if not cand.is_file():
+                                raise FileNotFoundError(str(cand))
+                            off = max(0, int(qs.get("offset", ["0"])[0]))
+                            ln = max(1, min(262144, int(qs.get("length", ["32768"])[0])))
+                            with open(cand, "rb") as fh:
+                                fh.seek(off)
+                                blk = fh.read(ln)
+                            self._send_json(
+                                200,
+                                {
+                                    "ok": True,
+                                    "path": str(cand),
+                                    "offset": off,
+                                    "size": len(blk),
+                                    "sha256": hashlib.sha256(blk).hexdigest(),
+                                    "data_b64": base64.b64encode(blk).decode("ascii"),
+                                },
+                            )
+                        elif parsed.path == "/api/hyperdrive/cas":
+                            key_q = qs.get("key", [""])[0].strip().lower()
+                            if not key_q:
+                                self._send_json(200, {"ok": True, "stats": daemon_ref._get_v9_cas().stats()})
+                            else:
+                                raw_c = daemon_ref._get_v9_cas().get(key_q)
+                                if raw_c is None:
+                                    self._send_json(404, {"error": "CAS key not found"})
+                                else:
+                                    self._send_json(
+                                        200,
+                                        {
+                                            "ok": True,
+                                            "key": key_q,
+                                            "raw_bytes": len(raw_c),
+                                            "data_b64": base64.b64encode(raw_c).decode("ascii"),
+                                        },
+                                    )
+                        elif parsed.path == "/api/hyperdrive/hub":
+                            lim = max(1, min(64, int(qs.get("limit", ["25"])[0])))
+                            self._send_json(
+                                200,
+                                {
+                                    "ok": True,
+                                    "node_name": daemon_ref.config.node_name,
+                                    "items": daemon_ref._get_v9_hub().list_items(limit=lim),
+                                },
+                            )
+                        elif parsed.path == "/api/hyperdrive/handoff":
+                            self._send_json(
+                                200,
+                                {
+                                    "ok": True,
+                                    "node_name": daemon_ref.config.node_name,
+                                    "tasks": daemon_ref._get_v9_handoff().list_tasks(),
+                                },
+                            )
+                        elif parsed.path == "/api/galactic/status":
+                            self._send_json(
+                                200,
+                                {
+                                    "ok": True,
+                                    "version": "12.0.0",
+                                    "node_name": daemon_ref.config.node_name,
+                                    "role": daemon_ref.config.role,
+                                    "native_v9": v9_native_caps(),
+                                    "native_v12": v12_native_caps(),
                                     "zero_weight": get_zero_weight_status(),
                                 },
                             )
@@ -1512,7 +1047,7 @@ class ChimeraDaemon:
                         200,
                         {
                             "generated_at": datetime.now().astimezone().isoformat(timespec="seconds"),
-                            "version": "8.0.0",
+                            "version": "12.0.0",
                             "cluster": st_payload.get("cluster", {}),
                             "status": st_payload,
                         },
@@ -1546,6 +1081,16 @@ class ChimeraDaemon:
 
             def do_POST(self) -> None:
                 parsed = urllib.parse.urlparse(self.path)
+                if parsed.path.startswith("/v1/"):
+                    plat_res = daemon_ref.platform.handle_post(
+                        parsed,
+                        self._read_body(),
+                        self.headers,
+                        client_ip=str(self.client_address[0] if self.client_address else "127.0.0.1"),
+                    )
+                    if plat_res is not None:
+                        self._send_json(plat_res[0], plat_res[1])
+                        return
                 if parsed.path == "/api/tcp_sink":
                     t0 = time.perf_counter()
                     clen = int(self.headers.get("Content-Length", "0"))
@@ -2189,6 +1734,9 @@ class ChimeraDaemon:
                                     int(daemon_ref.config.phantom_http_port): int(daemon_ref.config.peer_dashboard_port or daemon_ref.http_addr[1]),
                                 },
                                 local_test_mode=bool(body.get("local_test_mode", not bool(daemon_ref.config.peer_ipv4))),
+                                allowed_reverse_ports=list(
+                                    getattr(daemon_ref.config, "phantom_reverse_allowed_ports", [9780, 12500, 12504])
+                                ) + [int(daemon_ref.http_addr[1])],
                             ).start_listeners()
                         res = daemon_ref._phantom_client.connect(
                             local_test_mode=bool(body.get("local_test_mode", daemon_ref._phantom_client.local_test_mode)),
@@ -2198,6 +1746,16 @@ class ChimeraDaemon:
                         )
                         daemon_ref.store.log_event(
                             "INFO", "PHANTOM", f"mode={res['mode']} RTT={res['direct_rtt_ms']}ms conns={res['listeners']}"
+                        )
+                        daemon_ref.record_flow(
+                            "phantom",
+                            daemon_ref.config.node_name,
+                            daemon_ref.config.peer_name or "svhome",
+                            "PHANTOM_5MS",
+                            wire_bytes=len(json.dumps(res)),
+                            elapsed_ms=float(res.get("direct_rtt_ms", 0.0)),
+                            detail=f"{res.get('mode')} ports={res.get('listeners')}",
+                            ok=bool(res.get("connected")),
                         )
                         daemon_ref.invalidate_status_cache()
                         self._send_json(200, res)
@@ -2243,6 +1801,14 @@ class ChimeraDaemon:
                     "/api/singularity/kolmogorov",
                     "/api/singularity/airgap",
                     "/api/singularity/swarm",
+                    "/api/hyperdrive/grid-exec",
+                    "/api/hyperdrive/handoff",
+                    "/api/hyperdrive/nvme-delta",
+                    "/api/hyperdrive/cas",
+                    "/api/hyperdrive/hub",
+                    "/api/galactic/frost-sign",
+                    "/api/galactic/wasm-resume",
+                    "/api/galactic/vsa-query",
                 ):
                     raw_b = self._read_body()
                     try:
@@ -2549,6 +2115,112 @@ class ChimeraDaemon:
                             out_s = SwarmAnycastMesh.run_benchmark()
                             out_s["node_name"] = daemon_ref.config.node_name
                             self._send_json(200, out_s)
+                        elif parsed.path == "/api/hyperdrive/grid-exec":
+                            kernel = str(body.get("kernel") or "")
+                            p_b64 = str(body.get("payload_b64") or "")
+                            raw_p = base64.b64decode(p_b64.encode("ascii")) if p_b64 else b""
+                            s0 = int(body.get("start_step", 0))
+                            s1 = int(body.get("end_step", 6))
+                            init_hex = str(body.get("init_state_hex") or "")
+                            out_g = execute_whitelisted_kernel(kernel, raw_p, s0, s1, init_hex)
+                            out_g["node_name"] = daemon_ref.config.node_name
+                            self._send_json(200, out_g)
+                        elif parsed.path == "/api/hyperdrive/handoff":
+                            out_ho = daemon_ref._get_v9_handoff().accept_and_resume(
+                                task_id=str(body.get("task_id") or "handoff_task"),
+                                kernel=str(body.get("kernel") or "lz4_compress_hash"),
+                                payload_b64=str(body.get("payload_b64") or ""),
+                                state_hex=str(body.get("state_hex") or ""),
+                                resume_step=int(body.get("resume_step", 0)),
+                                total_steps=int(body.get("total_steps", 6)),
+                            )
+                            out_ho["node_name"] = daemon_ref.config.node_name
+                            self._send_json(200, out_ho)
+                        elif parsed.path == "/api/hyperdrive/nvme-delta":
+                            raw_path = str(body.get("path") or "")
+                            if not raw_path:
+                                raise ValueError("path is required")
+                            cand = daemon_ref._assert_path_allowed(raw_path)
+                            if ".git" in cand.parts:
+                                raise PermissionError("Access to .git denied")
+                            raw_d = base64.b64decode(str(body.get("data_b64") or "").encode("ascii"))
+                            if len(raw_d) > 262144:
+                                raise ValueError("Delta write exceeds 256 KB limit")
+                            off_d = max(0, int(body.get("offset", 0)))
+                            nvme = daemon_ref._get_v9_nvme()
+                            rel_p = cand.name
+                            wb = nvme.write_back_bytes(rel_p, off_d, raw_d)
+                            wb["node_name"] = daemon_ref.config.node_name
+                            self._send_json(200, wb)
+                        elif parsed.path == "/api/hyperdrive/cas":
+                            raw_c = base64.b64decode(str(body.get("data_b64") or "").encode("ascii"))
+                            if len(raw_c) > 1024 * 1024:
+                                raise ValueError("CAS object exceeds 1 MiB cap")
+                            res_c = daemon_ref._get_v9_cas().put(raw_c)
+                            res_c["node_name"] = daemon_ref.config.node_name
+                            self._send_json(200, res_c)
+                        elif parsed.path == "/api/hyperdrive/hub":
+                            item = daemon_ref._get_v9_hub().push_item(
+                                kind=str(body.get("kind") or "clipboard"),
+                                title=str(body.get("title") or "Hub"),
+                                text=str(body.get("text") or ""),
+                                source_node=str(body.get("source_node") or daemon_ref.config.node_name),
+                            )
+                            self._send_json(200, {"ok": True, **item})
+                        elif parsed.path == "/api/galactic/frost-sign":
+                            commits = [
+                                (int(c[0]), bytes.fromhex(str(c[1])), bytes.fromhex(str(c[2])))
+                                for c in body["commits"]
+                            ]
+                            z = FrostThreshold2of3.partial_sign(
+                                int(body["share_id"]),
+                                int(str(body["secret_hex"]), 16),
+                                {"d": int(str(body["nonce_d_hex"]), 16), "e": int(str(body["nonce_e_hex"]), 16)},
+                                commits,
+                                bytes.fromhex(str(body["group_pubkey_hex"])),
+                                bytes.fromhex(str(body["message_hex"])),
+                            )
+                            self._send_json(
+                                200,
+                                {
+                                    "ok": True,
+                                    "node_name": daemon_ref.config.node_name,
+                                    "share_id": int(body["share_id"]),
+                                    "z_hex": hex(z)[2:],
+                                },
+                            )
+                        elif parsed.path == "/api/galactic/wasm-resume":
+                            ckpt = body.get("checkpoint")
+                            if not isinstance(ckpt, dict) or not ckpt.get("wasm_b64"):
+                                raise ValueError("Missing checkpoint or wasm_b64")
+                            wasm_raw = base64.b64decode(str(ckpt["wasm_b64"]))
+                            if len(wasm_raw) > 65536 or int(ckpt.get("mem_pages", 1)) > 4:
+                                raise ValueError("WASM checkpoint exceeds sandbox cap")
+                            vm = WasmLiveTeleportEngine(max_steps=500_000, max_mem_pages=4)
+                            res = vm.execute_with_checkpoint(
+                                wasm_raw,
+                                b"",
+                                fn_name=str(ckpt.get("fn_name") or "filter"),
+                                checkpoint=ckpt,
+                            )
+                            res["node_name"] = daemon_ref.config.node_name
+                            self._send_json(200, res)
+                        elif parsed.path == "/api/galactic/vsa-query":
+                            trials = max(1, min(200, int(body.get("trials", 50))))
+                            corrupt_pct = max(0.0, min(0.45, float(body.get("corrupt_pct", 0.40))))
+                            res = HyperdimensionalVsaMesh.run_benchmark(trials=trials, corrupt_pct=corrupt_pct)
+                            res["node_name"] = daemon_ref.config.node_name
+                            daemon_ref.record_flow(
+                                "crypto",
+                                daemon_ref.config.node_name,
+                                daemon_ref.config.node_name,
+                                "VSA_RECONSTRUCT",
+                                wire_bytes=1250,
+                                elapsed_ms=float(res.get("mean_query_ms", 0.0)),
+                                detail=f"recall={res.get('recall_pct')}% ({trials}x40% dmg)",
+                                ok=bool(res.get("ok")),
+                            )
+                            self._send_json(200, res)
                     except PermissionError as pe:
                         self._send_json(403, {"error": str(pe)})
                     except FileNotFoundError as fnf:
@@ -2592,7 +2264,288 @@ class ChimeraDaemon:
                             else ""
                         )
                         rep = run_singularity_benchmark(peer_http_base=peer_base)
+                        gc.collect()
                         self._send_json(200, rep)
+                    except Exception as exc:
+                        self._send_json(500, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/hyperdrive/benchmark":
+                    raw_b = self._read_body()
+                    try:
+                        body = json.loads(raw_b.decode("utf-8") or "{}")
+                    except Exception:
+                        self._send_json(400, {"error": "Invalid JSON body"})
+                        return
+                    try:
+                        peer_base = (
+                            daemon_ref.active_edge_peer_base()
+                            if (daemon_ref.config.role == "controller" and not bool(body.get("local_only", False)))
+                            else ""
+                        )
+                        rep = run_hyperdrive_benchmark(peer_http_base=peer_base, root_dir=str(daemon_ref.ghost_fs.root_dir))
+                        daemon_ref.record_flow(
+                            "phantom",
+                            daemon_ref.config.node_name,
+                            daemon_ref.config.peer_name or "local",
+                            "BENCH_V9",
+                            wire_bytes=4096,
+                            elapsed_ms=float(rep.get("total_ms", 0.0)),
+                            detail=f"{rep.get('ideas_verified')}/{rep.get('ideas_total')} PASS",
+                            ok=bool(rep.get("ok")),
+                        )
+                        gc.collect()
+                        self._send_json(200, rep)
+                    except Exception as exc:
+                        self._send_json(500, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/galactic/benchmark":
+                    raw_b = self._read_body()
+                    try:
+                        body = json.loads(raw_b.decode("utf-8") or "{}")
+                    except Exception:
+                        self._send_json(400, {"error": "Invalid JSON body"})
+                        return
+                    try:
+                        peer_base = (
+                            daemon_ref.active_edge_peer_base()
+                            if (daemon_ref.config.role == "controller" and not bool(body.get("local_only", False)))
+                            else ""
+                        )
+                        wave = str(body.get("wave") or "all")
+                        rep = run_galactic_benchmark(peer_http_base=peer_base, wave=wave)
+                        daemon_ref.record_flow(
+                            "compute",
+                            daemon_ref.config.node_name,
+                            daemon_ref.config.peer_name or "local",
+                            f"BENCH_V12({wave})",
+                            wire_bytes=2048,
+                            elapsed_ms=float(rep.get("total_ms", 0.0)),
+                            detail=f"{rep.get('ideas_verified')}/{rep.get('ideas_total')} PASS",
+                            ok=bool(rep.get("ok")),
+                        )
+                        gc.collect()
+                        self._send_json(200, rep)
+                    except Exception as exc:
+                        self._send_json(500, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/trinity/governor":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        if body.get("policy"):
+                            daemon_ref.host_governor.set_policy(str(body["policy"]))
+                        if body.get("check_preempt"):
+                            ov = body.get("override_metrics")
+                            self._send_json(200, daemon_ref.host_governor.check_preempt(override_metrics=ov))
+                        else:
+                            ov = body.get("override_metrics")
+                            self._send_json(200, daemon_ref.host_governor.evaluate_state(override_metrics=ov))
+                    except Exception as exc:
+                        self._send_json(400, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/vsa/store":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        if isinstance(body.get("items"), list):
+                            res = daemon_ref.vsa_memory.store_batch(body["items"])
+                        else:
+                            res = daemon_ref.vsa_memory.store(
+                                str(body.get("item_id") or ""),
+                                domain=str(body.get("domain") or "global"),
+                                text=str(body.get("text") or ""),
+                                payload=body.get("payload"),
+                                reward=float(body.get("reward", 1.0) or 1.0),
+                                vsa_hex=body.get("vsa_hex"),
+                            )
+                        self._send_json(200, res)
+                    except Exception as exc:
+                        self._send_json(400, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/vsa/recall":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        res = daemon_ref.vsa_memory.recall(
+                            str(body.get("query_text") or ""),
+                            domain=body.get("domain"),
+                            top_k=int(body.get("top_k") or 5),
+                            min_sim=float(body.get("min_sim") or 0.0),
+                            query_vsa_hex=body.get("query_vsa_hex"),
+                        )
+                        daemon_ref.record_flow(
+                            "crypto",
+                            daemon_ref.config.node_name,
+                            daemon_ref.config.node_name,
+                            "VSA_RECALL",
+                            wire_bytes=1250,
+                            elapsed_ms=float(res.get("elapsed_ms", 0.0)),
+                            detail=f"backend={res.get('backend')} n={res.get('scanned')}",
+                            ok=bool(res.get("ok")),
+                        )
+                        self._send_json(200, res)
+                    except Exception as exc:
+                        self._send_json(400, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/vsa/sync-peer":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        peer_base = str(body.get("peer_base") or daemon_ref.active_edge_peer_base() or "").rstrip("/")
+                        if not peer_base:
+                            self._send_json(400, {"error": "no_peer_base"})
+                            return
+                        dom = str(body.get("domain") or "").strip()
+                        lim = int(body.get("limit") or 500)
+                        qs = urllib.parse.urlencode({k: v for k, v in (("domain", dom), ("limit", str(lim))) if v})
+                        t0 = time.perf_counter()
+                        with urllib.request.urlopen(f"{peer_base}/api/vsa/export?{qs}", timeout=4.0) as resp:
+                            rem_data = json.loads(resp.read().decode("utf-8", errors="ignore"))
+                        rem_items = list(rem_data.get("items") or []) if isinstance(rem_data, dict) else []
+                        pulled = 0
+                        if rem_items:
+                            pull_res = daemon_ref.vsa_memory.store_batch(rem_items)
+                            pulled = int(pull_res.get("stored_count", len(rem_items)))
+                        pushed = 0
+                        peer_total = None
+                        if bool(body.get("bidirectional", True)):
+                            loc_items = daemon_ref.vsa_memory.export_items(domain=dom or None, limit=lim)
+                            if loc_items:
+                                push_req = urllib.request.Request(
+                                    f"{peer_base}/api/vsa/store",
+                                    data=json.dumps({"items": loc_items}, ensure_ascii=False).encode("utf-8"),
+                                    headers={"Content-Type": "application/json"},
+                                    method="POST",
+                                )
+                                with urllib.request.urlopen(push_req, timeout=4.0) as p_resp:
+                                    push_res = json.loads(p_resp.read().decode("utf-8", errors="ignore"))
+                                if isinstance(push_res, dict):
+                                    pushed = int(push_res.get("stored_count", len(loc_items)))
+                                    peer_total = push_res.get("total_items")
+                        st_loc = daemon_ref.vsa_memory.stats()
+                        elapsed_ms = round((time.perf_counter() - t0) * 1000.0, 2)
+                        daemon_ref.record_flow(
+                            "crypto",
+                            daemon_ref.config.node_name,
+                            daemon_ref.config.peer_name or "peer",
+                            "VSA_SYNC",
+                            wire_bytes=len(json.dumps(rem_items)),
+                            elapsed_ms=elapsed_ms,
+                            detail=f"pulled={pulled} pushed={pushed} total={st_loc.get('item_count')}",
+                            ok=True,
+                        )
+                        self._send_json(
+                            200,
+                            {
+                                "ok": True,
+                                "peer_base": peer_base,
+                                "pulled": pulled,
+                                "pushed": pushed,
+                                "local_total": st_loc.get("item_count", 0),
+                                "peer_total": peer_total if peer_total is not None else st_loc.get("item_count", 0),
+                                "elapsed_ms": elapsed_ms,
+                            },
+                        )
+                    except Exception as exc:
+                        self._send_json(502, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/trinity/kill-switch":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        from_peer = bool(body.get("from_peer", False))
+                        if body.get("evaluate_auto"):
+                            ks = daemon_ref.trinity.evaluate_auto_kill_switch(
+                                burn_rate_pct_hr=float(body.get("burn_rate_pct_hr", 0.0)),
+                                recent_outputs=int(body.get("recent_outputs", 0)),
+                                zero_output_hours=float(body.get("zero_output_hours", 2.0)),
+                            )
+                        else:
+                            ks = daemon_ref.trinity.set_kill_switch(
+                                bool(body.get("active", True)),
+                                str(body.get("reason") or ""),
+                                auto_triggered=bool(body.get("auto_triggered", False)),
+                                relay_to_peer=not from_peer,
+                            )
+                        self._send_json(200, {"ok": True, "kill_switch": ks})
+                    except Exception as exc:
+                        self._send_json(400, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/galactic/live-teleport":
+                    raw_b = self._read_body()
+                    try:
+                        body = json.loads(raw_b.decode("utf-8") or "{}")
+                    except Exception:
+                        self._send_json(400, {"error": "Invalid JSON body"})
+                        return
+                    try:
+                        peer_base = (
+                            daemon_ref.active_edge_peer_base()
+                            if (daemon_ref.config.role == "controller" and not bool(body.get("local_only", False)))
+                            else ""
+                        )
+                        res = WasmLiveTeleportEngine.run_benchmark(peer_http_base=peer_base)
+                        daemon_ref.record_flow(
+                            "compute",
+                            daemon_ref.config.node_name,
+                            (daemon_ref.config.peer_name or "peer") if res.get("resumed_on_peer") else daemon_ref.config.node_name,
+                            "WASM_TELEPORT",
+                            wire_bytes=int(res.get("checkpoint_wire_bytes", 0)),
+                            elapsed_ms=float(res.get("teleport_ms", 0.0)),
+                            detail=f"step {res.get('paused_at_step')}/{res.get('total_steps')} peer={res.get('resumed_on_peer')} res={res.get('got_result')}",
+                            ok=bool(res.get("ok")),
+                        )
+                        self._send_json(200, res)
+                    except Exception as exc:
+                        self._send_json(500, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/galactic/live-frost":
+                    raw_b = self._read_body()
+                    try:
+                        body = json.loads(raw_b.decode("utf-8") or "{}")
+                    except Exception:
+                        self._send_json(400, {"error": "Invalid JSON body"})
+                        return
+                    try:
+                        peer_base = (
+                            daemon_ref.active_edge_peer_base()
+                            if (daemon_ref.config.role == "controller" and not bool(body.get("local_only", False)))
+                            else ""
+                        )
+                        res = FrostThreshold2of3.run_benchmark(peer_http_base=peer_base)
+                        daemon_ref.record_flow(
+                            "crypto",
+                            daemon_ref.config.node_name,
+                            (daemon_ref.config.peer_name or "peer") if res.get("peer_signed_live") else daemon_ref.config.node_name,
+                            "FROST_2OF3",
+                            wire_bytes=192,
+                            elapsed_ms=float(res.get("elapsed_ms", 0.0)),
+                            detail=f"3 pairs OK peer={res.get('peer_signed_live')} tamper_blocked={res.get('tamper_rejected')}",
+                            ok=bool(res.get("ok")),
+                        )
+                        self._send_json(200, res)
+                    except Exception as exc:
+                        self._send_json(500, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/galactic/live-chmc":
+                    try:
+                        res = ActiveMatterCell.run_benchmark()
+                        daemon_ref.record_flow(
+                            "crypto",
+                            daemon_ref.config.node_name,
+                            daemon_ref.config.node_name,
+                            "CHMC_3STRIKE",
+                            wire_bytes=int(res.get("stored_cipher_bytes", 0)),
+                            elapsed_ms=float(res.get("elapsed_ms", 0.0)),
+                            detail=f"blind={res.get('blind_search_encrypted_ok')} heal={res.get('bit_rot_self_healed_and_unlocked')} shred={res.get('self_shred_after_3_strikes')}",
+                            ok=bool(res.get("ok")),
+                        )
+                        self._send_json(200, res)
                     except Exception as exc:
                         self._send_json(500, {"error": str(exc)})
                     return
@@ -2604,6 +2557,7 @@ class ChimeraDaemon:
 
         self._httpd = _ThreadingControlServer((host_b, int(port_b)), Handler)
         self.http_addr = self._httpd.server_address[:2]
+        self.platform.start()
 
         if int(self.config.warp_port) >= 0:
             self._warp_srv = WarpServer(
@@ -2614,9 +2568,18 @@ class ChimeraDaemon:
             self.config.warp_port = self._warp_srv.udp_addr[1]
 
         fb_port = 0 if self._ephemeral_mode else int(self.config.phantom_fallback_port)
+        rev_fwds: dict[int, int] = {}
+        if (not self._ephemeral_mode) and self.config.role == "server":
+            rtq = int(getattr(self.config, "phantom_reverse_tquota_port", 12551))
+            rhp = int(getattr(self.config, "phantom_reverse_http_port", 9790))
+            if rtq > 0:
+                rev_fwds[rtq] = 12500
+            if rhp > 0:
+                rev_fwds[rhp] = int(self.http_addr[1])
         self._phantom_srv = PhantomTunnelServer(
             fallback_port=fb_port,
             allowed_forward_ports=list(self.config.phantom_allowed_ports) + [int(self.http_addr[1])],
+            reverse_forwards=rev_fwds,
         ).start()
 
         if bool(self.config.phantom_enabled) and self.config.role == "controller" and self.config.peer_ipv4:
@@ -2633,6 +2596,9 @@ class ChimeraDaemon:
                 peer_fallback_port=int(self.config.phantom_fallback_port),
                 forwards=ph_forwards,
                 local_test_mode=False,
+                allowed_reverse_ports=list(
+                    getattr(self.config, "phantom_reverse_allowed_ports", [9780, 12500, 12504])
+                ) + [int(self.http_addr[1])],
             ).start_listeners()
             if not self._ephemeral_mode:
                 def _auto_phantom() -> None:
@@ -2668,11 +2634,12 @@ class ChimeraDaemon:
         t_http.start()
         t_sched.start()
         self._threads.extend([t_http, t_sched])
+        self.trinity.refresh_async(ttl_s=0.0)
         zw = get_zero_weight_status()
         self.store.log_event(
             "INFO",
             "DAEMON",
-            f"v8.0 Started on http://{self.http_addr[0]}:{self.http_addr[1]} | RAM={zw['daemon_ram_mb']}MB | Beam={self.config.beam_port} EdgeProxy={self.config.edge_proxy_port} PhantomFB={self._phantom_srv.fallback_port}",
+            f"v9.0 Started on http://{self.http_addr[0]}:{self.http_addr[1]} | RAM={zw['daemon_ram_mb']}MB | Beam={self.config.beam_port} EdgeProxy={self.config.edge_proxy_port} PhantomFB={self._phantom_srv.fallback_port}",
         )
         return self
 
@@ -2709,7 +2676,7 @@ class ChimeraDaemon:
 
     def status_payload(self) -> dict[str, Any]:
         return {
-            "version": "8.0.0",
+            "version": "12.0.0",
             "config": self.config.to_dict(),
             "hardware": cpu_caps(),
             "zero_weight": get_zero_weight_status(),
@@ -2772,6 +2739,7 @@ class ChimeraDaemon:
 
     def close(self) -> None:
         self._stop.set()
+        self.platform.close()
         if self._phantom_client is not None:
             self._phantom_client.close()
         if self._phantom_srv is not None:
@@ -2793,4 +2761,5 @@ class ChimeraDaemon:
                 srv.close()
         self.sentinel.close()
         self.code_search.close()
+        self.vsa_memory.close()
         self.store.close()

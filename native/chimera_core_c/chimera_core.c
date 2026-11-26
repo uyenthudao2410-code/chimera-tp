@@ -1309,3 +1309,481 @@ size_t chimera_fsk_demod_bits(
     }
     return n_syms;
 }
+
+/* ------------------------------------------------------------------------- */
+/* CHIMERA v9.0 HYPERDRIVE Extensions (LZ4 SIMD, Batch ChaCha20, Search, Tile)*/
+/* ------------------------------------------------------------------------- */
+
+static inline int lz4_write_ext_len(uint8_t *dst, size_t *op, size_t dst_cap, size_t rem) {
+    while (rem >= 255u) {
+        if (*op >= dst_cap) return 0;
+        dst[(*op)++] = 255u;
+        rem -= 255u;
+    }
+    if (*op >= dst_cap) return 0;
+    dst[(*op)++] = (uint8_t)rem;
+    return 1;
+}
+
+ssize_t chimera_lz4_compress(const uint8_t *src, size_t src_len, uint8_t *dst, size_t dst_cap) {
+    if (src_len == 0u) return 0;
+    if (!src || !dst || dst_cap < 4u || src_len > UINT32_MAX) return -1;
+    store_le32(dst, (uint32_t)src_len);
+    size_t op = 4u;
+
+    int32_t ht[4096];
+    for (size_t i = 0; i < 4096u; i++) ht[i] = -1;
+
+    size_t ip = 0u;
+    size_t anchor = 0u;
+
+    if (src_len >= 13u) {
+        size_t mflimit = src_len - 12u;
+        size_t matchlimit = src_len - 5u;
+        while (ip <= mflimit) {
+            uint32_t v = load_le32(src + ip);
+            size_t hh = (size_t)(((v * UINT32_C(2654435761)) >> 20) & 0xFFFu);
+            int32_t ref_pos = ht[hh];
+            ht[hh] = (int32_t)ip;
+
+            if (ref_pos >= 0) {
+                size_t ru = (size_t)ref_pos;
+                size_t off = ip - ru;
+                if (off >= 1u && off <= 65535u && load_le32(src + ru) == v) {
+                    size_t ml = 4u;
+                    while (ip + ml < matchlimit && src[ru + ml] == src[ip + ml]) {
+                        ml++;
+                    }
+                    size_t lit_len = ip - anchor;
+                    size_t mc = ml - 4u;
+                    if (op >= dst_cap) return -1;
+                    size_t tok_l = lit_len < 15u ? lit_len : 15u;
+                    size_t tok_m = mc < 15u ? mc : 15u;
+                    dst[op++] = (uint8_t)((tok_l << 4) | tok_m);
+                    if (lit_len >= 15u && !lz4_write_ext_len(dst, &op, dst_cap, lit_len - 15u)) {
+                        return -1;
+                    }
+                    if (op + lit_len + 2u > dst_cap) return -1;
+                    if (lit_len > 0u) {
+                        memcpy(dst + op, src + anchor, lit_len);
+                        op += lit_len;
+                    }
+                    dst[op++] = (uint8_t)(off & 0xFFu);
+                    dst[op++] = (uint8_t)((off >> 8) & 0xFFu);
+                    if (mc >= 15u && !lz4_write_ext_len(dst, &op, dst_cap, mc - 15u)) {
+                        return -1;
+                    }
+                    ip += ml;
+                    anchor = ip;
+                    continue;
+                }
+            }
+            ip++;
+        }
+    }
+
+    size_t last_lit = src_len - anchor;
+    if (op >= dst_cap) return -1;
+    size_t tok_l = last_lit < 15u ? last_lit : 15u;
+    dst[op++] = (uint8_t)(tok_l << 4);
+    if (last_lit >= 15u && !lz4_write_ext_len(dst, &op, dst_cap, last_lit - 15u)) {
+        return -1;
+    }
+    if (op + last_lit > dst_cap) return -1;
+    if (last_lit > 0u) {
+        memcpy(dst + op, src + anchor, last_lit);
+        op += last_lit;
+    }
+    return (ssize_t)op;
+}
+
+ssize_t chimera_lz4_decompress(const uint8_t *src, size_t src_len, uint8_t *dst, size_t dst_cap) {
+    if (src_len == 0u) return 0;
+    if (!src || src_len < 4u) return -1;
+    size_t orig_len = (size_t)load_le32(src);
+    if (orig_len == 0u) return (src_len == 4u) ? 0 : -1;
+    if (!dst || orig_len > dst_cap) return -1;
+
+    size_t ip = 4u;
+    size_t op = 0u;
+    while (ip < src_len) {
+        uint8_t tok = src[ip++];
+        size_t lit_len = (size_t)(tok >> 4);
+        if (lit_len == 15u) {
+            for (;;) {
+                if (ip >= src_len) return -1;
+                size_t b = (size_t)src[ip++];
+                if (lit_len > orig_len - op) return -1;
+                lit_len += b;
+                if (b < 255u) break;
+            }
+        }
+        if (ip + lit_len > src_len || op + lit_len > orig_len) return -1;
+        if (lit_len > 0u) {
+            memcpy(dst + op, src + ip, lit_len);
+            ip += lit_len;
+            op += lit_len;
+        }
+        if (ip >= src_len) break;
+        if (ip + 2u > src_len) return -1;
+        size_t off = (size_t)src[ip] | ((size_t)src[ip + 1u] << 8);
+        ip += 2u;
+        if (off == 0u || off > op) return -1;
+        size_t ml = (size_t)(tok & 0x0Fu) + 4u;
+        if ((tok & 0x0Fu) == 15u) {
+            for (;;) {
+                if (ip >= src_len) return -1;
+                size_t b = (size_t)src[ip++];
+                if (ml > orig_len - op) return -1;
+                ml += b;
+                if (b < 255u) break;
+            }
+        }
+        if (op + ml > orig_len) return -1;
+        size_t mpos = op - off;
+        for (size_t k = 0; k < ml; k++) {
+            dst[op + k] = dst[mpos + k];
+        }
+        op += ml;
+    }
+    return (ip == src_len && op == orig_len) ? (ssize_t)orig_len : -1;
+}
+
+void chimera_batch_chacha20_xor(
+    uint8_t *bufs_flat,
+    size_t packet_len,
+    size_t n_packets,
+    const uint8_t *key32,
+    const uint8_t *base_nonce8
+) {
+    if (!bufs_flat || !key32 || !base_nonce8 || packet_len == 0u || n_packets == 0u) return;
+    uint64_t base_val = 0u;
+    for (int j = 0; j < 8; j++) {
+        base_val = (base_val << 8) | (uint64_t)base_nonce8[j];
+    }
+    uint8_t nonce12[12];
+    nonce12[0] = 'P'; nonce12[1] = 'H'; nonce12[2] = '9'; nonce12[3] = 'N';
+    for (size_t i = 0; i < n_packets; i++) {
+        uint64_t val = base_val + (uint64_t)i;
+        for (int j = 0; j < 8; j++) {
+            nonce12[4 + j] = (uint8_t)((val >> (56 - j * 8)) & 0xFFu);
+        }
+        uint8_t *p = bufs_flat + (i * packet_len);
+        chimera_chacha20_xor(p, p, packet_len, key32, nonce12, 1u);
+    }
+}
+
+#if (defined(__x86_64__) || defined(_M_X64)) && defined(__GNUC__)
+__attribute__((target("avx2")))
+static size_t simd_search_avx2(
+    const uint8_t *hay,
+    size_t hay_len,
+    const uint8_t *needle,
+    size_t needle_len,
+    uint32_t *out_offsets,
+    size_t max_matches
+) {
+    size_t limit = hay_len - needle_len + 1u;
+    __m256i first = _mm256_set1_epi8((char)needle[0]);
+    __m256i last = _mm256_set1_epi8((char)needle[needle_len - 1u]);
+    size_t i = 0u;
+    size_t count = 0u;
+
+    while (i + 32u <= limit) {
+        __m256i b0 = _mm256_loadu_si256((const __m256i *)(hay + i));
+        __m256i b1 = _mm256_loadu_si256((const __m256i *)(hay + i + needle_len - 1u));
+        __m256i eq = _mm256_and_si256(_mm256_cmpeq_epi8(b0, first), _mm256_cmpeq_epi8(b1, last));
+        uint32_t mask = (uint32_t)_mm256_movemask_epi8(eq);
+        while (mask != 0u) {
+            unsigned bit = (unsigned)__builtin_ctz(mask);
+            size_t pos = i + (size_t)bit;
+            int ok = 1;
+            if (needle_len > 2u && memcmp(hay + pos + 1u, needle + 1u, needle_len - 2u) != 0) {
+                ok = 0;
+            }
+            if (ok) {
+                if (out_offsets && count < max_matches) {
+                    out_offsets[count] = (uint32_t)pos;
+                }
+                count++;
+            }
+            mask &= (mask - 1u);
+        }
+        i += 32u;
+    }
+
+    while (i < limit) {
+        if (hay[i] == needle[0] && hay[i + needle_len - 1u] == needle[needle_len - 1u]
+            && (needle_len <= 2u || memcmp(hay + i + 1u, needle + 1u, needle_len - 2u) == 0)) {
+            if (out_offsets && count < max_matches) {
+                out_offsets[count] = (uint32_t)i;
+            }
+            count++;
+        }
+        i++;
+    }
+    return count;
+}
+#endif
+
+size_t chimera_simd_search_count(
+    const uint8_t *haystack,
+    size_t hay_len,
+    const uint8_t *needle,
+    size_t needle_len,
+    uint32_t *out_offsets,
+    size_t max_matches
+) {
+    if (!haystack || !needle || needle_len == 0u || needle_len > hay_len) return 0u;
+#if (defined(__x86_64__) || defined(_M_X64)) && defined(__GNUC__)
+    if ((chimera_cpu_caps() & 2u) != 0u) {
+        return simd_search_avx2(haystack, hay_len, needle, needle_len, out_offsets, max_matches);
+    }
+#endif
+    size_t limit = hay_len - needle_len + 1u;
+    size_t count = 0u;
+    for (size_t i = 0u; i < limit; i++) {
+        if (memcmp(haystack + i, needle, needle_len) == 0) {
+            if (out_offsets && count < max_matches) {
+                out_offsets[count] = (uint32_t)i;
+            }
+            count++;
+        }
+    }
+    return count;
+}
+
+#if (defined(__x86_64__) || defined(_M_X64)) && defined(__GNUC__)
+__attribute__((target("avx2")))
+static int tile_is_equal_avx2(const uint8_t *p, const uint8_t *c, size_t len) {
+    size_t i = 0u;
+    while (i + 32u <= len) {
+        __m256i vp = _mm256_loadu_si256((const __m256i *)(p + i));
+        __m256i vc = _mm256_loadu_si256((const __m256i *)(c + i));
+        __m256i x = _mm256_xor_si256(vp, vc);
+        if (!_mm256_testz_si256(x, x)) return 0;
+        i += 32u;
+    }
+    while (i < len) {
+        if (p[i] != c[i]) return 0;
+        i++;
+    }
+    return 1;
+}
+
+__attribute__((target("avx2")))
+static void tile_xor_copy_avx2(uint8_t *dst, const uint8_t *p, const uint8_t *c, size_t len) {
+    size_t i = 0u;
+    while (i + 32u <= len) {
+        __m256i vp = _mm256_loadu_si256((const __m256i *)(p + i));
+        __m256i vc = _mm256_loadu_si256((const __m256i *)(c + i));
+        _mm256_storeu_si256((__m256i *)(dst + i), _mm256_xor_si256(vp, vc));
+        i += 32u;
+    }
+    while (i < len) {
+        dst[i] = p[i] ^ c[i];
+        i++;
+    }
+}
+#endif
+
+ssize_t chimera_tile_diff_xor(
+    const uint8_t *prev,
+    const uint8_t *curr,
+    size_t n_tiles,
+    size_t tile_bytes,
+    uint8_t *out_mask,
+    uint8_t *out_delta,
+    size_t max_delta
+) {
+    if (n_tiles == 0u || tile_bytes == 0u) return 0;
+    if (!prev || !curr || !out_mask) return -1;
+    int has_avx2 = (chimera_cpu_caps() & 2u) != 0u;
+    size_t written = 0u;
+    for (size_t t = 0u; t < n_tiles; t++) {
+        size_t off = t * tile_bytes;
+        const uint8_t *p = prev + off;
+        const uint8_t *c = curr + off;
+        int same;
+#if (defined(__x86_64__) || defined(_M_X64)) && defined(__GNUC__)
+        if (has_avx2) {
+            same = tile_is_equal_avx2(p, c, tile_bytes);
+        } else {
+            same = (memcmp(p, c, tile_bytes) == 0);
+        }
+#else
+        (void)has_avx2;
+        same = (memcmp(p, c, tile_bytes) == 0);
+#endif
+        if (same) {
+            out_mask[t] = 0u;
+        } else {
+            out_mask[t] = 1u;
+            if (!out_delta || written + tile_bytes > max_delta) return -1;
+            uint8_t *d = out_delta + written;
+#if (defined(__x86_64__) || defined(_M_X64)) && defined(__GNUC__)
+            if (has_avx2) {
+                tile_xor_copy_avx2(d, p, c, tile_bytes);
+            } else {
+                for (size_t k = 0u; k < tile_bytes; k++) d[k] = p[k] ^ c[k];
+            }
+#else
+            for (size_t k = 0u; k < tile_bytes; k++) d[k] = p[k] ^ c[k];
+#endif
+            written += tile_bytes;
+        }
+    }
+    return (ssize_t)written;
+}
+
+#if (defined(__x86_64__) || defined(_M_X64)) && defined(__GNUC__)
+__attribute__((target("avx2")))
+static void vsa_bind_xor_avx2(const uint8_t *a, const uint8_t *b, uint8_t *out, size_t len) {
+    size_t i = 0u;
+    while (i + 32u <= len) {
+        __m256i va = _mm256_loadu_si256((const __m256i *)(a + i));
+        __m256i vb = _mm256_loadu_si256((const __m256i *)(b + i));
+        _mm256_storeu_si256((__m256i *)(out + i), _mm256_xor_si256(va, vb));
+        i += 32u;
+    }
+    while (i < len) {
+        out[i] = a[i] ^ b[i];
+        i++;
+    }
+}
+#endif
+
+void chimera_vsa_bind_xor(const uint8_t *a, const uint8_t *b, uint8_t *out, size_t len) {
+    if (!a || !b || !out || len == 0u) return;
+#if (defined(__x86_64__) || defined(_M_X64)) && defined(__GNUC__)
+    if ((chimera_cpu_caps() & 2u) != 0u) {
+        vsa_bind_xor_avx2(a, b, out, len);
+        return;
+    }
+#endif
+    for (size_t i = 0u; i < len; i++) {
+        out[i] = a[i] ^ b[i];
+    }
+}
+
+size_t chimera_vsa_hamming(const uint8_t *a, const uint8_t *b, size_t len) {
+    if (!a || !b || len == 0u) return 0u;
+    size_t tot = 0u;
+    size_t i = 0u;
+    while (i + 8u <= len) {
+        uint64_t va = 0u, vb = 0u;
+        memcpy(&va, a + i, 8u);
+        memcpy(&vb, b + i, 8u);
+        tot += (size_t)__builtin_popcountll(va ^ vb);
+        i += 8u;
+    }
+    while (i < len) {
+        uint8_t x = a[i] ^ b[i];
+        tot += (size_t)__builtin_popcount((unsigned int)x);
+        i++;
+    }
+    return tot;
+}
+
+static inline int64_t ch_asr64(int64_t v, int s) {
+    return (v < 0) ? (int64_t)(~((uint64_t)(~v) >> s)) : (int64_t)((uint64_t)v >> s);
+}
+
+static inline int32_t ch_fold_q16(int64_t v) {
+    int64_t m = (v + 1048576LL) % 2097152LL;
+    if (m < 0) m += 2097152LL;
+    return (int32_t)(m - 1048576LL);
+}
+
+void chimera_chaos_step_q16(
+    int32_t *state,
+    const uint8_t *drive,
+    uint8_t *out_ks,
+    size_t len,
+    int32_t coupling_q16
+) {
+    if (!state || !drive || !out_ks || len == 0u) return;
+    int64_t x = (int64_t)state[0];
+    int64_t y = (int64_t)state[1];
+    int64_t z = (int64_t)state[2];
+    int64_t c = (coupling_q16 < 0) ? 0LL : ((coupling_q16 > 65536) ? 65536LL : (int64_t)coupling_q16);
+    const int64_t dt = 655LL;
+
+    for (size_t i = 0u; i < len; i++) {
+        int64_t d_q16 = (int64_t)((int32_t)drive[i] - 128) * 2048LL;
+        int64_t xd = x + ch_asr64(c * (d_q16 - x), 16);
+        int64_t nx = (int64_t)ch_fold_q16(xd + ch_asr64(10LL * (y - xd) * dt, 16) + ((z ^ ch_asr64(y, 3)) & 0x7FFFLL));
+        int64_t ny = (int64_t)ch_fold_q16(y + ch_asr64((ch_asr64(xd * (1835008LL - z), 16) - y) * dt, 16) + ch_asr64(d_q16, 2));
+        int64_t nz = (int64_t)ch_fold_q16(z + ch_asr64((ch_asr64(xd * y, 16) - ch_asr64(z * 174762LL, 16)) * dt, 16) + (ch_asr64(nx, 2) & 0xFFFFLL));
+
+        uint32_t nx_u = (uint32_t)(int32_t)nx;
+        uint32_t ny_u = (uint32_t)(int32_t)ny;
+        uint32_t nz_u = (uint32_t)(int32_t)nz;
+        uint32_t mix = (nx_u ^ (ny_u >> 5) ^ (nz_u >> 11) ^ (nx_u << 7)) * 2654435761u;
+        mix ^= (mix >> 16);
+        out_ks[i] = (uint8_t)((mix * 2246822519u) >> 24);
+
+        x = nx;
+        y = ny;
+        z = nz;
+    }
+    state[0] = (int32_t)x;
+    state[1] = (int32_t)y;
+    state[2] = (int32_t)z;
+}
+
+static inline uint64_t ch_splitmix64(uint64_t *state) {
+    *state += 0x9E3779B97F4A7C15ULL;
+    uint64_t z = *state;
+    z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9ULL;
+    z = (z ^ (z >> 27)) * 0x94D049BB133111EBULL;
+    return z ^ (z >> 31);
+}
+
+void chimera_babel_mine(
+    const uint8_t *target,
+    size_t len,
+    uint64_t start_seed,
+    uint32_t n_candidates,
+    uint64_t *out_best_seed,
+    uint32_t *out_best_dist
+) {
+    if (!target || len == 0u || n_candidates == 0u) {
+        if (out_best_seed) *out_best_seed = start_seed;
+        if (out_best_dist) *out_best_dist = (uint32_t)len;
+        return;
+    }
+    uint32_t best_dist = (uint32_t)len + 1u;
+    uint64_t best_seed = start_seed;
+
+    for (uint32_t k = 0u; k < n_candidates; k++) {
+        uint64_t seed = start_seed + (uint64_t)k;
+        uint64_t s = seed;
+        uint32_t dist = 0u;
+        size_t i = 0u;
+        int aborted = 0;
+        while (i < len) {
+            uint64_t w = ch_splitmix64(&s);
+            size_t take = (len - i < 8u) ? (len - i) : 8u;
+            for (size_t j = 0u; j < take; j++) {
+                uint8_t wb = (uint8_t)((w >> (j * 8u)) & 0xFFu);
+                if (wb != target[i + j]) {
+                    dist++;
+                    if (dist >= best_dist) {
+                        aborted = 1;
+                        break;
+                    }
+                }
+            }
+            if (aborted) break;
+            i += take;
+        }
+        if (!aborted && dist < best_dist) {
+            best_dist = dist;
+            best_seed = seed;
+            if (best_dist == 0u) break;
+        }
+    }
+    if (out_best_seed) *out_best_seed = best_seed;
+    if (out_best_dist) *out_best_dist = best_dist;
+}

@@ -134,7 +134,7 @@ class TestSingularityV8Protocol(unittest.TestCase):
             base = f"http://127.0.0.1:{daemon.http_addr[1]}"
             try:
                 h = json.loads(urllib.request.urlopen(f"{base}/api/health", timeout=4.0).read().decode())
-                self.assertEqual(h["version"], "8.0.0")
+                self.assertIn(h["version"], ("8.0.0", "9.0.0", "10.0.0", "11.0.0", "12.0.0"))
 
                 st = json.loads(urllib.request.urlopen(f"{base}/api/singularity/status", timeout=4.0).read().decode())
                 self.assertTrue(st["ok"])

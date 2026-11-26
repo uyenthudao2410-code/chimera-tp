@@ -136,6 +136,53 @@ def _bind_signatures(lib: ctypes.CDLL) -> None:
         lib.chimera_fsk_demod_bits.argtypes = [c_void_p, c_size_t, c_void_p, c_size_t]
         lib.chimera_fsk_demod_bits.restype = c_size_t
 
+    if hasattr(lib, "chimera_lz4_compress"):
+        lib.chimera_lz4_compress.argtypes = [c_void_p, c_size_t, c_void_p, c_size_t]
+        lib.chimera_lz4_compress.restype = c_ssize_t
+
+    if hasattr(lib, "chimera_lz4_decompress"):
+        lib.chimera_lz4_decompress.argtypes = [c_void_p, c_size_t, c_void_p, c_size_t]
+        lib.chimera_lz4_decompress.restype = c_ssize_t
+
+    if hasattr(lib, "chimera_batch_chacha20_xor"):
+        lib.chimera_batch_chacha20_xor.argtypes = [c_void_p, c_size_t, c_size_t, c_void_p, c_void_p]
+        lib.chimera_batch_chacha20_xor.restype = None
+
+    if hasattr(lib, "chimera_simd_search_count"):
+        lib.chimera_simd_search_count.argtypes = [c_void_p, c_size_t, c_void_p, c_size_t, c_void_p, c_size_t]
+        lib.chimera_simd_search_count.restype = c_size_t
+
+    if hasattr(lib, "chimera_tile_diff_xor"):
+        lib.chimera_tile_diff_xor.argtypes = [
+            c_void_p,
+            c_void_p,
+            c_size_t,
+            c_size_t,
+            c_void_p,
+            c_void_p,
+            c_size_t,
+        ]
+        lib.chimera_tile_diff_xor.restype = c_ssize_t
+
+    c_u64 = ctypes.c_uint64
+    c_u32_p = ctypes.POINTER(c_u32)
+
+    if hasattr(lib, "chimera_vsa_bind_xor"):
+        lib.chimera_vsa_bind_xor.argtypes = [c_void_p, c_void_p, c_void_p, c_size_t]
+        lib.chimera_vsa_bind_xor.restype = None
+
+    if hasattr(lib, "chimera_vsa_hamming"):
+        lib.chimera_vsa_hamming.argtypes = [c_void_p, c_void_p, c_size_t]
+        lib.chimera_vsa_hamming.restype = c_size_t
+
+    if hasattr(lib, "chimera_chaos_step_q16"):
+        lib.chimera_chaos_step_q16.argtypes = [c_void_p, c_void_p, c_void_p, c_size_t, c_i32]
+        lib.chimera_chaos_step_q16.restype = None
+
+    if hasattr(lib, "chimera_babel_mine"):
+        lib.chimera_babel_mine.argtypes = [c_void_p, c_size_t, c_u64, c_u32, c_u64_p, c_u32_p]
+        lib.chimera_babel_mine.restype = None
+
 
 _DLL: ctypes.CDLL | None = _discover_and_load_dll()
 
@@ -936,3 +983,467 @@ def fsk_demod_bits(pcm_bytes: bytes | bytearray) -> bytes:
         si1, sq1 = i1 >> 10, q1 >> 10
         out[s] = 1 if (si1 * si1 + sq1 * sq1) > (si0 * si0 + sq0 * sq0) else 0
     return bytes(out)
+
+
+def v9_native_caps() -> dict[str, bool]:
+    return {
+        "lz4_codec": _DLL is not None and hasattr(_DLL, "chimera_lz4_compress") and hasattr(_DLL, "chimera_lz4_decompress"),
+        "batch_chacha": _DLL is not None and hasattr(_DLL, "chimera_batch_chacha20_xor"),
+        "simd_search": _DLL is not None and hasattr(_DLL, "chimera_simd_search_count"),
+        "tile_diff": _DLL is not None and hasattr(_DLL, "chimera_tile_diff_xor"),
+    }
+
+
+def _lz4_ext_len_py(out: bytearray, rem: int) -> None:
+    while rem >= 255:
+        out.append(255)
+        rem -= 255
+    out.append(rem)
+
+
+def lz4_compress(data: bytes | bytearray) -> bytes:
+    """Deterministic SIMD-ready LZ4 block encoder with 4-byte LE original length prefix."""
+    n = len(data)
+    if n == 0:
+        return b""
+    if _DLL is not None and hasattr(_DLL, "chimera_lz4_compress"):
+        cap = n + (n // 255) + 64
+        out = bytearray(cap)
+        sp, ks = _ro_ptr(data)
+        dp, kd = _rw_ptr(out)
+        rc = int(_DLL.chimera_lz4_compress(sp, n, dp, cap))
+        _ = (ks, kd)
+        if rc >= 0:
+            return bytes(out[:rc])
+
+    mv = memoryview(data)
+    out = bytearray(struct.pack("<I", n))
+    ht = [-1] * 4096
+    ip = 0
+    anchor = 0
+    if n >= 13:
+        mflimit = n - 12
+        matchlimit = n - 5
+        while ip <= mflimit:
+            v = int.from_bytes(mv[ip : ip + 4], "little")
+            hh = ((v * 2654435761) & 0xFFFFFFFF) >> 20
+            ref_pos = ht[hh]
+            ht[hh] = ip
+            if ref_pos >= 0:
+                off = ip - ref_pos
+                if 1 <= off <= 65535 and int.from_bytes(mv[ref_pos : ref_pos + 4], "little") == v:
+                    ml = 4
+                    while ip + ml < matchlimit and mv[ref_pos + ml] == mv[ip + ml]:
+                        ml += 1
+                    lit_len = ip - anchor
+                    mc = ml - 4
+                    out.append((min(lit_len, 15) << 4) | min(mc, 15))
+                    if lit_len >= 15:
+                        _lz4_ext_len_py(out, lit_len - 15)
+                    if lit_len > 0:
+                        out.extend(mv[anchor : anchor + lit_len])
+                    out.append(off & 0xFF)
+                    out.append((off >> 8) & 0xFF)
+                    if mc >= 15:
+                        _lz4_ext_len_py(out, mc - 15)
+                    ip += ml
+                    anchor = ip
+                    continue
+            ip += 1
+    last_lit = n - anchor
+    out.append(min(last_lit, 15) << 4)
+    if last_lit >= 15:
+        _lz4_ext_len_py(out, last_lit - 15)
+    if last_lit > 0:
+        out.extend(mv[anchor:])
+    return bytes(out)
+
+
+def lz4_decompress(raw: bytes | bytearray) -> bytes:
+    """Decode a CHIMERA deterministic LZ4 block safely."""
+    n = len(raw)
+    if n == 0:
+        return b""
+    if n < 4:
+        raise ValueError("Truncated LZ4 header")
+    orig_len = struct.unpack_from("<I", raw, 0)[0]
+    if orig_len == 0:
+        if n == 4:
+            return b""
+        raise ValueError("Invalid trailing bytes for empty LZ4 block")
+    if _DLL is not None and hasattr(_DLL, "chimera_lz4_decompress"):
+        out = bytearray(orig_len)
+        sp, ks = _ro_ptr(raw)
+        dp, kd = _rw_ptr(out)
+        rc = int(_DLL.chimera_lz4_decompress(sp, n, dp, orig_len))
+        _ = (ks, kd)
+        if rc != orig_len:
+            raise ValueError(f"Corrupt native LZ4 block (rc={rc}, expected={orig_len})")
+        return bytes(out)
+
+    out_py = bytearray(orig_len)
+    ip = 4
+    op = 0
+    while ip < n:
+        tok = raw[ip]
+        ip += 1
+        lit_len = tok >> 4
+        if lit_len == 15:
+            while True:
+                if ip >= n:
+                    raise ValueError("Truncated LZ4 literal length")
+                b = raw[ip]
+                ip += 1
+                if lit_len > orig_len - op:
+                    raise ValueError("LZ4 literal overflow")
+                lit_len += b
+                if b < 255:
+                    break
+        if ip + lit_len > n or op + lit_len > orig_len:
+            raise ValueError("LZ4 literal bounds exceeded")
+        if lit_len > 0:
+            out_py[op : op + lit_len] = raw[ip : ip + lit_len]
+            ip += lit_len
+            op += lit_len
+        if ip >= n:
+            break
+        if ip + 2 > n:
+            raise ValueError("Truncated LZ4 offset")
+        off = raw[ip] | (raw[ip + 1] << 8)
+        ip += 2
+        if off == 0 or off > op:
+            raise ValueError("Invalid LZ4 match offset")
+        ml = (tok & 0x0F) + 4
+        if (tok & 0x0F) == 15:
+            while True:
+                if ip >= n:
+                    raise ValueError("Truncated LZ4 match length")
+                b = raw[ip]
+                ip += 1
+                if ml > orig_len - op:
+                    raise ValueError("LZ4 match overflow")
+                ml += b
+                if b < 255:
+                    break
+        if op + ml > orig_len:
+            raise ValueError("LZ4 match bounds exceeded")
+        mpos = op - off
+        for k in range(ml):
+            out_py[op + k] = out_py[mpos + k]
+        op += ml
+    if ip != n or op != orig_len:
+        raise ValueError("Truncated LZ4 output")
+    return bytes(out_py)
+
+
+def batch_chacha20_xor(
+    bufs_flat: bytearray,
+    packet_len: int,
+    n_packets: int,
+    key32: bytes,
+    base_nonce8: bytes,
+) -> None:
+    """In-place batch ChaCha20 XOR over `n_packets` contiguous fixed-stride buffers."""
+    if len(key32) != 32 or len(base_nonce8) != 8:
+        raise ValueError("batch_chacha20_xor requires 32-byte key and 8-byte base nonce")
+    if packet_len <= 0 or n_packets <= 0:
+        return
+    if len(bufs_flat) < packet_len * n_packets:
+        raise ValueError("Insufficient bufs_flat capacity for batch_chacha20_xor")
+    if _DLL is not None and hasattr(_DLL, "chimera_batch_chacha20_xor"):
+        bp, kb = _rw_ptr(bufs_flat)
+        kp, kk = _ro_ptr(key32)
+        np, kn = _ro_ptr(base_nonce8)
+        _DLL.chimera_batch_chacha20_xor(bp, packet_len, n_packets, kp, np)
+        _ = (kb, kk, kn)
+        return
+    base_val = int.from_bytes(base_nonce8, "big")
+    for i in range(n_packets):
+        nonce12 = b"PH9N" + ((base_val + i) & 0xFFFFFFFFFFFFFFFF).to_bytes(8, "big")
+        start = i * packet_len
+        end = start + packet_len
+        bufs_flat[start:end] = chacha20_xor(bufs_flat[start:end], key32, nonce12, counter=1)
+
+
+def simd_search_count(
+    haystack: bytes | bytearray,
+    needle: bytes | bytearray,
+    max_matches: int = 1024,
+) -> tuple[int, list[int]]:
+    """Exact AVX2-accelerated overlapping byte search returning (total_count, ascending_offsets)."""
+    n_hay = len(haystack)
+    n_ndl = len(needle)
+    if n_ndl == 0 or n_ndl > n_hay:
+        return 0, []
+    cap = max(0, int(max_matches))
+    if _DLL is not None and hasattr(_DLL, "chimera_simd_search_count"):
+        hp, kh = _ro_ptr(haystack)
+        np, kn = _ro_ptr(needle)
+        if cap > 0:
+            arr = (ctypes.c_uint32 * cap)()
+            op = ctypes.cast(arr, ctypes.c_void_p)
+        else:
+            arr = None
+            op = ctypes.c_void_p(0)
+        cnt = int(_DLL.chimera_simd_search_count(hp, n_hay, np, n_ndl, op, cap))
+        _ = (kh, kn)
+        offsets = [int(arr[i]) for i in range(min(cnt, cap))] if arr is not None else []
+        return cnt, offsets
+
+    src_b = bytes(haystack)
+    pat_b = bytes(needle)
+    offsets_py: list[int] = []
+    cnt = 0
+    pos = 0
+    while True:
+        idx = src_b.find(pat_b, pos)
+        if idx < 0:
+            break
+        if len(offsets_py) < cap:
+            offsets_py.append(idx)
+        cnt += 1
+        pos = idx + 1
+    return cnt, offsets_py
+
+
+def tile_diff_xor(
+    prev: bytes | bytearray,
+    curr: bytes | bytearray,
+    n_tiles: int,
+    tile_bytes: int,
+    delta_buf: bytearray | None = None,
+) -> tuple[bytes, bytes]:
+    """AVX2 dirty-tile mask + XOR delta extraction across `n_tiles * tile_bytes` frames."""
+    if n_tiles <= 0 or tile_bytes <= 0:
+        return b"", b""
+    need = n_tiles * tile_bytes
+    if len(prev) < need or len(curr) < need:
+        raise ValueError("Invalid buffer sizes for tile_diff_xor")
+    if _DLL is not None and hasattr(_DLL, "chimera_tile_diff_xor"):
+        mask = bytearray(n_tiles)
+        delta = delta_buf if (delta_buf is not None and len(delta_buf) >= need) else bytearray(need)
+        pp, kp = _ro_ptr(prev)
+        cp, kc = _ro_ptr(curr)
+        mp, km = _rw_ptr(mask)
+        dp, kd = _rw_ptr(delta)
+        written = int(_DLL.chimera_tile_diff_xor(pp, cp, n_tiles, tile_bytes, mp, dp, need))
+        _ = (kp, kc, km, kd)
+        if written >= 0:
+            return bytes(mask), bytes(delta[:written])
+
+    mask_py = bytearray(n_tiles)
+    delta_py = bytearray()
+    mv_p = memoryview(prev)
+    mv_c = memoryview(curr)
+    for t in range(n_tiles):
+        off = t * tile_bytes
+        sp = mv_p[off : off + tile_bytes]
+        sc = mv_c[off : off + tile_bytes]
+        if sp != sc:
+            mask_py[t] = 1
+            xp = int.from_bytes(sp, "little") ^ int.from_bytes(sc, "little")
+            delta_py.extend(xp.to_bytes(tile_bytes, "little"))
+    return bytes(mask_py), bytes(delta_py)
+
+
+def tile_apply_xor(
+    prev: bytes | bytearray,
+    mask: bytes | bytearray,
+    delta: bytes | bytearray,
+    tile_bytes: int,
+) -> bytes:
+    """Losslessly reconstruct next frame from `prev`, `mask`, and compressed `delta` XOR tiles."""
+    n_tiles = len(mask)
+    if n_tiles == 0 or tile_bytes <= 0:
+        return bytes(prev)
+    if len(prev) < n_tiles * tile_bytes:
+        raise ValueError("prev buffer too short for tile_apply_xor")
+    out = bytearray(prev)
+    d_pos = 0
+    for t in range(n_tiles):
+        if mask[t]:
+            if d_pos + tile_bytes > len(delta):
+                raise ValueError("Truncated delta payload in tile_apply_xor")
+            off = t * tile_bytes
+            chunk_p = int.from_bytes(prev[off : off + tile_bytes], "little")
+            chunk_d = int.from_bytes(delta[d_pos : d_pos + tile_bytes], "little")
+            out[off : off + tile_bytes] = (chunk_p ^ chunk_d).to_bytes(tile_bytes, "little")
+            d_pos += tile_bytes
+    if d_pos != len(delta):
+        raise ValueError("Unused trailing delta bytes in tile_apply_xor")
+    return bytes(out)
+
+
+def tile_apply_xor_inplace(
+    frame: bytearray,
+    mask: bytes | bytearray,
+    delta: bytes | bytearray,
+    tile_bytes: int,
+) -> None:
+    """Zero-copy in-place lossless tile XOR reconstruction mutating only dirty tiles."""
+    n_tiles = len(mask)
+    if n_tiles == 0 or tile_bytes <= 0:
+        return
+    if len(frame) < n_tiles * tile_bytes:
+        raise ValueError("frame buffer too short for tile_apply_xor_inplace")
+    mv_f = memoryview(frame)
+    mv_d = memoryview(delta)
+    d_pos = 0
+    for t in range(n_tiles):
+        if mask[t]:
+            if d_pos + tile_bytes > len(delta):
+                raise ValueError("Truncated delta payload in tile_apply_xor_inplace")
+            off = t * tile_bytes
+            chunk_p = int.from_bytes(mv_f[off : off + tile_bytes], "little")
+            chunk_d = int.from_bytes(mv_d[d_pos : d_pos + tile_bytes], "little")
+            mv_f[off : off + tile_bytes] = (chunk_p ^ chunk_d).to_bytes(tile_bytes, "little")
+            d_pos += tile_bytes
+    if d_pos != len(delta):
+        raise ValueError("Unused trailing delta bytes in tile_apply_xor_inplace")
+
+
+def v12_native_caps() -> dict[str, bool]:
+    return {
+        "vsa_bind_xor": _DLL is not None and hasattr(_DLL, "chimera_vsa_bind_xor"),
+        "vsa_hamming": _DLL is not None and hasattr(_DLL, "chimera_vsa_hamming"),
+        "chaos_step_q16": _DLL is not None and hasattr(_DLL, "chimera_chaos_step_q16"),
+        "babel_mine": _DLL is not None and hasattr(_DLL, "chimera_babel_mine"),
+    }
+
+
+def vsa_bind_xor(a: bytes | bytearray, b: bytes | bytearray) -> bytes:
+    """AVX2-accelerated XOR binding for hyperdimensional binary vectors."""
+    n = len(a)
+    if len(b) != n:
+        raise ValueError("VSA vectors must have equal byte length")
+    if n == 0:
+        return b""
+    if _DLL is not None and hasattr(_DLL, "chimera_vsa_bind_xor"):
+        out = bytearray(n)
+        ap, ka = _ro_ptr(a)
+        bp, kb = _ro_ptr(b)
+        op, ko = _rw_ptr(out)
+        _DLL.chimera_vsa_bind_xor(ap, bp, op, n)
+        _ = (ka, kb, ko)
+        return bytes(out)
+    return (int.from_bytes(a, "little") ^ int.from_bytes(b, "little")).to_bytes(n, "little")
+
+
+def vsa_hamming(a: bytes | bytearray, b: bytes | bytearray) -> int:
+    """Hardware-popcnt bit Hamming distance across binary hypervectors."""
+    n = len(a)
+    if len(b) != n:
+        raise ValueError("VSA vectors must have equal byte length")
+    if n == 0:
+        return 0
+    if _DLL is not None and hasattr(_DLL, "chimera_vsa_hamming"):
+        ap, ka = _ro_ptr(a)
+        bp, kb = _ro_ptr(b)
+        dist = int(_DLL.chimera_vsa_hamming(ap, bp, n))
+        _ = (ka, kb)
+        return dist
+    return (int.from_bytes(a, "little") ^ int.from_bytes(b, "little")).bit_count()
+
+
+def _ch_fold_q16_py(v: int) -> int:
+    return ((v + 1_048_576) % 2_097_152) - 1_048_576
+
+
+def chaos_step_q16(
+    state: list[int] | tuple[int, int, int],
+    drive: bytes | bytearray,
+    coupling_q16: int = 49_152,
+) -> tuple[bytes, list[int]]:
+    """Bit-identical integer Q16.16 coupled Pecora-Carroll chaotic stream step."""
+    if len(state) != 3:
+        raise ValueError("Chaotic state must contain 3 int32 values [x, y, z]")
+    n = len(drive)
+    if n == 0:
+        return b"", [int(state[0]), int(state[1]), int(state[2])]
+    if _DLL is not None and hasattr(_DLL, "chimera_chaos_step_q16"):
+        st_arr = (ctypes.c_int32 * 3)(int(state[0]), int(state[1]), int(state[2]))
+        out = bytearray(n)
+        dp, kd = _ro_ptr(drive)
+        op, ko = _rw_ptr(out)
+        _DLL.chimera_chaos_step_q16(ctypes.cast(st_arr, ctypes.c_void_p), dp, op, n, int(coupling_q16))
+        _ = (kd, ko)
+        return bytes(out), [int(st_arr[0]), int(st_arr[1]), int(st_arr[2])]
+
+    x, y, z = int(state[0]), int(state[1]), int(state[2])
+    c = max(0, min(65_536, int(coupling_q16)))
+    dt = 655
+    out_py = bytearray(n)
+    for i, db in enumerate(drive):
+        d_q16 = (db - 128) << 11
+        xd = x + ((c * (d_q16 - x)) >> 16)
+        nx = _ch_fold_q16_py(xd + ((10 * (y - xd) * dt) >> 16) + ((z ^ (y >> 3)) & 0x7FFF))
+        ny = _ch_fold_q16_py(y + ((((xd * (1_835_008 - z)) >> 16) - y) * dt >> 16) + (d_q16 >> 2))
+        nz = _ch_fold_q16_py(z + ((((xd * y) >> 16) - ((z * 174_762) >> 16)) * dt >> 16) + ((nx >> 2) & 0xFFFF))
+        nx_u = nx & 0xFFFFFFFF
+        ny_u = ny & 0xFFFFFFFF
+        nz_u = nz & 0xFFFFFFFF
+        mix = ((nx_u ^ (ny_u >> 5) ^ (nz_u >> 11) ^ ((nx_u << 7) & 0xFFFFFFFF)) * 2_654_435_761) & 0xFFFFFFFF
+        mix ^= mix >> 16
+        out_py[i] = ((mix * 2_246_822_519) & 0xFFFFFFFF) >> 24
+        x, y, z = nx, ny, nz
+    return bytes(out_py), [x, y, z]
+
+
+def splitmix64_bytes(seed: int, n_bytes: int) -> bytes:
+    """Bit-exact SplitMix64 little-endian deterministic byte stream matching chimera_babel_mine."""
+    s = int(seed) & 0xFFFFFFFFFFFFFFFF
+    out = bytearray()
+    mask64 = 0xFFFFFFFFFFFFFFFF
+    while len(out) < n_bytes:
+        s = (s + 0x9E3779B97F4A7C15) & mask64
+        z = s
+        z = ((z ^ (z >> 30)) * 0xBF58476D1CE4E5B9) & mask64
+        z = ((z ^ (z >> 27)) * 0x94D049BB133111EB) & mask64
+        z ^= z >> 31
+        out.extend(z.to_bytes(8, "little"))
+    return bytes(out[:n_bytes])
+
+
+def babel_mine(
+    target: bytes | bytearray,
+    start_seed: int = 0,
+    n_candidates: int = 4096,
+) -> tuple[int, int]:
+    """Search SplitMix64 seed neighborhood for nearest deterministic 0-byte representation."""
+    tgt_b = bytes(target)
+    n = len(tgt_b)
+    if n == 0 or n_candidates <= 0:
+        return int(start_seed) & 0xFFFFFFFFFFFFFFFF, n
+    if _DLL is not None and hasattr(_DLL, "chimera_babel_mine"):
+        tp, kt = _ro_ptr(tgt_b)
+        b_seed = ctypes.c_uint64(0)
+        b_dist = ctypes.c_uint32(0)
+        _DLL.chimera_babel_mine(
+            tp,
+            n,
+            int(start_seed) & 0xFFFFFFFFFFFFFFFF,
+            int(n_candidates) & 0xFFFFFFFF,
+            ctypes.byref(b_seed),
+            ctypes.byref(b_dist),
+        )
+        _ = kt
+        return int(b_seed.value), int(b_dist.value)
+
+    best_dist = n + 1
+    best_seed = int(start_seed) & 0xFFFFFFFFFFFFFFFF
+    for k in range(int(n_candidates)):
+        seed = (int(start_seed) + k) & 0xFFFFFFFFFFFFFFFF
+        cand = splitmix64_bytes(seed, n)
+        dist = 0
+        for i in range(n):
+            if cand[i] != tgt_b[i]:
+                dist += 1
+                if dist >= best_dist:
+                    break
+        else:
+            if dist < best_dist:
+                best_dist = dist
+                best_seed = seed
+                if best_dist == 0:
+                    break
+    return best_seed, best_dist

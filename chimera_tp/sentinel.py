@@ -290,6 +290,13 @@ class SentinelEngine:
                         (str(lp), t_text, t_count, now_local),
                     )
 
+            try:
+                radar_u = str(getattr(config, "radar_url", "http://127.0.0.1:8787") or "").rstrip("/")
+                if radar_u:
+                    alerts.extend(self.scan_stalled_workers(radar_url=radar_u))
+            except Exception:
+                pass
+
             has_crit = any(a["severity"] == "CRITICAL" for a in alerts)
             status = "ALERT" if has_crit else ("WARN" if alerts else "OK")
             for a in alerts[:20]:
@@ -349,6 +356,57 @@ class SentinelEngine:
                 pass
 
         return summary
+
+    def scan_stalled_workers(
+        self,
+        radar_url: str = "http://127.0.0.1:8787",
+        max_age_s: float = 300.0,
+    ) -> list[dict[str, Any]]:
+        """Detect stalled Radar crew runs exceeding max_age_s on loopback Radar API."""
+        base = str(radar_url or "").rstrip("/")
+        parsed = urllib.parse.urlparse(base)
+        host = (parsed.hostname or "").lower()
+        if parsed.scheme not in ("http", "https") or host not in ("127.0.0.1", "localhost", "::1"):
+            return []
+        try:
+            with urllib.request.urlopen(f"{base}/api/status", timeout=1.5) as resp:
+                data = json.loads(resp.read().decode("utf-8", errors="ignore"))
+        except Exception:
+            return []
+        if not isinstance(data, dict):
+            return []
+        out: list[dict[str, Any]] = []
+        candidates: list[dict[str, Any]] = []
+        if isinstance(data.get("active_run"), dict):
+            candidates.append(data["active_run"])
+        for key in ("running_runs", "runs"):
+            if isinstance(data.get(key), list):
+                candidates.extend(r for r in data[key] if isinstance(r, dict))
+        now_ts = time.time()
+        for run in candidates:
+            status = str(run.get("status") or "").lower()
+            if status not in ("running", "in_progress", "active"):
+                continue
+            elapsed = float(run.get("elapsed_s") or 0.0)
+            if elapsed <= 0.0 and run.get("started_at"):
+                try:
+                    dt = datetime.fromisoformat(str(run["started_at"]).replace("Z", "+00:00"))
+                    elapsed = max(0.0, now_ts - dt.timestamp())
+                except Exception:
+                    elapsed = 0.0
+            if elapsed > float(max_age_s):
+                rid = run.get("id") or run.get("run_id") or "?"
+                out.append(
+                    {
+                        "severity": "WARN",
+                        "category": "STALLED_WORKER",
+                        "source": f"radar:{rid}",
+                        "title": f"Worker #{rid} chạy quá {int(elapsed)}s (> {int(max_age_s)}s)",
+                        "detail": str(run.get("task_title") or run.get("repo") or "codex_exec")[:220],
+                        "diagnosis": "Lazarus Stall-Reaper hoặc restart Radar Daemon sẽ thu hồi process treo.",
+                    }
+                )
+        return out
 
     def latest_status(self) -> dict[str, Any]:
         with self._lock:

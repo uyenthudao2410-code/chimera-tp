@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "chimera-tp"
-version = "8.0.0"
-description = "CHIMERA-HYPER v6.0: APEX-SYNERGY (PHANTOM-5MS Tunnel, Radar + Tqouta Fusion, Ghost-PTY, Ghost-FS WebDAV, Medic & Drop-Portal)"
+version = "17.0.0"
+description = "CHIMERA-HYPER v17.0.0 — Universal Personal Infrastructure Brain & Platform Substrate (PHANTOM-5MS, CHIMERA-CONNECT, 10 Hot Cartridges, Native Rust/C11 SIMD)"
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.11"

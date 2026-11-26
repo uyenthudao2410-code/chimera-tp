@@ -253,7 +253,10 @@ class OpsConfig:
     phantom_ssh_port: int = 2222
     phantom_http_port: int = 9789
     phantom_tquota_port: int = 12550
+    phantom_reverse_tquota_port: int = 12551
+    phantom_reverse_http_port: int = 9790
     phantom_allowed_ports: list[int] = field(default_factory=lambda: [22, 8787, 9780, 12500, 12504])
+    phantom_reverse_allowed_ports: list[int] = field(default_factory=lambda: [9780, 12500, 12504])
     drop_ttl_s: int = 600
     tquota_admin_url: str = "http://127.0.0.1:12504"
     tquota_relay_url: str = "http://127.0.0.1:12500"
