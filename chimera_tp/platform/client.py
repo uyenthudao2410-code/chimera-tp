@@ -311,6 +311,44 @@ class ChimeraClient:
             return {"ok": False, "via": "local_fallback", "rows": []}
         return self._post_json("/v1/vault-sql/query", {"name": name, "sql": sql, "params": params or [], "limit": limit})
 
+    def colab_status(self, refresh: bool = False) -> dict[str, Any]:
+        if not self.available:
+            return {"ok": False, "via": "local_fallback", "usage": {"available": False}}
+        q = "?refresh=1" if refresh else ""
+        return self._get_json(f"/v1/vgpu/colab/status{q}", timeout=12.0)
+
+    def colab_exec(
+        self,
+        task_kind: str = "cuda_embed",
+        payload: dict[str, Any] | None = None,
+        *,
+        profile: str | None = None,
+        session: str | None = None,
+        keep_session: bool = False,
+        require_gpu: bool = False,
+        allow_heavy_gpu: bool = False,
+    ) -> dict[str, Any]:
+        if not self.available:
+            return {"ok": False, "via": "local_fallback"}
+        return self._post_json(
+            "/v1/vgpu/colab/exec",
+            {
+                "task_kind": task_kind,
+                "payload": payload or {},
+                "profile": profile,
+                "session": session,
+                "keep_session": keep_session,
+                "require_gpu": require_gpu,
+                "allow_heavy_gpu": allow_heavy_gpu,
+            },
+            timeout=240.0,
+        )
+
+    def colab_stop(self, session: str) -> dict[str, Any]:
+        if not self.available:
+            return {"ok": False, "via": "local_fallback"}
+        return self._post_json("/v1/vgpu/colab/stop", {"session": session}, timeout=30.0)
+
 
 def connect(
     app: str | None = None,

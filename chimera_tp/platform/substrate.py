@@ -14,6 +14,7 @@ from typing import Any
 
 from ..autopilot import get_zero_weight_status
 from .autoload import autoload_status
+from .colab_cli_bridge import ColabCliBridge
 from .discovery import (
     AppRegistry,
     PassivePortScanner,
@@ -83,6 +84,14 @@ class PlatformSubstrate:
             max_frames=240,
             interval_s=1.0,
         )
+        self.colab = ColabCliBridge(
+            state_dir=Path(daemon.ops_dir) / "colab",
+            peer_base_resolver=(
+                daemon.active_edge_peer_base
+                if (not self.ephemeral and daemon.config.peer_ipv4)
+                else None
+            ),
+        )
         self.vgpu = VgpuParetoGateway(
             node_name=daemon.config.node_name,
             role=daemon.config.role,
@@ -93,6 +102,7 @@ class PlatformSubstrate:
                 else None
             ),
             on_flow=daemon.record_flow,
+            colab_bridge=self.colab,
         )
         self.jobs = ImmortalJobEngine(db_path=Path(daemon.ops_dir) / "immortal_jobs.db")
         self.browser = SharedBrowserGrid(cdp_port=0 if self.ephemeral else 9785, idle_shutdown_s=120.0)
@@ -180,6 +190,7 @@ class PlatformSubstrate:
         self.browser.close()
         self.zygote.close()
         self.ghost.close()
+        self.colab.close()
 
     def merged_apps(self) -> list[dict[str, Any]]:
         """Merge local app registry with live ONLINE apps from peer node (e.g. svhome radar/tqouta visible on Windows)."""
@@ -372,6 +383,11 @@ class PlatformSubstrate:
             return 200, self.capabilities()
 
         if path == "/v1/smi":
+            if not self.ephemeral:
+                try:
+                    self.colab.status(refresh=False)
+                except Exception:
+                    pass
             caps = self.capabilities()
             apps = self.merged_apps()
             known_ports = {int(self.daemon.http_addr[1]), int(self.egress.addr[1])}
@@ -417,6 +433,10 @@ class PlatformSubstrate:
 
         if path == "/v1/vgpu/workers/list":
             return 200, {"ok": True, "workers": self.vgpu.list_remote_workers()}
+
+        if path == "/v1/vgpu/colab/status":
+            refresh = (qs.get("refresh") or ["0"])[0].lower() in ("1", "true", "yes")
+            return 200, self.colab.status(refresh=refresh)
 
         if path == "/v1/ghost/status":
             return 200, self.ghost.status()
@@ -758,6 +778,35 @@ class PlatformSubstrate:
             except Exception as exc:
                 return 400, {"error": str(exc)}
 
+        if path == "/v1/vgpu/colab/exec":
+            if not self._cartridge_enabled.get("vgpu_pareto", True):
+                return 503, {"error": "cartridge_disabled:vgpu_pareto"}
+            try:
+                return 200, self.colab.exec_task(
+                    task_kind=str(body.get("task_kind") or "cuda_embed"),
+                    payload=body.get("payload") or {},
+                    profile=body.get("profile") or None,
+                    session_name=body.get("session") or None,
+                    keep_session=bool(body.get("keep_session", False)),
+                    require_gpu=bool(body.get("require_gpu", False)),
+                    allow_heavy_gpu=bool(body.get("allow_heavy_gpu", False)),
+                )
+            except Exception as exc:
+                return 502, {"error": str(exc)}
+
+        if path == "/v1/vgpu/colab/stop":
+            sess = str(body.get("session") or "").strip()
+            if not sess:
+                return 400, {"error": "missing_session"}
+            return 200, self.colab.stop_session(sess)
+
+        if path == "/v1/vgpu/colab/tunnel-cmd":
+            sess = str(body.get("session") or "chimera_t4").strip()
+            lport = int(body.get("local_port") or 9795)
+            rport = int(body.get("remote_port") or 9795)
+            cmd = self.colab.build_ssh_tunnel_command(sess, local_port=lport, remote_port=rport)
+            return 200, {"ok": True, "session": sess, "local_port": lport, "remote_port": rport, "cmd": cmd}
+
         if path == "/v1/vgpu/ptx-bench":
             n = max(64, min(262144, int(body.get("n") or 16384)))
             va = [float((i % 13) - 6) for i in range(n)]
@@ -875,10 +924,15 @@ def render_smi(smi_data: dict[str, Any]) -> str:
     gh = smi_data.get("ghost") or {}
     gpu = vg.get("gpu") or {}
     colab_n = int(vg.get("colab_online", 0))
+    ccli = vg.get("colab_cli") or {}
+    if ccli.get("available") and ccli.get("balance_cu") is not None:
+        colab_tag = f"Colab:{float(ccli['balance_cu']):.0f}CU"
+    else:
+        colab_tag = f"Colab:{colab_n}"
     gpu_desc = (
-        f"Colab:{colab_n} | {gpu.get('name','GPU')[:18]} {gpu.get('util_pct',0)}% {gpu.get('temp_c',0)}C"
+        f"{colab_tag} | {gpu.get('name','GPU')[:16]} {gpu.get('util_pct',0)}% {gpu.get('temp_c',0)}C"
         if gpu.get("present")
-        else f"Colab:{colab_n} | CPU-AVX2 / peer-offload"
+        else f"{colab_tag} | CPU-AVX2 / peer-offload"
     )
     apps = smi_data.get("apps") or []
     unlinked = smi_data.get("unlinked_ports") or []

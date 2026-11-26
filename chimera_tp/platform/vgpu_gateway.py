@@ -96,6 +96,7 @@ class VgpuParetoGateway:
         host_governor: Any = None,
         peer_base_resolver: Callable[[], str] | None = None,
         on_flow: Callable[..., Any] | None = None,
+        colab_bridge: Any = None,
         temp_yield_c: float = 72.0,
         util_yield_pct: float = 45.0,
         min_free_vram_mb: int = 512,
@@ -105,6 +106,7 @@ class VgpuParetoGateway:
         self.host_governor = host_governor
         self.peer_base_resolver = peer_base_resolver
         self.on_flow = on_flow
+        self.colab_bridge = colab_bridge
         self.temp_yield_c = float(temp_yield_c)
         self.util_yield_pct = float(util_yield_pct)
         self.min_free_vram_mb = int(min_free_vram_mb)
@@ -159,6 +161,14 @@ class VgpuParetoGateway:
     def _active_colab_worker(self) -> dict[str, Any] | None:
         online = [w for w in self.list_remote_workers() if w.get("online")]
         return online[0] if online else None
+
+    def _colab_cli_info(self) -> dict[str, Any]:
+        if self.colab_bridge is None:
+            return {"probed": False, "available": False, "via": "disabled", "balance_cu": None}
+        try:
+            return self.colab_bridge.summary_cached()
+        except Exception:
+            return {"probed": False, "available": False, "via": "error", "balance_cu": None}
 
     def gpu_telemetry(self, force: bool = False) -> dict[str, Any]:
         now = time.monotonic()
@@ -226,9 +236,11 @@ class VgpuParetoGateway:
         payload_bytes: int = 1024,
         prefer_colab: bool = True,
     ) -> dict[str, Any]:
-        """4-Tier Pareto Router: Colab Pro CUDA (protects Windows!) -> Idle Windows GPU -> AVX2 CPU -> Cloud."""
+        """4-Tier Pareto Router: Colab Pro (HTTP or Headless CLI — protects Windows!) -> Idle Windows GPU -> AVX2 CPU -> Cloud."""
         colab = self._active_colab_worker()
-        elig = self.evaluate_gpu_eligibility(respect_work_first=prefer_colab and colab is not None)
+        colab_cli = self._colab_cli_info()
+        has_colab = (colab is not None) or bool(colab_cli.get("available"))
+        elig = self.evaluate_gpu_eligibility(respect_work_first=prefer_colab and has_colab)
         candidates: list[dict[str, Any]] = []
 
         if colab is not None:
@@ -238,6 +250,21 @@ class VgpuParetoGateway:
                     "node": colab["worker_id"],
                     "gpu_name": colab["gpu_name"],
                     "est_ms": round(35.0 + payload_bytes / 400000.0, 2),
+                    "est_cost_usd": 0.0,
+                    "tier": "cuda_heavy",
+                    "workstation_impact": "0%",
+                    "available": True,
+                }
+            )
+        elif colab_cli.get("available"):
+            candidates.append(
+                {
+                    "engine": "colab_cli_headless",
+                    "node": "colab-cli",
+                    "gpu_name": "Colab Pro CLI (T4/L4/A100)",
+                    "balance_cu": colab_cli.get("balance_cu"),
+                    "via": colab_cli.get("via"),
+                    "est_ms": round(120.0 + payload_bytes / 400000.0, 2),
                     "est_cost_usd": 0.0,
                     "tier": "cuda_heavy",
                     "workstation_impact": "0%",
@@ -282,8 +309,8 @@ class VgpuParetoGateway:
         tier_rank = {"standard": 1, "high": 2, "cuda_heavy": 3, "frontier": 4}
         min_r = tier_rank.get(min_tier, 1)
 
-        # If Colab Pro is online and user wants to protect Windows workstation (prefer_colab & heavy/cuda), prioritize Colab!
-        if prefer_colab and colab is not None and (min_tier in ("cuda_heavy", "high") or elig.get("governor_mode") == "USER_ACTIVE"):
+        # If Colab Pro (worker or headless CLI) is online and user wants to protect Windows workstation, prioritize Colab!
+        if prefer_colab and has_colab and (min_tier in ("cuda_heavy", "high") or elig.get("governor_mode") == "USER_ACTIVE"):
             if candidates[0]["est_ms"] <= max_ms:
                 return {"ok": True, "selected": candidates[0], "eligibility": elig, "candidates": candidates}
 
@@ -458,6 +485,7 @@ class VgpuParetoGateway:
             "ptx_jit": self.ptx.probe(),
             "colab_workers": workers,
             "colab_online": sum(1 for w in workers if w.get("online")),
+            "colab_cli": self._colab_cli_info(),
             "backends": probe_gpu_backends(),
             "governor_mode": elig["governor_mode"],
             "embed_cache_entries": cache_len,

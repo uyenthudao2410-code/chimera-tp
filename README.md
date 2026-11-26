@@ -56,7 +56,7 @@ Measured live across **Windows (`Rust GFNI/AVX-512F`, GTX 1650, Python 3.11)** a
 | **Immortal-Job Crash Resume** | Re-run from step 1 | **Resumes at step `3/4`**, `dup_skipped=True` | **`-75%` wasted work** |
 | **Shared Browser-Grid (CDP)** | `~1 GB` per Chrome instance | **`0.0 MB` RAM when idle**, lazy shared CDP + media block | On-demand zero-RAM |
 | **Zygote Worker (`svhome` Linux)** | `python3` spawn `~60–150 ms` | **`2.791 ms` (`linux_prefork_cow`, 0 warnings)** | **`~20x–50x` faster** |
-| **4-Tier VGPU (Colab Pro + `nvcuda` PTX)** | Idle/unshared GPU or laggy PC | **Colab Pro CUDA (`0%` Win load)** + **`0.73 ms` GTX 1650 PTX JIT (`0 MB` VRAM retained)** | Workstation protected |
+| **4-Tier VGPU (Colab Pro CLI + `nvcuda` PTX)** | Manual notebook/ngrok or laggy PC | **Headless `chimera-tp colab` CLI (`0` ngrok, anti-congestion, CU auto-stop, `0%` Win GPU)** + **`0.73 ms` GTX 1650 PTX JIT** | Zero-touch cloud CUDA |
 | **Zero-Leak Egress DLP + Live Traffic** | Unmonitored secret leaks | **`403 BLOCKED` `< 50 µs`** + **`31` live `radar` requests** routed via `:9781` | Zero-code protection |
 | **Cristae Folded-Cavity SC-RLNC** | Heavy RAM/FEC under WAN bursts | **`31.4%` packet loss → `100%` SHA-256 exact** in **`4.098 ms`** (`16 KB` L2) | Zero RAM growth |
 | **Cross-Node `Vault-SQL` (Live `30 MB` DB)** | Remote SQLite queries / locks | **`31.05 MB → 6.35 MB` (`4.89x`)**, unchanged **`0 B`**, **`53` tables in `4.75 ms`** | Zero lock errors |
@@ -110,7 +110,12 @@ python -m chimera_tp cartridge enable browser_grid
 # Zero-downtime Canary Twin comparison (PROMOTE / ROLLBACK)
 python -m chimera_tp canary http://127.0.0.1:8080 http://127.0.0.1:8081 --paths /health --samples 5
 
-# Expose 8 live infrastructure tools to AI Coding Agents over stdio MCP
+# Headless Google Colab Pro/Ultra CUDA offload (zero ngrok, anti-congestion, CU auto-stop, 0% Windows GPU load)
+python -m chimera_tp colab status
+python -m chimera_tp colab matmul --n 2048 --profile T4
+python -m chimera_tp colab embed --texts "hello world" "fast vector" --dim 256 --require-gpu
+
+# Expose 10 live infrastructure tools to AI Coding Agents over stdio MCP
 python -m chimera_tp mcp
 ```
 
@@ -146,7 +151,7 @@ python -m unittest discover -s tests -v
 
 ## 6. Repository Map & Documentation
 
-* **`chimera_tp/platform/`** — `v16–v17` Open Platform Substrate (`discovery.py`, `client.py`, `autoload.py`, `mcp_server.py`, `egress_membrane.py`, `pulse_bus.py`, `hybrid_search.py`, `flight_recorder.py`, `vgpu_gateway.py`, `immortal_jobs.py`, `browser_grid.py`, `zygote_canary.py`, `substrate.py`).
+* **`chimera_tp/platform/`** — `v16–v18` Open Platform Substrate (`discovery.py`, `client.py`, `autoload.py`, `mcp_server.py`, `egress_membrane.py`, `pulse_bus.py`, `hybrid_search.py`, `flight_recorder.py`, `vgpu_gateway.py`, `colab_cli_bridge.py`, `nvcuda_ptx.py`, `immortal_jobs.py`, `browser_grid.py`, `zygote_canary.py`, `vault_sql.py`, `folded_cavity_rlnc.py`, `ghost_bubble.py`, `substrate.py`).
 * **`chimera_tp/`** — Core transport (`phantom_tunnel.py`, `v9_dataplane.py`, `gf256.py`), native SIMD bridge (`native.py`), sovereign & galactic engines (`v9_*`–`v12_*`), `host_governor.py`, `sentinel.py`, `medic.py`, `dashboard.py`, `universe_ui.py`.
 * **`native/`** — Bit-identical Rust (`chimera_core`) & C11 (`chimera_core_c`) SIMD accelerators.
 * **Docs & Plans:** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) • [docs/EVALUATION.md](docs/EVALUATION.md) • [docs/MOONSHOT_VAULT.md](docs/MOONSHOT_VAULT.md) • [docs/ROADMAP.md](docs/ROADMAP.md) • [docs/reports/CHIMERA_V17_PLATFORM_SUBSTRATE_AUDIT.md](docs/reports/CHIMERA_V17_PLATFORM_SUBSTRATE_AUDIT.md).

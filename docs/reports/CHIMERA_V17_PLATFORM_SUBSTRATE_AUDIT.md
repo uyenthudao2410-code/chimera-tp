@@ -91,8 +91,10 @@ Hệ thống `chimera-tp v17.0.0` đã hoàn thành bước chuyển mình quan 
 
 1. **Ép cân RAM `svhome` bằng Phantom-Demand Lazy Shedding (`dashboard.py`):**
    - Chuyển toàn bộ mô-đun phòng lab `v6–v12` sang `_LazyRef` + `@property` + `gc.collect()` → RAM daemon `svhome` giảm từ **`75.87 MB` → `57.86 MB` (`-18.01 MB`, `-23.7%`)** dù bật đủ **`12` Cartridges** (`win-desktop`: **`31.82 / 80 MB`**).
-2. **4-Tier VGPU Pareto Fabric (Colab Pro CUDA + Zero-Dependency GTX 1650 `nvcuda.dll` PTX JIT):**
-   - Ưu tiên đẩy CUDA nặng sang **Colab Pro T4/L4/A100** ([chimera_colab_vgpu_worker.py](../../scripts/chimera_colab_vgpu_worker.py)) để giữ máy Windows `0%` tải GPU khi người dùng đang làm việc (`workstation_impact="0%"`).
+2. **4-Tier VGPU Pareto Fabric (Headless Colab Pro CLI + Zero-Dependency GTX 1650 `nvcuda.dll` PTX JIT):**
+   - **Tích hợp Headless `ColabCliBridge` (`colab_cli_bridge.py`) — Không cần mở notebook tay, Không cần ngrok:** Kế thừa và phổ quát hóa toàn bộ thuật toán chống nghẽn của `colab` CLI (`--config` cô lập riêng, chọn profile nhẹ nhất `CPU → CPU_HIGH_MEM → T4 → L4 → A100`, bỏ `--high-mem` trên GPU single-shape `L4/H100`, `COLAB_CLI_ASSIGN_RETRIES=0` fallback nhanh, chạy payload qua `colab exec -f`, tự động `colab stop` trong `finally` chống rò rỉ Compute Unit, WebSocket-SSH `-L` qua `colab ssh --proxy-mode`, và tự động chuyển tiếp xuyên máy `win-desktop → svhome` qua `PHANTOM-5MS`).
+   - **Kiểm chứng thực chiến trên GPU Google Colab Pro thật (`chimera-tp colab matmul --n 2048 --profile T4`):** Cấp phát tự động **`Tesla T4 (14.56 GB VRAM, 12.67 GB RAM)`**, tính `2048×2048` FP32 CUDA matmul trong **`77.202 ms` (`222.53 GFLOPS`)**, `workstation_gpu_impact="0%"`, và tự ngắt runtime ngay lập tức (`auto_stopped_cu_guard=True`, `active_assignments=0`, giữ nguyên **`2,350.14 CU`** không rò rỉ).
+   - Pareto Router ưu tiên `colab_cli_headless` (`workstation_impact="0%"`) để giữ máy Windows `0%` tải GPU khi người dùng đang làm việc.
    - Khi Windows rảnh/cho phép: chạy kernel PTX JIT thật trên `NVIDIA GeForce GTX 1650 (sm_7.5)` qua `nvcuda.dll` (**`0.73 ms`** trên `65,536` phần tử, **`0.0 MB` VRAM giữ lại**, `0` gói cài thêm).
 3. **Traffic thật của `radar` chạy sống qua `CHIMERA-EGRESS + MEMBRANE :9781` + Zero-Leak DLP + UCB1 Bandit:**
    - Bật `--inject-proxy` cho `radar-dashboard.service`: ghi nhận ngay **`31` request thật** của `radar` đi qua `:9781`; DLP Sentinel chặn rò rỉ khóa (`ghp_`/`sk-`/`AIza`/`PRIVATE KEY`) với `403 X-Chimera-DLP: BLOCKED` trong `< 50 µs`.

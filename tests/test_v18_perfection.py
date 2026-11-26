@@ -14,7 +14,14 @@ from pathlib import Path
 
 from chimera_tp.autopilot import OpsConfig
 from chimera_tp.dashboard import ChimeraDaemon
-from chimera_tp.platform import CristaeFoldedCavityRLNC, NvCudaPtxEngine
+from chimera_tp.platform import (
+    ColabCliBridge,
+    CristaeFoldedCavityRLNC,
+    NvCudaPtxEngine,
+    parse_marked_json,
+    parse_usage_text,
+    select_lightest_profile,
+)
 
 
 class TestV18Perfection(unittest.TestCase):
@@ -176,6 +183,103 @@ class TestV18Perfection(unittest.TestCase):
         self.assertEqual(st_c, 200)
         self.assertTrue(cres["committed"])
         self.assertEqual((ws / "config.txt").read_text(encoding="utf-8"), "v2=upgraded\n")
+
+    def test_05_colab_cli_bridge_anti_congestion_and_headless_exec(self) -> None:
+        import os
+        import stat
+
+        # 1. Anti-congestion right-sizing rules
+        self.assertEqual(select_lightest_profile("cuda_embed", batch_size=2, require_gpu=False)["profile"], "CPU")
+        self.assertEqual(select_lightest_profile("cuda_embed", batch_size=32, require_gpu=False)["profile"], "T4")
+        self.assertEqual(select_lightest_profile("cuda_matmul", require_gpu=True)["profile"], "T4")
+        self.assertEqual(select_lightest_profile("highram_verify")["profile"], "CPU_HIGH_MEM")
+        self.assertEqual(select_lightest_profile("llm_large")["profile"], "L4")
+        self.assertEqual(select_lightest_profile("cuda_matmul", allow_heavy_gpu=True)["profile"], "A100")
+
+        # 2. Single-shape GPUs (L4/H100) MUST omit --high-mem; A100 & CPU_HIGH_MEM MUST include it
+        self.assertNotIn("--high-mem", ColabCliBridge.build_new_command("s1", "L4"))
+        self.assertNotIn("--high-mem", ColabCliBridge.build_new_command("s1", "H100"))
+        self.assertIn("--high-mem", ColabCliBridge.build_new_command("s1", "A100"))
+        self.assertIn("--high-mem", ColabCliBridge.build_new_command("s1", "CPU_HIGH_MEM"))
+
+        # 3. Usage & marked JSON parsers
+        u = parse_usage_text("\x1b[32mCurrent balance: 2350.14 compute units\x1b[0m\nUsage rate: 0.00/hr\nActive assignments: 0")
+        self.assertEqual(u["balance_cu"], 2350.14)
+        self.assertEqual(u["active_assignments"], 0)
+        parsed = parse_marked_json("noise\n===CHIMERA_COLAB_OUT_START===\n{\"ok\":true,\"val\":42}\n===CHIMERA_COLAB_OUT_END===\ntail")
+        self.assertEqual(parsed["val"], 42)
+
+        # 4. End-to-end mock `colab` CLI binary verifying: status -> Pareto route -> new -> exec -f -> CU-guard auto-stop -> 0 leaked sessions!
+        log_file = Path(self._tmp.name) / "colab_calls.log"
+        stub_py = Path(self._tmp.name) / "fake_colab.py"
+        stub_py.write_text(
+            "import json, subprocess, sys\n"
+            "from pathlib import Path\n"
+            f"LOG = Path({str(log_file)!r})\n"
+            "args = sys.argv[1:]\n"
+            "if len(args) >= 2 and args[0] == '--config': args = args[2:]\n"
+            "sub = args[0] if args else ''\n"
+            "with LOG.open('a', encoding='utf-8') as f: f.write(json.dumps(args) + '\\n')\n"
+            "if sub == 'usage':\n"
+            "    print('Current balance: 2350.14 compute units\\nUsage rate: 0.00/hr\\nActive assignments: 0')\n"
+            "elif sub == 'sessions':\n"
+            "    print('[colab] No active sessions found on server.')\n"
+            "elif sub == 'new':\n"
+            "    print('Created session')\n"
+            "elif sub == 'exec':\n"
+            "    fi = args.index('-f') + 1\n"
+            "    rc = subprocess.run([sys.executable, args[fi]], check=False).returncode\n"
+            "    sys.exit(rc)\n"
+            "elif sub == 'stop':\n"
+            "    print('Stopped session')\n",
+            encoding="utf-8",
+        )
+        if os.name == "nt":
+            stub_bin = Path(self._tmp.name) / "fake_colab.cmd"
+            stub_bin.write_text(f'@echo off\r\n"{sys.executable}" "{stub_py}" %*\r\n', encoding="utf-8")
+        else:
+            stub_bin = Path(self._tmp.name) / "fake_colab.sh"
+            stub_bin.write_text(f'#!/bin/sh\nexec "{sys.executable}" "{stub_py}" "$@"\n', encoding="utf-8")
+            stub_bin.chmod(stub_bin.stat().st_mode | stat.S_IEXEC)
+
+        self.daemon.platform.colab._colab_bin_override = str(stub_bin)
+        self.daemon.platform.colab._status_cache = None
+
+        st_info = self._get("/v1/vgpu/colab/status?refresh=1")
+        self.assertTrue(st_info["local_cli_found"])
+        self.assertEqual(st_info["usage"]["balance_cu"], 2350.14)
+        self.assertEqual(st_info["sessions"]["sessions"], [])
+
+        # Pareto route MUST now automatically pick colab_cli_headless (0% Windows GPU load!) without any manual ngrok worker!
+        st_pr, route = self._post("/v1/vgpu/route", {"max_ms": 500, "max_cost_usd": 0.0, "min_tier": "cuda_heavy"})
+        self.assertEqual(st_pr, 200)
+        self.assertEqual(route["selected"]["engine"], "colab_cli_headless")
+        self.assertEqual(route["selected"]["workstation_impact"], "0%")
+
+        # Headless exec (cuda_embed) runs script via `colab exec -f` and auto-stops session in finally (CU-leak guard!)
+        st_ex, ex = self._post(
+            "/v1/vgpu/colab/exec",
+            {"task_kind": "cuda_embed", "payload": {"texts": ["hello colab fabric"], "dim": 64}, "profile": "CPU"},
+        )
+        self.assertEqual(st_ex, 200)
+        self.assertTrue(ex["ok"])
+        self.assertTrue(ex["auto_stopped_cu_guard"])
+        self.assertEqual(ex["workstation_gpu_impact"], "0%")
+        self.assertEqual(ex["result"]["count"], 1)
+        self.assertEqual(len(ex["result"]["embeddings"][0]), 64)
+
+        # Verify `stop` was actually invoked by CU-leak guard
+        calls = [json.loads(ln) for ln in log_file.read_text(encoding="utf-8").splitlines() if ln.strip()]
+        subcmds = [c[0] for c in calls]
+        self.assertIn("new", subcmds)
+        self.assertIn("exec", subcmds)
+        self.assertIn("stop", subcmds)
+
+        # Verify WebSocket-SSH tunnel command generation (zero ngrok!)
+        st_tn, tn = self._post("/v1/vgpu/colab/tunnel-cmd", {"session": "chimera_t4", "local_port": 9795, "remote_port": 9795})
+        self.assertEqual(st_tn, 200)
+        self.assertIn("ssh", tn["cmd"][0])
+        self.assertTrue(any("ssh --proxy-mode -s chimera_t4" in arg for arg in tn["cmd"]))
 
 
 if __name__ == "__main__":

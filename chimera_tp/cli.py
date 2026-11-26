@@ -389,6 +389,27 @@ def main(argv: list[str] | None = None) -> int:
     p_gh.add_argument("--commit", action="store_true", help="Commit changes back to target directory if exit_code==0")
     p_gh.add_argument("cmd", nargs=argparse.REMAINDER, help="Command to test (prefix with --)")
 
+    p_clb = sub.add_parser("colab", help="Headless Google Colab Pro/Ultra CLI fabric (zero ngrok, anti-congestion, CU auto-stop)")
+    p_clb.add_argument("action", choices=("status", "exec", "embed", "matmul", "stop", "tunnel-cmd"), help="Colab CLI action")
+    p_clb.add_argument("--task", default="probe", choices=("probe", "cuda_embed", "cuda_matmul"), help="Task kind for exec")
+    p_clb.add_argument("--profile", default="", help="Optional Colab profile override (CPU, CPU_HIGH_MEM, T4, L4, A100)")
+    p_clb.add_argument("--session", default="", help="Optional Colab session name")
+    p_clb.add_argument("--texts", nargs="*", default=None, help="Input texts for embed")
+    p_clb.add_argument("--dim", type=int, default=256, help="Embedding dimension for embed")
+    p_clb.add_argument("--n", type=int, default=1024, help="Matrix dimension NxN for matmul")
+    p_clb.add_argument("--require-gpu", action="store_true", help="Require GPU (default auto-picks lightest T4)")
+    p_clb.add_argument("--allow-heavy-gpu", action="store_true", help="Allow A100 heavy GPU tier")
+    p_clb.add_argument("--keep-session", action="store_true", help="Keep Colab runtime alive after execution (default auto-stops to guard CU)")
+    p_clb.add_argument("--refresh", action="store_true", help="Bypass status cache and query Colab CLI live")
+    p_clb.add_argument("--local-port", type=int, default=9795, help="Local port for WebSocket-SSH tunnel-cmd")
+    p_clb.add_argument("--remote-port", type=int, default=9795, help="Remote Colab port for WebSocket-SSH tunnel-cmd")
+    p_clb.add_argument("--anchor", default="", help="Override CHIMERA anchor URL")
+
+    p_ship = sub.add_parser("ship-check", help="Verify Overmind Cortex canary shipping invariants (PHANTOM, storm, RAM, CRDT, DLP)")
+    p_ship.add_argument("--local", default="http://127.0.0.1:9780", help="Local Chimera dashboard URL")
+    p_ship.add_argument("--peer", default="http://127.0.0.1:9789", help="Peer Chimera URL via PHANTOM or loopback")
+    p_ship.add_argument("--window", type=float, default=1.5, help="Storm tx_delta observation window in seconds")
+
     # ---- Legacy Research Subcommands (v0.5.0 Multi-Realm Exotic Lanes) ----
     p_probe = sub.add_parser("probe", help="Probe hardware capabilities & Windows network realms")
     p_probe.add_argument("--json", action="store_true", help="Emit probe profile as JSON")
@@ -409,6 +430,17 @@ def main(argv: list[str] | None = None) -> int:
     _add_send_options(p_connect)
 
     args = parser.parse_args(argv)
+
+    if args.command == "ship-check":
+        from .overmind_cortex import OvermindCortex
+
+        rep = OvermindCortex.canary_ship_check(
+            local_base=args.local,
+            peer_base=args.peer,
+            delta_window_s=float(args.window),
+        )
+        print(json.dumps(rep, indent=2, ensure_ascii=False))
+        return 0 if rep.get("ok") else 1
 
     if args.command == "probe":
         env = probe_environment()
@@ -1346,6 +1378,78 @@ def main(argv: list[str] | None = None) -> int:
             res["discard_result"] = eng.discard(res["bubble_id"])
         print(json.dumps(res, indent=2, ensure_ascii=False))
         return int(res["exit_code"])
+
+    if args.command == "colab":
+        import urllib.request as _urlreq
+        from .platform import discover_runtime_file
+
+        rt = discover_runtime_file()
+        anchor = (args.anchor or (rt or {}).get("anchor_url") or "http://127.0.0.1:9780").rstrip("/")
+        opener = _urlreq.build_opener(_urlreq.ProxyHandler({}))
+        if args.action == "status":
+            q = "?refresh=1" if args.refresh else ""
+            with opener.open(f"{anchor}/v1/vgpu/colab/status{q}", timeout=20.0) as resp:
+                print(json.dumps(json.loads(resp.read().decode("utf-8")), indent=2, ensure_ascii=False))
+            return 0
+        if args.action == "stop":
+            sess = args.session or "chimera_t4"
+            req = _urlreq.Request(
+                f"{anchor}/v1/vgpu/colab/stop",
+                data=json.dumps({"session": sess}).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with opener.open(req, timeout=45.0) as resp:
+                res = json.loads(resp.read().decode("utf-8"))
+            print(json.dumps(res, indent=2, ensure_ascii=False))
+            return 0 if res.get("ok") else 1
+        if args.action == "tunnel-cmd":
+            req = _urlreq.Request(
+                f"{anchor}/v1/vgpu/colab/tunnel-cmd",
+                data=json.dumps(
+                    {
+                        "session": args.session or "chimera_t4",
+                        "local_port": int(args.local_port),
+                        "remote_port": int(args.remote_port),
+                    }
+                ).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with opener.open(req, timeout=10.0) as resp:
+                print(json.dumps(json.loads(resp.read().decode("utf-8")), indent=2, ensure_ascii=False))
+            return 0
+        task_kind = (
+            "cuda_embed"
+            if args.action == "embed"
+            else ("cuda_matmul" if args.action == "matmul" else args.task)
+        )
+        payload: dict[str, object] = {}
+        if task_kind == "cuda_embed":
+            payload = {"texts": list(args.texts or ["chimera colab fabric test"]), "dim": int(args.dim)}
+        elif task_kind == "cuda_matmul":
+            payload = {"n": int(args.n)}
+        req = _urlreq.Request(
+            f"{anchor}/v1/vgpu/colab/exec",
+            data=json.dumps(
+                {
+                    "task_kind": task_kind,
+                    "payload": payload,
+                    "profile": args.profile or None,
+                    "session": args.session or None,
+                    "keep_session": bool(args.keep_session),
+                    "require_gpu": bool(args.require_gpu or args.action == "matmul"),
+                    "allow_heavy_gpu": bool(args.allow_heavy_gpu),
+                },
+                ensure_ascii=False,
+            ).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with opener.open(req, timeout=260.0) as resp:
+            res = json.loads(resp.read().decode("utf-8"))
+        print(json.dumps(res, indent=2, ensure_ascii=False))
+        return 0 if res.get("ok") else 1
 
     if args.command == "run":
         import subprocess

@@ -3,6 +3,12 @@
 from .autoload import autoload_status, install_autoload, install_systemd_dropin, uninstall_autoload
 from .browser_grid import SharedBrowserGrid, find_browser_binary
 from .client import ChimeraClient, connect, is_available
+from .colab_cli_bridge import (
+    ColabCliBridge,
+    parse_marked_json,
+    parse_usage_text,
+    select_lightest_profile,
+)
 from .discovery import (
     AppRegistry,
     PassivePortScanner,
@@ -31,6 +37,7 @@ __all__ = [
     "AppRegistry",
     "CanaryTwinJudge",
     "ChimeraClient",
+    "ColabCliBridge",
     "CristaeFoldedCavityRLNC",
     "DisklessSecretVault",
     "EgressMembraneProxy",
@@ -57,10 +64,13 @@ __all__ = [
     "install_systemd_dropin",
     "is_available",
     "link_project",
+    "parse_marked_json",
+    "parse_usage_text",
     "probe_gpu_backends",
     "probe_nvidia_gpu",
     "render_smi",
     "runtime_beacon_paths",
+    "select_lightest_profile",
     "serve_mcp_stdio",
     "uninstall_autoload",
     "write_agents_infra_doc",

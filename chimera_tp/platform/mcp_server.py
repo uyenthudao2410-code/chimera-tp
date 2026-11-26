@@ -91,6 +91,30 @@ _TOOLS = [
             "required": ["baseline_url", "canary_url"],
         },
     },
+    {
+        "name": "chimera_colab_status",
+        "description": "Check live Google Colab Pro/Ultra CLI status, Compute Unit balance, and active sessions (auto-relayed win-desktop -> svhome).",
+        "inputSchema": {
+            "type": "object",
+            "properties": {"refresh": {"type": "boolean"}},
+            "required": [],
+        },
+    },
+    {
+        "name": "chimera_colab_exec",
+        "description": "Dispatch a headless GPU/CUDA compute task (probe, cuda_embed, cuda_matmul) to Google Colab Pro via colab CLI with anti-congestion right-sizing and CU-leak auto-stop (0% Windows GPU impact).",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "task_kind": {"type": "string", "enum": ["probe", "cuda_embed", "cuda_matmul"]},
+                "payload": {"type": "object"},
+                "profile": {"type": "string", "description": "Optional profile override: CPU, CPU_HIGH_MEM, T4, L4, A100"},
+                "require_gpu": {"type": "boolean"},
+                "keep_session": {"type": "boolean"},
+            },
+            "required": ["task_kind"],
+        },
+    },
 ]
 
 
@@ -148,6 +172,16 @@ def handle_mcp_request(msg: dict[str, Any], anchor_url: str | None = None) -> di
                     baseline_url=str(args.get("baseline_url", "")),
                     canary_url=str(args.get("canary_url", "")),
                     samples=int(args.get("samples", 5)),
+                )
+            elif tname == "chimera_colab_status":
+                out = client.colab_status(refresh=bool(args.get("refresh", False)))
+            elif tname == "chimera_colab_exec":
+                out = client.colab_exec(
+                    task_kind=str(args.get("task_kind", "probe")),
+                    payload=args.get("payload") if isinstance(args.get("payload"), dict) else {},
+                    profile=args.get("profile") or None,
+                    require_gpu=bool(args.get("require_gpu", False)),
+                    keep_session=bool(args.get("keep_session", False)),
                 )
             else:
                 return {
