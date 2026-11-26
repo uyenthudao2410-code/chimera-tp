@@ -32,6 +32,9 @@ from .hybrid_search import HybridPlatformSearch
 from .immortal_jobs import ImmortalJobEngine
 from .pulse_bus import PulseBus
 from .browser_grid import SharedBrowserGrid
+from .cosmos_entity import CosmosEntityEngine
+from .hyper_desk import HyperDeskEngine
+from .omega_entity import OmegaEntityEngine
 from .vault_sql import VaultSqlFabric
 from .vgpu_gateway import VgpuParetoGateway
 from .zygote_canary import CanaryTwinJudge, ZygoteWorkerPool
@@ -117,6 +120,25 @@ class PlatformSubstrate:
             ),
         )
         self.ghost = GhostBubbleEngine(work_root=Path(daemon.ops_dir) / "ghost_bubbles")
+        self.hyper_desk = HyperDeskEngine(
+            host_governor=getattr(daemon, "host_governor", None),
+            pulse_bus=self.pulse,
+            zygote_pool=self.zygote,
+            browser_grid=self.browser,
+            peer_base_resolver=(
+                daemon.active_edge_peer_base
+                if (not self.ephemeral and daemon.config.peer_ipv4)
+                else None
+            ),
+            on_flow=daemon.record_flow,
+        )
+        self.cosmos = CosmosEntityEngine(
+            ops_dir=Path(daemon.ops_dir),
+            node_name=daemon.config.node_name,
+            role=daemon.config.role,
+            substrate=self,
+        )
+        self.omega = OmegaEntityEngine(ops_dir=Path(daemon.ops_dir), substrate=self)
         self._peer_apps_lock = threading.Lock()
         self._peer_apps_ts: float = 0.0
         self._peer_apps_cache: list[dict[str, Any]] = []
@@ -135,6 +157,9 @@ class PlatformSubstrate:
             "zygote_canary": True,
             "vault_sql": True,
             "ghost_bubble": True,
+            "hyper_desk": True,
+            "cosmos_entity": True,
+            "omega_entity": True,
         }
         self._load_cartridge_config()
         self._beacon_paths: list[Path] = []
@@ -191,6 +216,8 @@ class PlatformSubstrate:
         self.browser.close()
         self.zygote.close()
         self.ghost.close()
+        self.hyper_desk.close()
+        self.cosmos.close()
         self.colab.close()
 
     def merged_apps(self) -> list[dict[str, Any]]:
@@ -248,7 +275,7 @@ class PlatformSubstrate:
         return {
             "ok": True,
             "schema": "chimera.capabilities.v1",
-            "version": "18.0.0",
+            "version": "21.0.0",
             "node_name": self.daemon.config.node_name,
             "role": self.daemon.config.role,
             "os": platform.system().lower(),
@@ -331,6 +358,21 @@ class PlatformSubstrate:
                     "endpoint": f"{anchor}/v1/ghost/run",
                     "description": "Unprivileged Copy-on-Write dry-run reality bubble with atomic commit/discard",
                 },
+                "hyper_desk": {
+                    "status": "active" if self._cartridge_enabled["hyper_desk"] else "disabled",
+                    "endpoint": f"{anchor}/v1/hyperdesk/diagnose",
+                    "description": "v19 Kernel multitasking optimizer: Focus Cryo, Silicon Wall, GTX1650 VRAM-Swap, Hydra Collapse, Orphan Reaper & Sync Dam",
+                },
+                "cosmos_entity": {
+                    "status": "active" if self._cartridge_enabled["cosmos_entity"] else "disabled",
+                    "endpoint": f"{anchor}/v1/cosmos/status",
+                    "description": "v20 Cosmic Infrastructure Entity: SSI, Zero-Env CAS, Omni-Memory (6 views), Immortal-Net, Immune-OS, Autogen SRE, Swarm OS, Thermo & Genesis",
+                },
+                "omega_entity": {
+                    "status": "active" if self._cartridge_enabled["omega_entity"] else "disabled",
+                    "endpoint": f"{anchor}/v1/omega/status",
+                    "description": "v21 Singularity Entity: Ring-1 EPT dedup, Akashic DAG+Fusion, Silicon Alchemy, Precognition, Vampire Cloud, Intent Kernel, Multiverse & Autopoietic DNA",
+                },
             },
         }
 
@@ -355,7 +397,7 @@ class PlatformSubstrate:
         apps = self.merged_apps()
         eg = self.egress.stats()
         return {
-            "version": "18.0.0",
+            "version": "21.0.0",
             "anchor_url": self.anchor_url,
             "egress_proxy_url": self.egress.url,
             "apps_online": [a["app"] for a in apps if a.get("online")],
@@ -413,6 +455,9 @@ class PlatformSubstrate:
                 "canary": self.canary.stats(),
                 "vault_sql": self.vault_sql.status(),
                 "ghost": self.ghost.status(),
+                "hyper_desk": self.hyper_desk.status(),
+                "cosmos": self.cosmos.status(),
+                "omega": self.omega.status(),
                 "cartridge_toggles": dict(self._cartridge_enabled),
             }
 
@@ -441,6 +486,42 @@ class PlatformSubstrate:
 
         if path == "/v1/vgpu/colab/policy":
             return 200, {"ok": True, "policy": self.colab.get_policy(), "autonomous": self.colab.autonomous_state()}
+
+        if path == "/v1/unify/status":
+            from .unify import unify_status
+
+            return 200, unify_status()
+
+        if path == "/v1/openai/v1/models":
+            models: list[dict[str, Any]] = [
+                {"id": "chimera-vsa-embed-256", "object": "model", "owned_by": "chimera-vgpu-avx2"},
+                {"id": "chimera-cuda-embed", "object": "model", "owned_by": "chimera-colab-elastic"},
+                {"id": "chimera-colab-elastic", "object": "model", "owned_by": "chimera-colab-elastic"},
+            ]
+            relay_url = str(getattr(self.daemon.config, "tquota_relay_url", "") or "http://127.0.0.1:12500").rstrip("/")
+            model_urls = [f"{relay_url}/v1/models"]
+            if (not self.ephemeral) and getattr(self.daemon.config, "peer_ipv4", ""):
+                model_urls.append(f"http://{self.daemon.config.peer_ipv4}:12500/v1/models")
+            import urllib.request as _ur
+
+            opener = _ur.build_opener(_ur.ProxyHandler({}))
+            seen = {m["id"] for m in models}
+            for murl in model_urls:
+                try:
+                    with opener.open(murl, timeout=1.2) as r:
+                        rem = json.loads(r.read().decode("utf-8"))
+                    added = False
+                    for item in (rem.get("data") or []):
+                        mid = item.get("id")
+                        if mid and mid not in seen:
+                            models.append(item)
+                            seen.add(mid)
+                            added = True
+                    if added:
+                        break
+                except Exception:
+                    continue
+            return 200, {"object": "list", "data": models}
 
         if path == "/v1/ghost/status":
             return 200, self.ghost.status()
@@ -534,6 +615,38 @@ class PlatformSubstrate:
                 "hosts_line": hosts_line,
                 "usage_hint": "curl -H 'Host: radar.chimera.local' http://127.0.0.1:9780/api/health",
             }
+
+        # --- v19 CHIMERA-HYPERDESK GET routes ---
+        if path == "/v1/hyperdesk/status":
+            return 200, self.hyper_desk.status()
+        if path == "/v1/hyperdesk/diagnose":
+            return 200, self.hyper_desk.diagnose()
+        if path == "/v1/hyperdesk/vram/status":
+            return 200, {"ok": True, "vram_swap": self.hyper_desk.vram_swap.status()}
+
+        # --- v20 CHIMERA-COSMOS GET routes ---
+        if path == "/v1/cosmos/status":
+            return 200, self.cosmos.status()
+        if path == "/v1/cosmos/omni/get":
+            key = (qs.get("key") or [""])[0]
+            ns = (qs.get("namespace") or ["global"])[0]
+            asof_raw = (qs.get("as_of_seq") or [""])[0]
+            asof = int(asof_raw) if asof_raw.isdigit() else None
+            return 200, self.cosmos.omni.get(key, namespace=ns, as_of_seq=asof)
+        if path == "/v1/cosmos/omni/search":
+            q = (qs.get("q") or [""])[0]
+            ns = (qs.get("namespace") or ["global"])[0]
+            return 200, self.cosmos.omni.search(q, namespace=ns)
+        if path == "/v1/cosmos/genesis/seed":
+            return 200, self.cosmos.export_genesis_seed()
+        if path == "/v1/cosmos/genesis/assimilate":
+            return 200, self.cosmos.assimilate_profile()
+
+        # --- v21 CHIMERA-OMEGA ENTITY GET routes ---
+        if path == "/v1/omega/status":
+            return 200, self.omega.status()
+        if path == "/v1/omega/gravity":
+            return 200, self.omega.omega_gravity_status()
 
         return None
 
@@ -671,6 +784,37 @@ class PlatformSubstrate:
                 allow_peer_offload=bool(body.get("allow_peer_offload", True)),
                 prefer_cuda=bool(body.get("prefer_cuda", False)),
             )
+
+        if path in ("/v1/openai/v1/chat/completions", "/v1/openai/v1/responses", "/v1/openai/v1/completions"):
+            sub_ep = path[len("/v1/openai") :]
+            relay_base = str(getattr(self.daemon.config, "tquota_relay_url", "") or "http://127.0.0.1:12500").rstrip("/")
+            candidates = [f"{relay_base}{sub_ep}"]
+            if (not self.ephemeral) and getattr(self.daemon.config, "peer_ipv4", ""):
+                candidates.append(f"http://{self.daemon.config.peer_ipv4}:12500{sub_ep}")
+            import urllib.error as _ue
+            import urllib.request as _ur
+
+            opener = _ur.build_opener(_ur.ProxyHandler({}))
+            fwd_hdrs = {"Content-Type": "application/json"}
+            if headers.get("Authorization"):
+                fwd_hdrs["Authorization"] = str(headers.get("Authorization"))
+            last_err = ""
+            for target_url in candidates:
+                try:
+                    req = _ur.Request(target_url, data=raw_body, headers=fwd_hdrs, method="POST")
+                    with opener.open(req, timeout=60.0) as r:
+                        data = json.loads(r.read().decode("utf-8"))
+                    if isinstance(data, dict):
+                        data.setdefault("chimera_relay_via", target_url)
+                    return r.status, data if isinstance(data, dict) else {"data": data}
+                except _ue.HTTPError as e:
+                    try:
+                        return e.code, json.loads(e.read().decode("utf-8"))
+                    except Exception:
+                        return e.code, {"error": str(e)}
+                except Exception as exc:
+                    last_err = str(exc)
+            return 503, {"error": f"openai_relay_unavailable:{last_err}", "hint": "Ensure local/peer tquota relay (:12500) is active; /v1/openai/v1/embeddings works standalone."}
 
         if path == "/v1/vgpu/compute":
             if not self._cartridge_enabled.get("vgpu_pareto", True):
@@ -883,6 +1027,157 @@ class PlatformSubstrate:
         if path == "/v1/ghost/discard":
             return 200, self.ghost.discard(str(body.get("bubble_id") or ""))
 
+        # --- v19 CHIMERA-HYPERDESK POST routes ---
+        if path.startswith("/v1/hyperdesk/"):
+            if not self._cartridge_enabled.get("hyper_desk", True):
+                return 503, {"error": "cartridge_disabled:hyper_desk"}
+            if path == "/v1/hyperdesk/optimize":
+                return 200, self.hyper_desk.optimize_now(
+                    reap_orphans=bool(body.get("reap_orphans", True)),
+                    apply_cryo=bool(body.get("apply_cryo", True)),
+                    apply_silicon_wall=bool(body.get("apply_silicon_wall", True)),
+                    apply_sync_dam=bool(body.get("apply_sync_dam", True)),
+                    apply_hydra=bool(body.get("apply_hydra", True)),
+                    dry_run=bool(body.get("dry_run", False)),
+                )
+            if path == "/v1/hyperdesk/cryo":
+                return 200, self.hyper_desk.apply_cryo(
+                    min_ws_mb=float(body.get("min_ws_mb") or 40.0),
+                    allow_suspend=bool(body.get("allow_suspend", False)),
+                    dry_run=bool(body.get("dry_run", False)),
+                )
+            if path == "/v1/hyperdesk/thaw":
+                return 200, self.hyper_desk.thaw_all()
+            if path == "/v1/hyperdesk/silicon-wall":
+                return 200, self.hyper_desk.apply_silicon_wall(
+                    release_to_full=bool(body.get("release_to_full", False)),
+                    dry_run=bool(body.get("dry_run", False)),
+                )
+            if path == "/v1/hyperdesk/reap-orphans":
+                return 200, self.hyper_desk.reap_orphans(dry_run=bool(body.get("dry_run", True)))
+            if path == "/v1/hyperdesk/hydra":
+                return 200, self.hyper_desk.collapse_hydra(dry_run=bool(body.get("dry_run", False)))
+            if path == "/v1/hyperdesk/sync-dam":
+                return 200, self.hyper_desk.apply_sync_dam(
+                    suspend=bool(body.get("suspend", False)),
+                    release=bool(body.get("release", False)),
+                    dry_run=bool(body.get("dry_run", False)),
+                )
+            if path == "/v1/hyperdesk/vram/bench":
+                return 200, self.hyper_desk.vram_swap.benchmark(payload_mb=float(body.get("payload_mb") or 4.0))
+            if path == "/v1/hyperdesk/vram/yield":
+                return 200, self.hyper_desk.vram_swap.yield_vram(drop_pages=bool(body.get("drop_pages", False)))
+            if path == "/v1/hyperdesk/cortex/watch":
+                try:
+                    return 200, self.hyper_desk.cortex_watch_scan(str(body.get("dir") or "."))
+                except Exception as exc:
+                    return 400, {"error": str(exc)}
+
+        # --- v20 CHIMERA-COSMOS POST routes ---
+        if path.startswith("/v1/cosmos/"):
+            if not self._cartridge_enabled.get("cosmos_entity", True):
+                return 503, {"error": "cartridge_disabled:cosmos_entity"}
+            if path == "/v1/cosmos/ssi/place":
+                try:
+                    return 200, self.cosmos.ssi_place_and_levitate(
+                        str(body.get("task_id") or f"task_{int(time.time())}"),
+                        work_kind=str(body.get("work_kind") or "cpu_batch"),
+                        data_locality=str(body.get("data_locality") or "local"),
+                        state=body.get("state"),
+                        levitate_to=body.get("levitate_to"),
+                    )
+                except Exception as exc:
+                    return 400, {"error": str(exc)}
+            if path == "/v1/cosmos/omni/put":
+                return 200, self.cosmos.omni.put(
+                    str(body.get("key") or "k"),
+                    body.get("value"),
+                    namespace=str(body.get("namespace") or "global"),
+                    tier=str(body.get("tier") or "hot_ram"),
+                )
+            if path == "/v1/cosmos/omni/sql":
+                try:
+                    return 200, self.cosmos.omni.sql_query(str(body.get("sql") or ""))
+                except Exception as exc:
+                    return 400, {"error": str(exc)}
+            if path == "/v1/cosmos/omni/heal":
+                return 200, self.cosmos.omni.test_gf256_self_heal(int(body.get("seq") or 1))
+            if path == "/v1/cosmos/net/resolve":
+                try:
+                    return 200, self.cosmos.resolve_capability_uri(str(body.get("uri") or ""))
+                except Exception as exc:
+                    return 400, {"error": str(exc)}
+            if path == "/v1/cosmos/immune/ghost-issue":
+                return 200, self.cosmos.immune.issue_ghost_token(
+                    str(body.get("secret_name") or "API_KEY"),
+                    str(body.get("real_value") or ""),
+                    list(body.get("allowed_domains") or []),
+                )
+            if path == "/v1/cosmos/immune/ghost-resolve":
+                return 200, self.cosmos.immune.resolve_ghost_token(
+                    str(body.get("ghost_token") or ""),
+                    str(body.get("target_domain") or ""),
+                )
+            if path == "/v1/cosmos/autogen/sre":
+                return 200, self.cosmos.autogen_sre_cycle(execute=bool(body.get("execute", False)))
+            if path == "/v1/cosmos/swarm/spawn":
+                try:
+                    return 200, self.cosmos.swarm_spawn_agent(
+                        str(body.get("agent_id") or "agent1"),
+                        str(body.get("target_dir") or "."),
+                        max_ram_mb=int(body.get("max_ram_mb") or 512),
+                        max_cost_usd=float(body.get("max_cost_usd") or 0.25),
+                    )
+                except Exception as exc:
+                    return 400, {"error": str(exc)}
+            if path == "/v1/cosmos/swarm/burn-check":
+                return 200, self.cosmos.swarm_check_burn_loop(
+                    str(body.get("agent_id") or ""),
+                    str(body.get("error_trace") or ""),
+                    float(body.get("cost_delta_usd") or 0.0),
+                )
+            if path == "/v1/cosmos/thermo/flush":
+                return 200, self.cosmos.thermo.flush_coalesced()
+
+        # --- v21 CHIMERA-OMEGA ENTITY POST routes ---
+        if path.startswith("/v1/omega/"):
+            if not self._cartridge_enabled.get("omega_entity", True):
+                return 503, {"error": "cartridge_disabled:omega_entity"}
+            if path == "/v1/omega/benchmark":
+                return 200, self.omega.run_full_entity_benchmark()
+            if path == "/v1/omega/intent/compile":
+                return 200, self.omega.compile_intent(
+                    str(body.get("service") or "app"),
+                    dict(body.get("invariants") or {}),
+                )
+            if path == "/v1/omega/akashic/eval":
+                return 200, self.omega.akashic_eval(
+                    str(body.get("op") or "agg"),
+                    list(body.get("records") or []),
+                    threshold=float(body.get("threshold") or 0.0),
+                )
+            if path == "/v1/omega/alchemy/run":
+                return 200, self.omega.silicon_alchemy_run(
+                    n=int(body.get("n") or 8192),
+                    prefer_gpu=bool(body.get("prefer_gpu", True)),
+                )
+            if path == "/v1/omega/vampire/dispatch":
+                raw = str(body.get("payload") or "chimera_vampire_payload").encode("utf-8")
+                return 200, self.omega.vampire_cloud_dispatch(raw, scalar=int(body.get("scalar") or 7))
+            if path == "/v1/omega/multiverse/race":
+                try:
+                    return 200, self.omega.multiverse_race(
+                        str(body.get("target_dir") or ""),
+                        list(body.get("candidates") or []),
+                        collapse_winner=bool(body.get("collapse_winner", True)),
+                    )
+                except Exception as exc:
+                    return 400, {"error": str(exc)}
+            if path == "/v1/omega/multiverse/ctrl-z":
+                return 200, self.omega.global_ctrl_z(body.get("snap_id"))
+            if path == "/v1/omega/autopoietic/evolve":
+                return 200, self.omega.autopoietic_evolve()
+
         return None
 
     def handle_host_proxy(
@@ -964,6 +1259,9 @@ def render_smi(smi_data: dict[str, Any]) -> str:
     cn = smi_data.get("canary") or {}
     vq = smi_data.get("vault_sql") or {}
     gh = smi_data.get("ghost") or {}
+    hd = smi_data.get("hyper_desk") or {}
+    cs = smi_data.get("cosmos") or {}
+    om = smi_data.get("omega") or {}
     gpu = vg.get("gpu") or {}
     colab_n = int(vg.get("colab_online", 0))
     ccli = vg.get("colab_cli") or {}
@@ -999,6 +1297,9 @@ def render_smi(smi_data: dict[str, Any]) -> str:
         f"|  [ON] zygote_canary   : mode={zg.get('mode','?'):<17} execs={zg.get('executions',0):<4} canary_runs={cn.get('runs',0):<3} |",
         f"|  [ON] vault_sql       : dbs={vq.get('db_count',0):<4} syncs={vq.get('syncs',0):<4} queries={vq.get('queries',0):<5} saved={vq.get('bytes_saved',0):>7} B |",
         f"|  [ON] ghost_bubble    : open={gh.get('open_bubbles',0):<3} runs={gh.get('runs',0):<4} commits={gh.get('commits',0):<4} discards={gh.get('discards',0):<4}   |",
+        f"|  [ON] hyper_desk      : cryo={hd.get('cryo_passes',0):<3} wall={hd.get('silicon_wall_pinned_procs',0):<3} reaped={hd.get('orphans_reaped',0):<3} vram={str((hd.get('vram_swap') or {}).get('cuda_available',False)):<5}  |",
+        f"|  [ON] cosmos_entity   : omni={((cs.get('omni_memory') or {}).get('log_entries',0)):<4} cas={((cs.get('zero_env') or {}).get('envs',0)):<3} ssi={cs.get('ssi_tasks',0):<3} regime={str((cs.get('thermodynamic') or {}).get('regime','?'))[:13]:<13}|",
+        f"|  [ON] omega_entity    : ept={om.get('ept_unique_pages',0):<4} akashic={om.get('akashic_hits',0):<4} gen={((om.get('active_genome') or {}).get('generation',1)):<3} mode={str(om.get('ring_minus_1_mode','?'))[:14]:<14}|",
         "+" + "-" * 78 + "+",
         f"| ATTACHED & LINKED APPS ({len(apps)})                                                   |",
     ]

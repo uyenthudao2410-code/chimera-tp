@@ -25,12 +25,55 @@ import urllib.request
 from pathlib import Path
 
 
+def _install_win_orphan_job_guard() -> None:
+    """Attach current Windows process tree to a KILL_ON_JOB_CLOSE JobObject to prevent multiprocessing.spawn zombies."""
+    if os.name != "nt" or os.environ.get("CHIMERA_DISABLE_JOB_GUARD") == "1":
+        return
+    try:
+        import ctypes
+        k32 = ctypes.windll.kernel32
+        job = k32.CreateJobObjectW(None, None)
+        if not job:
+            return
+        class _IO_COUNTERS(ctypes.Structure):
+            _fields_ = [(n, ctypes.c_uint64) for n in ("r", "w", "o", "rt", "wt", "ot")]
+        class _BASIC(ctypes.Structure):
+            _fields_ = [
+                ("PerProcessUserTimeLimit", ctypes.c_int64),
+                ("PerJobUserTimeLimit", ctypes.c_int64),
+                ("LimitFlags", ctypes.c_uint32),
+                ("MinimumWorkingSetSize", ctypes.c_size_t),
+                ("MaximumWorkingSetSize", ctypes.c_size_t),
+                ("ActiveProcessLimit", ctypes.c_uint32),
+                ("Affinity", ctypes.c_size_t),
+                ("PriorityClass", ctypes.c_uint32),
+                ("SchedulingClass", ctypes.c_uint32),
+            ]
+        class _EXT(ctypes.Structure):
+            _fields_ = [
+                ("BasicLimitInformation", _BASIC),
+                ("IoInfo", _IO_COUNTERS),
+                ("ProcessMemoryLimit", ctypes.c_size_t),
+                ("JobMemoryLimit", ctypes.c_size_t),
+                ("PeakProcessMemoryUsed", ctypes.c_size_t),
+                ("PeakJobMemoryUsed", ctypes.c_size_t),
+            ]
+        ext = _EXT()
+        ext.BasicLimitInformation.LimitFlags = 0x2000  # JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE
+        k32.SetInformationJobObject(ctypes.c_void_p(job), 9, ctypes.byref(ext), ctypes.sizeof(ext))
+        k32.AssignProcessToJobObject(ctypes.c_void_p(job), k32.GetCurrentProcess())
+        globals()["_CHIMERA_JOB_HANDLE"] = job
+    except Exception:
+        pass
+
+
 def _bootstrap() -> None:
     if os.environ.get("CHIMERA_DISABLE_AUTOLOAD") == "1":
         return
     argv0 = " ".join(sys.argv[:2]).lower()
     if "chimera_tp" in argv0 or "chimera-tp" in argv0:
         return
+    _install_win_orphan_job_guard()
 
     home = Path.home() / ".chimera"
     rt_path = home / "runtime.json"
@@ -59,21 +102,36 @@ def _bootstrap() -> None:
         }
     else:
         apps_file = home / "apps.json"
-        if not apps_file.is_file():
-            return
-        try:
-            reg = json.loads(apps_file.read_text(encoding="utf-8"))
-            cwd_norm = os.path.normcase(os.path.abspath(str(cwd)))
-            for entry in reg.values():
-                p = entry.get("path")
-                if not p:
-                    continue
-                p_norm = os.path.normcase(os.path.abspath(str(p)))
-                if cwd_norm == p_norm or cwd_norm.startswith(p_norm + os.sep):
-                    app_info = entry
-                    break
-        except Exception:
-            return
+        if apps_file.is_file():
+            try:
+                reg = json.loads(apps_file.read_text(encoding="utf-8"))
+                cwd_norm = os.path.normcase(os.path.abspath(str(cwd)))
+                for entry in reg.values():
+                    p = entry.get("path")
+                    if not p:
+                        continue
+                    p_norm = os.path.normcase(os.path.abspath(str(p)))
+                    if cwd_norm == p_norm or cwd_norm.startswith(p_norm + os.sep):
+                        app_info = entry
+                        break
+            except Exception:
+                pass
+        if not app_info:
+            unify_file = home / "unify.json"
+            if unify_file.is_file():
+                try:
+                    ucfg = json.loads(unify_file.read_text(encoding="utf-8"))
+                    cwd_norm = os.path.normcase(os.path.abspath(str(cwd)))
+                    for droot in (ucfg.get("dev_roots") or []):
+                        dr_norm = os.path.normcase(os.path.abspath(str(droot)))
+                        if cwd_norm.startswith(dr_norm + os.sep):
+                            rel = os.path.relpath(str(cwd), str(droot))
+                            top = rel.split(os.sep)[0]
+                            if top and top.lower() not in ("chimera-tp", ".", ".."):
+                                app_info = {"app": top, "port": 0, "qos": "interactive", "attach_mode": "python_unify"}
+                            break
+                except Exception:
+                    pass
 
     if not app_info:
         return
@@ -92,6 +150,8 @@ def _bootstrap() -> None:
     os.environ.setdefault("CHIMERA_URL", anchor)
     os.environ.setdefault("CHIMERA_APP", app_name)
     os.environ.setdefault("CHIMERA_RUNTIME", str(rt_path))
+    os.environ.setdefault("CHIMERA_OPENAI_BASE", f"{anchor}/v1/openai/v1")
+    os.environ.setdefault("CHIMERA_COMPUTE_URL", f"{anchor}/v1/vgpu/compute")
     if proxy:
         os.environ.setdefault("CHIMERA_EGRESS_PROXY", proxy)
         if os.environ.get("CHIMERA_INJECT_HTTP_PROXY", "1") == "1" and not os.environ.get("HTTP_PROXY"):
@@ -109,7 +169,7 @@ def _bootstrap() -> None:
         "port": int(app_info.get("port") or 0),
         "qos": str(app_info.get("qos") or "interactive"),
         "needs": list(app_info.get("needs") or ["egress", "pulse"]),
-        "attach_mode": "python_autoload",
+        "attach_mode": str(app_info.get("attach_mode") or "python_autoload"),
     }).encode("utf-8")
 
     def _heartbeat_loop() -> None:
@@ -166,6 +226,8 @@ const path = require("path");
     const appName = String(appInfo.app || path.basename(cwd));
     process.env.CHIMERA_URL = process.env.CHIMERA_URL || anchor;
     process.env.CHIMERA_APP = process.env.CHIMERA_APP || appName;
+    process.env.CHIMERA_OPENAI_BASE = process.env.CHIMERA_OPENAI_BASE || (anchor + "/v1/openai/v1");
+    process.env.CHIMERA_COMPUTE_URL = process.env.CHIMERA_COMPUTE_URL || (anchor + "/v1/vgpu/compute");
     if (rt.egress_proxy_url) {
       process.env.CHIMERA_EGRESS_PROXY = process.env.CHIMERA_EGRESS_PROXY || rt.egress_proxy_url;
     }
@@ -221,7 +283,11 @@ def shared_autoload_dir() -> Path:
     return d
 
 
-def install_autoload(target_dir: Path | None = None, user_site: bool = True) -> dict[str, Any]:
+def install_autoload(
+    target_dir: Path | None = None,
+    user_site: bool = True,
+    shared_dir_override: Path | None = None,
+) -> dict[str, Any]:
     sdir = Path(target_dir) if target_dir else _target_site_dir(user_site=user_site)
     sdir.mkdir(parents=True, exist_ok=True)
     hook_py = sdir / f"{_HOOK_MODULE_NAME}.py"
@@ -230,7 +296,10 @@ def install_autoload(target_dir: Path | None = None, user_site: bool = True) -> 
     pth_file.write_text(f"import {_HOOK_MODULE_NAME}\n", encoding="utf-8")
 
     # Also install universal PYTHONPATH sitecustomize.py + Node.js preload hook in ~/.chimera/autoload/
-    shared = shared_autoload_dir() if target_dir is None else (sdir / "chimera_shared")
+    if shared_dir_override is not None:
+        shared = Path(shared_dir_override)
+    else:
+        shared = shared_autoload_dir() if target_dir is None else (sdir / "chimera_shared")
     shared.mkdir(parents=True, exist_ok=True)
     site_cust = shared / "sitecustomize.py"
     node_hook = shared / "chimera_node_hook.cjs"

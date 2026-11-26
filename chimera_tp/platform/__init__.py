@@ -9,6 +9,13 @@ from .colab_cli_bridge import (
     parse_usage_text,
     select_lightest_profile,
 )
+from .cosmos_entity import (
+    CosmosEntityEngine,
+    ImmuneSecurityKernel,
+    OmniMemoryFabric,
+    ThermodynamicPhysicsEngine,
+    ZeroEnvCasStore,
+)
 from .discovery import (
     AppRegistry,
     PassivePortScanner,
@@ -24,11 +31,14 @@ from .flight_recorder import DisklessSecretVault, FlightRecorderBlackBox
 from .folded_cavity_rlnc import CristaeFoldedCavityRLNC
 from .ghost_bubble import GhostBubbleEngine
 from .hybrid_search import HybridPlatformSearch
+from .hyper_desk import HyperDeskEngine, VramCompressedSwap
 from .immortal_jobs import ImmortalJobEngine
 from .mcp_server import handle_mcp_request, serve_mcp_stdio
 from .nvcuda_ptx import NvCudaPtxEngine
+from .omega_entity import OmegaEntityEngine
 from .pulse_bus import PulseBus
 from .substrate import PlatformSubstrate, render_smi
+from .unify import unify_install, unify_status, unify_uninstall
 from .vault_sql import VaultSqlFabric
 from .vgpu_gateway import VgpuParetoGateway, probe_gpu_backends, probe_nvidia_gpu
 from .zygote_canary import CanaryTwinJudge, ZygoteWorkerPool
@@ -38,20 +48,28 @@ __all__ = [
     "CanaryTwinJudge",
     "ChimeraClient",
     "ColabCliBridge",
+    "CosmosEntityEngine",
     "CristaeFoldedCavityRLNC",
     "DisklessSecretVault",
     "EgressMembraneProxy",
     "FlightRecorderBlackBox",
     "GhostBubbleEngine",
     "HybridPlatformSearch",
+    "HyperDeskEngine",
     "ImmortalJobEngine",
+    "ImmuneSecurityKernel",
     "NvCudaPtxEngine",
+    "OmegaEntityEngine",
+    "OmniMemoryFabric",
     "PassivePortScanner",
     "PlatformSubstrate",
     "PulseBus",
     "SharedBrowserGrid",
+    "ThermodynamicPhysicsEngine",
     "VaultSqlFabric",
     "VgpuParetoGateway",
+    "VramCompressedSwap",
+    "ZeroEnvCasStore",
     "ZygoteWorkerPool",
     "autoload_status",
     "chimera_home_dir",
@@ -72,6 +90,9 @@ __all__ = [
     "runtime_beacon_paths",
     "select_lightest_profile",
     "serve_mcp_stdio",
+    "unify_install",
+    "unify_status",
+    "unify_uninstall",
     "uninstall_autoload",
     "write_agents_infra_doc",
 ]

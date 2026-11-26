@@ -74,6 +74,13 @@ Full detailed audit & remaining architectural recommendations: [docs/reports/CHI
 python -m chimera_tp smi
 ```
 
+### Unify the Entire Workstation/Server in 1 Command (Zero-Code for Legacy, `.venv` & AI Agents)
+```bash
+# Installs all 3 layers: User PYTHONPATH (.venv auto-attach) + Unified /v1/openai/v1 + DEV/AGENTS.md + Global MCP
+python -m chimera_tp unify install
+python -m chimera_tp unify status
+```
+
 ### Attach an Existing Project (Zero Code Changes)
 ```bash
 # Install zero-code Python autoload hook once (<0.3ms overhead when unlinked)
@@ -152,7 +159,7 @@ python -m unittest discover -s tests -v
 
 ## 6. Repository Map & Documentation
 
-* **`chimera_tp/platform/`** — `v16–v18` Open Platform Substrate (`discovery.py`, `client.py`, `autoload.py`, `mcp_server.py`, `egress_membrane.py`, `pulse_bus.py`, `hybrid_search.py`, `flight_recorder.py`, `vgpu_gateway.py`, `colab_cli_bridge.py`, `nvcuda_ptx.py`, `immortal_jobs.py`, `browser_grid.py`, `zygote_canary.py`, `vault_sql.py`, `folded_cavity_rlnc.py`, `ghost_bubble.py`, `substrate.py`).
+* **`chimera_tp/platform/`** — `v16–v18` Open Platform Substrate (`discovery.py`, `client.py`, `autoload.py`, `unify.py`, `mcp_server.py`, `egress_membrane.py`, `pulse_bus.py`, `hybrid_search.py`, `flight_recorder.py`, `vgpu_gateway.py`, `colab_cli_bridge.py`, `nvcuda_ptx.py`, `immortal_jobs.py`, `browser_grid.py`, `zygote_canary.py`, `vault_sql.py`, `folded_cavity_rlnc.py`, `ghost_bubble.py`, `substrate.py`).
 * **`chimera_tp/`** — Core transport (`phantom_tunnel.py`, `v9_dataplane.py`, `gf256.py`), native SIMD bridge (`native.py`), sovereign & galactic engines (`v9_*`–`v12_*`), `host_governor.py`, `sentinel.py`, `medic.py`, `dashboard.py`, `universe_ui.py`.
 * **`native/`** — Bit-identical Rust (`chimera_core`) & C11 (`chimera_core_c`) SIMD accelerators.
 * **Docs & Plans:** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) • [docs/EVALUATION.md](docs/EVALUATION.md) • [docs/MOONSHOT_VAULT.md](docs/MOONSHOT_VAULT.md) • [docs/ROADMAP.md](docs/ROADMAP.md) • [docs/reports/CHIMERA_V17_PLATFORM_SUBSTRATE_AUDIT.md](docs/reports/CHIMERA_V17_PLATFORM_SUBSTRATE_AUDIT.md).

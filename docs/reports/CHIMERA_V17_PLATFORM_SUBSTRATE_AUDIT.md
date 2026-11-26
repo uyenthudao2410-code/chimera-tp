@@ -105,4 +105,8 @@ Hệ thống `chimera-tp v17.0.0` đã hoàn thành bước chuyển mình quan 
 5. **Đột phá thuật toán lõi & vận hành an toàn (`Cristae Folded-Cavity RLNC` + Cartridge #12 `CHIMERA-GHOST`):**
    - `Cristae Folded-Cavity SC-RLNC` (`16 KB` trong `64 KB` L2): chịu mất **`31.4%`** gói WAN (`16/51` gói rơi) vẫn khôi phục `100%` SHA-256 trong **`4.098 ms`** (`32` sóng domino).
    - `CHIMERA-GHOST` (`chimera-tp ghost`): chạy thử lệnh trong bong bóng CoW cô lập, xem diff đầy đủ, commit nguyên tử hoặc hủy `0` dấu vết trên cả Windows & Linux.
-   - Kiểm thử tự động: **`17/17 PASS` Windows (`39.96s`)** (`test_v18` + `test_v17` + `test_v15`) và **`4/4 PASS` `svhome` Linux (`10.67s`)**.
+6. **Hợp Nhất 3 Tầng Toàn Máy (`CHIMERA-UNIFY` — `chimera-tp unify install`):**
+   - **Tầng 1 (Runtime & `.venv` Zero-Code):** Tự bơm `PYTHONPATH=~/.chimera/autoload` ở User Env (Windows `HKCU\Environment` + Linux `environment.d`/`.bashrc`/`.profile`) kèm `unify.json` `dev_roots` → mọi dự án mới tạo trong `E:\DEV\*` hoặc `~/DEV/*` (kể cả `.venv` mới tinh chưa từng chạy `link`) tự động nhận `CHIMERA_URL`, `CHIMERA_OPENAI_BASE`, `CHIMERA_COMPUTE_URL`, `HTTP_PROXY` ngay lúc khởi chạy.
+   - **Tầng 2 (Cổng chuẩn OpenAI hợp nhất `/v1/openai/v1/*`):** `/embeddings` chạy thẳng VGPU/Auto-Colab `$0`, còn `/models` (`13` models hợp nhất trên cả 2 máy) & `/chat/completions` tự động chuyển tiếp qua `tquota` (`:12500`).
+   - **Tầng 3 (AI Coding Agent Auto-Compliance):** Ghi Beacon idempotent tại `E:\DEV\AGENTS.md` và `/home/svhome/DEV/AGENTS.md` + đăng ký sạch MCP server `chimera` (`11` tools) vào `claude_code`, `antigravity`, `codex`.
+   - Kiểm thử tự động: **`8/8 PASS` Windows** (`test_v18_perfection` `6/6` + `test_v18_unify` `2/2`) và **`8/8 PASS` `svhome` Linux**.

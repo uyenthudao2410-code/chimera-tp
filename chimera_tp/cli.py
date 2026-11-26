@@ -416,10 +416,37 @@ def main(argv: list[str] | None = None) -> int:
     p_cmp.add_argument("--profile", default="", help="Optional Colab profile override")
     p_cmp.add_argument("--anchor", default="", help="Override CHIMERA anchor URL")
 
+    p_uni = sub.add_parser("unify", help="Host-wide 3-layer unification (OS PYTHONPATH/.venv + OpenAI gateway + AI Agent MCP/AGENTS.md)")
+    p_uni.add_argument("action", choices=("status", "install", "uninstall"), help="Unify action")
+    p_uni.add_argument("--dev-root", action="append", default=None, help="Workspace root directory to auto-attach (repeatable, e.g. E:/DEV)")
+    p_uni.add_argument("--no-env", action="store_true", help="Skip user-level PYTHONPATH/CHIMERA_* OS env setup")
+    p_uni.add_argument("--no-mcp", action="store_true", help="Skip AI agent MCP server registration")
+    p_uni.add_argument("--no-beacons", action="store_true", help="Skip dev-root AGENTS.md beacon injection")
+
     p_ship = sub.add_parser("ship-check", help="Verify Overmind Cortex canary shipping invariants (PHANTOM, storm, RAM, CRDT, DLP)")
     p_ship.add_argument("--local", default="http://127.0.0.1:9780", help="Local Chimera dashboard URL")
     p_ship.add_argument("--peer", default="http://127.0.0.1:9789", help="Peer Chimera URL via PHANTOM or loopback")
     p_ship.add_argument("--window", type=float, default=1.5, help="Storm tx_delta observation window in seconds")
+
+    # ---- v19-v21 CHIMERA-HYPERDESK, COSMOS & OMEGA ENTITY Subcommands ----
+    p_hdesk = sub.add_parser("hyperdesk", help="v19 CHIMERA-HYPERDESK multitasking optimizer (diagnose, optimize, cryo, wall, reap, hydra, dam, vram-bench, thaw)")
+    p_hdesk.add_argument("action", choices=("diagnose", "optimize", "cryo", "wall", "reap", "hydra", "dam", "vram-bench", "thaw", "status"))
+    p_hdesk.add_argument("--dry-run", action="store_true", help="Inspect actions without modifying processes")
+    p_hdesk.add_argument("--release", action="store_true", help="Release Silicon Wall or Sync Dam back to full defaults")
+    p_hdesk.add_argument("--payload-mb", type=float, default=4.0, help="VRAM swap benchmark payload size in MB")
+    p_hdesk.add_argument("--anchor", default="", help="Override CHIMERA anchor URL")
+
+    p_cos = sub.add_parser("cosmos", help="v20 CHIMERA-COSMOS Sovereign Infrastructure Entity (status, sre, genesis, assimilate, resolve)")
+    p_cos.add_argument("action", choices=("status", "sre", "genesis", "assimilate", "resolve"))
+    p_cos.add_argument("--execute", action="store_true", help="Execute Autogen SRE hot-swap")
+    p_cos.add_argument("--uri", default="gpu://gtx1650", help="Capability URI for resolve")
+    p_cos.add_argument("--anchor", default="", help="Override CHIMERA anchor URL")
+
+    p_ome = sub.add_parser("omega-entity", help="v21 CHIMERA-OMEGA ENTITY Singularity engines (status, bench, intent, evolve, gravity)")
+    p_ome.add_argument("action", choices=("status", "bench", "intent", "evolve", "gravity"))
+    p_ome.add_argument("--service", default="cosmic-app", help="Service name for intent compiler")
+    p_ome.add_argument("--p99-ms", type=float, default=25.0, help="Target p99 latency SLA in ms")
+    p_ome.add_argument("--anchor", default="", help="Override CHIMERA anchor URL")
 
     # ---- Legacy Research Subcommands (v0.5.0 Multi-Realm Exotic Lanes) ----
     p_probe = sub.add_parser("probe", help="Probe hardware capabilities & Windows network realms")
@@ -1508,6 +1535,108 @@ def main(argv: list[str] | None = None) -> int:
             method="POST",
         )
         with opener.open(req, timeout=260.0) as resp:
+            res = json.loads(resp.read().decode("utf-8"))
+        print(json.dumps(res, indent=2, ensure_ascii=False))
+        return 0 if res.get("ok") else 1
+
+    if args.command == "unify":
+        from .platform import unify_install, unify_status, unify_uninstall
+
+        if args.action == "status":
+            print(json.dumps(unify_status(), indent=2, ensure_ascii=False))
+            return 0
+        if args.action == "uninstall":
+            res = unify_uninstall(
+                install_env=not args.no_env,
+                install_mcp=not args.no_mcp,
+                install_beacons=not args.no_beacons,
+            )
+            print(json.dumps(res, indent=2, ensure_ascii=False))
+            return 0
+        res = unify_install(
+            dev_roots=args.dev_root,
+            install_env=not args.no_env,
+            install_mcp=not args.no_mcp,
+            install_beacons=not args.no_beacons,
+        )
+        print(json.dumps(res, indent=2, ensure_ascii=False))
+        return 0
+
+    if args.command == "hyperdesk":
+        import urllib.request as _urlreq
+        from .platform import discover_runtime_file
+
+        rt = discover_runtime_file()
+        anchor = (args.anchor or (rt or {}).get("anchor_url") or "http://127.0.0.1:9780").rstrip("/")
+        opener = _urlreq.build_opener(_urlreq.ProxyHandler({}))
+        act = args.action
+        if act in ("diagnose", "status"):
+            ep = "/v1/hyperdesk/diagnose" if act == "diagnose" else "/v1/hyperdesk/status"
+            with opener.open(f"{anchor}{ep}", timeout=15.0) as resp:
+                print(json.dumps(json.loads(resp.read().decode("utf-8")), indent=2, ensure_ascii=False))
+            return 0
+        route_map = {
+            "optimize": ("/v1/hyperdesk/optimize", {"dry_run": bool(args.dry_run)}),
+            "cryo": ("/v1/hyperdesk/cryo", {"dry_run": bool(args.dry_run)}),
+            "wall": ("/v1/hyperdesk/silicon-wall", {"release_to_full": bool(args.release), "dry_run": bool(args.dry_run)}),
+            "reap": ("/v1/hyperdesk/reap-orphans", {"dry_run": bool(args.dry_run)}),
+            "hydra": ("/v1/hyperdesk/hydra", {"dry_run": bool(args.dry_run)}),
+            "dam": ("/v1/hyperdesk/sync-dam", {"release": bool(args.release), "dry_run": bool(args.dry_run)}),
+            "vram-bench": ("/v1/hyperdesk/vram/bench", {"payload_mb": float(args.payload_mb)}),
+            "thaw": ("/v1/hyperdesk/thaw", {}),
+        }
+        ep, payload_obj = route_map[act]
+        req = _urlreq.Request(f"{anchor}{ep}", data=json.dumps(payload_obj).encode("utf-8"), headers={"Content-Type": "application/json"}, method="POST")
+        with opener.open(req, timeout=25.0) as resp:
+            res = json.loads(resp.read().decode("utf-8"))
+        print(json.dumps(res, indent=2, ensure_ascii=False))
+        return 0 if res.get("ok") else 1
+
+    if args.command == "cosmos":
+        import urllib.request as _urlreq
+        from .platform import discover_runtime_file
+
+        rt = discover_runtime_file()
+        anchor = (args.anchor or (rt or {}).get("anchor_url") or "http://127.0.0.1:9780").rstrip("/")
+        opener = _urlreq.build_opener(_urlreq.ProxyHandler({}))
+        if args.action in ("status", "genesis", "assimilate"):
+            ep = {"status": "/v1/cosmos/status", "genesis": "/v1/cosmos/genesis/seed", "assimilate": "/v1/cosmos/genesis/assimilate"}[args.action]
+            with opener.open(f"{anchor}{ep}", timeout=15.0) as resp:
+                print(json.dumps(json.loads(resp.read().decode("utf-8")), indent=2, ensure_ascii=False))
+            return 0
+        if args.action == "sre":
+            ep, payload_obj = "/v1/cosmos/autogen/sre", {"execute": bool(args.execute)}
+        else:
+            ep, payload_obj = "/v1/cosmos/net/resolve", {"uri": args.uri}
+        req = _urlreq.Request(f"{anchor}{ep}", data=json.dumps(payload_obj).encode("utf-8"), headers={"Content-Type": "application/json"}, method="POST")
+        with opener.open(req, timeout=20.0) as resp:
+            res = json.loads(resp.read().decode("utf-8"))
+        print(json.dumps(res, indent=2, ensure_ascii=False))
+        return 0 if res.get("ok") else 1
+
+    if args.command == "omega-entity":
+        import urllib.request as _urlreq
+        from .platform import discover_runtime_file
+
+        rt = discover_runtime_file()
+        anchor = (args.anchor or (rt or {}).get("anchor_url") or "http://127.0.0.1:9780").rstrip("/")
+        opener = _urlreq.build_opener(_urlreq.ProxyHandler({}))
+        if args.action in ("status", "gravity"):
+            ep = "/v1/omega/status" if args.action == "status" else "/v1/omega/gravity"
+            with opener.open(f"{anchor}{ep}", timeout=15.0) as resp:
+                print(json.dumps(json.loads(resp.read().decode("utf-8")), indent=2, ensure_ascii=False))
+            return 0
+        if args.action == "bench":
+            ep, payload_obj = "/v1/omega/benchmark", {}
+        elif args.action == "evolve":
+            ep, payload_obj = "/v1/omega/autopoietic/evolve", {}
+        else:
+            ep, payload_obj = "/v1/omega/intent/compile", {
+                "service": args.service,
+                "invariants": {"p99_ms": float(args.p99_ms), "monthly_cost_usd": 0, "data_loss": 0, "secret_egress": 0, "host_ram_mb": 120},
+            }
+        req = _urlreq.Request(f"{anchor}{ep}", data=json.dumps(payload_obj).encode("utf-8"), headers={"Content-Type": "application/json"}, method="POST")
+        with opener.open(req, timeout=30.0) as resp:
             res = json.loads(resp.read().decode("utf-8"))
         print(json.dumps(res, indent=2, ensure_ascii=False))
         return 0 if res.get("ok") else 1
