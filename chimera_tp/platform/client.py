@@ -257,10 +257,37 @@ class ChimeraClient:
             return {"ok": False, "via": "local_fallback"}
         return self._post_json("/v1/blackbox/freeze", {"reason": reason, "app": self.app})
 
-    def embed(self, texts: str | list[str], dim: int = 256) -> dict[str, Any]:
+    def embed(self, texts: str | list[str], dim: int = 256, prefer_cuda: bool = False) -> dict[str, Any]:
         if not self.available:
             return {"ok": False, "via": "local_fallback", "data": []}
-        return self._post_json("/v1/openai/v1/embeddings", {"input": texts, "dimensions": dim, "app": self.app})
+        return self._post_json(
+            "/v1/openai/v1/embeddings",
+            {"input": texts, "dimensions": dim, "app": self.app, "prefer_cuda": prefer_cuda},
+            timeout=240.0 if prefer_cuda else self.timeout_s,
+        )
+
+    def compute(
+        self,
+        task_kind: str,
+        payload: dict[str, Any] | None = None,
+        *,
+        prefer_cuda: bool = False,
+        profile: str | None = None,
+    ) -> dict[str, Any]:
+        """Single unified CHIMERA-VGPU compute call: auto-routes across Colab Pro Elastic GPU, PTX JIT, and AVX2 CPU."""
+        if not self.available:
+            return {"ok": False, "via": "local_fallback"}
+        return self._post_json(
+            "/v1/vgpu/compute",
+            {
+                "task_kind": task_kind,
+                "payload": payload or {},
+                "prefer_cuda": prefer_cuda,
+                "profile": profile,
+                "app": self.app,
+            },
+            timeout=240.0,
+        )
 
     def pareto_route(self, max_ms: float = 500.0, max_cost_usd: float = 0.0, min_tier: str = "standard") -> dict[str, Any]:
         if not self.available:

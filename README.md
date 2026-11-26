@@ -98,7 +98,8 @@ brain = connect(app="next-app")
 resp = brain.fetch("https://api.example.com/data")               # Singleflight + Cache + 429 Shield
 brain.pulse_publish("events.ready", {"ok": True})                # Cross-host Pub/Sub (<5ms)
 hits = brain.search("query text", namespace="next-app")          # Hybrid BM25 + AVX2 VSA (<3ms)
-emb  = brain.embed(["hello world"], dim=256)                     # OpenAI-compat VGPU/AVX2 ($0)
+emb  = brain.embed(["hello world"], dim=256)                     # Auto-routed: AVX2 (<2ms) or Colab Pro GPU (heavy batch)
+res  = brain.compute("matmul", {"n": 2048})                      # 1 unified entity: auto-wakes Colab T4, reuses warm, auto-stops on idle!
 ```
 
 ### Hot-Toggle Cartridges, Run Canary Judge & Connect AI Agents
@@ -110,12 +111,12 @@ python -m chimera_tp cartridge enable browser_grid
 # Zero-downtime Canary Twin comparison (PROMOTE / ROLLBACK)
 python -m chimera_tp canary http://127.0.0.1:8080 http://127.0.0.1:8081 --paths /health --samples 5
 
-# Headless Google Colab Pro/Ultra CUDA offload (zero ngrok, anti-congestion, CU auto-stop, 0% Windows GPU load)
-python -m chimera_tp colab status
-python -m chimera_tp colab matmul --n 2048 --profile T4
-python -m chimera_tp colab embed --texts "hello world" "fast vector" --dim 256 --require-gpu
+# 1 Unified Autonomous Compute Entity (auto-routes across Colab Pro GPU / GTX 1650 PTX / AVX2 — 0 manual Colab commands!)
+python -m chimera_tp compute matmul --n 2048
+python -m chimera_tp compute embed --texts "doc 1" "doc 2" --prefer-cuda
+python -m chimera_tp colab policy --idle-ttl 180 --min-batch 16
 
-# Expose 10 live infrastructure tools to AI Coding Agents over stdio MCP
+# Expose 11 live infrastructure tools (including unified `chimera_compute`) to AI Coding Agents over stdio MCP
 python -m chimera_tp mcp
 ```
 

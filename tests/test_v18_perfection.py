@@ -281,6 +281,104 @@ class TestV18Perfection(unittest.TestCase):
         self.assertIn("ssh", tn["cmd"][0])
         self.assertTrue(any("ssh --proxy-mode -s chimera_t4" in arg for arg in tn["cmd"]))
 
+    def test_06_autonomous_single_entity_scale_warm_reuse_and_idle_reaper(self) -> None:
+        import os
+        import stat
+        import time
+
+        log_file = Path(self._tmp.name) / "auto_colab_calls.log"
+        stub_py = Path(self._tmp.name) / "fake_auto_colab.py"
+        stub_py.write_text(
+            "import json, subprocess, sys\n"
+            "from pathlib import Path\n"
+            f"LOG = Path({str(log_file)!r})\n"
+            "args = sys.argv[1:]\n"
+            "if len(args) >= 2 and args[0] == '--config': args = args[2:]\n"
+            "sub = args[0] if args else ''\n"
+            "with LOG.open('a', encoding='utf-8') as f: f.write(json.dumps(args) + '\\n')\n"
+            "if sub == 'usage':\n"
+            "    print('Current balance: 2350.14 compute units\\nUsage rate: 0.00/hr\\nActive assignments: 0')\n"
+            "elif sub == 'sessions':\n"
+            "    print('[colab] No active sessions found on server.')\n"
+            "elif sub == 'new':\n"
+            "    print('Created session')\n"
+            "elif sub == 'exec':\n"
+            "    fi = args.index('-f') + 1\n"
+            "    sys.exit(subprocess.run([sys.executable, args[fi]], check=False).returncode)\n"
+            "elif sub == 'stop':\n"
+            "    print('Stopped session')\n",
+            encoding="utf-8",
+        )
+        if os.name == "nt":
+            stub_bin = Path(self._tmp.name) / "fake_auto_colab.cmd"
+            stub_bin.write_text(f'@echo off\r\n"{sys.executable}" "{stub_py}" %*\r\n', encoding="utf-8")
+        else:
+            stub_bin = Path(self._tmp.name) / "fake_auto_colab.sh"
+            stub_bin.write_text(f'#!/bin/sh\nexec "{sys.executable}" "{stub_py}" "$@"\n', encoding="utf-8")
+            stub_bin.chmod(stub_bin.stat().st_mode | stat.S_IEXEC)
+
+        # Configure fast reaper interval & short idle_ttl_s to verify real background auto-reap
+        self.daemon.platform.colab._colab_bin_override = str(stub_bin)
+        self.daemon.platform.colab._reaper_interval_s = 0.12
+        self.daemon.platform.colab._status_cache = None
+        self.daemon.platform.colab.start_autonomous(ephemeral=True)
+        self._get("/v1/vgpu/colab/status?refresh=1")
+
+        st_p, pol = self._post(
+            "/v1/vgpu/colab/policy",
+            {"enabled": True, "idle_ttl_s": 0.45, "auto_min_batch": 4, "warm_session_reuse": True},
+        )
+        self.assertEqual(st_p, 200)
+        self.assertEqual(pol["policy"]["auto_min_batch"], 4)
+
+        # Verify HostYieldGovernor is wired properly (never UNKNOWN!)
+        vst = self._get("/v1/vgpu/status")
+        self.assertIn(vst["governor_mode"], ("USER_ACTIVE", "TURBO_IDLE", "SOVEREIGN_LOCAL"))
+
+        # 1. Light batch (2 < auto_min_batch=4) -> stays ultra-fast local, 0 Colab invocations!
+        st_l, res_l = self._post("/v1/openai/v1/embeddings", {"input": ["tiny 1", "tiny 2"], "dimensions": 64})
+        self.assertEqual(st_l, 200)
+        self.assertNotIn("colab", res_l["chimera_engine"])
+
+        # 2. Heavy batch (4 >= auto_min_batch=4) on the SAME OpenAI endpoint -> AUTO scale-from-zero onto Colab!
+        st_h1, res_h1 = self._post(
+            "/v1/openai/v1/embeddings",
+            {"input": ["heavy a", "heavy b", "heavy c", "heavy d"], "dimensions": 64},
+        )
+        self.assertEqual(st_h1, 200)
+        self.assertTrue(res_h1["chimera_engine"].startswith("colab_auto_elastic:"))
+        self.assertFalse(res_h1["warm_pool_hit"])
+        self.assertEqual(res_h1["workstation_gpu_impact"], "0%")
+
+        # 3. Second heavy batch immediately after -> AUTO reuses warm Colab session (0 extra `colab new` calls!)
+        st_h2, res_h2 = self._post(
+            "/v1/vgpu/compute",
+            {"task_kind": "embed", "payload": {"texts": ["batch2 a", "batch2 b", "batch2 c", "batch2 d"], "dim": 64}},
+        )
+        self.assertEqual(st_h2, 200)
+        self.assertTrue(res_h2["chimera_engine"].startswith("colab_auto_elastic:"))
+        self.assertTrue(res_h2["warm_pool_hit"])
+
+        calls_before_reap = [json.loads(ln)[0] for ln in log_file.read_text(encoding="utf-8").splitlines() if ln.strip()]
+        self.assertEqual(calls_before_reap.count("new"), 1)
+        self.assertEqual(calls_before_reap.count("exec"), 2)
+        self.assertEqual(calls_before_reap.count("stop"), 0)
+
+        # 4. Wait past idle_ttl_s (0.45s) -> background Idle-Reaper MUST automatically call `colab stop`!
+        deadline = time.monotonic() + 4.0
+        while time.monotonic() < deadline:
+            auto_st = self._get("/v1/vgpu/colab/policy")["autonomous"]
+            if auto_st["auto_reaped"] >= 1 and auto_st["mode_label"] == "AUTO:SLEEP":
+                break
+            time.sleep(0.1)
+
+        final_auto = self._get("/v1/vgpu/colab/policy")["autonomous"]
+        self.assertGreaterEqual(final_auto["auto_reaped"], 1)
+        self.assertEqual(final_auto["mode_label"], "AUTO:SLEEP")
+        self.assertEqual(final_auto["managed_sessions"], [])
+        calls_after_reap = [json.loads(ln)[0] for ln in log_file.read_text(encoding="utf-8").splitlines() if ln.strip()]
+        self.assertGreaterEqual(calls_after_reap.count("stop"), 1)
+
 
 if __name__ == "__main__":
     unittest.main()

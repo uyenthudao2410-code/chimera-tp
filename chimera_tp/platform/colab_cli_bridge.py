@@ -218,6 +218,8 @@ class ColabCliBridge:
         *,
         colab_bin: str | None = None,
         peer_base_resolver: Any = None,
+        idle_ttl_s: float = 180.0,
+        reaper_interval_s: float = 5.0,
     ) -> None:
         self.state_dir = Path(state_dir)
         self.state_dir.mkdir(parents=True, exist_ok=True)
@@ -225,9 +227,184 @@ class ColabCliBridge:
         self._colab_bin_override = colab_bin
         self.peer_base_resolver = peer_base_resolver
         self._lock = threading.Lock()
+        self._session_locks: dict[str, threading.Lock] = {}
         self._status_cache: tuple[float, dict[str, Any]] | None = None
         self._tunnels: dict[str, dict[str, Any]] = {}
+        self._managed_sessions: dict[str, dict[str, Any]] = {}
         self._exec_count = 0
+        self._warm_hits = 0
+        self._auto_reaped_count = 0
+        self._scaling_now = False
+        self._reaper_interval_s = max(0.05, float(reaper_interval_s))
+        self._stop_ev = threading.Event()
+        self._reaper_wake = threading.Event()
+        self._reaper_thread: threading.Thread | None = None
+        self._policy_path = self.state_dir / "auto_policy.json"
+        self.policy: dict[str, Any] = {
+            "enabled": True,
+            "idle_ttl_s": max(1.0, float(idle_ttl_s)),
+            "auto_min_batch": 16,
+            "protect_workstation": True,
+            "warm_session_reuse": True,
+            "default_gpu_profile": "T4",
+        }
+        self._load_policy()
+
+    def _load_policy(self) -> None:
+        try:
+            if self._policy_path.is_file():
+                raw = json.loads(self._policy_path.read_text(encoding="utf-8"))
+                if isinstance(raw, dict):
+                    for k in ("enabled", "protect_workstation", "warm_session_reuse"):
+                        if k in raw:
+                            self.policy[k] = bool(raw[k])
+                    if "idle_ttl_s" in raw:
+                        self.policy["idle_ttl_s"] = max(0.2, float(raw["idle_ttl_s"]))
+                    if "auto_min_batch" in raw:
+                        self.policy["auto_min_batch"] = max(1, int(raw["auto_min_batch"]))
+                    if "default_gpu_profile" in raw and str(raw["default_gpu_profile"]).upper() in ALLOWED_PROFILES:
+                        self.policy["default_gpu_profile"] = str(raw["default_gpu_profile"]).upper()
+        except Exception:
+            pass
+
+    def get_policy(self) -> dict[str, Any]:
+        with self._lock:
+            return dict(self.policy)
+
+    def update_policy(self, patch: dict[str, Any], persist: bool = True) -> dict[str, Any]:
+        with self._lock:
+            for k in ("enabled", "protect_workstation", "warm_session_reuse"):
+                if k in patch:
+                    self.policy[k] = bool(patch[k])
+            if "idle_ttl_s" in patch:
+                self.policy["idle_ttl_s"] = max(0.2, float(patch["idle_ttl_s"]))
+            if "auto_min_batch" in patch:
+                self.policy["auto_min_batch"] = max(1, int(patch["auto_min_batch"]))
+            if "default_gpu_profile" in patch:
+                prof = str(patch["default_gpu_profile"]).strip().upper()
+                if prof not in ALLOWED_PROFILES:
+                    raise ValueError(f"Unsupported default_gpu_profile: {prof!r}")
+                self.policy["default_gpu_profile"] = prof
+            snap = dict(self.policy)
+        if persist:
+            try:
+                self._policy_path.write_text(json.dumps(snap, indent=2), encoding="utf-8")
+            except Exception:
+                pass
+        self._reaper_wake.set()
+        return snap
+
+    def _get_session_lock(self, session_name: str) -> threading.Lock:
+        with self._lock:
+            lk = self._session_locks.get(session_name)
+            if lk is None:
+                lk = threading.Lock()
+                self._session_locks[session_name] = lk
+            return lk
+
+    def start_autonomous(self, ephemeral: bool = False) -> "ColabCliBridge":
+        """Start background warm-discovery & autonomous CU-guard Idle-Reaper thread (0ms boot block)."""
+        self._stop_ev.clear()
+        if self._reaper_thread is None or not self._reaper_thread.is_alive():
+            self._reaper_thread = threading.Thread(
+                target=self._idle_reaper_loop,
+                name="chimera-colab-reaper",
+                daemon=True,
+            )
+            self._reaper_thread.start()
+        if not ephemeral:
+            def _bg_probe() -> None:
+                try:
+                    self.status(refresh=True)
+                except Exception:
+                    pass
+
+            threading.Thread(target=_bg_probe, name="chimera-colab-probe", daemon=True).start()
+        return self
+
+    def _idle_reaper_loop(self) -> None:
+        while not self._stop_ev.is_set():
+            with self._lock:
+                ttl = float(self.policy.get("idle_ttl_s", 180.0))
+            wait_s = min(self._reaper_interval_s, max(0.05, ttl / 2.0))
+            self._reaper_wake.wait(wait_s)
+            self._reaper_wake.clear()
+            if self._stop_ev.is_set():
+                break
+            try:
+                self.reap_idle_sessions()
+            except Exception:
+                pass
+
+    def reap_idle_sessions(self) -> list[str]:
+        """Auto-stop any managed Colab session that has exceeded idle_ttl_s -> guarantees 0 CU/hr when idle."""
+        now = time.monotonic()
+        expired: list[str] = []
+        with self._lock:
+            for sname, info in list(self._managed_sessions.items()):
+                ttl = float(info.get("idle_ttl_s") or self.policy["idle_ttl_s"])
+                if (now - float(info.get("last_used_at", now))) >= ttl and not info.get("in_flight", False):
+                    expired.append(sname)
+        reaped: list[str] = []
+        for sname in expired:
+            lk = self._get_session_lock(sname)
+            if not lk.acquire(blocking=False):
+                continue
+            try:
+                with self._lock:
+                    info = self._managed_sessions.get(sname)
+                    if info is None or info.get("in_flight", False):
+                        continue
+                    ttl = float(info.get("idle_ttl_s") or self.policy["idle_ttl_s"])
+                    if (time.monotonic() - float(info.get("last_used_at", 0.0))) < ttl:
+                        continue
+                    self._managed_sessions.pop(sname, None)
+                self.stop_session(sname)
+                with self._lock:
+                    self._auto_reaped_count += 1
+                reaped.append(sname)
+            finally:
+                lk.release()
+        return reaped
+
+    def autonomous_state(self) -> dict[str, Any]:
+        now = time.monotonic()
+        with self._lock:
+            pol = dict(self.policy)
+            scaling = self._scaling_now
+            reaped = self._auto_reaped_count
+            warm_hits = self._warm_hits
+            execs = self._exec_count
+            managed = []
+            for sname, info in self._managed_sessions.items():
+                ttl = float(info.get("idle_ttl_s") or pol["idle_ttl_s"])
+                rem = max(0.0, round(ttl - (now - float(info.get("last_used_at", now))), 1))
+                managed.append(
+                    {
+                        "session": sname,
+                        "profile": info.get("profile", "?"),
+                        "uses": int(info.get("uses", 0)),
+                        "in_flight": bool(info.get("in_flight", False)),
+                        "idle_remaining_s": rem,
+                    }
+                )
+        if not pol.get("enabled", True):
+            mode_label = "MANUAL"
+        elif scaling:
+            mode_label = "AUTO:SCALING"
+        elif managed:
+            top = managed[0]
+            mode_label = f"AUTO:WARM:{top['profile']}({int(top['idle_remaining_s'])}s)"
+        else:
+            mode_label = "AUTO:SLEEP"
+        return {
+            "mode_label": mode_label,
+            "policy": pol,
+            "managed_sessions": managed,
+            "warm_reuses": warm_hits,
+            "auto_reaped": reaped,
+            "executions": execs,
+        }
 
     def find_colab_bin(self) -> str | None:
         if self._colab_bin_override and Path(self._colab_bin_override).is_file():
@@ -338,6 +515,7 @@ class ColabCliBridge:
 
     def summary_cached(self) -> dict[str, Any]:
         """Fast 0-ms cached summary (never spawns subprocesses or network during daemon boot / unit tests)."""
+        auto_st = self.autonomous_state()
         if self._status_cache is not None:
             snap = self._status_cache[1]
             usage = snap.get("usage") or {}
@@ -351,6 +529,7 @@ class ColabCliBridge:
                 "active_assignments": usage.get("active_assignments"),
                 "active_sessions": list(sess.get("sessions") or []),
                 "executions": self._exec_count,
+                "autonomous": auto_st,
             }
         return {
             "probed": False,
@@ -362,6 +541,7 @@ class ColabCliBridge:
             "active_assignments": None,
             "active_sessions": [],
             "executions": self._exec_count,
+            "autonomous": auto_st,
         }
 
     def status(self, refresh: bool = False) -> dict[str, Any]:
@@ -381,6 +561,7 @@ class ColabCliBridge:
                 "sessions": sess,
                 "active_tunnels": list(self._tunnels.keys()),
                 "executions": self._exec_count,
+                "autonomous": self.autonomous_state(),
                 "anti_congestion_order": ["CPU", "CPU_HIGH_MEM", "T4", "L4", "A100"],
             }
             self._status_cache = (now, snap)
@@ -552,6 +733,146 @@ class ColabCliBridge:
             "result": parsed,
         }
 
+    def auto_execute(
+        self,
+        task_kind: str = "cuda_embed",
+        payload: dict[str, Any] | None = None,
+        *,
+        profile: str | None = None,
+        require_gpu: bool = True,
+        allow_heavy_gpu: bool = False,
+    ) -> dict[str, Any]:
+        """Autonomous Elastic Scale-from-Zero + Warm-Reuse + Idle-Reaper CU-Guard execution."""
+        if not self.find_colab_bin():
+            if self.peer_base_resolver is not None:
+                pbase = (self.peer_base_resolver() or "").rstrip("/")
+                if pbase:
+                    opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+                    req = urllib.request.Request(
+                        f"{pbase}/v1/vgpu/colab/auto-exec",
+                        data=json.dumps(
+                            {
+                                "task_kind": task_kind,
+                                "payload": payload or {},
+                                "profile": profile,
+                                "require_gpu": require_gpu,
+                                "allow_heavy_gpu": allow_heavy_gpu,
+                            },
+                            ensure_ascii=False,
+                        ).encode("utf-8"),
+                        headers={"Content-Type": "application/json"},
+                        method="POST",
+                    )
+                    with opener.open(req, timeout=240.0) as r:
+                        rem = json.loads(r.read().decode("utf-8"))
+                    rem["relayed_via"] = pbase
+                    return rem
+            raise FileNotFoundError("Google Colab CLI (`colab`) not found locally or on peer")
+
+        pol = self.get_policy()
+        pl = dict(payload or {})
+        batch_sz = len(pl.get("texts") or []) if isinstance(pl.get("texts"), list) else 1
+        rt_sel = select_lightest_profile(
+            task_kind, batch_size=batch_sz, require_gpu=require_gpu, allow_heavy_gpu=allow_heavy_gpu
+        )
+        chosen_prof = str(profile or rt_sel["profile"]).strip().upper()
+        sess = f"chimera_auto_{chosen_prof.lower()}"
+        warm_reuse = bool(pol.get("warm_session_reuse", True))
+        idle_ttl = float(pol.get("idle_ttl_s", 180.0))
+
+        lk = self._get_session_lock(sess)
+        with lk:
+            with self._lock:
+                existing = self._managed_sessions.get(sess)
+                if existing is not None:
+                    existing["in_flight"] = True
+
+            warm_hit = False
+            reused = False
+            prof_used = chosen_prof
+            tmp_script: Path | None = None
+            stopped = False
+            try:
+                if existing is not None and warm_reuse:
+                    warm_hit = True
+                    reused = True
+                    prof_used = str(existing.get("profile") or chosen_prof)
+                else:
+                    with self._lock:
+                        self._scaling_now = True
+                    try:
+                        prov = self.ensure_session(sess, profile=chosen_prof, fallback_chain=rt_sel["fallback_chain"])
+                        reused = bool(prov.get("reused"))
+                        prof_used = str(prov.get("profile_used") or chosen_prof)
+                    finally:
+                        with self._lock:
+                            self._scaling_now = False
+
+                req_obj = {"task_kind": task_kind, **pl}
+                req_b64 = base64.b64encode(json.dumps(req_obj, ensure_ascii=False).encode("utf-8")).decode("ascii")
+                src = _UNIVERSAL_COLAB_RUNNER.replace("__REQ_B64__", req_b64)
+                with tempfile.NamedTemporaryFile("w", suffix=".py", delete=False, encoding="utf-8") as tf:
+                    tf.write(src)
+                    tmp_script = Path(tf.name)
+
+                # Self-healing: if a warm Colab runtime was preempted by Google, auto-provision fresh once!
+                try:
+                    exec_res = self._run_colab(["exec", "--timeout", "300", "-s", sess, "-f", str(tmp_script)], timeout=340)
+                except Exception:
+                    if not warm_hit:
+                        raise
+                    warm_hit = False
+                    with self._lock:
+                        self._managed_sessions.pop(sess, None)
+                        self._scaling_now = True
+                    try:
+                        prov = self.ensure_session(sess, profile=chosen_prof, fallback_chain=rt_sel["fallback_chain"])
+                        prof_used = str(prov.get("profile_used") or chosen_prof)
+                    finally:
+                        with self._lock:
+                            self._scaling_now = False
+                    exec_res = self._run_colab(["exec", "--timeout", "300", "-s", sess, "-f", str(tmp_script)], timeout=340)
+
+                parsed = parse_marked_json((exec_res.stdout or "") + "\n" + (exec_res.stderr or ""))
+                now_m = time.monotonic()
+                with self._lock:
+                    self._exec_count += 1
+                    if warm_hit:
+                        self._warm_hits += 1
+                    if warm_reuse:
+                        prev_uses = int((self._managed_sessions.get(sess) or {}).get("uses", 0))
+                        self._managed_sessions[sess] = {
+                            "profile": prof_used,
+                            "created_at": (self._managed_sessions.get(sess) or {}).get("created_at", now_m),
+                            "last_used_at": now_m,
+                            "idle_ttl_s": idle_ttl,
+                            "uses": prev_uses + 1,
+                            "in_flight": False,
+                        }
+            finally:
+                if tmp_script is not None:
+                    tmp_script.unlink(missing_ok=True)
+                with self._lock:
+                    if sess in self._managed_sessions:
+                        self._managed_sessions[sess]["in_flight"] = False
+                if not warm_reuse:
+                    st_stop = self.stop_session(sess)
+                    stopped = bool(st_stop.get("ok"))
+
+            return {
+                "ok": bool(parsed.get("ok")),
+                "autonomous": True,
+                "session": sess,
+                "profile_requested": chosen_prof,
+                "profile_used": prof_used,
+                "warm_pool_hit": warm_hit,
+                "reused_session": reused,
+                "idle_auto_stop_s": idle_ttl if warm_reuse else 0.0,
+                "auto_stopped_cu_guard": stopped,
+                "workstation_gpu_impact": "0%",
+                "result": parsed,
+            }
+
     def build_ssh_tunnel_command(self, session_name: str, local_port: int, remote_port: int = 9795) -> list[str]:
         """Build cross-platform WebSocket-SSH `-L` forward command using `colab ssh --proxy-mode` (zero ngrok!)."""
         cbin = self.find_colab_bin() or "colab"
@@ -578,12 +899,22 @@ class ColabCliBridge:
         ]
 
     def close(self) -> None:
+        self._stop_ev.set()
+        self._reaper_wake.set()
         with self._lock:
-            for info in self._tunnels.values():
-                proc = info.get("proc")
-                if proc is not None:
-                    try:
-                        proc.terminate()
-                    except Exception:
-                        pass
+            tunnels = list(self._tunnels.values())
             self._tunnels.clear()
+            managed_names = list(self._managed_sessions.keys())
+            self._managed_sessions.clear()
+        for info in tunnels:
+            proc = info.get("proc")
+            if proc is not None:
+                try:
+                    proc.terminate()
+                except Exception:
+                    pass
+        for sname in managed_names:
+            try:
+                self.stop_session(sname)
+            except Exception:
+                pass

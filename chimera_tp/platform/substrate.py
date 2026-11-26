@@ -175,6 +175,7 @@ class PlatformSubstrate:
 
     def start(self) -> "PlatformSubstrate":
         self.egress.start()
+        self.colab.start_autonomous(ephemeral=self.ephemeral)
         if not self.ephemeral:
             self.blackbox.start()
         else:
@@ -438,6 +439,9 @@ class PlatformSubstrate:
             refresh = (qs.get("refresh") or ["0"])[0].lower() in ("1", "true", "yes")
             return 200, self.colab.status(refresh=refresh)
 
+        if path == "/v1/vgpu/colab/policy":
+            return 200, {"ok": True, "policy": self.colab.get_policy(), "autonomous": self.colab.autonomous_state()}
+
         if path == "/v1/ghost/status":
             return 200, self.ghost.status()
 
@@ -665,7 +669,24 @@ class PlatformSubstrate:
                 dim=int(body.get("dimensions") or body.get("dim") or 256),
                 app=str(body.get("app") or headers.get("X-Chimera-App") or "external"),
                 allow_peer_offload=bool(body.get("allow_peer_offload", True)),
+                prefer_cuda=bool(body.get("prefer_cuda", False)),
             )
+
+        if path == "/v1/vgpu/compute":
+            if not self._cartridge_enabled.get("vgpu_pareto", True):
+                return 503, {"error": "cartridge_disabled:vgpu_pareto"}
+            try:
+                return 200, self.vgpu.compute_unified(
+                    task_kind=str(body.get("task_kind") or "embed"),
+                    payload=body.get("payload") or {},
+                    prefer_cuda=bool(body.get("prefer_cuda", False)),
+                    profile=body.get("profile") or None,
+                    app=str(body.get("app") or headers.get("X-Chimera-App") or "external"),
+                )
+            except ValueError as exc:
+                return 400, {"error": str(exc)}
+            except Exception as exc:
+                return 502, {"error": str(exc)}
 
         if path == "/v1/jobs/create":
             if not self._cartridge_enabled.get("immortal_jobs", True):
@@ -807,6 +828,27 @@ class PlatformSubstrate:
             cmd = self.colab.build_ssh_tunnel_command(sess, local_port=lport, remote_port=rport)
             return 200, {"ok": True, "session": sess, "local_port": lport, "remote_port": rport, "cmd": cmd}
 
+        if path == "/v1/vgpu/colab/auto-exec":
+            if not self._cartridge_enabled.get("vgpu_pareto", True):
+                return 503, {"error": "cartridge_disabled:vgpu_pareto"}
+            try:
+                return 200, self.colab.auto_execute(
+                    task_kind=str(body.get("task_kind") or "cuda_embed"),
+                    payload=body.get("payload") or {},
+                    profile=body.get("profile") or None,
+                    require_gpu=bool(body.get("require_gpu", True)),
+                    allow_heavy_gpu=bool(body.get("allow_heavy_gpu", False)),
+                )
+            except Exception as exc:
+                return 502, {"error": str(exc)}
+
+        if path == "/v1/vgpu/colab/policy":
+            try:
+                pol = self.colab.update_policy(body)
+                return 200, {"ok": True, "policy": pol, "autonomous": self.colab.autonomous_state()}
+            except ValueError as exc:
+                return 400, {"error": str(exc)}
+
         if path == "/v1/vgpu/ptx-bench":
             n = max(64, min(262144, int(body.get("n") or 16384)))
             va = [float((i % 13) - 6) for i in range(n)]
@@ -925,14 +967,15 @@ def render_smi(smi_data: dict[str, Any]) -> str:
     gpu = vg.get("gpu") or {}
     colab_n = int(vg.get("colab_online", 0))
     ccli = vg.get("colab_cli") or {}
+    auto_lbl = str((ccli.get("autonomous") or {}).get("mode_label") or "")
     if ccli.get("available") and ccli.get("balance_cu") is not None:
-        colab_tag = f"Colab:{float(ccli['balance_cu']):.0f}CU"
+        colab_tag = f"Colab:{float(ccli['balance_cu']):.0f}CU[{auto_lbl or 'AUTO'}]"
     else:
         colab_tag = f"Colab:{colab_n}"
     gpu_desc = (
-        f"{colab_tag} | {gpu.get('name','GPU')[:16]} {gpu.get('util_pct',0)}% {gpu.get('temp_c',0)}C"
+        f"{colab_tag} | {gpu.get('name','GPU')[:11]} {gpu.get('util_pct',0):.0f}% {gpu.get('temp_c',0):.0f}C"
         if gpu.get("present")
-        else f"{colab_tag} | CPU-AVX2 / peer-offload"
+        else f"{colab_tag} | AVX2/peer"
     )
     apps = smi_data.get("apps") or []
     unlinked = smi_data.get("unlinked_ports") or []

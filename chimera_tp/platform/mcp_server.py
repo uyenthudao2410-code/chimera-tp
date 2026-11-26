@@ -92,6 +92,20 @@ _TOOLS = [
         },
     },
     {
+        "name": "chimera_compute",
+        "description": "Single unified autonomous CHIMERA-VGPU compute tool (embed, matmul, vec_dot, probe): automatically routes heavy CUDA to Google Colab Pro Elastic GPU (auto scale-from-zero, warm reuse, idle auto-stop, 0% Windows GPU load) or local GTX 1650 PTX / AVX2.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "task_kind": {"type": "string", "enum": ["embed", "matmul", "vec_dot", "probe"]},
+                "payload": {"type": "object"},
+                "prefer_cuda": {"type": "boolean"},
+                "profile": {"type": "string"},
+            },
+            "required": ["task_kind"],
+        },
+    },
+    {
         "name": "chimera_colab_status",
         "description": "Check live Google Colab Pro/Ultra CLI status, Compute Unit balance, and active sessions (auto-relayed win-desktop -> svhome).",
         "inputSchema": {
@@ -172,6 +186,13 @@ def handle_mcp_request(msg: dict[str, Any], anchor_url: str | None = None) -> di
                     baseline_url=str(args.get("baseline_url", "")),
                     canary_url=str(args.get("canary_url", "")),
                     samples=int(args.get("samples", 5)),
+                )
+            elif tname == "chimera_compute":
+                out = client.compute(
+                    task_kind=str(args.get("task_kind", "probe")),
+                    payload=args.get("payload") if isinstance(args.get("payload"), dict) else {},
+                    prefer_cuda=bool(args.get("prefer_cuda", False)),
+                    profile=args.get("profile") or None,
                 )
             elif tname == "chimera_colab_status":
                 out = client.colab_status(refresh=bool(args.get("refresh", False)))

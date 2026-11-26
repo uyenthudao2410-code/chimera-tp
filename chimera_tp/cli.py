@@ -390,7 +390,7 @@ def main(argv: list[str] | None = None) -> int:
     p_gh.add_argument("cmd", nargs=argparse.REMAINDER, help="Command to test (prefix with --)")
 
     p_clb = sub.add_parser("colab", help="Headless Google Colab Pro/Ultra CLI fabric (zero ngrok, anti-congestion, CU auto-stop)")
-    p_clb.add_argument("action", choices=("status", "exec", "embed", "matmul", "stop", "tunnel-cmd"), help="Colab CLI action")
+    p_clb.add_argument("action", choices=("status", "policy", "exec", "embed", "matmul", "stop", "tunnel-cmd"), help="Colab CLI action")
     p_clb.add_argument("--task", default="probe", choices=("probe", "cuda_embed", "cuda_matmul"), help="Task kind for exec")
     p_clb.add_argument("--profile", default="", help="Optional Colab profile override (CPU, CPU_HIGH_MEM, T4, L4, A100)")
     p_clb.add_argument("--session", default="", help="Optional Colab session name")
@@ -401,9 +401,20 @@ def main(argv: list[str] | None = None) -> int:
     p_clb.add_argument("--allow-heavy-gpu", action="store_true", help="Allow A100 heavy GPU tier")
     p_clb.add_argument("--keep-session", action="store_true", help="Keep Colab runtime alive after execution (default auto-stops to guard CU)")
     p_clb.add_argument("--refresh", action="store_true", help="Bypass status cache and query Colab CLI live")
+    p_clb.add_argument("--idle-ttl", type=float, default=None, help="Set autonomous idle auto-stop TTL in seconds (for policy)")
+    p_clb.add_argument("--min-batch", type=int, default=None, help="Set minimum batch size for automatic Colab offload (for policy)")
     p_clb.add_argument("--local-port", type=int, default=9795, help="Local port for WebSocket-SSH tunnel-cmd")
     p_clb.add_argument("--remote-port", type=int, default=9795, help="Remote Colab port for WebSocket-SSH tunnel-cmd")
     p_clb.add_argument("--anchor", default="", help="Override CHIMERA anchor URL")
+
+    p_cmp = sub.add_parser("compute", help="Single unified CHIMERA-VGPU autonomous compute entrypoint (auto-routes Colab / PTX / AVX2)")
+    p_cmp.add_argument("task_kind", choices=("embed", "matmul", "vec_dot", "probe"), help="Unified compute task")
+    p_cmp.add_argument("--texts", nargs="*", default=None, help="Texts for embed")
+    p_cmp.add_argument("--dim", type=int, default=256, help="Embedding dim")
+    p_cmp.add_argument("--n", type=int, default=1024, help="Matrix NxN for matmul")
+    p_cmp.add_argument("--prefer-cuda", action="store_true", help="Hint CUDA acceleration (auto-scales Colab Pro if Windows active)")
+    p_cmp.add_argument("--profile", default="", help="Optional Colab profile override")
+    p_cmp.add_argument("--anchor", default="", help="Override CHIMERA anchor URL")
 
     p_ship = sub.add_parser("ship-check", help="Verify Overmind Cortex canary shipping invariants (PHANTOM, storm, RAM, CRDT, DLP)")
     p_ship.add_argument("--local", default="http://127.0.0.1:9780", help="Local Chimera dashboard URL")
@@ -1391,6 +1402,25 @@ def main(argv: list[str] | None = None) -> int:
             with opener.open(f"{anchor}/v1/vgpu/colab/status{q}", timeout=20.0) as resp:
                 print(json.dumps(json.loads(resp.read().decode("utf-8")), indent=2, ensure_ascii=False))
             return 0
+        if args.action == "policy":
+            patch: dict[str, object] = {}
+            if args.idle_ttl is not None:
+                patch["idle_ttl_s"] = float(args.idle_ttl)
+            if args.min_batch is not None:
+                patch["auto_min_batch"] = int(args.min_batch)
+            if patch:
+                req = _urlreq.Request(
+                    f"{anchor}/v1/vgpu/colab/policy",
+                    data=json.dumps(patch).encode("utf-8"),
+                    headers={"Content-Type": "application/json"},
+                    method="POST",
+                )
+                with opener.open(req, timeout=10.0) as resp:
+                    print(json.dumps(json.loads(resp.read().decode("utf-8")), indent=2, ensure_ascii=False))
+            else:
+                with opener.open(f"{anchor}/v1/vgpu/colab/policy", timeout=10.0) as resp:
+                    print(json.dumps(json.loads(resp.read().decode("utf-8")), indent=2, ensure_ascii=False))
+            return 0
         if args.action == "stop":
             sess = args.session or "chimera_t4"
             req = _urlreq.Request(
@@ -1440,6 +1470,37 @@ def main(argv: list[str] | None = None) -> int:
                     "keep_session": bool(args.keep_session),
                     "require_gpu": bool(args.require_gpu or args.action == "matmul"),
                     "allow_heavy_gpu": bool(args.allow_heavy_gpu),
+                },
+                ensure_ascii=False,
+            ).encode("utf-8"),
+            headers={"Content-Type": "application/json"},
+            method="POST",
+        )
+        with opener.open(req, timeout=260.0) as resp:
+            res = json.loads(resp.read().decode("utf-8"))
+        print(json.dumps(res, indent=2, ensure_ascii=False))
+        return 0 if res.get("ok") else 1
+
+    if args.command == "compute":
+        import urllib.request as _urlreq
+        from .platform import discover_runtime_file
+
+        rt = discover_runtime_file()
+        anchor = (args.anchor or (rt or {}).get("anchor_url") or "http://127.0.0.1:9780").rstrip("/")
+        opener = _urlreq.build_opener(_urlreq.ProxyHandler({}))
+        payload: dict[str, object] = {}
+        if args.task_kind == "embed":
+            payload = {"texts": list(args.texts or ["chimera unified autonomous compute"]), "dim": int(args.dim)}
+        elif args.task_kind == "matmul":
+            payload = {"n": int(args.n)}
+        req = _urlreq.Request(
+            f"{anchor}/v1/vgpu/compute",
+            data=json.dumps(
+                {
+                    "task_kind": args.task_kind,
+                    "payload": payload,
+                    "prefer_cuda": bool(args.prefer_cuda),
+                    "profile": args.profile or None,
                 },
                 ensure_ascii=False,
             ).encode("utf-8"),
