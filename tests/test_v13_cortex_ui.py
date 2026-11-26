@@ -27,10 +27,12 @@ class TestV13CortexUI(unittest.TestCase):
         gz_bytes = gzip.compress(raw_bytes, compresslevel=9)
         packed_bytes = build_kolmogorov_packed_html("{}", '""')
 
-        self.assertLessEqual(len(raw_bytes), 52_000, f"Raw UI bloated: {len(raw_bytes)} B")
-        self.assertLessEqual(len(gz_bytes), 20_500, f"Gzip UI bloated: {len(gz_bytes)} B")
-        self.assertLessEqual(len(packed_bytes), 28_000, f"Packed UI bloated: {len(packed_bytes)} B")
-        self.assertEqual(UNIVERSE_DASHBOARD_HTML.count("precision highp float;"), 4)
+        self.assertLessEqual(len(raw_bytes), 46_000, f"Raw UI bloated: {len(raw_bytes)} B")
+        self.assertLessEqual(len(gz_bytes), 18_500, f"Gzip UI bloated: {len(gz_bytes)} B")
+        self.assertLessEqual(len(packed_bytes), 25_000, f"Packed UI bloated: {len(packed_bytes)} B")
+        # v26+ Zero-WebGL invariant: pure 2D SVG/Canvas observability console (0% GPU lag)
+        self.assertNotIn("getContext('webgl'", UNIVERSE_DASHBOARD_HTML)
+        self.assertNotIn("precision highp float;", UNIVERSE_DASHBOARD_HTML)
 
         for marker in (
             "CHIMERA-HYPER v2.0",
@@ -62,7 +64,12 @@ class TestV13CortexUI(unittest.TestCase):
                 f.write(scripts[0])
                 jsp = f.name
             try:
-                proc = subprocess.run([node, "--check", jsp], capture_output=True, text=True)
+                proc = subprocess.run(
+                    [node, "--check", jsp],
+                    capture_output=True,
+                    text=True,
+                    creationflags=(getattr(subprocess, "CREATE_NO_WINDOW", 0) if os.name == "nt" else 0),
+                )
                 self.assertEqual(proc.returncode, 0, proc.stderr)
             finally:
                 os.unlink(jsp)
@@ -94,7 +101,7 @@ class TestV13CortexUI(unittest.TestCase):
                 with urllib.request.urlopen(req, timeout=5.0) as r:
                     wire_gz = r.read()
                     self.assertEqual(r.headers.get("Content-Encoding"), "gzip")
-                    self.assertLessEqual(len(wire_gz), 22_000, f"Root gzip wire too large: {len(wire_gz)}")
+                    self.assertLessEqual(len(wire_gz), 19_500, f"Root gzip wire too large: {len(wire_gz)}")
                     raw_html = gzip.decompress(wire_gz).decode("utf-8")
                     self.assertIn("CHIMERA-HYPER v12.0 OMEGA-GALACTIC", raw_html)
                     self.assertIn("cortex_unit", raw_html)
@@ -102,7 +109,7 @@ class TestV13CortexUI(unittest.TestCase):
                 with urllib.request.urlopen(f"{base}/?packed=1", timeout=5.0) as r2:
                     packed_raw = r2.read()
                     self.assertEqual(r2.headers.get("X-Chimera-Packed"), "kolmogorov-deflate-raw")
-                    self.assertLessEqual(len(packed_raw), 28_000, f"Packed wire too large: {len(packed_raw)}")
+                    self.assertLessEqual(len(packed_raw), 25_500, f"Packed wire too large: {len(packed_raw)}")
                     packed_txt = packed_raw.decode("utf-8")
                     self.assertIn("DecompressionStream('deflate-raw')", packed_txt)
                     b64s = re.findall(r"_u\('([A-Za-z0-9+/=]+)'\)", packed_txt)
@@ -122,6 +129,57 @@ class TestV13CortexUI(unittest.TestCase):
                 pulse = json.loads(urllib.request.urlopen(f"{base}/api/pulse", timeout=4.0).read().decode("utf-8"))
                 ops = {f["op"] for f in pulse.get("flows", [])}
                 self.assertTrue({"WASM_TELEPORT", "FROST_2OF3", "CHMC_3STRIKE", "TARPIT_0KB"}.issubset(ops), ops)
+            finally:
+                daemon.close()
+
+    def test_04_zero_blocking_assets_and_total_wire_to_first_interactive(self) -> None:
+        self.assertEqual(re.findall(r"<script\b[^>]*\bsrc\s*=", UNIVERSE_DASHBOARD_HTML, re.I), [])
+        self.assertEqual(
+            re.findall(r"<link\b[^>]*\brel\s*=\s*[\"']?stylesheet\b", UNIVERSE_DASHBOARD_HTML, re.I),
+            [],
+        )
+        self.assertEqual(re.findall(r"https?://", UNIVERSE_DASHBOARD_HTML, re.I), [])
+
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            work = root / "work"
+            work.mkdir()
+            cfg = OpsConfig(
+                role="server",
+                node_name="wire_tti_unit",
+                dashboard_bind="127.0.0.1:0",
+                beam_port=0,
+                rpc_v4_port=0,
+                rpc_v6_port=-1,
+                query_port=0,
+                warp_port=-1,
+                edge_proxy_port=-1,
+                allowed_query_roots=[str(work)],
+                search_roots=[str(work)],
+                edge_targets={},
+                phantom_enabled=False,
+            )
+            daemon = ChimeraDaemon(config=cfg, ops_dir=root / "ops", auto_seed_on_empty=False).start()
+            base = f"http://127.0.0.1:{daemon.http_addr[1]}"
+            try:
+                req_root = urllib.request.Request(f"{base}/", headers={"Accept-Encoding": "gzip"})
+                with urllib.request.urlopen(req_root, timeout=5.0) as r_root:
+                    self.assertEqual(r_root.headers.get("Content-Encoding"), "gzip")
+                    root_gz = r_root.read()
+
+                req_pulse = urllib.request.Request(f"{base}/api/pulse", headers={"Accept-Encoding": "gzip"})
+                with urllib.request.urlopen(req_pulse, timeout=5.0) as r_pulse:
+                    self.assertEqual(r_pulse.headers.get("Content-Encoding"), "gzip")
+                    pulse_gz = r_pulse.read()
+                    pulse_obj = json.loads(gzip.decompress(pulse_gz).decode("utf-8"))
+                    self.assertIn("zero_weight", pulse_obj)
+
+                total_wire = len(root_gz) + len(pulse_gz)
+                self.assertLessEqual(
+                    total_wire,
+                    26_000,
+                    f"Total wire to first interactive too large: {len(root_gz)} + {len(pulse_gz)} = {total_wire} B",
+                )
             finally:
                 daemon.close()
 
