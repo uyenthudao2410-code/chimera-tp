@@ -50,15 +50,24 @@ def probe_nvidia_gpu() -> dict[str, Any]:
         return {"present": False}
 
 
-def probe_gpu_backends() -> dict[str, Any]:
-    """Zero-RAM probe for installed ML/CUDA runtimes (never imports heavy torch weights into daemon)."""
+_BACKENDS_LOCK = threading.Lock()
+_BACKENDS_CACHE: tuple[float, dict[str, Any]] | None = None
+
+
+def probe_gpu_backends(force: bool = False) -> dict[str, Any]:
+    """Zero-RAM cached (60s) probe for installed ML/CUDA runtimes (never blocks discovery)."""
+    global _BACKENDS_CACHE
+    now = time.monotonic()
+    with _BACKENDS_LOCK:
+        if (not force) and _BACKENDS_CACHE is not None and (now - _BACKENDS_CACHE[0]) < 60.0:
+            return dict(_BACKENDS_CACHE[1])
     ollama_live = False
     try:
-        with socket.create_connection(("127.0.0.1", 11434), timeout=0.12):
+        with socket.create_connection(("127.0.0.1", 11434), timeout=0.04):
             ollama_live = True
     except OSError:
         ollama_live = False
-    return {
+    res = {
         "nvcuda_ptx_jit": NvCudaPtxEngine().probe()["available"],
         "torch_installed": importlib.util.find_spec("torch") is not None,
         "onnxruntime_installed": importlib.util.find_spec("onnxruntime") is not None,
@@ -67,6 +76,9 @@ def probe_gpu_backends() -> dict[str, Any]:
         "llama_server_exe": bool(shutil.which("llama-server")),
         "avx2_vsa_builtin": True,
     }
+    with _BACKENDS_LOCK:
+        _BACKENDS_CACHE = (now, res)
+    return dict(res)
 
 
 def _dense_embed(text: str, dim: int = 256) -> list[float]:
@@ -114,6 +126,7 @@ class VgpuParetoGateway:
         self.ptx = NvCudaPtxEngine()
         self._lock = threading.Lock()
         self._gpu_ts = 0.0
+        self._gpu_refreshing = False
         self._gpu_cache: dict[str, Any] = {"present": False}
         self._embed_cache: dict[str, list[float]] = {}
         self._remote_workers: dict[str, dict[str, Any]] = {}
@@ -170,15 +183,34 @@ class VgpuParetoGateway:
         except Exception:
             return {"probed": False, "available": False, "via": "error", "balance_cu": None}
 
-    def gpu_telemetry(self, force: bool = False) -> dict[str, Any]:
+    def gpu_telemetry(self, force: bool = False, non_blocking: bool = True) -> dict[str, Any]:
         now = time.monotonic()
         with self._lock:
-            if (not force) and (now - self._gpu_ts) < 2.0 and self._gpu_ts > 0:
+            age = now - self._gpu_ts
+            has_val = self._gpu_ts > 0.0
+            if (not force) and has_val and age < 10.0:
                 return dict(self._gpu_cache)
+            if (not force) and has_val and non_blocking:
+                cached = dict(self._gpu_cache)
+                if not self._gpu_refreshing:
+                    self._gpu_refreshing = True
+
+                    def _bg_gpu() -> None:
+                        try:
+                            fresh = probe_nvidia_gpu()
+                            with self._lock:
+                                self._gpu_cache = fresh
+                                self._gpu_ts = time.monotonic()
+                        finally:
+                            with self._lock:
+                                self._gpu_refreshing = False
+
+                    threading.Thread(target=_bg_gpu, name="chimera-gpu-probe", daemon=True).start()
+                return cached
         info = probe_nvidia_gpu()
         with self._lock:
             self._gpu_cache = info
-            self._gpu_ts = now
+            self._gpu_ts = time.monotonic()
         return dict(info)
 
     def evaluate_gpu_eligibility(

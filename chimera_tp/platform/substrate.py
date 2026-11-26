@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import ctypes
+import gc
 import json
 import os
 import platform
@@ -121,6 +123,7 @@ class PlatformSubstrate:
         )
         self.ghost = GhostBubbleEngine(work_root=Path(daemon.ops_dir) / "ghost_bubbles")
         self.hyper_desk = HyperDeskEngine(
+            ops_dir=Path(daemon.ops_dir),
             host_governor=getattr(daemon, "host_governor", None),
             pulse_bus=self.pulse,
             zygote_pool=self.zygote,
@@ -142,6 +145,10 @@ class PlatformSubstrate:
         self._peer_apps_lock = threading.Lock()
         self._peer_apps_ts: float = 0.0
         self._peer_apps_cache: list[dict[str, Any]] = []
+        self._openai_models_lock = threading.Lock()
+        self._openai_models_ts: float = 0.0
+        self._openai_models_cache: list[dict[str, Any]] = []
+        self._trim_tick: int = 0
 
         self._cart_cfg_path = Path(daemon.ops_dir) / "cartridges.json"
         self._cartridge_enabled: dict[str, bool] = {
@@ -184,14 +191,44 @@ class PlatformSubstrate:
         _atomic_write_text(self._cart_cfg_path, json.dumps(self._cartridge_enabled, indent=2))
         if name == "browser_grid" and not enabled:
             self.browser.close()
+        if name == "hyper_desk":
+            if enabled:
+                self.hyper_desk.start_autonomic()
+            else:
+                self.hyper_desk.stop_autonomic(restore_defaults=True)
         self.write_beacons()
+        try:
+            self.daemon.record_flow(
+                "compute",
+                "cortex-ui",
+                name,
+                "CARTRIDGE_TOGGLE",
+                detail=f"enabled={bool(enabled)}",
+                ok=True,
+            )
+        except Exception:
+            pass
         return {"ok": True, "cartridge": name, "enabled": bool(enabled), "cartridges": dict(self._cartridge_enabled)}
+
+    def _trim_memory_if_needed(self, ram_mb: float) -> None:
+        """Keep Linux glibc RSS strictly under Zero-Weight 80 MB budget after burst CONNECT tunnels / forks."""
+        self._trim_tick += 1
+        if ram_mb < 66.0 and (self._trim_tick % 30) != 0:
+            return
+        try:
+            gc.collect()
+            if os.name != "nt":
+                ctypes.CDLL("libc.so.6").malloc_trim(0)
+        except Exception:
+            pass
 
     def _sample_frame(self) -> dict[str, Any]:
         zw = get_zero_weight_status()
+        ram_mb = float(zw.get("daemon_ram_mb", 0.0))
+        self._trim_memory_if_needed(ram_mb)
         eg = self.egress.stats()
         return {
-            "ram_mb": zw.get("daemon_ram_mb", 0.0),
+            "ram_mb": ram_mb,
             "apps_online": sum(1 for a in self.registry.list_apps() if a.get("online")),
             "egress_reqs": eg.get("requests_total", 0),
             "egress_hit_pct": eg.get("hit_rate_pct", 0.0),
@@ -203,6 +240,8 @@ class PlatformSubstrate:
         self.colab.start_autonomous(ephemeral=self.ephemeral)
         if not self.ephemeral:
             self.blackbox.start()
+            if self._cartridge_enabled.get("hyper_desk", True) and self.hyper_desk._autonomic_policy.get("enabled", True):
+                self.hyper_desk.start_autonomic()
         else:
             self.blackbox.record_once()
         self.write_beacons()
@@ -396,8 +435,33 @@ class PlatformSubstrate:
     def pulse_summary(self) -> dict[str, Any]:
         apps = self.merged_apps()
         eg = self.egress.stats()
+        vg = self.vgpu.status()
+        gpu = vg.get("gpu") or {}
+        colab_cu = 0.0
+        try:
+            cs = self.colab.status(refresh=False)
+            colab_cu = float((cs.get("usage") or {}).get("balance_cu") or 0.0)
+        except Exception:
+            pass
+        hd = self.hyper_desk.status()
+        vram_st = hd.get("vram_swap") or {}
+        gov = getattr(self.daemon, "host_governor", None)
+        hm = gov.get_host_metrics() if gov else {}
+        peer_online = bool(getattr(getattr(self.daemon, "config", None), "peer_ipv4", ""))
+        th = self.cosmos.thermo.optimize_placement(
+            host_metrics=hm, gpu=gpu, colab_cu=colab_cu, peer_online=peer_online
+        )
+        imm = self.cosmos.immune.stats()
+        zenv = self.cosmos.zero_env.stats()
+        om = self.omega.status()
+        gen = om.get("active_genome") or {}
+        reclaimed_mb = (
+            float(hd.get("cryo_est_ws_reclaimed_mb") or 0.0)
+            + float(hd.get("orphans_commit_reclaimed_mb") or 0.0)
+            + float(hd.get("hydra_trimmed_mb") or 0.0)
+        )
         return {
-            "version": "21.0.0",
+            "version": "22.0.0",
             "anchor_url": self.anchor_url,
             "egress_proxy_url": self.egress.url,
             "apps_online": [a["app"] for a in apps if a.get("online")],
@@ -410,12 +474,44 @@ class PlatformSubstrate:
             "pulse_seq": self.pulse.stats().get("latest_seq", 0),
             "search_docs": self.search.stats().get("docs", 0),
             "blackbox_frames": self.blackbox.stats().get("buffered_frames", 0),
-            "vgpu_ready": self.vgpu.status().get("gpu_ready", False),
-            "colab_online": self.vgpu.status().get("colab_online", 0),
+            "vgpu_ready": vg.get("gpu_ready", False),
+            "colab_online": vg.get("colab_online", 0),
+            "colab_cu": round(colab_cu, 1),
+            "gpu_temp_c": gpu.get("temp_c"),
+            "gpu_util_pct": gpu.get("util_pct"),
+            "vram_free_mb": gpu.get("vram_free_mb"),
             "immortal_jobs": self.jobs.stats().get("total_jobs", 0),
             "browser_sessions": self.browser.status().get("active_sessions", 0),
             "zygote_execs": self.zygote.status().get("executions", 0),
             "ghost_runs": self.ghost.status().get("runs", 0),
+            "hyper_desk": {
+                "reclaimed_mb": round(reclaimed_mb, 1),
+                "cryo_procs": int(hd.get("cryo_trimmed_procs") or 0),
+                "wall_pinned": int(hd.get("silicon_wall_pinned_procs") or 0),
+                "orphans": int(hd.get("orphans_reaped") or 0),
+                "hydra_mb": round(float(hd.get("hydra_trimmed_mb") or 0.0), 1),
+                "vram_yield_ms": round(float(vram_st.get("last_yield_ms") or 0.0), 1),
+                "sync_dam": bool(hd.get("sync_dam_active")),
+                "autonomic_on": bool(hd.get("autonomic_running")),
+            },
+            "thermo": {
+                "regime": th.get("regime", "COOL_LOCAL_HYBRID"),
+                "watts": round(float(th.get("est_host_watts") or 0.0), 1),
+                "cpu_pct": round(float(th.get("cpu_pct") or 0.0), 1),
+                "ssd_save_pct": round(float((th.get("ssd_barrier") or {}).get("write_reduction_pct") or 0.0), 1),
+                "zero_env_pct": round(float(zenv.get("dedup_saved_pct") or 0.0), 1),
+                "quarantined": len(imm.get("quarantined_actors") or []),
+                "ransomware_trips": int(imm.get("ransomware_trips") or 0),
+            },
+            "omega": {
+                "genome": str(gen.get("codec") or "lz4_simd"),
+                "gen": int(gen.get("generation") or 1),
+                "score": round(float(gen.get("score") or 0.0), 1),
+                "akashic_hits": int(om.get("akashic_hits") or 0),
+                "precog_hits": int(om.get("precog_hits") or 0),
+                "ctrl_z_depth": int(om.get("ctrl_z_depth") or 0),
+            },
+            "cartridges": dict(self._cartridge_enabled),
         }
 
     def handle_get(self, parsed: urllib.parse.ParseResult, headers: Any) -> tuple[int, dict[str, Any]] | None:
@@ -493,22 +589,34 @@ class PlatformSubstrate:
             return 200, unify_status()
 
         if path == "/v1/openai/v1/models":
+            now_m = time.monotonic()
+            is_hop = str(headers.get("X-Chimera-OpenAI-Hop") or "") == "1"
+            with self._openai_models_lock:
+                if self._openai_models_cache and (now_m - self._openai_models_ts) < 30.0:
+                    return 200, {"object": "list", "data": list(self._openai_models_cache)}
+
             models: list[dict[str, Any]] = [
                 {"id": "chimera-vsa-embed-256", "object": "model", "owned_by": "chimera-vgpu-avx2"},
                 {"id": "chimera-cuda-embed", "object": "model", "owned_by": "chimera-colab-elastic"},
                 {"id": "chimera-colab-elastic", "object": "model", "owned_by": "chimera-colab-elastic"},
             ]
             relay_url = str(getattr(self.daemon.config, "tquota_relay_url", "") or "http://127.0.0.1:12500").rstrip("/")
-            model_urls = [f"{relay_url}/v1/models"]
-            if (not self.ephemeral) and getattr(self.daemon.config, "peer_ipv4", ""):
-                model_urls.append(f"http://{self.daemon.config.peer_ipv4}:12500/v1/models")
+            model_urls: list[tuple[str, float, dict[str, str]]] = [(f"{relay_url}/v1/models", 0.35, {})]
+            if (not is_hop) and (not self.ephemeral) and getattr(self.daemon.config, "peer_ipv4", ""):
+                try:
+                    pbase = (self.daemon.active_edge_peer_base() or "").rstrip("/")
+                    if pbase:
+                        model_urls.append((f"{pbase}/v1/openai/v1/models", 1.5, {"X-Chimera-OpenAI-Hop": "1"}))
+                except Exception:
+                    pass
             import urllib.request as _ur
 
             opener = _ur.build_opener(_ur.ProxyHandler({}))
             seen = {m["id"] for m in models}
-            for murl in model_urls:
+            for murl, tout, hdrs in model_urls:
                 try:
-                    with opener.open(murl, timeout=1.2) as r:
+                    req = _ur.Request(murl, headers=hdrs, method="GET")
+                    with opener.open(req, timeout=tout) as r:
                         rem = json.loads(r.read().decode("utf-8"))
                     added = False
                     for item in (rem.get("data") or []):
@@ -521,6 +629,9 @@ class PlatformSubstrate:
                         break
                 except Exception:
                     continue
+            with self._openai_models_lock:
+                self._openai_models_cache = list(models)
+                self._openai_models_ts = now_m
             return 200, {"object": "list", "data": models}
 
         if path == "/v1/ghost/status":
@@ -623,6 +734,8 @@ class PlatformSubstrate:
             return 200, self.hyper_desk.diagnose()
         if path == "/v1/hyperdesk/vram/status":
             return 200, {"ok": True, "vram_swap": self.hyper_desk.vram_swap.status()}
+        if path == "/v1/hyperdesk/autonomic":
+            return 200, self.hyper_desk.get_autonomic_status()
 
         # --- v20 CHIMERA-COSMOS GET routes ---
         if path == "/v1/cosmos/status":
@@ -787,21 +900,28 @@ class PlatformSubstrate:
 
         if path in ("/v1/openai/v1/chat/completions", "/v1/openai/v1/responses", "/v1/openai/v1/completions"):
             sub_ep = path[len("/v1/openai") :]
+            is_hop = str(headers.get("X-Chimera-OpenAI-Hop") or "") == "1"
             relay_base = str(getattr(self.daemon.config, "tquota_relay_url", "") or "http://127.0.0.1:12500").rstrip("/")
-            candidates = [f"{relay_base}{sub_ep}"]
-            if (not self.ephemeral) and getattr(self.daemon.config, "peer_ipv4", ""):
-                candidates.append(f"http://{self.daemon.config.peer_ipv4}:12500{sub_ep}")
+            candidates: list[tuple[str, dict[str, str]]] = [(f"{relay_base}{sub_ep}", {})]
+            if (not is_hop) and (not self.ephemeral) and getattr(self.daemon.config, "peer_ipv4", ""):
+                try:
+                    pbase = (self.daemon.active_edge_peer_base() or "").rstrip("/")
+                    if pbase:
+                        candidates.append((f"{pbase}/v1/openai{sub_ep}", {"X-Chimera-OpenAI-Hop": "1"}))
+                except Exception:
+                    pass
             import urllib.error as _ue
             import urllib.request as _ur
 
             opener = _ur.build_opener(_ur.ProxyHandler({}))
-            fwd_hdrs = {"Content-Type": "application/json"}
+            base_hdrs = {"Content-Type": "application/json"}
             if headers.get("Authorization"):
-                fwd_hdrs["Authorization"] = str(headers.get("Authorization"))
+                base_hdrs["Authorization"] = str(headers.get("Authorization"))
             last_err = ""
-            for target_url in candidates:
+            for target_url, extra_hdrs in candidates:
                 try:
-                    req = _ur.Request(target_url, data=raw_body, headers=fwd_hdrs, method="POST")
+                    hdrs = {**base_hdrs, **extra_hdrs}
+                    req = _ur.Request(target_url, data=raw_body, headers=hdrs, method="POST")
                     with opener.open(req, timeout=60.0) as r:
                         data = json.loads(r.read().decode("utf-8"))
                     if isinstance(data, dict):
@@ -1072,6 +1192,21 @@ class PlatformSubstrate:
                     return 200, self.hyper_desk.cortex_watch_scan(str(body.get("dir") or "."))
                 except Exception as exc:
                     return 400, {"error": str(exc)}
+            if path == "/v1/hyperdesk/autonomic":
+                action = str(body.get("action") or "").strip().lower()
+                if action == "on":
+                    return 200, self.hyper_desk.start_autonomic()
+                if action == "off":
+                    return 200, self.hyper_desk.stop_autonomic(restore_defaults=bool(body.get("restore_defaults", True)))
+                if action == "tick":
+                    return 200, self.hyper_desk.autonomic_tick_once(
+                        force_patrol=bool(body.get("force_patrol", True)),
+                        force_orphan=bool(body.get("force_orphan", False)),
+                        dry_run=bool(body.get("dry_run", False)),
+                    )
+                if isinstance(body.get("policy"), dict):
+                    return 200, self.hyper_desk.update_autonomic_policy(body["policy"])
+                return 200, self.hyper_desk.get_autonomic_status()
 
         # --- v20 CHIMERA-COSMOS POST routes ---
         if path.startswith("/v1/cosmos/"):
@@ -1297,7 +1432,7 @@ def render_smi(smi_data: dict[str, Any]) -> str:
         f"|  [ON] zygote_canary   : mode={zg.get('mode','?'):<17} execs={zg.get('executions',0):<4} canary_runs={cn.get('runs',0):<3} |",
         f"|  [ON] vault_sql       : dbs={vq.get('db_count',0):<4} syncs={vq.get('syncs',0):<4} queries={vq.get('queries',0):<5} saved={vq.get('bytes_saved',0):>7} B |",
         f"|  [ON] ghost_bubble    : open={gh.get('open_bubbles',0):<3} runs={gh.get('runs',0):<4} commits={gh.get('commits',0):<4} discards={gh.get('discards',0):<4}   |",
-        f"|  [ON] hyper_desk      : cryo={hd.get('cryo_passes',0):<3} wall={hd.get('silicon_wall_pinned_procs',0):<3} reaped={hd.get('orphans_reaped',0):<3} vram={str((hd.get('vram_swap') or {}).get('cuda_available',False)):<5}  |",
+        f"|  [ON] hyper_desk      : auto={'ON' if (hd.get('autonomic') or {}).get('running') else 'OFF':<3} wall={hd.get('silicon_wall_pinned_procs',0):<2} cryo={hd.get('cryo_passes',0):<3} reap={hd.get('orphans_reaped',0):<2} dec={((hd.get('autonomic') or {}).get('decisions',0)):<3} |",
         f"|  [ON] cosmos_entity   : omni={((cs.get('omni_memory') or {}).get('log_entries',0)):<4} cas={((cs.get('zero_env') or {}).get('envs',0)):<3} ssi={cs.get('ssi_tasks',0):<3} regime={str((cs.get('thermodynamic') or {}).get('regime','?'))[:13]:<13}|",
         f"|  [ON] omega_entity    : ept={om.get('ept_unique_pages',0):<4} akashic={om.get('akashic_hits',0):<4} gen={((om.get('active_genome') or {}).get('generation',1)):<3} mode={str(om.get('ring_minus_1_mode','?'))[:14]:<14}|",
         "+" + "-" * 78 + "+",
