@@ -28,6 +28,7 @@ from .hybrid_search import HybridPlatformSearch
 from .immortal_jobs import ImmortalJobEngine
 from .pulse_bus import PulseBus
 from .browser_grid import SharedBrowserGrid
+from .vault_sql import VaultSqlFabric
 from .vgpu_gateway import VgpuParetoGateway
 from .zygote_canary import CanaryTwinJudge, ZygoteWorkerPool
 
@@ -94,6 +95,14 @@ class PlatformSubstrate:
         self.browser = SharedBrowserGrid(cdp_port=0 if self.ephemeral else 9785, idle_shutdown_s=120.0)
         self.zygote = ZygoteWorkerPool()
         self.canary = CanaryTwinJudge()
+        self.vault_sql = VaultSqlFabric(
+            replica_dir=Path(daemon.ops_dir) / "vault_sql",
+            peer_base_resolver=(
+                daemon.active_edge_peer_base
+                if (not self.ephemeral and daemon.config.peer_ipv4)
+                else None
+            ),
+        )
 
         self._cart_cfg_path = Path(daemon.ops_dir) / "cartridges.json"
         self._cartridge_enabled: dict[str, bool] = {
@@ -107,6 +116,7 @@ class PlatformSubstrate:
             "immortal_jobs": True,
             "browser_grid": True,
             "zygote_canary": True,
+            "vault_sql": True,
         }
         self._load_cartridge_config()
         self._beacon_paths: list[Path] = []
@@ -246,7 +256,12 @@ class PlatformSubstrate:
                     "status": "active" if self._cartridge_enabled["zygote_canary"] else "disabled",
                     "endpoint": f"{anchor}/v1/zygote/exec",
                     "mode": self.zygote.status().get("mode", "warm_pool"),
-                    "description": "Linux CoW fork / Windows warm worker pool + Zero-Downtime Canary Twin regression judge",
+                    "description": "Single-threaded Linux pre-fork CoW / Windows warm worker pool + Canary Twin judge",
+                },
+                "vault_sql": {
+                    "status": "active" if self._cartridge_enabled["vault_sql"] else "disabled",
+                    "endpoint": f"{anchor}/v1/vault-sql/query",
+                    "description": "Single-writer WAL-safe SQLite cross-node replica fabric (<0.3ms local reads)",
                 },
             },
         }
@@ -319,6 +334,7 @@ class PlatformSubstrate:
                 "browser": self.browser.status(),
                 "zygote": self.zygote.status(),
                 "canary": self.canary.stats(),
+                "vault_sql": self.vault_sql.status(),
                 "cartridge_toggles": dict(self._cartridge_enabled),
             }
 
@@ -401,6 +417,29 @@ class PlatformSubstrate:
 
         if path == "/v1/zygote/status":
             return 200, self.zygote.status()
+
+        if path == "/v1/vault-sql/status":
+            return 200, self.vault_sql.status()
+
+        if path == "/v1/vault-sql/snapshot":
+            name = (qs.get("name") or [""])[0]
+            since_sha = (qs.get("since_sha256") or [""])[0]
+            try:
+                return 200, self.vault_sql.export_snapshot(name=name, since_sha256=since_sha)
+            except Exception as exc:
+                return 404, {"error": str(exc)}
+
+        if path == "/v1/dns/hosts-hint":
+            apps = self.registry.list_apps()
+            domains = sorted({a["domain"] for a in apps if a.get("domain")})
+            hosts_line = ("127.0.0.1 " + " ".join(domains)) if domains else ""
+            return 200, {
+                "ok": True,
+                "anchor_port": int(self.daemon.http_addr[1]),
+                "domains": domains,
+                "hosts_line": hosts_line,
+                "usage_hint": "curl -H 'Host: radar.chimera.local' http://127.0.0.1:9780/api/health",
+            }
 
         return None
 
@@ -609,7 +648,104 @@ class PlatformSubstrate:
                 ignore_keys=body.get("ignore_keys"),
             )
 
+        if path == "/v1/vault-sql/register":
+            try:
+                return 200, self.vault_sql.register_db(
+                    name=str(body.get("name") or ""),
+                    path=str(body.get("path") or ""),
+                    role=str(body.get("role") or "primary"),
+                )
+            except Exception as exc:
+                return 400, {"error": str(exc)}
+
+        if path == "/v1/vault-sql/sync":
+            try:
+                if body.get("snapshot"):
+                    return 200, self.vault_sql.install_replica_snapshot(str(body.get("name") or ""), body["snapshot"])
+                return 200, self.vault_sql.sync_from_peer(
+                    name=str(body.get("name") or ""),
+                    peer_base=body.get("peer_base"),
+                )
+            except Exception as exc:
+                return 502, {"error": str(exc)}
+
+        if path == "/v1/vault-sql/query":
+            try:
+                return 200, self.vault_sql.query_readonly(
+                    name=str(body.get("name") or ""),
+                    sql=str(body.get("sql") or ""),
+                    params=body.get("params"),
+                    limit=int(body.get("limit") or 200),
+                )
+            except ValueError as exc:
+                return 400, {"error": str(exc)}
+            except Exception as exc:
+                return 404, {"error": str(exc)}
+
         return None
+
+    def handle_host_proxy(
+        self,
+        method: str,
+        raw_path: str,
+        headers: Any,
+        raw_body: bytes = b"",
+    ) -> tuple[int, str, bytes] | None:
+        """Transparent *.chimera.local Host-header reverse proxy (local port first, then peer via PHANTOM)."""
+        host_hdr = str(headers.get("Host") or "").strip().lower()
+        hostname = host_hdr.split(":", 1)[0]
+        if not hostname.endswith(".chimera.local"):
+            return None
+        app_sub = hostname[: -len(".chimera.local")].strip(".")
+        if not app_sub:
+            return None
+        apps = self.registry.list_apps()
+        target = next((a for a in apps if a.get("app") == app_sub or a.get("domain") == hostname), None)
+        if target is None or int(target.get("port") or 0) <= 0:
+            return 404, "application/json", json.dumps({"error": f"unknown_chimera_domain:{hostname}"}).encode("utf-8")
+
+        port = int(target["port"])
+        import urllib.error
+        import urllib.request
+
+        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+        fwd_headers = {
+            k: v
+            for k, v in headers.items()
+            if k.lower() not in ("host", "connection", "content-length", "transfer-encoding")
+        }
+        fwd_headers["X-Forwarded-Host"] = host_hdr
+
+        # Try local 127.0.0.1:<port> first; if refused and peer exists, forward through peer :9780 with same Host!
+        attempts: list[tuple[str, dict[str, str]]] = [(f"http://127.0.0.1:{port}{raw_path}", dict(fwd_headers))]
+        if (not self.ephemeral) and self.daemon.config.peer_ipv4:
+            try:
+                pbase = self.daemon.active_edge_peer_base().rstrip("/")
+                if pbase:
+                    ph = dict(fwd_headers)
+                    ph["Host"] = hostname
+                    attempts.append((f"{pbase}{raw_path}", ph))
+            except Exception:
+                pass
+
+        last_err = ""
+        for url, hdrs in attempts:
+            try:
+                req = urllib.request.Request(
+                    url,
+                    data=raw_body if method in ("POST", "PUT", "PATCH") else None,
+                    headers=hdrs,
+                    method=method,
+                )
+                with opener.open(req, timeout=8.0) as r:
+                    ct = r.headers.get("Content-Type", "application/octet-stream")
+                    return r.status, ct, r.read()
+            except urllib.error.HTTPError as e:
+                ct = e.headers.get("Content-Type", "application/octet-stream") if e.headers else "application/json"
+                return e.code, ct, e.read()
+            except Exception as exc:
+                last_err = str(exc)
+        return 502, "application/json", json.dumps({"error": f"chimera_local_proxy_failed:{hostname}:{last_err}"}).encode("utf-8")
 
 
 def render_smi(smi_data: dict[str, Any]) -> str:
@@ -625,6 +761,7 @@ def render_smi(smi_data: dict[str, Any]) -> str:
     br = smi_data.get("browser") or {}
     zg = smi_data.get("zygote") or {}
     cn = smi_data.get("canary") or {}
+    vq = smi_data.get("vault_sql") or {}
     gpu = vg.get("gpu") or {}
     gpu_desc = (
         f"{gpu.get('name','GPU')[:22]} {gpu.get('util_pct',0)}% {gpu.get('temp_c',0)}C free={gpu.get('vram_free_mb',0)}MB"
@@ -651,6 +788,7 @@ def render_smi(smi_data: dict[str, Any]) -> str:
         f"|  [ON] immortal_jobs   : jobs={jb.get('total_jobs',0):<4} done={jb.get('completed_jobs',0):<4} steps={jb.get('completed_steps',0):<5} dup_skip={jb.get('duplicate_steps_skipped',0):<5}|",
         f"|  [ON] browser_grid    : bin={str(br.get('binary_found',False)):<5} running={str(br.get('running',False)):<5} sessions={br.get('active_sessions',0):<3} (0MB idle)  |",
         f"|  [ON] zygote_canary   : mode={zg.get('mode','?'):<17} execs={zg.get('executions',0):<4} canary_runs={cn.get('runs',0):<3} |",
+        f"|  [ON] vault_sql       : dbs={vq.get('db_count',0):<4} syncs={vq.get('syncs',0):<4} queries={vq.get('queries',0):<5} saved={vq.get('bytes_saved',0):>7} B |",
         "+" + "-" * 78 + "+",
         f"| ATTACHED & LINKED APPS ({len(apps)})                                                   |",
     ]

@@ -552,6 +552,10 @@ class ChimeraDaemon:
                 return self.rfile.read(clen) if clen > 0 else b""
 
             def do_GET(self) -> None:
+                host_prox = daemon_ref.platform.handle_host_proxy("GET", self.path, self.headers)
+                if host_prox is not None:
+                    self._send_bytes(host_prox[0], host_prox[1], host_prox[2])
+                    return
                 parsed = urllib.parse.urlparse(self.path)
                 if parsed.path == "/.well-known/chimera.json" or parsed.path.startswith("/v1/"):
                     plat_res = daemon_ref.platform.handle_get(parsed, self.headers)
@@ -1080,6 +1084,11 @@ class ChimeraDaemon:
                 self._send_json(404, {"error": "Not found"})
 
             def do_POST(self) -> None:
+                if str(self.headers.get("Host") or "").lower().split(":", 1)[0].endswith(".chimera.local"):
+                    host_prox = daemon_ref.platform.handle_host_proxy("POST", self.path, self.headers, self._read_body())
+                    if host_prox is not None:
+                        self._send_bytes(host_prox[0], host_prox[1], host_prox[2])
+                        return
                 parsed = urllib.parse.urlparse(self.path)
                 if parsed.path.startswith("/v1/"):
                     plat_res = daemon_ref.platform.handle_post(

@@ -374,6 +374,16 @@ def main(argv: list[str] | None = None) -> int:
     p_can.add_argument("--samples", type=int, default=5, help="Number of paired samples")
     p_can.add_argument("--anchor", default="", help="Override CHIMERA anchor URL")
 
+    p_sd = sub.add_parser("attach-systemd", help="Install non-destructive systemd user drop-in for Python (.venv) or Node service")
+    p_sd.add_argument("unit", help="systemd user unit name (e.g. radar-dashboard.service or tquota.service)")
+    p_sd.add_argument("--app", required=True, help="Application name")
+    p_sd.add_argument("--runtime", choices=("python", "node"), required=True, help="Service runtime")
+    p_sd.add_argument("--port", type=int, default=0, help="Service listening port")
+    p_sd.add_argument("--inject-proxy", action="store_true", help="Also set HTTP_PROXY/HTTPS_PROXY to :9781")
+
+    p_dns = sub.add_parser("dns", help="Show *.chimera.local registered domains and hosts hint")
+    p_dns.add_argument("--anchor", default="", help="Override CHIMERA anchor URL")
+
     # ---- Legacy Research Subcommands (v0.5.0 Multi-Realm Exotic Lanes) ----
     p_probe = sub.add_parser("probe", help="Probe hardware capabilities & Windows network realms")
     p_probe.add_argument("--json", action="store_true", help="Emit probe profile as JSON")
@@ -1290,6 +1300,29 @@ def main(argv: list[str] | None = None) -> int:
             res = json.loads(resp.read().decode("utf-8"))
         print(json.dumps(res, indent=2, ensure_ascii=False))
         return 0 if res.get("verdict") == "PROMOTE" else 1
+
+    if args.command == "attach-systemd":
+        from .platform import install_systemd_dropin
+
+        res = install_systemd_dropin(
+            unit_name=args.unit,
+            app_name=args.app,
+            runtime=args.runtime,
+            port=args.port,
+            inject_http_proxy=bool(args.inject_proxy),
+        )
+        print(json.dumps(res, indent=2, ensure_ascii=False))
+        return 0
+
+    if args.command == "dns":
+        import urllib.request as _urlreq
+        from .platform import discover_runtime_file
+
+        rt = discover_runtime_file()
+        anchor = (args.anchor or (rt or {}).get("anchor_url") or "http://127.0.0.1:9780").rstrip("/")
+        with _urlreq.urlopen(f"{anchor}/v1/dns/hosts-hint", timeout=4.0) as resp:
+            print(json.dumps(json.loads(resp.read().decode("utf-8")), indent=2, ensure_ascii=False))
+        return 0
 
     if args.command == "run":
         import subprocess

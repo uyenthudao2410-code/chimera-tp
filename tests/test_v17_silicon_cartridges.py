@@ -218,6 +218,74 @@ class TestV17SiliconCartridges(unittest.TestCase):
         )
         self.assertTrue(json.loads(mcp_r["result"]["content"][0]["text"])["ok"])
 
+    def test_05_vault_sql_host_proxy_node_hook_and_systemd_dropin(self) -> None:
+        import sqlite3
+        import subprocess
+        from chimera_tp.platform import install_autoload, install_systemd_dropin
+
+        # 1. Vault-SQL: WAL-safe online snapshot -> unchanged 0-B check -> replica -> <2ms SELECT -> block DROP
+        src_db = Path(self._tmp.name) / "demo_primary.db"
+        conn = sqlite3.connect(str(src_db))
+        conn.execute("CREATE TABLE items (id INTEGER PRIMARY KEY, name TEXT, score INTEGER)")
+        conn.executemany("INSERT INTO items VALUES (?,?,?)", [(1, "radar", 99), (2, "tqouta", 95)])
+        conn.commit()
+        conn.close()
+
+        st_reg, _ = self._post("/v1/vault-sql/register", {"name": "demo", "path": str(src_db), "role": "primary"})
+        self.assertEqual(st_reg, 200)
+        snap1 = self._get("/v1/vault-sql/snapshot?name=demo")
+        self.assertTrue(snap1["ok"])
+        self.assertFalse(snap1["unchanged"])
+
+        snap_same = self._get(f"/v1/vault-sql/snapshot?name=demo&since_sha256={snap1['sha256']}")
+        self.assertTrue(snap_same["unchanged"])
+        self.assertEqual(snap_same["wire_bytes"], 0)
+
+        st_sync, rep = self._post("/v1/vault-sql/sync", {"name": "demo_rep", "snapshot": snap1})
+        self.assertEqual(st_sync, 200)
+        self.assertEqual(rep["sha256"], snap1["sha256"])
+
+        st_q, qres = self._post("/v1/vault-sql/query", {"name": "demo_rep", "sql": "SELECT name, score FROM items ORDER BY id"})
+        self.assertEqual(st_q, 200)
+        self.assertEqual(qres["count"], 2)
+        self.assertEqual(qres["rows"][0]["name"], "radar")
+
+        st_bad, _ = self._post("/v1/vault-sql/query", {"name": "demo_rep", "sql": "DROP TABLE items"})
+        self.assertEqual(st_bad, 400)
+
+        # 2. *.chimera.local Host-header reverse proxy
+        srv_app, u_app = _start_mini_server({"service": "mockapp", "ok": True})
+        app_port = int(u_app.rsplit(":", 1)[1])
+        try:
+            self._post("/v1/apps/register", {"app": "mockapp", "port": app_port, "pid": 0})
+            req_h = urllib.request.Request(f"{self.anchor}/status", headers={"Host": "mockapp.chimera.local"})
+            with urllib.request.urlopen(req_h, timeout=4.0) as r:
+                self.assertEqual(r.status, 200)
+                self.assertEqual(json.loads(r.read().decode())["service"], "mockapp")
+            dns = self._get("/v1/dns/hosts-hint")
+            self.assertIn("mockapp.chimera.local", dns["domains"])
+        finally:
+            srv_app.shutdown(); srv_app.server_close()
+
+        # 3. Node preload hook JS syntax check + systemd drop-in generation
+        site_tmp = Path(self._tmp.name) / "site_v17"
+        al = install_autoload(target_dir=site_tmp)
+        node_hook = Path(al["node_preload_hook"])
+        self.assertTrue(node_hook.is_file())
+        rc = subprocess.call(["node", "--check", str(node_hook)])
+        self.assertEqual(rc, 0)
+
+        sd_dir = Path(self._tmp.name) / "systemd_user"
+        sd = install_systemd_dropin("tquota.service", app_name="tqouta", runtime="node", port=12500, systemd_user_dir=sd_dir)
+        conf_txt = Path(sd["dropin_path"]).read_text(encoding="utf-8")
+        self.assertIn("NODE_OPTIONS=--require=", conf_txt)
+        self.assertIn("CHIMERA_APP=tqouta", conf_txt)
+
+        # 4. VGPU backends probe present
+        vg = self._get("/v1/vgpu/status")
+        self.assertIn("backends", vg)
+        self.assertTrue(vg["backends"]["avx2_vsa_builtin"])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -173,3 +173,9 @@
 - [x] **Bước 6 — Kiểm Thử Tự Động & Đánh Giá Benchmark TRƯỚC vs SAU (Windows + `svhome`)**:
   - Windows: **`8/8 PASS`** (`test_v16` + `test_v17`, `22.05s`) | `svhome` Linux: **`4/4 PASS`** (`test_v17`, `12.79s`, real `os.fork()`).
   - Zero-Weight RAM live sau khi bật đủ `10` Cartridge: `win-desktop` **`38.43 / 80 MB`**, `svhome` **`52.16 / 80 MB`** (vẫn thấp hơn baseline `57.93 MB`).
+- [x] **Bước 7 — Hoàn Thiện 5 Mảnh Còn Thiếu (Đưa `radar` & `tqouta` Lên `[ONLINE]` + Cartridge #11 `CHIMERA-VAULT-SQL`):**
+  - **Single-threaded Pre-Fork `CHIMERA-ZYGOTE` (`zygote_canary.py`):** Triệt tiêu 100% `DeprecationWarning` Python 3.14, giảm tốc độ fork trên `svhome` xuống **`2.791 ms`** (`linux_prefork_cow`).
+  - **Python `sitecustomize.py` + Node.js `chimera_node_hook.cjs` + `attach-systemd` (`autoload.py`):** Gắn `90-chimera.conf` cho `radar-dashboard.service` (`.venv`) và `tquota.service` (`node`) → cả 2 chuyển sang **`[ONLINE]`** trong `chimera-tp smi` trên `svhome`.
+  - **`*.chimera.local` Host-Header Reverse Proxy (`substrate.py`, `dashboard.py`):** Xác minh `Host: radar.chimera.local` (`HTTP 200`, `86.9 KB`) và `Host: tqouta.chimera.local` (`HTTP 200`, `625.4 KB`, `55.5 ms`) xuyên `win-desktop → svhome`.
+  - **Cartridge #11 `CHIMERA-VAULT-SQL` (`vault_sql.py`):** Đồng bộ `svhome_telemetry` (`106 KB → 8.8 KB`, `-91.7%`; lần 2 `0 B` unchanged), truy vấn cục bộ trên Windows **`1.344 ms`**.
+  - **`VGPU` Zero-RAM Backend Probe (`vgpu_gateway.py`):** Báo cáo trung thực `backends` không nạp nặng `torch` vào daemon (`win-desktop` RAM **`19.29 MB`**, `svhome` **`75.87 MB`**; `9/9 PASS` Win, `5/5 PASS` Linux).

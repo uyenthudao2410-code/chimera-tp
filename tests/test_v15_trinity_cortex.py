@@ -442,6 +442,111 @@ class TestV15TrinityCortex(unittest.TestCase):
             backend.shutdown()
             backend.server_close()
 
+    def test_07_stale_streams_cleared_on_reconnect_no_retransmit_storm(self) -> None:
+        big_payload = json.dumps({"ok": True, "blob": "X" * 48000}).encode("utf-8")
+
+        class _RevBigHandler(http.server.BaseHTTPRequestHandler):
+            def do_GET(self) -> None:
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(big_payload)))
+                self.end_headers()
+                self.wfile.write(big_payload)
+
+            def log_message(self, *_args: object) -> None:
+                pass
+
+        rev_backend = http.server.ThreadingHTTPServer(("127.0.0.1", 0), _RevBigHandler)
+        rev_backend.daemon_threads = True
+        threading.Thread(target=rev_backend.serve_forever, daemon=True).start()
+        rev_p = int(rev_backend.server_address[1])
+
+        srv1 = PhantomTunnelServer(fallback_port=0, allowed_forward_ports=[rev_p], reverse_forwards={0: rev_p}).start()
+        srv2 = PhantomTunnelServer(fallback_port=0, allowed_forward_ports=[rev_p], reverse_forwards={0: rev_p}).start()
+        active_srv = [srv1]
+
+        class _OfferHandler(http.server.BaseHTTPRequestHandler):
+            def do_POST(self) -> None:
+                length = int(self.headers.get("Content-Length") or 0)
+                body = json.loads(self.rfile.read(length).decode("utf-8") or "{}")
+                resp = json.dumps(active_srv[0].accept_offer(body)).encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.send_header("Content-Length", str(len(resp)))
+                self.end_headers()
+                self.wfile.write(resp)
+
+            def log_message(self, *_args: object) -> None:
+                pass
+
+        offer_srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), _OfferHandler)
+        offer_srv.daemon_threads = True
+        threading.Thread(target=offer_srv.serve_forever, daemon=True).start()
+        offer_port = int(offer_srv.server_address[1])
+
+        cli_tunnel = PhantomTunnelClient(
+            peer_http_base=f"http://127.0.0.1:{offer_port}",
+            peer_udp_ip="127.0.0.1",
+            peer_fallback_port=srv2.fallback_port,
+            forwards={0: rev_p},
+            local_test_mode=True,
+            allowed_reverse_ports=[rev_p],
+            keepalive_interval_s=0.15,
+            pong_stale_s=0.45,
+            reconnect_cooldown_s=0.2,
+            auto_reconnect=True,
+        ).start_listeners()
+        hold_sock = None
+        try:
+            conn_res = cli_tunnel.connect(local_test_mode=True, num_sockets=8, spray_count=64, timeout_s=2.0)
+            self.assertTrue(conn_res["connected"])
+
+            # Open an idle incomplete TCP stream across the forward listener so _conns is populated before restart
+            import socket as _sock
+            hold_sock = _sock.create_connection(("127.0.0.1", cli_tunnel.bound_ports[rev_p]), timeout=3.0)
+            hold_sock.sendall(b"GET /stale HTTP/1.1\r\nHost: localhost\r\n")
+            time.sleep(0.15)
+            self.assertGreaterEqual(cli_tunnel.status()["active_conns"], 1)
+
+            # Kill srv1 and wait for auto-reconnect to srv2
+            active_srv[0] = srv2
+            srv1.close()
+            deadline = time.monotonic() + 5.0
+            reconnected = False
+            while time.monotonic() < deadline:
+                st = cli_tunnel.status()
+                if st.get("reconnect_count", 0) >= 1 and st.get("connected") and not st.get("reconnecting"):
+                    reconnected = True
+                    break
+                time.sleep(0.1)
+            self.assertTrue(reconnected, f"Expected auto-reconnect, status={cli_tunnel.status()}")
+
+            time.sleep(0.4)
+            st_after = cli_tunnel.status()
+            self.assertEqual(st_after["active_conns"], 0, f"Stale streams leaked across session: {st_after}")
+            self.assertLess(st_after["tx_bytes"], 500_000, f"Retransmit storm suspected: {st_after}")
+
+            # 48 KB Reverse-PHANTOM payload (like Tquota /healthz) must succeed cleanly after reconnect
+            rev_loc = srv2.reverse_bound_ports[rev_p]
+            t0 = time.perf_counter()
+            got = urllib.request.urlopen(f"http://127.0.0.1:{rev_loc}/healthz-sim", timeout=2.5).read()
+            dt = time.perf_counter() - t0
+            self.assertEqual(len(got), len(big_payload))
+            self.assertLess(dt, 2.0)
+        finally:
+            if hold_sock is not None:
+                try:
+                    hold_sock.close()
+                except OSError:
+                    pass
+            cli_tunnel.close()
+            srv1.close()
+            srv2.close()
+            offer_srv.shutdown()
+            offer_srv.server_close()
+            rev_backend.shutdown()
+            rev_backend.server_close()
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -301,6 +301,16 @@ class ChimeraClient:
             {"baseline_url": baseline_url, "canary_url": canary_url, "paths": paths or ["/"], "samples": samples},
         )
 
+    def vault_sql_sync(self, name: str, peer_base: str | None = None) -> dict[str, Any]:
+        if not self.available:
+            return {"ok": False, "via": "local_fallback"}
+        return self._post_json("/v1/vault-sql/sync", {"name": name, "peer_base": peer_base})
+
+    def vault_sql_query(self, name: str, sql: str, params: list[Any] | None = None, limit: int = 200) -> dict[str, Any]:
+        if not self.available:
+            return {"ok": False, "via": "local_fallback", "rows": []}
+        return self._post_json("/v1/vault-sql/query", {"name": name, "sql": sql, "params": params or [], "limit": limit})
+
 
 def connect(
     app: str | None = None,

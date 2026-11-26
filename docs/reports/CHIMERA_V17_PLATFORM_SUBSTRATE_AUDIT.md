@@ -67,3 +67,19 @@ Sau nâng cấp **`v17.0.0`**, toàn bộ hệ thống đã chuyển hóa thành
 ## 4. Kết Luận Kiểm Toán
 
 Hệ thống `chimera-tp v17.0.0` đã hoàn thành bước chuyển mình quan trọng nhất: **từ một tập hợp công cụ mạng/mật mã mạnh nhưng đóng kín, thành một Nền Tảng Hạ Tầng Mở tự khám phá được (`CHIMERA-CONNECT`) với 10 Cartridge chạy sống trên cả Windows và Linux `svhome` dưới chuẩn Zero-Weight `< 80 MB` RAM.**
+
+
+---
+
+## 5. Cập Nhật Hoàn Thiện Đợt Cuối (`v17.0.1` — Đã Xử Lý Trọn 5 Điểm Còn Thiếu)
+
+1. **`radar` & `tqouta` đã chuyển sang `[ONLINE]` sống 24/7 trên `svhome`:**
+   - Gắn `systemd` user drop-in không xâm lấn (`90-chimera.conf`) kèm `sitecustomize.py` (Python `.venv`) và `chimera_node_hook.cjs` (Node.js `NODE_OPTIONS=--require=...`, heartbeat `unref()` mỗi `60 s`) → `chimera-tp smi` trên `svhome` hiển thị **`[ONLINE] radar (python_autoload)`** & **`[ONLINE] tqouta (node_preload)`** với `0` dòng sửa code nguồn ứng dụng.
+2. **Reverse-Proxy `*.chimera.local` hoạt động xuyên 2 máy qua `:9780`:**
+   - `Host: radar.chimera.local` (`HTTP 200`, `86,926 B`) và `Host: tqouta.chimera.local` (`HTTP 200`, `625,425 B`, **`55.5 ms`**) định tuyến thẳng từ `win-desktop` xuyên `PHANTOM-5MS` tới `svhome`.
+3. **Cartridge #11 `CHIMERA-VAULT-SQL` (`vault_sql.py`) hoạt động xuyên 2 máy:**
+   - Đồng bộ `svhome_telemetry` (`106,496 B → 8,887 B`, nén `11.98x`, `-91.7%` lưu lượng; lần 2 không đổi **`0 B`**) và truy vấn SQLite chỉ-đọc cục bộ ngay trên Windows trong **`1.344 ms`** (`0` lỗi lock).
+4. **Sửa triệt để cảnh báo `os.fork()` đa luồng trên `svhome`:**
+   - Tách `CHIMERA-ZYGOTE` sang tiến trình pre-fork helper đơn luồng (`linux_prefork_cow`) → **`0` `DeprecationWarning` Python 3.14**, thời gian thực thi warm giảm từ `7.435 ms` xuống **`2.791 ms`** (**`2.66x` nhanh hơn**).
+5. **`CHIMERA-VGPU` Zero-RAM Backend Probe (`vgpu_gateway.py`):**
+   - Dò runtime ML/CUDA (`torch`, `onnxruntime`, `ollama :11434`, `llama-server`) không nạp nặng RAM daemon (`win-desktop` **`19.29 / 80 MB`**, `svhome` **`75.87 / 80 MB`**; `9/9` PASS Win, `5/5` PASS Linux).

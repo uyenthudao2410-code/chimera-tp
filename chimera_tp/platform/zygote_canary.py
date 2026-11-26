@@ -1,4 +1,4 @@
-"""CHIMERA-ZYGOTE (Linux CoW fork / Windows Warm-Pool) + CANARY TWIN Shadow Regression Judge."""
+"""CHIMERA-ZYGOTE (Single-Threaded Pre-Fork Helper on Linux / Warm-Pool on Windows) + CANARY TWIN Judge."""
 
 from __future__ import annotations
 
@@ -7,6 +7,8 @@ import hashlib
 import json
 import os
 import re
+import subprocess
+import sys
 import threading
 import time
 import urllib.error
@@ -40,8 +42,59 @@ def _run_kernel(kernel: str, payload: dict[str, Any]) -> dict[str, Any]:
     raise ValueError(f"Unsupported zygote kernel: {kernel}")
 
 
+# Dedicated single-threaded Linux pre-fork helper script: 0 multi-thread fork warnings, 0 deadlock risk!
+_LINUX_PREFORK_HELPER = r'''
+import hashlib, json, os, re, sys
+
+def run_k(kernel, payload):
+    if kernel == "hash_batch":
+        items = list(payload.get("items") or [])
+        return {"count": len(items), "hashes": [hashlib.blake2s(str(x).encode("utf-8"), digest_size=16).hexdigest() for x in items]}
+    if kernel == "json_filter":
+        rows = list(payload.get("rows") or [])
+        key = str(payload.get("key") or "")
+        eq = payload.get("equals")
+        matched = [r for r in rows if isinstance(r, dict) and r.get(key) == eq]
+        return {"total": len(rows), "matched": len(matched), "rows": matched}
+    if kernel == "regex_extract":
+        text = str(payload.get("text") or "")
+        pat = str(payload.get("pattern") or "")
+        hits = re.findall(pat, text)[:500]
+        return {"count": len(hits), "matches": hits}
+    if kernel == "text_stats":
+        text = str(payload.get("text") or "")
+        words = text.split()
+        return {"chars": len(text), "words": len(words), "lines": text.count("\n") + (1 if text else 0)}
+    raise ValueError(f"Unsupported zygote kernel: {kernel}")
+
+for raw_line in sys.stdin:
+    line = raw_line.strip()
+    if not line:
+        continue
+    req = json.loads(line)
+    r_fd, w_fd = os.pipe()
+    pid = os.fork()
+    if pid == 0:
+        os.close(r_fd)
+        try:
+            out = {"ok": True, "result": run_k(req["kernel"], req.get("payload") or {}), "pid": os.getpid()}
+        except Exception as exc:
+            out = {"ok": False, "error": str(exc), "pid": os.getpid()}
+        with os.fdopen(w_fd, "wb") as wf:
+            wf.write(json.dumps(out, ensure_ascii=False).encode("utf-8"))
+        os._exit(0)
+    else:
+        os.close(w_fd)
+        with os.fdopen(r_fd, "rb") as rf:
+            data = rf.read().decode("utf-8")
+        os.waitpid(pid, 0)
+        sys.stdout.write(data + "\n")
+        sys.stdout.flush()
+'''
+
+
 class ZygoteWorkerPool:
-    """Linux os.fork() Copy-on-Write (<3 ms cold-start) / Windows persistent warm thread pool."""
+    """Single-threaded Linux pre-fork helper (0 warnings, ~1-3ms CoW fork) / Windows warm worker pool."""
 
     SUPPORTED_KERNELS = ("hash_batch", "json_filter", "regex_extract", "text_stats")
 
@@ -49,8 +102,26 @@ class ZygoteWorkerPool:
         self.supports_cow_fork = hasattr(os, "fork") and os.name != "nt"
         self._executor = concurrent.futures.ThreadPoolExecutor(max_workers=4, thread_name_prefix="chimera-zygote")
         self._lock = threading.Lock()
+        self._helper_lock = threading.Lock()
+        self._helper: subprocess.Popen[str] | None = None
         self._exec_count = 0
         self._total_ms = 0.0
+
+    def _ensure_helper_locked(self) -> subprocess.Popen[str]:
+        if self._helper is not None and self._helper.poll() is None:
+            return self._helper
+        env = dict(os.environ)
+        env["CHIMERA_DISABLE_AUTOLOAD"] = "1"
+        self._helper = subprocess.Popen(
+            [sys.executable, "-u", "-c", _LINUX_PREFORK_HELPER],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            text=True,
+            bufsize=1,
+            env=env,
+        )
+        return self._helper
 
     def execute(self, kernel: str, payload: dict[str, Any], prefer_fork: bool = True) -> dict[str, Any]:
         if kernel not in self.SUPPORTED_KERNELS:
@@ -60,29 +131,21 @@ class ZygoteWorkerPool:
         child_pid = 0
 
         if self.supports_cow_fork and prefer_fork:
-            mode = "linux_cow_fork"
-            r_fd, w_fd = os.pipe()
-            pid = os.fork()
-            if pid == 0:
-                os.close(r_fd)
-                try:
-                    res = {"ok": True, "result": _run_kernel(kernel, payload), "pid": os.getpid()}
-                except Exception as exc:
-                    res = {"ok": False, "error": str(exc), "pid": os.getpid()}
-                raw = json.dumps(res, ensure_ascii=False).encode("utf-8")
-                with os.fdopen(w_fd, "wb") as wf:
-                    wf.write(raw)
-                os._exit(0)
-            else:
-                os.close(w_fd)
-                child_pid = pid
-                with os.fdopen(r_fd, "rb") as rf:
-                    raw = rf.read()
-                os.waitpid(pid, 0)
-                parsed = json.loads(raw.decode("utf-8"))
+            mode = "linux_prefork_cow"
+            with self._helper_lock:
+                proc = self._ensure_helper_locked()
+                assert proc.stdin is not None and proc.stdout is not None
+                proc.stdin.write(json.dumps({"kernel": kernel, "payload": payload}, ensure_ascii=False) + "\n")
+                proc.stdin.flush()
+                line = proc.stdout.readline()
+                if not line:
+                    self._stop_helper_locked()
+                    raise RuntimeError("Zygote pre-fork helper exited unexpectedly")
+                parsed = json.loads(line)
                 if not parsed.get("ok"):
-                    raise RuntimeError(parsed.get("error", "fork_worker_error"))
+                    raise RuntimeError(parsed.get("error", "prefork_worker_error"))
                 out = parsed["result"]
+                child_pid = int(parsed.get("pid") or 0)
         else:
             fut = self._executor.submit(_run_kernel, kernel, payload)
             out = fut.result(timeout=10.0)
@@ -105,16 +168,34 @@ class ZygoteWorkerPool:
         with self._lock:
             n = self._exec_count
             avg = round(self._total_ms / max(1, n), 3)
+        helper_alive = self._helper is not None and self._helper.poll() is None
         return {
             "ok": True,
-            "mode": "linux_cow_fork" if self.supports_cow_fork else "windows_warm_pool",
+            "mode": "linux_prefork_cow" if self.supports_cow_fork else "windows_warm_pool",
             "supports_cow_fork": self.supports_cow_fork,
+            "helper_running": helper_alive,
             "kernels": list(self.SUPPORTED_KERNELS),
             "executions": n,
             "avg_ms": avg,
         }
 
+    def _stop_helper_locked(self) -> None:
+        if self._helper is not None:
+            try:
+                if self._helper.stdin:
+                    self._helper.stdin.close()
+                self._helper.terminate()
+                self._helper.wait(timeout=1.5)
+            except Exception:
+                try:
+                    self._helper.kill()
+                except Exception:
+                    pass
+            self._helper = None
+
     def close(self) -> None:
+        with self._helper_lock:
+            self._stop_helper_locked()
         self._executor.shutdown(wait=False)
 
 
@@ -146,7 +227,7 @@ class CanaryTwinJudge:
     ) -> dict[str, Any]:
         req_paths = list(paths or ["/"])
         n_samples = max(1, min(30, int(samples)))
-        ign = set(ignore_keys or ["ts", "ts_ms", "ts_local", "elapsed_ms", "timestamp"])
+        ign = set(ignore_keys or ["ts", "ts_ms", "ts_local", "elapsed_ms", "timestamp", "daemon_ram_mb", "host_free_ram_gb"])
         opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
 
         def _hit(base: str, path: str) -> dict[str, Any]:

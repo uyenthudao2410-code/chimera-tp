@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import hashlib
+import importlib.util
 import json
 import math
+import shutil
+import socket
 import subprocess
 import threading
 import time
@@ -12,6 +15,24 @@ import urllib.request
 from typing import Any, Callable
 
 from ..vsa_memory_service import encode_text_10k
+
+
+def probe_gpu_backends() -> dict[str, Any]:
+    """Zero-RAM probe for installed ML/CUDA runtimes (never imports heavy torch weights into daemon)."""
+    ollama_live = False
+    try:
+        with socket.create_connection(("127.0.0.1", 11434), timeout=0.12):
+            ollama_live = True
+    except OSError:
+        ollama_live = False
+    return {
+        "torch_installed": importlib.util.find_spec("torch") is not None,
+        "onnxruntime_installed": importlib.util.find_spec("onnxruntime") is not None,
+        "ollama_exe": bool(shutil.which("ollama")),
+        "ollama_live_11434": ollama_live,
+        "llama_server_exe": bool(shutil.which("llama-server")),
+        "avx2_vsa_builtin": True,
+    }
 
 
 def probe_nvidia_gpu() -> dict[str, Any]:
@@ -336,6 +357,7 @@ class VgpuParetoGateway:
             "gpu_ready": elig["gpu_ready"],
             "reason": elig["reason"],
             "gpu": elig["gpu"],
+            "backends": probe_gpu_backends(),
             "governor_mode": elig["governor_mode"],
             "embed_cache_entries": cache_len,
             "stats": st,

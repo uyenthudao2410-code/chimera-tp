@@ -175,7 +175,7 @@ class _TunnelStream:
     last_open_tx: float = 0.0
     next_tx_seq: int = 0
     tx_fin_seq: int | None = None
-    tx_buffer: dict[int, tuple[int, bytes, float]] = field(default_factory=dict)
+    tx_buffer: dict[int, tuple[int, bytes, float, int, float]] = field(default_factory=dict)
     rx_next_seq: int = 0
     rx_fin_seq: int | None = None
     rx_chunks: dict[int, bytes] = field(default_factory=dict)
@@ -184,6 +184,12 @@ class _TunnelStream:
     tx_eof_local: bool = False
     rx_eof_sent: bool = False
     prefer_v9: bool = False
+    created_at: float = field(default_factory=time.perf_counter)
+    last_activity: float = field(default_factory=time.perf_counter)
+    open_retries: int = 0
+    tx_eof_at: float = 0.0
+    last_fin_tx: float = 0.0
+    fin_retries: int = 0
 
 
 class _TunnelEndpointMixin:
@@ -238,11 +244,11 @@ class _TunnelEndpointMixin:
             while not stop_ev.is_set() and not stream.closed:
                 with self._mux_lock:
                     inflight = len(stream.tx_buffer)
-                if inflight > 128:
+                if inflight > 32:
                     time.sleep(0.002)
                     continue
                 try:
-                    data = stream.tcp_sock.recv(32768)
+                    data = stream.tcp_sock.recv(16384)
                 except socket.timeout:
                     continue
                 except OSError:
@@ -262,17 +268,23 @@ class _TunnelEndpointMixin:
                         if len(comp) < int(len(piece) * 0.88):
                             flags = 1
                             wire_piece = comp
+                    now_tx = time.perf_counter()
                     with self._mux_lock:
                         seq = stream.next_tx_seq
                         stream.next_tx_seq += 1
-                        stream.tx_buffer[seq] = (flags, wire_piece, time.perf_counter())
+                        stream.tx_buffer[seq] = (flags, wire_piece, now_tx, 0, now_tx)
+                        stream.last_activity = now_tx
                     pkt = _pack_inner(_P_DATA, flags, stream.conn_id, seq, 0, wire_piece)
                     self._send_encrypted(sock, addr, key, sid, pkt, fast=stream.prefer_v9 or None)
         finally:
+            now_fin = time.perf_counter()
             with self._mux_lock:
                 stream.tx_eof_local = True
                 fin_seq = stream.next_tx_seq
                 stream.tx_fin_seq = fin_seq
+                stream.tx_eof_at = now_fin
+                stream.last_fin_tx = now_fin
+                stream.last_activity = now_fin
             sock, addr, key, sid = get_transport()
             if sock is not None and addr is not None:
                 pkt = _pack_inner(_P_FIN, 0, stream.conn_id, fin_seq, 0, b"")
@@ -319,6 +331,7 @@ class _TunnelEndpointMixin:
             except zlib.error:
                 return
             with self._mux_lock:
+                stream.last_activity = time.perf_counter()
                 if seq >= stream.rx_next_seq and seq not in stream.rx_chunks:
                     stream.rx_chunks[seq] = plain
                 self._flush_rx_in_order(stream)
@@ -326,12 +339,14 @@ class _TunnelEndpointMixin:
             self._send_encrypted(sock, addr, key, sid, _pack_inner(_P_ACK, 0, stream.conn_id, ack_seq), fast=stream.prefer_v9 or None)
         elif ptype == _P_FIN:
             with self._mux_lock:
+                stream.last_activity = time.perf_counter()
                 stream.rx_fin_seq = seq
                 self._flush_rx_in_order(stream)
                 ack_seq = stream.rx_next_seq
             self._send_encrypted(sock, addr, key, sid, _pack_inner(_P_ACK, 0, stream.conn_id, ack_seq), fast=stream.prefer_v9 or None)
         elif ptype == _P_ACK:
             with self._mux_lock:
+                stream.last_activity = time.perf_counter()
                 stream.open_acked = True
                 for s in [k_s for k_s in stream.tx_buffer if k_s < seq]:
                     del stream.tx_buffer[s]
@@ -349,16 +364,21 @@ class _TunnelEndpointMixin:
             to_res: list[tuple[int, int, bytes]] = []
             now = time.perf_counter()
             with self._mux_lock:
+                stream.last_activity = now
                 for s in [k_s for k_s in stream.tx_buffer if k_s < seq]:
                     del stream.tx_buffer[s]
                 for m in miss:
+                    if len(to_res) >= 12:
+                        break
                     ent = stream.tx_buffer.get(m)
                     if ent is not None:
-                        fl, piece, _ = ent
-                        stream.tx_buffer[m] = (fl, piece, now)
+                        fl, piece, last_tx, retries, first_tx = ent
+                        if (now - last_tx) < 0.03:
+                            continue
+                        stream.tx_buffer[m] = (fl, piece, now, retries + 1, first_tx)
                         to_res.append((fl, m, piece))
             for fl, m, piece in to_res:
-                self._send_encrypted(sock, addr, key, sid, _pack_inner(_P_DATA, fl, stream.conn_id, m, 0, piece))
+                self._send_encrypted(sock, addr, key, sid, _pack_inner(_P_DATA, fl, stream.conn_id, m, 0, piece), fast=stream.prefer_v9 or None)
         elif ptype == _P_CLOSE:
             stream.closed = True
             try:
@@ -377,37 +397,86 @@ class _TunnelEndpointMixin:
         if sock is None or addr is None:
             return
         now = time.perf_counter()
-        resends: list[bytes] = []
+        max_total_resends = 24
+        max_stream_resends = 6
+        resends: list[tuple[bytes, bool | None]] = []
         with self._mux_lock:
             dead_ids: list[int] = []
-            for cid, c in conns.items():
+            for cid, c in list(conns.items()):
                 if c.closed:
                     dead_ids.append(cid)
                     continue
-                if not c.open_acked and c.open_target_port > 0 and (now - c.last_open_tx) >= 0.08:
-                    c.last_open_tx = now
-                    resends.append(_pack_inner(_P_OPEN, 0, cid, 0, c.open_target_port))
-                for s, (fl, piece, last_tx) in list(c.tx_buffer.items()):
-                    rto = 0.04 if len(piece) <= 256 else 0.09
-                    if (now - last_tx) >= rto:
-                        c.tx_buffer[s] = (fl, piece, now)
-                        resends.append(_pack_inner(_P_DATA, fl, cid, s, 0, piece))
-                if c.rx_chunks:
+                fast_flag = True if c.prefer_v9 else None
+                if not c.open_acked and c.open_target_port > 0:
+                    open_rto = min(1.0, 0.12 * (2 ** min(c.open_retries, 4)))
+                    if c.open_retries >= 12 or (now - c.created_at) > 8.0:
+                        c.closed = True
+                        try:
+                            c.tcp_sock.close()
+                        except OSError:
+                            pass
+                        resends.append((_pack_inner(_P_CLOSE, 0, cid, 0), fast_flag))
+                        dead_ids.append(cid)
+                        continue
+                    if (now - c.last_open_tx) >= open_rto and len(resends) < max_total_resends:
+                        c.last_open_tx = now
+                        c.open_retries += 1
+                        resends.append((_pack_inner(_P_OPEN, 0, cid, 0, c.open_target_port), fast_flag))
+                if c.tx_buffer:
+                    sorted_seqs = sorted(c.tx_buffer.keys())
+                    oldest_first_tx = c.tx_buffer[sorted_seqs[0]][4]
+                    if (now - oldest_first_tx) > 15.0:
+                        c.closed = True
+                        c.tx_buffer.clear()
+                        try:
+                            c.tcp_sock.close()
+                        except OSError:
+                            pass
+                        resends.append((_pack_inner(_P_CLOSE, 0, cid, 0), fast_flag))
+                        dead_ids.append(cid)
+                        continue
+                    stream_sent = 0
+                    for s in sorted_seqs:
+                        if stream_sent >= max_stream_resends or len(resends) >= max_total_resends:
+                            break
+                        fl, piece, last_tx, retries, first_tx = c.tx_buffer[s]
+                        base_rto = 0.08 if len(piece) <= 256 else 0.15
+                        rto = min(1.5, base_rto * (2 ** min(retries, 4)))
+                        if (now - last_tx) >= rto:
+                            c.tx_buffer[s] = (fl, piece, now, retries + 1, first_tx)
+                            resends.append((_pack_inner(_P_DATA, fl, cid, s, 0, piece), fast_flag))
+                            stream_sent += 1
+                if c.tx_eof_local and not c.rx_eof_sent and not c.tx_buffer:
+                    if c.tx_eof_at > 0.0 and (now - c.tx_eof_at) > 6.0:
+                        c.closed = True
+                        try:
+                            c.tcp_sock.close()
+                        except OSError:
+                            pass
+                        resends.append((_pack_inner(_P_CLOSE, 0, cid, 0), fast_flag))
+                        dead_ids.append(cid)
+                        continue
+                    if c.tx_fin_seq is not None and c.fin_retries < 5 and (now - c.last_fin_tx) >= 0.35 and len(resends) < max_total_resends:
+                        c.last_fin_tx = now
+                        c.fin_retries += 1
+                        resends.append((_pack_inner(_P_FIN, 0, cid, c.tx_fin_seq, 0, b""), fast_flag))
+                if c.rx_chunks and len(resends) < max_total_resends:
                     max_rx = max(c.rx_chunks.keys())
-                    missing = [s for s in range(c.rx_next_seq, min(max_rx, c.rx_next_seq + 32)) if s not in c.rx_chunks]
-                    if missing and (now - c.last_nack_at) >= 0.02:
+                    missing = [s for s in range(c.rx_next_seq, min(max_rx, c.rx_next_seq + 16)) if s not in c.rx_chunks]
+                    if missing and (now - c.last_nack_at) >= 0.08:
                         c.last_nack_at = now
                         nbody = struct.pack(f"<{len(missing)}I", *missing)
-                        resends.append(_pack_inner(_P_NACK, 0, cid, c.rx_next_seq, len(missing), nbody))
-                elif c.rx_fin_seq is not None and c.rx_next_seq < c.rx_fin_seq and (now - c.last_nack_at) >= 0.02:
-                    c.last_nack_at = now
-                    missing = list(range(c.rx_next_seq, min(c.rx_fin_seq, c.rx_next_seq + 32)))
-                    nbody = struct.pack(f"<{len(missing)}I", *missing)
-                    resends.append(_pack_inner(_P_NACK, 0, cid, c.rx_next_seq, len(missing), nbody))
+                        resends.append((_pack_inner(_P_NACK, 0, cid, c.rx_next_seq, len(missing), nbody), fast_flag))
+                elif c.rx_fin_seq is not None and c.rx_next_seq < c.rx_fin_seq and (now - c.last_nack_at) >= 0.08 and len(resends) < max_total_resends:
+                    missing = list(range(c.rx_next_seq, min(c.rx_fin_seq, c.rx_next_seq + 16)))
+                    if missing:
+                        c.last_nack_at = now
+                        nbody = struct.pack(f"<{len(missing)}I", *missing)
+                        resends.append((_pack_inner(_P_NACK, 0, cid, c.rx_next_seq, len(missing), nbody), fast_flag))
             for cid in dead_ids:
                 conns.pop(cid, None)
-        for inner in resends:
-            self._send_encrypted(sock, addr, key, sid, inner)
+        for inner, fast_flag in resends:
+            self._send_encrypted(sock, addr, key, sid, inner, fast=fast_flag)
 
 
 @dataclass
@@ -689,6 +758,8 @@ class PhantomTunnelServer(_TunnelEndpointMixin):
         with self._mux_lock:
             stream = sess.conns.get(conn_id)
         if stream is None:
+            if ptype in (_P_DATA, _P_FIN):
+                self._send_encrypted(sock, src, sess.key, sess.session_id, _pack_inner(_P_CLOSE, 0, conn_id, 0), fast=use_fast)
             return
         stream.prefer_v9 = stream.prefer_v9 or use_fast
         self._handle_stream_frame(stream, ptype, flags, seq, body, sock, src, sess.key, sess.session_id)
@@ -818,7 +889,17 @@ class PhantomTunnelServer(_TunnelEndpointMixin):
                     dec = open_any_packet(sess.key, pkt)
                     if dec is not None:
                         self._dispatch_inner_server(sess, sock, (src[0], int(src[1])), dec[2], prefer_v9=(magic == _ENV_MAGIC_V9))
+            now_m = time.monotonic()
             with self._sess_lock:
+                stale_sids = [
+                    sid
+                    for sid, s in self._sessions.items()
+                    if s.sock is None and not s.conns and (now_m - s.last_rx) > 120.0
+                ]
+                for sid in stale_sids:
+                    stale_s = self._sessions.pop(sid, None)
+                    if stale_s is not None:
+                        self._close_session_obj(stale_s)
                 fb_list = [s for s in self._sessions.values() if s.sock is None and s.peer_udp is not None and s.conns]
             for s in fb_list:
                 self._retransmit_pending(s.conns, sock, s.peer_udp, s.key, s.session_id)
@@ -880,6 +961,7 @@ class PhantomTunnelClient(_TunnelEndpointMixin):
         pong_stale_s: float = 35.0,
         reconnect_cooldown_s: float = 10.0,
         auto_reconnect: bool = True,
+        fallback_upgrade_interval_s: float = 30.0,
     ) -> None:
         self._init_mux(direction_bit=1, use_fast_wire=use_fast_wire)
         self.peer_http_base = peer_http_base.rstrip("/")
@@ -895,6 +977,7 @@ class PhantomTunnelClient(_TunnelEndpointMixin):
         self._pong_stale_s = max(0.2, float(pong_stale_s))
         self._reconnect_cooldown_s = max(0.1, float(reconnect_cooldown_s))
         self._auto_reconnect = bool(auto_reconnect)
+        self._fallback_upgrade_interval_s = max(0.5, float(fallback_upgrade_interval_s))
 
         self._stop = threading.Event()
         self._conn_lock = threading.Lock()
@@ -910,6 +993,7 @@ class PhantomTunnelClient(_TunnelEndpointMixin):
         self._punches_ok = 0
         self._reconnect_count = 0
         self._last_reconnect_attempt = 0.0
+        self._last_fallback_upgrade = 0.0
         self._reconnecting = False
         self._last_pong = 0.0
         self._last_ping_sent: dict[int, float] = {}
@@ -990,6 +1074,7 @@ class PhantomTunnelClient(_TunnelEndpointMixin):
         num_sockets: int = 192,
         spray_count: int = 900,
         timeout_s: float = 3.5,
+        preserve_on_fallback_fail: bool = False,
     ) -> dict[str, Any]:
         with self._conn_lock:
             t0 = time.perf_counter()
@@ -1092,6 +1177,7 @@ class PhantomTunnelClient(_TunnelEndpointMixin):
                     win_sock.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 4 * 1024 * 1024)
                 except OSError:
                     pass
+                self._reset_conns_for_new_session()
                 with self._state_lock:
                     self._session_id = sid
                     self._session_key = key
@@ -1112,17 +1198,29 @@ class PhantomTunnelClient(_TunnelEndpointMixin):
                         self._last_pong = time.monotonic()
                     return {**self.status(), "connected": True, "rtt_samples_ms": rtts, "elapsed_ms": round((time.perf_counter() - t0) * 1000.0, 2)}
 
+            if preserve_on_fallback_fail:
+                with self._state_lock:
+                    if self._sock is not None and self._mode == "TAILSCALE_FALLBACK":
+                        return {
+                            **self.status(),
+                            "connected": False,
+                            "upgraded": False,
+                            "elapsed_ms": round((time.perf_counter() - t0) * 1000.0, 2),
+                        }
+
             # Fallback cleanly to Tailscale UDP fallback port if punch failed
             fb_sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             _disable_connreset(fb_sock)
             fb_sock.bind(("0.0.0.0", 0))
             fb_sock.setblocking(False)
+            self._reset_conns_for_new_session()
             with self._state_lock:
                 self._session_id = sid
                 self._session_key = key
                 self._sock = fb_sock
                 self._peer_addr = (self.peer_udp_ip or "127.0.0.1", fb_port)
                 self._mode = "TAILSCALE_FALLBACK"
+                self._last_fallback_upgrade = time.monotonic()
             if old_sock is not None:
                 try:
                     old_sock.close()
@@ -1151,7 +1249,7 @@ class PhantomTunnelClient(_TunnelEndpointMixin):
                 out.append(round((time.perf_counter() - t0) * 1000.0, 2))
         return out
 
-    def _trigger_auto_reconnect(self, reason: str = "pong_stale") -> None:
+    def _trigger_auto_reconnect(self, reason: str = "pong_stale", *, preserve_on_fallback_fail: bool = False) -> None:
         with self._state_lock:
             now_m = time.monotonic()
             if self._stop.is_set() or self._reconnecting or not self._auto_reconnect:
@@ -1165,9 +1263,10 @@ class PhantomTunnelClient(_TunnelEndpointMixin):
             try:
                 res = self.connect(
                     local_test_mode=self.local_test_mode,
-                    num_sockets=16 if self.local_test_mode else 96,
-                    spray_count=64 if self.local_test_mode else 600,
-                    timeout_s=3.0,
+                    num_sockets=16 if self.local_test_mode else 192,
+                    spray_count=64 if self.local_test_mode else 900,
+                    timeout_s=3.5,
+                    preserve_on_fallback_fail=preserve_on_fallback_fail,
                 )
                 if res.get("connected"):
                     with self._state_lock:
@@ -1185,9 +1284,9 @@ class PhantomTunnelClient(_TunnelEndpointMixin):
         while not self._stop.is_set():
             with self._state_lock:
                 sock, addr, key, sid = self._sock, self._peer_addr, self._session_key, self._session_id
-                punches_ok = self._punches_ok
+                had_session = self._punches_ok > 0 or self._last_pong > 0.0
             if sock is None or addr is None:
-                if self._auto_reconnect and punches_ok > 0:
+                if self._auto_reconnect and had_session:
                     self._trigger_auto_reconnect("disconnected")
                 self._stop.wait(timeout=0.25)
                 continue
@@ -1263,6 +1362,8 @@ class PhantomTunnelClient(_TunnelEndpointMixin):
                         stream = self._conns.get(conn_id)
                     if stream is not None:
                         self._handle_stream_frame(stream, ptype, flags, seq, body, sock, addr, key, sid)
+                    elif ptype in (_P_DATA, _P_FIN):
+                        self._send_encrypted(sock, addr, key, sid, _pack_inner(_P_CLOSE, 0, conn_id, 0))
 
             if self._conns:
                 self._retransmit_pending(self._conns, sock, addr, key, sid)
@@ -1274,9 +1375,23 @@ class PhantomTunnelClient(_TunnelEndpointMixin):
                 self._send_encrypted(sock, addr, key, sid, ping)
             with self._state_lock:
                 lp = self._last_pong
-                p_ok = self._punches_ok
-            if self._auto_reconnect and p_ok > 0 and lp > 0.0 and (now - lp) >= self._pong_stale_s:
+                had_sess = self._punches_ok > 0 or lp > 0.0
+                cur_mode = self._mode
+                last_up = self._last_fallback_upgrade
+                is_stale = bool(self._auto_reconnect and had_sess and lp > 0.0 and (now - lp) >= self._pong_stale_s)
+                can_upgrade = bool(
+                    not is_stale
+                    and self._auto_reconnect
+                    and not self.local_test_mode
+                    and cur_mode == "TAILSCALE_FALLBACK"
+                    and (now - last_up) >= self._fallback_upgrade_interval_s
+                )
+                if can_upgrade:
+                    self._last_fallback_upgrade = now
+            if is_stale:
                 self._trigger_auto_reconnect("pong_stale")
+            elif can_upgrade:
+                self._trigger_auto_reconnect("fallback_upgrade", preserve_on_fallback_fail=True)
 
     def disconnect(self) -> dict[str, Any]:
         with self._state_lock:
@@ -1309,14 +1424,10 @@ class PhantomTunnelClient(_TunnelEndpointMixin):
                 "last_pong_age_s": pong_age,
             }
 
-    def close(self) -> None:
-        self._stop.set()
-        for _, _, srv in self._tcp_srvs:
-            try:
-                srv.close()
-            except OSError:
-                pass
+    def _reset_conns_for_new_session(self) -> int:
+        """Close and clear all previous-session multiplexed TCP streams before switching sessions."""
         with self._mux_lock:
+            count = len(self._conns)
             for c in self._conns.values():
                 c.closed = True
                 try:
@@ -1324,6 +1435,16 @@ class PhantomTunnelClient(_TunnelEndpointMixin):
                 except OSError:
                     pass
             self._conns.clear()
+        return count
+
+    def close(self) -> None:
+        self._stop.set()
+        for _, _, srv in self._tcp_srvs:
+            try:
+                srv.close()
+            except OSError:
+                pass
+        self._reset_conns_for_new_session()
         self.disconnect()
         for t in self._threads:
             t.join(timeout=1.0)

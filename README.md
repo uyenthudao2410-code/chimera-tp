@@ -20,12 +20,13 @@
  └────────────────────────────────────────────┬────────────────────────────────────┘
                                               ▼
  ┌─────────────────────────────────────────────────────────────────────────────────┐
- │  10 HOT-LOADABLE SILICON CARTRIDGES (chimera-tp cartridge enable/disable)       │
- │  1. connect          6. diskless_secrets  (In-RAM XOR vault, 0 B plaintext)     │
- │  2. egress_membrane  7. vgpu_pareto       (GTX 1650 sharing + <50ms auto-yield) │
- │  3. pulse            8. immortal_jobs     (SQLite WAL crash-resumable steps)    │
- │  4. hybrid_search    9. browser_grid      (0 MB idle lazy shared Chromium CDP)  │
- │  5. blackbox        10. zygote_canary     (Linux CoW fork + Canary Twin judge)  │
+ │  11 HOT-LOADABLE SILICON CARTRIDGES (chimera-tp cartridge enable/disable)       │
+ │  1. connect          7. vgpu_pareto       (GTX 1650 sharing + <50ms auto-yield) │
+ │  2. egress_membrane  8. immortal_jobs     (SQLite WAL crash-resumable steps)    │
+ │  3. pulse            9. browser_grid      (0 MB idle lazy shared Chromium CDP)  │
+ │  4. hybrid_search   10. zygote_canary     (Single-thread pre-fork + Canary)     │
+ │  5. blackbox        11. vault_sql         (Cross-node SQLite replica <1.4ms)    │
+ │  6. diskless_secrets (+ *.chimera.local Host Reverse Proxy & Node/Python hooks) │
  └────────────────────────────────────────────┬────────────────────────────────────┘
                                               ▼
  ┌─────────────────────────────────────────────────────────────────────────────────┐
@@ -53,9 +54,11 @@ Measured live across **Windows (`Rust GFNI/AVX-512F`, GTX 1650, Python 3.11)** a
 | **VGPU Pareto + OpenAI Embeddings** | Idle GTX 1650 unshared | **Cold `12.54 ms` → Warm `0.06 ms` (`$0`)**, `< 50 ms` yield | **`209x` cache hit** |
 | **Immortal-Job Crash Resume** | Re-run from step 1 | **Resumes at step `3/4`**, `dup_skipped=True` | **`-75%` wasted work** |
 | **Shared Browser-Grid (CDP)** | `~1 GB` per Chrome instance | **`0.0 MB` RAM when idle**, lazy shared CDP + media block | On-demand zero-RAM |
-| **Zygote Worker (`svhome` Linux)** | `python3` spawn `~60–150 ms` | **`7.435 ms` (`os.fork()` Copy-on-Write, 50 items)** | **`~10x–20x` faster** |
+| **Zygote Worker (`svhome` Linux)** | `python3` spawn `~60–150 ms` | **`2.791 ms` (`linux_prefork_cow`, 0 warnings)** | **`~20x–50x` faster** |
+| **Cross-Node `Vault-SQL` Replica** | Remote SQLite queries / locks | **`-91.7%` compressed sync (`0 B` unchanged)** • **`1.34 ms` local read** | Zero lock errors |
+| **`*.chimera.local` Host Mesh** | Manual ports / `ssh -L` | **`radar.chimera.local` & `tqouta.chimera.local` (`HTTP 200`, `55.5 ms`)** | `[ONLINE]` zero-code attach |
 | **Native `PH9N` Tunnel & UI Stream** | `481 Mbps` / `3.6 MB/frame` | **`2,631.7 Mbps` (`5.47x`)** • **`1,164 FPS` (`-99.96%` wire)** | Bit-exact Rust = C11 |
-| **24/7 Daemon RAM (`< 80 MB` cap)** | Heavy desktop suites | **`38.43 MB` (Win)** • **`52.16 MB` (`svhome`)** | **Zero-Weight PASS** |
+| **24/7 Daemon RAM (`< 80 MB` cap)** | Heavy desktop suites | **`19.29 MB` (Win)** • **`75.87 MB` (`svhome`)** (`11` Cartridges) | **Zero-Weight PASS** |
 
 Full detailed audit & remaining architectural recommendations: [docs/reports/CHIMERA_V17_PLATFORM_SUBSTRATE_AUDIT.md](docs/reports/CHIMERA_V17_PLATFORM_SUBSTRATE_AUDIT.md).
 
