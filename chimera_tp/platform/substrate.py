@@ -154,6 +154,9 @@ class PlatformSubstrate:
         self._pulse_beat: int = 0
         self._unify_check_ts: float = 0.0
         self._unify_active_cache: bool = False
+        self._pulse_cache_lock = threading.Lock()
+        self._pulse_cache_ts: float = 0.0
+        self._pulse_cache_val: dict[str, Any] | None = None
 
         self._cart_cfg_path = Path(daemon.ops_dir) / "cartridges.json"
         self._cartridge_enabled: dict[str, bool] = {
@@ -441,6 +444,13 @@ class PlatformSubstrate:
         return written
 
     def pulse_summary(self) -> dict[str, Any]:
+        now_m = time.monotonic()
+        with self._pulse_cache_lock:
+            if self._pulse_cache_val is not None and (now_m - self._pulse_cache_ts) < 2.0:
+                cached = dict(self._pulse_cache_val)
+                self._pulse_beat += 1
+                cached["heartbeat"] = self._pulse_beat
+                return cached
         self._pulse_beat += 1
         apps = self.merged_apps()
         eg = self.egress.stats()
@@ -458,6 +468,8 @@ class PlatformSubstrate:
                 pass
         hd = self.hyper_desk.status()
         vram_st = hd.get("vram_swap") or {}
+        stasis_st = hd.get("stasis") or {}
+        thermo_st = hd.get("thermostat") or {}
         gov = getattr(self.daemon, "host_governor", None)
         hm = gov.get_host_metrics() if gov else {}
         peer_online = bool(getattr(getattr(self.daemon, "config", None), "peer_ipv4", ""))
@@ -472,8 +484,8 @@ class PlatformSubstrate:
             float(hd.get("cryo_est_ws_reclaimed_mb") or 0.0)
             + float(hd.get("orphans_commit_reclaimed_mb") or 0.0)
             + float(hd.get("hydra_trimmed_mb") or 0.0)
+            + float(stasis_st.get("total_ws_reclaimed_mb") or 0.0)
         )
-        now_m = time.monotonic()
         if (now_m - self._unify_check_ts) >= 30.0:
             self._unify_check_ts = now_m
             self._unify_active_cache = (chimera_home_dir() / "unify.json").is_file()
@@ -481,8 +493,8 @@ class PlatformSubstrate:
             oai_cnt = len(self._openai_models_cache) or 3
         host_cpu = hm.get("cpu_pct")
         real_cpu = round(float(host_cpu), 1) if host_cpu is not None else round(float(th.get("cpu_pct") or 0.0), 1)
-        return {
-            "version": "23.0.0",
+        out = {
+            "version": "24.0.0",
             "heartbeat": self._pulse_beat,
             "anchor_url": self.anchor_url,
             "egress_proxy_url": self.egress.url,
@@ -520,16 +532,18 @@ class PlatformSubstrate:
             "vault_sql_dbs": int(self.vault_sql.status().get("db_count") or 0),
             "hyper_desk": {
                 "reclaimed_mb": round(reclaimed_mb, 1),
-                "cryo_procs": int(hd.get("cryo_trimmed_procs") or 0),
+                "cryo_procs": int(hd.get("cryo_trimmed_procs") or 0) + int(stasis_st.get("active_stasis_pids") or 0),
                 "wall_pinned": int(hd.get("silicon_wall_pinned_procs") or 0),
                 "orphans": int(hd.get("orphans_reaped") or 0),
                 "hydra_mb": round(float(hd.get("hydra_trimmed_mb") or 0.0), 1),
                 "vram_yield_ms": round(float(vram_st.get("last_yield_ms") or 0.0), 1),
                 "sync_dam": bool(hd.get("sync_dam_active")),
-                "autonomic_on": bool(hd.get("autonomic_running")),
+                "autonomic_on": bool((hd.get("autonomic") or {}).get("running")),
+                "thermostat_state": str(thermo_st.get("state") or "CRYO_ECO_99"),
+                "cpu_cap_pct": int(thermo_st.get("cpu_max_pct") or 100),
             },
             "thermo": {
-                "regime": th.get("regime", "COOL_LOCAL_HYBRID"),
+                "regime": str(thermo_st.get("state") or th.get("regime") or "COOL_LOCAL_HYBRID"),
                 "watts": round(float(th.get("est_host_watts") or 0.0), 1),
                 "cpu_pct": real_cpu,
                 "ssd_save_pct": round(float((th.get("ssd_barrier") or {}).get("write_reduction_pct") or 0.0), 1),
@@ -547,6 +561,10 @@ class PlatformSubstrate:
             },
             "cartridges": dict(self._cartridge_enabled),
         }
+        with self._pulse_cache_lock:
+            self._pulse_cache_ts = now_m
+            self._pulse_cache_val = dict(out)
+        return out
 
     def handle_get(self, parsed: urllib.parse.ParseResult, headers: Any) -> tuple[int, dict[str, Any]] | None:
         path = parsed.path
@@ -774,6 +792,8 @@ class PlatformSubstrate:
         if path == "/v1/hyperdesk/pwm/status":
             from ..native import native_focus_state, native_pwm_stats
             return 200, {"ok": True, "pwm": native_pwm_stats(), "focus": native_focus_state()}
+        if path == "/v1/hyperdesk/thermostat":
+            return 200, self.hyper_desk.thermostat.status()
         if path == "/v1/exile/status":
             probe = (qs.get("probe") or ["0"])[0].lower() in ("1", "true", "yes")
             return 200, self.hyper_desk.exile.status(probe=probe)
@@ -1284,6 +1304,16 @@ class PlatformSubstrate:
                     overwrite_existing=bool(body.get("overwrite_existing", False)),
                     dry_run=bool(body.get("dry_run", False)),
                 )
+            if path == "/v1/hyperdesk/thermostat":
+                mode = str(body.get("mode") or "").strip().lower()
+                if mode:
+                    try:
+                        res = self.hyper_desk.thermostat.set_mode(mode)
+                        self.hyper_desk.update_autonomic_policy({"thermostat_mode": mode})
+                        return 200, res
+                    except ValueError as exc:
+                        return 400, {"error": str(exc)}
+                return 200, self.hyper_desk.thermostat.status()
 
         if path == "/v1/exile/run":
             if not self._cartridge_enabled.get("hyper_desk", True):

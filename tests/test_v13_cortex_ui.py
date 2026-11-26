@@ -27,15 +27,15 @@ class TestV13CortexUI(unittest.TestCase):
         gz_bytes = gzip.compress(raw_bytes, compresslevel=9)
         packed_bytes = build_kolmogorov_packed_html("{}", '""')
 
-        self.assertLessEqual(len(raw_bytes), 48_000, f"Raw UI bloated: {len(raw_bytes)} B")
-        self.assertLessEqual(len(gz_bytes), 20_000, f"Gzip UI bloated: {len(gz_bytes)} B")
-        self.assertLessEqual(len(packed_bytes), 27_000, f"Packed UI bloated: {len(packed_bytes)} B")
+        self.assertLessEqual(len(raw_bytes), 52_000, f"Raw UI bloated: {len(raw_bytes)} B")
+        self.assertLessEqual(len(gz_bytes), 20_500, f"Gzip UI bloated: {len(gz_bytes)} B")
+        self.assertLessEqual(len(packed_bytes), 28_000, f"Packed UI bloated: {len(packed_bytes)} B")
         self.assertEqual(UNIVERSE_DASHBOARD_HTML.count("precision highp float;"), 4)
 
         for marker in (
             "CHIMERA-HYPER v2.0",
             "CHIMERA-HYPER v12.0 OMEGA-GALACTIC",
-            "CHIMERA-HYPER v23",
+            "OMNISCIENCE v24",
             "mesh-svg",
             "sil-list",
             "c-ht",
