@@ -28,63 +28,51 @@ _COLUMNS = "item_id, domain, text, payload_json, vsa_blob, reward, updated_at"
 _VALID_VECTOR = f"length(vsa_blob) >= {VSA_BYTES}"
 
 _TOKEN_RE = re.compile(r"[a-z0-9_]{2,}")
-# Precompute bit-expansion lookup for each byte value (0..255) -> tuple of (+1/-1) per bit
-_BYTE_SIGNS: tuple[tuple[int, ...], ...] = tuple(
-    tuple(1 if ((b >> bit) & 1) else -1 for bit in range(8)) for b in range(256)
-)
 
-
-@functools.lru_cache(maxsize=4096)
-def _token_hypervector(token: str) -> bytes:
-    """Deterministically expand one token into a 1,250-byte (10,000-bit) hypervector."""
-    blk = hashlib.blake2b(token.encode("utf-8"), digest_size=32).digest()
+@functools.lru_cache(maxsize=256)
+def _expand_token(seed: bytes) -> bytes:
+    """Expand one fixed-size token digest into its original 10,000-bit projection."""
+    block = seed
     buf = bytearray()
     while len(buf) < VSA_BYTES:
-        blk = hashlib.sha256(blk).digest()
-        buf.extend(blk)
+        block = hashlib.sha256(block).digest()
+        buf.extend(block)
     return bytes(buf[:VSA_BYTES])
 
 
+def _token_hypervector(token: str) -> bytes:
+    seed = hashlib.blake2b(token.encode("utf-8"), digest_size=32).digest()
+    return _expand_token(seed)
+
+
 def encode_text_10k(text: str) -> bytes:
-    """Encode arbitrary text into a 10,000-bit binary hypervector using majority-rule bundling."""
-    tokens = _TOKEN_RE.findall(str(text or "").lower())[:48]
-    if not tokens:
-        tokens = ["empty"]
+    """Bundle up to 48 token vectors by majority, setting ties to one."""
+    words = _TOKEN_RE.finditer(str(text or "").lower())
+    tokens = [match.group() for match in islice(words, 48)] or ["empty"]
     if len(tokens) == 1:
         return _token_hypervector(tokens[0])
 
-    # Keep count compact and cache unique token projections
-    counts = [0] * VSA_BITS
-    for tok in tokens:
-        raw = _token_hypervector(tok)
-        idx = 0
-        for bval in raw:
-            s0, s1, s2, s3, s4, s5, s6, s7 = _BYTE_SIGNS[bval]
-            counts[idx] += s0
-            counts[idx + 1] += s1
-            counts[idx + 2] += s2
-            counts[idx + 3] += s3
-            counts[idx + 4] += s4
-            counts[idx + 5] += s5
-            counts[idx + 6] += s6
-            counts[idx + 7] += s7
-            idx += 8
+    # Each integer is one bit of the vote count at all 10,000 positions.
+    planes = [0] * len(tokens).bit_length()
+    for token in tokens:
+        carry = int.from_bytes(_token_hypervector(token), "little")
+        for bit, plane in enumerate(planes):
+            planes[bit] = plane ^ carry
+            carry &= plane
+            if not carry:
+                break
 
-    out = bytearray(VSA_BYTES)
-    idx = 0
-    for bi in range(VSA_BYTES):
-        out[bi] = (
-            (1 if counts[idx] >= 0 else 0)
-            | (2 if counts[idx + 1] >= 0 else 0)
-            | (4 if counts[idx + 2] >= 0 else 0)
-            | (8 if counts[idx + 3] >= 0 else 0)
-            | (16 if counts[idx + 4] >= 0 else 0)
-            | (32 if counts[idx + 5] >= 0 else 0)
-            | (64 if counts[idx + 6] >= 0 else 0)
-            | (128 if counts[idx + 7] >= 0 else 0)
-        )
-        idx += 8
-    return bytes(out)
+    # Compare from low to high: a one in the threshold requires this plane AND
+    # the lower comparison, a zero accepts this plane OR the lower comparison.
+    # count > (n - 1) // 2 implements the original nonnegative signed vote.
+    threshold = (len(tokens) - 1) // 2
+    majority = 0
+    for bit, plane in enumerate(planes):
+        if threshold & (1 << bit):
+            majority &= plane
+        else:
+            majority |= plane
+    return majority.to_bytes(VSA_BYTES, "little")
 
 
 def hamming_similarity(a: bytes, b: bytes) -> float:

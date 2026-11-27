@@ -1,0 +1,349 @@
+{
+  "ok": true,
+  "state": "completed",
+  "exit_code": 0,
+  "stderr": "",
+  "attempt_id": "24dd6a210d09456f9473edf8218d1a1c",
+  "request_id": "5ac0c1eee6a2499a9cbd0029b57772df",
+  "ssh_route": "phantom_ssh",
+  "elapsed_end_to_end_ms": 57891.0,
+  "admission": {
+    "accepted": true,
+    "reason": "capacity",
+    "limits_verified": true,
+    "effective_policy": {
+      "ram_reserve_mib": 2560,
+      "job_memory_mib": 512,
+      "disk_reserve_mib": 14306,
+      "job_disk_mib": 80,
+      "cpu_quota_pct": 95,
+      "max_tasks": 128,
+      "runtime_seconds": 285,
+      "psi_cpu_pct": 25.0,
+      "psi_memory_pct": 1.0,
+      "psi_io_pct": 5.0,
+      "max_load1": 1.8,
+      "max_temp_c": 70.0,
+      "service_urls": [
+        "http://127.0.0.1:9780/.well-known/chimera.json"
+      ],
+      "service_p95_ms": 150.0,
+      "service_samples": 5,
+      "service_timeout_s": 0.5,
+      "max_sample_age_s": 5.0,
+      "require_io_cap": true,
+      "io_write_bps": 8388608,
+      "disk_path": "/home/svhome"
+    }
+  },
+  "tests": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.118s\n\nOK",
+  "benchmark": {
+    "export_bytes": 709505,
+    "export_sha256": "ac30bbf2214160db5a6f0f2747fdca6dc574a64d69b6e832ace3115a4702a6d8",
+    "module_sha256": {
+      "baseline": "c4b5bd8aeddd8bfc50c5465f8ea41ce749ae2850ac077f84f04cb5aaf4643ede",
+      "candidate": "71db03ee60854ad50b5780edef0e01633f323a0cebbcd3a327c4f2a14383e5d4"
+    },
+    "python": "3.14.4",
+    "trials": [
+      {
+        "pair": 1,
+        "version": "baseline",
+        "opened_kib": {
+          "VmHWM": 29412,
+          "VmRSS": 29412
+        },
+        "passes": [
+          {
+            "pass": "cold",
+            "fetched": 300,
+            "stored": 300,
+            "wall_ms": 8978.59,
+            "cpu_ms": 8409.04,
+            "after_kib": {
+              "VmHWM": 34064,
+              "VmRSS": 34064
+            },
+            "cache_entries": 1438,
+            "rows": 300,
+            "data_sha256": "5f7c4186e4c4b385066db6ba4e4a4d390baa39458fa43cca5c15635cf1be4189"
+          },
+          {
+            "pass": "warm",
+            "fetched": 300,
+            "stored": 300,
+            "wall_ms": 8994.69,
+            "cpu_ms": 8433.53,
+            "after_kib": {
+              "VmHWM": 36864,
+              "VmRSS": 34692
+            },
+            "cache_entries": 1438,
+            "rows": 300,
+            "data_sha256": "5f7c4186e4c4b385066db6ba4e4a4d390baa39458fa43cca5c15635cf1be4189"
+          }
+        ]
+      },
+      {
+        "pair": 1,
+        "version": "candidate",
+        "opened_kib": {
+          "VmHWM": 29344,
+          "VmRSS": 29344
+        },
+        "passes": [
+          {
+            "pass": "cold",
+            "fetched": 300,
+            "stored": 300,
+            "wall_ms": 288.99,
+            "cpu_ms": 271.05,
+            "after_kib": {
+              "VmHWM": 32428,
+              "VmRSS": 32428
+            },
+            "cache_entries": 256,
+            "rows": 300,
+            "data_sha256": "5f7c4186e4c4b385066db6ba4e4a4d390baa39458fa43cca5c15635cf1be4189"
+          },
+          {
+            "pass": "warm",
+            "fetched": 300,
+            "stored": 300,
+            "wall_ms": 304.39,
+            "cpu_ms": 281.4,
+            "after_kib": {
+              "VmHWM": 35388,
+              "VmRSS": 33200
+            },
+            "cache_entries": 256,
+            "rows": 300,
+            "data_sha256": "5f7c4186e4c4b385066db6ba4e4a4d390baa39458fa43cca5c15635cf1be4189"
+          }
+        ]
+      },
+      {
+        "pair": 2,
+        "version": "candidate",
+        "opened_kib": {
+          "VmHWM": 29356,
+          "VmRSS": 29356
+        },
+        "passes": [
+          {
+            "pass": "cold",
+            "fetched": 300,
+            "stored": 300,
+            "wall_ms": 305.11,
+            "cpu_ms": 282.2,
+            "after_kib": {
+              "VmHWM": 32440,
+              "VmRSS": 32440
+            },
+            "cache_entries": 256,
+            "rows": 300,
+            "data_sha256": "5f7c4186e4c4b385066db6ba4e4a4d390baa39458fa43cca5c15635cf1be4189"
+          },
+          {
+            "pass": "warm",
+            "fetched": 300,
+            "stored": 300,
+            "wall_ms": 294.94,
+            "cpu_ms": 280.07,
+            "after_kib": {
+              "VmHWM": 35400,
+              "VmRSS": 33212
+            },
+            "cache_entries": 256,
+            "rows": 300,
+            "data_sha256": "5f7c4186e4c4b385066db6ba4e4a4d390baa39458fa43cca5c15635cf1be4189"
+          }
+        ]
+      },
+      {
+        "pair": 2,
+        "version": "baseline",
+        "opened_kib": {
+          "VmHWM": 29468,
+          "VmRSS": 29468
+        },
+        "passes": [
+          {
+            "pass": "cold",
+            "fetched": 300,
+            "stored": 300,
+            "wall_ms": 8987.33,
+            "cpu_ms": 8412.84,
+            "after_kib": {
+              "VmHWM": 34128,
+              "VmRSS": 34128
+            },
+            "cache_entries": 1438,
+            "rows": 300,
+            "data_sha256": "5f7c4186e4c4b385066db6ba4e4a4d390baa39458fa43cca5c15635cf1be4189"
+          },
+          {
+            "pass": "warm",
+            "fetched": 300,
+            "stored": 300,
+            "wall_ms": 8917.84,
+            "cpu_ms": 8364.08,
+            "after_kib": {
+              "VmHWM": 37048,
+              "VmRSS": 34748
+            },
+            "cache_entries": 1438,
+            "rows": 300,
+            "data_sha256": "5f7c4186e4c4b385066db6ba4e4a4d390baa39458fa43cca5c15635cf1be4189"
+          }
+        ]
+      },
+      {
+        "pair": 3,
+        "version": "baseline",
+        "opened_kib": {
+          "VmHWM": 29484,
+          "VmRSS": 29484
+        },
+        "passes": [
+          {
+            "pass": "cold",
+            "fetched": 300,
+            "stored": 300,
+            "wall_ms": 9090.27,
+            "cpu_ms": 8517.22,
+            "after_kib": {
+              "VmHWM": 34144,
+              "VmRSS": 34144
+            },
+            "cache_entries": 1438,
+            "rows": 300,
+            "data_sha256": "5f7c4186e4c4b385066db6ba4e4a4d390baa39458fa43cca5c15635cf1be4189"
+          },
+          {
+            "pass": "warm",
+            "fetched": 300,
+            "stored": 300,
+            "wall_ms": 8998.05,
+            "cpu_ms": 8429.54,
+            "after_kib": {
+              "VmHWM": 37064,
+              "VmRSS": 34764
+            },
+            "cache_entries": 1438,
+            "rows": 300,
+            "data_sha256": "5f7c4186e4c4b385066db6ba4e4a4d390baa39458fa43cca5c15635cf1be4189"
+          }
+        ]
+      },
+      {
+        "pair": 3,
+        "version": "candidate",
+        "opened_kib": {
+          "VmHWM": 29420,
+          "VmRSS": 29420
+        },
+        "passes": [
+          {
+            "pass": "cold",
+            "fetched": 300,
+            "stored": 300,
+            "wall_ms": 290.16,
+            "cpu_ms": 274.11,
+            "after_kib": {
+              "VmHWM": 32508,
+              "VmRSS": 32508
+            },
+            "cache_entries": 256,
+            "rows": 300,
+            "data_sha256": "5f7c4186e4c4b385066db6ba4e4a4d390baa39458fa43cca5c15635cf1be4189"
+          },
+          {
+            "pass": "warm",
+            "fetched": 300,
+            "stored": 300,
+            "wall_ms": 315.0,
+            "cpu_ms": 293.02,
+            "after_kib": {
+              "VmHWM": 35528,
+              "VmRSS": 33280
+            },
+            "cache_entries": 256,
+            "rows": 300,
+            "data_sha256": "5f7c4186e4c4b385066db6ba4e4a4d390baa39458fa43cca5c15635cf1be4189"
+          }
+        ]
+      }
+    ]
+  },
+  "schema": "chimera.vsa-ingest-replay-ab/1",
+  "utc": "2026-11-27T06:05:17+00:00",
+  "git_baseline": "cc46cde011ea44c67beb607129ce8ebdde2b10e8",
+  "benchmark_sha256": "ce09592d73ad276b884c3f6413c0f532fcb71cbd032965ef34ab39751d541c7c",
+  "scope": "Three paired cold and repeat ingestions of the same loopback export into private SQLite databases in tmpfs. The named times and memory are for isolated processes. Row comparison includes each serialized vector, payload and reward except wall-clock update times.",
+  "summary": {
+    "cold": {
+      "baseline": {
+        "wall_ms": 8987.33,
+        "cpu_ms": 8412.84,
+        "vmhwm_mib": 33.328,
+        "rss_mib": 33.328,
+        "rows": 300,
+        "cache_entries": 1438
+      },
+      "candidate": {
+        "wall_ms": 290.16,
+        "cpu_ms": 274.11,
+        "vmhwm_mib": 31.68,
+        "rss_mib": 31.68,
+        "rows": 300,
+        "cache_entries": 256
+      }
+    },
+    "warm": {
+      "baseline": {
+        "wall_ms": 8994.69,
+        "cpu_ms": 8429.54,
+        "vmhwm_mib": 36.18,
+        "rss_mib": 33.934,
+        "rows": 300,
+        "cache_entries": 1438
+      },
+      "candidate": {
+        "wall_ms": 304.39,
+        "cpu_ms": 281.4,
+        "vmhwm_mib": 34.57,
+        "rss_mib": 32.434,
+        "rows": 300,
+        "cache_entries": 256
+      }
+    }
+  },
+  "isolated_http": {
+    "fixture": "one accepted item, one invalid item, two ingestions, one exported row and exact similarity 1.0",
+    "win-desktop": {
+      "pid": 31200,
+      "isolated_port": 20003,
+      "candidate_sha256": "71db03ee60854ad50b5780edef0e01633f323a0cebbcd3a327c4f2a14383e5d4",
+      "fetched": 2,
+      "stored": 1,
+      "total": 1,
+      "export_sha256": "d23877bc5917ad4a043fdb7e6c1edede8fd3f53bcd4ede707416c8e40ba3dba2",
+      "similarity": 1,
+      "regressions_passed": 5
+    },
+    "svhome": {
+      "pid": 4118127,
+      "isolated_port": 35207,
+      "candidate_sha256": "71db03ee60854ad50b5780edef0e01633f323a0cebbcd3a327c4f2a14383e5d4",
+      "fetched": 2,
+      "stored": 1,
+      "total": 1,
+      "export_sha256": "d23877bc5917ad4a043fdb7e6c1edede8fd3f53bcd4ede707416c8e40ba3dba2",
+      "similarity": 1.0,
+      "regressions_passed": 5,
+      "guard_attempt": "097acedcf4574c3cbaa7e003ae9444ff",
+      "limits_verified": true
+    }
+  }
+}

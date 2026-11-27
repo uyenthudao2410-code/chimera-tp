@@ -21,6 +21,38 @@ class DiskLedgerTests(unittest.TestCase):
         self.addCleanup(service.close)
         return service
 
+    def test_text_vectors_match_persisted_format_for_every_vote_count(self):
+        import hashlib
+        from chimera_tp.vsa_memory_service import encode_text_10k
+
+        def legacy_atom(word):
+            block = hashlib.blake2b(word.encode("utf-8"), digest_size=32).digest()
+            raw = bytearray()
+            while len(raw) < VSA_BYTES:
+                block = hashlib.sha256(block).digest()
+                raw.extend(block)
+            return bytes(raw[:VSA_BYTES])
+
+        # Check each 1,250-byte result against independent scalar bit counts.
+        # Non-power-of-two lengths exercise comparison, repeated words exercise carries.
+        words = (["alpha", "beta", "beta", "alpha", "field_43", "unit", "09"] * 7)[:48]
+        atoms = {word: legacy_atom(word) for word in words}
+        counts = [0] * (8 * VSA_BYTES)
+        for n, word in enumerate(words, start=1):
+            expected = bytearray(VSA_BYTES)
+            for pos, byte in enumerate(atoms[word]):
+                for bit in range(8):
+                    k = 8 * pos + bit
+                    counts[k] += (byte >> bit) & 1
+                    if counts[k] * 2 >= n:
+                        expected[pos] |= 1 << bit
+            with self.subTest(token_count=n):
+                self.assertEqual(encode_text_10k(" ".join(words[:n])), expected)
+        self.assertEqual(encode_text_10k(" ".join(words) + " ignored suffix"), expected)
+        self.assertEqual(encode_text_10k("x / !"), legacy_atom("empty"))
+        self.assertEqual(encode_text_10k(" A / \u212AELVIN "), legacy_atom("kelvin"))
+        self.assertEqual(encode_text_10k("repeat " * 48), legacy_atom("repeat"))
+
     def test_legacy_rows_order_domain_and_exact_payload(self):
         service = self.service()
         service.close()
