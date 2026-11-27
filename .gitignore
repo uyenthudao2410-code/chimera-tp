@@ -17,8 +17,8 @@ native/chimera_core/target/
 /ErrorReports/
 /tasks/devdrive_setup.log
 # The live observer owns both files. Archive the completed journal for acceptance.
-/tasks/live_daemon_soak_3bb6a24fb27c_win33212.json
-/tasks/live_daemon_soak_3bb6a24fb27c_win33212.jsonl
+/tasks/live_daemon_soak_b6cfe9af9fec_win2168.json
+/tasks/live_daemon_soak_b6cfe9af9fec_win2168.jsonl
 *.so
 *.pdb
 *.lib

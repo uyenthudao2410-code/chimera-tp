@@ -1,0 +1,8 @@
+# The observer authenticates the exact bytes of its rollout manifest.
+tasks/workstation_rollout_b6cfe9af9fec.json text eol=lf
+tasks/observed_serving_3bb6a24fb27c_win33212.json text eol=crlf
+
+# The Windows measurement records SHA-256 of the two collectors as executed.
+scripts/measure_workstation_apps.py text eol=lf
+scripts/workstation_webviews.py text eol=lf
+tasks/workstation_webview_hosts_20261127T031023.json text eol=crlf

@@ -6,7 +6,11 @@ Cập nhật ngày 27/11/2026 theo giờ Việt Nam. Mục tiêu là người d�
 
 ## Bản đang phục vụ và điều kiện nghiệm thu
 
-Đối chiếu lúc 10:04 ngày 27/11 ghi nhận hai daemon nạp lại mã lúc 10:02, giữ tên thư mục release cũ. Toàn bộ **116 tệp Python** trên hai máy khớp nhau. Năm tệp khác bản `5e25fafe4a8f`; bộ nguồn quan sát được đã lưu ở Git `3bb6a24fb27c`. Cửa sổ 09:29 dừng sau 16 mẫu do đổi PID. Cửa sổ 24 giờ hiện tính từ **10:04:42 ngày 27/11**, PID Windows **33212** và Linux **4066005**. [Đối chiếu nguồn](../tasks/observed_serving_3bb6a24fb27c_win33212.json) · [Báo cáo RAM](../tasks/live_daemon_soak_3bb6a24fb27c_win33212.json) · [Cửa sổ đã kết thúc](../tasks/live_daemon_soak_5e25fafe4a8f_win5268.json)
+Ngày 27/11, hai daemon đã chuyển lần lượt sang bản `b6cfe9af9fec`. Windows chạy PID **2168**, `svhome` chạy PID **4072947**. Đã đối chiếu đủ **116 tệp Python** và thư viện native đang nạp trên từng máy. Bộ thử Windows đạt 37 ca, bỏ qua 3 ca dành cho Linux. Bộ thử `svhome` đạt 40/40 với trần CPU 95% của một lõi và trần ghi 8 MiB/s. Chỉ hai tệp Python của gói phục vụ thay đổi so với snapshot trước. Hai tác vụ 08:00 tiếp tục dùng đường dẫn cũ và có cùng mã `autopilot`. [Biên nhận triển khai](../tasks/workstation_rollout_b6cfe9af9fec.json)
+
+Lượt đọc theo lô đầu tiên sau chuyển phiên đã ghi biên nhận riêng trên từng máy. Sổ bằng chứng lưu số thao tác và kết quả. Lượt chỉ thành công một phần làm mất trạng thái đã xác minh, yêu cầu rỗng bị từ chối trước khi ghi. Hai biên nhận trong hồ sơ là lượt đọc nghiệm thu có chủ đích. Chúng chưa cho biết tần suất dùng tự nhiên của từng tính năng. [Mã ghi nhận](../chimera_tp/platform/evidence.py) · [Kiểm thử qua HTTP](../tests/test_agent_hyper_bus.py)
+
+Cửa sổ RAM mới bắt đầu **10:35:48 ngày 27/11 (UTC+7)**. Mốc sớm nhất đủ một ngày là **10:35:48 ngày 28/11**, nếu cả hai PID và mã đang nạp cùng ổn định. Cửa sổ trước dừng khi đổi PID Linux, sau 15 mẫu trong 28 phút với đỉnh 72,91 MiB trên Windows và 68,40 MiB trên Linux. [Báo cáo đang đo](../tasks/live_daemon_soak_b6cfe9af9fec_win2168.json) · [Cửa sổ trước](../tasks/live_daemon_soak_3bb6a24fb27c_win33212.json)
 
 | Đường sử dụng | Kết quả trên hai máy |
 | --- | --- |
@@ -22,7 +26,7 @@ Sau khi nạp lại trình quản lý systemd của UID 1000, 36 dịch vụ đa
 
 Hai tiến trình thực tế đã gọi cùng một build qua CLI `swarm` và MCP. Linux ghi đúng một lần chạy cho cặp đó. Cả hai nhận cùng ZIP 151 byte. Sửa nguồn chưa commit tạo ZIP mới 165 byte, đổi toolchain buộc build lại, và lượt gặp lỗi không được dùng lại từ cache. Trước khi nạp lại trình quản lý systemd, yêu cầu trần ghi SSD trả `io_cap_unavailable` trước khi compiler chạy. Bộ thử đã xóa đúng vé thử của nó. [Biên nhận hai client](../tasks/guarded_client_pair_5e25fafe4a8f.json)
 
-Để đối chiếu kết quả 24 giờ từ thư mục dự án, chạy `python -I -B -S scripts/check_daemon_soak.py tasks/live_daemon_soak_3bb6a24fb27c_win33212.json`. Lệnh đọc từng mẫu JSONL, đối chiếu PID, đỉnh kernel, thời lượng, hash biên nhận triển khai và các mốc kiểm nguồn. Mã thoát 0 xác nhận `passed`, 1 là đang đo, 2 là thất bại, mẫu đã cũ hoặc bằng chứng chưa đủ. Phép kiểm chỉ đọc tệp. [Mã đối chiếu](../scripts/check_daemon_soak.py) · [Nhật ký từng mẫu](../tasks/live_daemon_soak_3bb6a24fb27c_win33212.jsonl)
+Để đối chiếu kết quả 24 giờ từ thư mục dự án, chạy `python -I -B -S scripts/check_daemon_soak.py tasks/live_daemon_soak_b6cfe9af9fec_win2168.json`. Lệnh đọc từng mẫu JSONL, đối chiếu PID, đỉnh kernel, thời lượng, hash biên nhận triển khai và các mốc kiểm nguồn. Mã thoát 0 xác nhận `passed`, 1 là đang đo, 2 là thất bại, mẫu đã cũ hoặc bằng chứng chưa đủ. Phép kiểm chỉ đọc tệp. [Mã đối chiếu](../scripts/check_daemon_soak.py) · [Nhật ký từng mẫu](../tasks/live_daemon_soak_b6cfe9af9fec_win2168.jsonl)
 
 ## Mức dùng WebView2 của Teams và Outlook
 
@@ -43,7 +47,7 @@ Trên nhánh cục bộ `codex/workstation-integration-20261127`, bản `d3861f6
 
 Ba cặp tiến trình Linux cho RSS nghỉ trung vị 40,25 MiB với allocator mặc định và 40,11 MiB khi giới hạn hai arena. Sau khi gọi đồng thời các API tùy chọn, RSS lớn nhất trong các mẫu tương ứng là 48,48 và 46,64 MiB. Lượt thử có truyền dữ liệu bị guard ngắt do áp lực I/O. Cấu hình allocator thật được giữ nguyên. [Dữ liệu từng tiến trình](../tasks/svhome_allocator_startup_ab_5e25fafe4a8f.json)
 
-Tquota đã kiểm thử việc dùng lại hash các hàng khai báo công cụ trong `input[]` khi các tin nhắn sau thay đổi. Bộ tuần tự hóa ghi nhận riêng những hàng công cụ nhúng thực sự được dùng lại. Chưa có số đo tác động trên relay đang phục vụ. [Kiểm thử và hash mã relay](../tasks/workstation_followup_20261127_legacy.json)
+Trên relay Windows, trong 61,5 giây lưu lượng đang phục vụ, bộ đếm dùng lại hàng khai báo công cụ nhúng tăng từ 122 lên 124. Bộ tuần tự hóa dùng lại thêm 2.383.438 byte đầu vào nói chung, còn bộ đếm riêng cho hàng công cụ ở bước tuần tự hóa giữ mức 77. Đây là số byte xử lý tại relay. Chi phí token và độ trễ đầu cuối chưa được đo. Trên `svhome`, hai tệp nguồn đang phục vụ khác SHA-256 với Windows và bản đang chạy chưa xuất bộ đếm hàng công cụ nhúng. [Hai ảnh chụp trên từng máy](../tasks/workstation_relay_live_20261127.json) · [Kiểm thử mã và wheel](../tasks/workstation_followup_20261127_legacy.json)
 
 ## Ba nguồn và ý nghĩa đối với thiết kế
 

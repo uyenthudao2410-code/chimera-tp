@@ -1,0 +1,157 @@
+{
+  "schema": "chimera.workstation-relay-observation/1",
+  "source": "Local Tquota /healthz?lite=1 and /api/dashboard?lite=1 on each node, port 12500. Only aggregate counters and specified source hashes were retained.",
+  "scope": "Two read-only observations of existing traffic. Counters without the field are null. Serialized bytes reused are not vendor token, latency or billing savings.",
+  "nodes": {
+    "win-desktop": {
+      "first": {
+        "utc": "2026-11-27T03:40:29.762461+00:00",
+        "service": "tquota",
+        "pid": 9516,
+        "started_at": 1795748455952,
+        "source_in_sync": true,
+        "prefixDelta": {
+          "deltaHits": 122,
+          "toolsDeltaHits": 0,
+          "embeddedToolRowsReused": 122,
+          "cachedToolSlices": 0
+        },
+        "wireDeltaSerializer": {
+          "spliceHits": 128,
+          "itemsReused": 23480,
+          "bytesReused": 124410857,
+          "toolsReused": 0,
+          "fallbackCount": 0,
+          "embeddedToolRowsReused": 77
+        },
+        "generationKeyDelta": {
+          "canonicalToolsHits": 0
+        }
+      },
+      "last": {
+        "utc": "2026-11-27T03:41:31.303959+00:00",
+        "pid": 9516,
+        "started_at": 1795748455952,
+        "source_in_sync": true,
+        "prefixDelta": {
+          "deltaHits": 124,
+          "toolsDeltaHits": 0,
+          "embeddedToolRowsReused": 124,
+          "cachedToolSlices": 0
+        },
+        "wireDeltaSerializer": {
+          "spliceHits": 130,
+          "itemsReused": 23876,
+          "bytesReused": 126794295,
+          "toolsReused": 0,
+          "fallbackCount": 0,
+          "embeddedToolRowsReused": 77
+        },
+        "generationKeyDelta": {
+          "canonicalToolsHits": 0
+        },
+        "runtime_root": "E:\\DEV\\Chung\\.ch-relay\\local-relay",
+        "source_sha256": {
+          "src/request-footprint.js": "f318b95fa29153cc37136d523b504b243af7797be91cb2b22a2f83a4b611901b",
+          "src/wire-delta-serializer.js": "fb613e5945e7b51965b1ff84fa32a2b21802bba46db568225bf16904a9dadf6a",
+          "test/embedded-tool-prefix.test.js": "5e885cc751a060d6598738a2cc7ad9628788712aa862300a9753b8dbb655a158"
+        }
+      },
+      "elapsed_s": 61.541,
+      "delta": {
+        "prefixDelta": {
+          "deltaHits": 2,
+          "toolsDeltaHits": 0,
+          "embeddedToolRowsReused": 2,
+          "cachedToolSlices": 0
+        },
+        "wireDeltaSerializer": {
+          "spliceHits": 2,
+          "itemsReused": 396,
+          "bytesReused": 2383438,
+          "toolsReused": 0,
+          "fallbackCount": 0,
+          "embeddedToolRowsReused": 0
+        },
+        "generationKeyDelta": {
+          "canonicalToolsHits": 0
+        }
+      }
+    },
+    "svhome": {
+      "first": {
+        "utc": "2026-11-27T03:40:32.246562+00:00",
+        "service": "tquota",
+        "pid": 4066133,
+        "started_at": 1795748596225,
+        "source_in_sync": true,
+        "prefixDelta": {
+          "deltaHits": 3,
+          "toolsDeltaHits": 0,
+          "embeddedToolRowsReused": null,
+          "cachedToolSlices": 0
+        },
+        "wireDeltaSerializer": {
+          "spliceHits": 5,
+          "itemsReused": 1378,
+          "bytesReused": 6142628,
+          "toolsReused": 0,
+          "fallbackCount": 0,
+          "embeddedToolRowsReused": null
+        },
+        "generationKeyDelta": {
+          "canonicalToolsHits": 0
+        }
+      },
+      "last": {
+        "utc": "2026-11-27T03:41:33.454024+00:00",
+        "pid": 4066133,
+        "started_at": 1795748596225,
+        "source_in_sync": true,
+        "prefixDelta": {
+          "deltaHits": 3,
+          "toolsDeltaHits": 0,
+          "embeddedToolRowsReused": null,
+          "cachedToolSlices": 0
+        },
+        "wireDeltaSerializer": {
+          "spliceHits": 5,
+          "itemsReused": 1378,
+          "bytesReused": 6142628,
+          "toolsReused": 0,
+          "fallbackCount": 0,
+          "embeddedToolRowsReused": null
+        },
+        "generationKeyDelta": {
+          "canonicalToolsHits": 0
+        },
+        "runtime_root": "/home/svhome/DEV/Tqouta/local-relay",
+        "source_sha256": {
+          "src/request-footprint.js": "7d04cb1cd65efba2962b8a21eeb8d750cc9c0b12b3754a0ee358f9707e6aa0fe",
+          "src/wire-delta-serializer.js": "64e2a38daac415c5a075feb2248efb8525e08fd6137b88a0cf94c2c84a31852b",
+          "test/embedded-tool-prefix.test.js": null
+        }
+      },
+      "elapsed_s": 61.207,
+      "delta": {
+        "prefixDelta": {
+          "deltaHits": 0,
+          "toolsDeltaHits": 0,
+          "embeddedToolRowsReused": null,
+          "cachedToolSlices": 0
+        },
+        "wireDeltaSerializer": {
+          "spliceHits": 0,
+          "itemsReused": 0,
+          "bytesReused": 0,
+          "toolsReused": 0,
+          "fallbackCount": 0,
+          "embeddedToolRowsReused": null
+        },
+        "generationKeyDelta": {
+          "canonicalToolsHits": 0
+        }
+      }
+    }
+  }
+}
