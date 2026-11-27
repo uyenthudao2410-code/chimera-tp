@@ -1,0 +1,239 @@
+{
+  "schema": "chimera.passive-relay-cache/1",
+  "rollout": "tasks/workstation_rollout_9d578fa676f7_win6020.json",
+  "release": "sha256:9d578fa676f7f99a98643c3b7f5e7477dd7ddfebad937e3543ade9dffcc62d4a",
+  "scope": "Two read-only snapshots of the running Chimera and Tquota counters on each node while the operator's Codex session was active. No replay, file prefetch, model request or test workload was sent by the sampler. These counters do not attribute clients or measure provider billing, token savings or frame time.",
+  "routes": {
+    "chimera": [
+      "/.well-known/chimera.json",
+      "/v1/agent/precog",
+      "/v1/truth-matrix"
+    ],
+    "tquota": [
+      "/healthz?lite=1",
+      "/api/dashboard?lite=1"
+    ]
+  },
+  "nodes": {
+    "win-desktop": {
+      "chimera_pid": 6020,
+      "chimera_started": "2026-11-27T13:17:36+07:00",
+      "runtime_source_dir": "C:/Users/Admin/AppData/Local/chimera/releases/9d578fa676f7",
+      "tquota_pid": 27448,
+      "tquota_started": 1795759680399,
+      "source_in_sync_both_samples": true,
+      "elapsed_seconds": 92.718,
+      "first": {
+        "utc": "2026-11-27T06:28:00.691+00:00",
+        "precog": {
+          "spec_cache_hits": 0,
+          "spec_cache_stores": 1
+        },
+        "evidence_summary": {
+          "verified": 1,
+          "unverified": 17,
+          "violated": 0,
+          "disabled": 0
+        },
+        "prefix": {
+          "deltaHits": 39,
+          "toolsDeltaHits": 0,
+          "embeddedToolRowsReused": 39,
+          "cachedToolSlices": 0
+        },
+        "wire": {
+          "spliceHits": 41,
+          "itemsReused": 10820,
+          "bytesReused": 60708932,
+          "toolsReused": 0,
+          "fallbackCount": 0,
+          "embeddedToolRowsReused": 0
+        },
+        "generation": {
+          "canonicalToolsHits": 0
+        }
+      },
+      "last": {
+        "utc": "2026-11-27T06:29:33.403+00:00",
+        "precog": {
+          "spec_cache_hits": 0,
+          "spec_cache_stores": 1
+        },
+        "evidence_summary": {
+          "verified": 1,
+          "unverified": 17,
+          "violated": 0,
+          "disabled": 0
+        },
+        "prefix": {
+          "deltaHits": 42,
+          "toolsDeltaHits": 0,
+          "embeddedToolRowsReused": 42,
+          "cachedToolSlices": 0
+        },
+        "wire": {
+          "spliceHits": 49,
+          "itemsReused": 11801,
+          "bytesReused": 66259820,
+          "toolsReused": 0,
+          "fallbackCount": 0,
+          "embeddedToolRowsReused": 0
+        },
+        "generation": {
+          "canonicalToolsHits": 0
+        }
+      },
+      "delta": {
+        "precog": {
+          "spec_cache_hits": 0,
+          "spec_cache_stores": 0
+        },
+        "prefix": {
+          "deltaHits": 3,
+          "toolsDeltaHits": 0,
+          "embeddedToolRowsReused": 3
+        },
+        "wire": {
+          "spliceHits": 8,
+          "itemsReused": 981,
+          "bytesReused": 5550888,
+          "toolsReused": 0,
+          "fallbackCount": 0,
+          "embeddedToolRowsReused": 0
+        },
+        "generation": {
+          "canonicalToolsHits": 0
+        }
+      },
+      "latest_basis": {
+        "connect": "unverified",
+        "egress_membrane": "unverified",
+        "pulse": "unverified",
+        "hybrid_search": "unverified",
+        "blackbox": "unverified",
+        "diskless_secrets": "unverified",
+        "vgpu_pareto": "unverified",
+        "immortal_jobs": "unverified",
+        "browser_grid": "unverified",
+        "zygote_canary": "unverified",
+        "vault_sql": "unverified",
+        "ghost_bubble": "unverified",
+        "hyper_desk": "unverified",
+        "cosmos_entity": "unverified",
+        "omega_entity": "unverified",
+        "agent_hyper_bus": "runtime_traffic",
+        "exile": "unverified",
+        "pulse.relay": "unverified"
+      }
+    },
+    "svhome": {
+      "chimera_pid": 4119762,
+      "chimera_started": "2026-11-27T13:16:27+07:00",
+      "runtime_source_dir": "/home/svhome/.local/share/chimera/releases/9d578fa676f7",
+      "tquota_pid": 4117716,
+      "tquota_started": 1795759677698,
+      "source_in_sync_both_samples": true,
+      "elapsed_seconds": 89.961,
+      "first": {
+        "utc": "2026-11-27T06:28:03.792+00:00",
+        "precog": {
+          "spec_cache_hits": 0,
+          "spec_cache_stores": 0
+        },
+        "evidence_summary": {
+          "verified": 0,
+          "unverified": 16,
+          "violated": 0,
+          "disabled": 0
+        },
+        "prefix": {
+          "deltaHits": 2,
+          "toolsDeltaHits": 0,
+          "embeddedToolRowsReused": 2,
+          "cachedToolSlices": 0
+        },
+        "wire": {
+          "spliceHits": 3,
+          "itemsReused": 693,
+          "bytesReused": 3805617,
+          "toolsReused": 0,
+          "fallbackCount": 0,
+          "embeddedToolRowsReused": 0
+        },
+        "generation": {
+          "canonicalToolsHits": 0
+        }
+      },
+      "last": {
+        "utc": "2026-11-27T06:29:33.753+00:00",
+        "precog": {
+          "spec_cache_hits": 0,
+          "spec_cache_stores": 0
+        },
+        "evidence_summary": {
+          "verified": 0,
+          "unverified": 16,
+          "violated": 0,
+          "disabled": 0
+        },
+        "prefix": {
+          "deltaHits": 2,
+          "toolsDeltaHits": 0,
+          "embeddedToolRowsReused": 2,
+          "cachedToolSlices": 0
+        },
+        "wire": {
+          "spliceHits": 3,
+          "itemsReused": 693,
+          "bytesReused": 3805617,
+          "toolsReused": 0,
+          "fallbackCount": 0,
+          "embeddedToolRowsReused": 0
+        },
+        "generation": {
+          "canonicalToolsHits": 0
+        }
+      },
+      "delta": {
+        "precog": {
+          "spec_cache_hits": 0,
+          "spec_cache_stores": 0
+        },
+        "prefix": {
+          "deltaHits": 0,
+          "toolsDeltaHits": 0,
+          "embeddedToolRowsReused": 0
+        },
+        "wire": {
+          "spliceHits": 0,
+          "itemsReused": 0,
+          "bytesReused": 0,
+          "toolsReused": 0,
+          "fallbackCount": 0,
+          "embeddedToolRowsReused": 0
+        },
+        "generation": {
+          "canonicalToolsHits": 0
+        }
+      },
+      "latest_basis": {
+        "connect": "unverified",
+        "egress_membrane": "unverified",
+        "pulse": "unverified",
+        "hybrid_search": "unverified",
+        "blackbox": "unverified",
+        "diskless_secrets": "unverified",
+        "vgpu_pareto": "unverified",
+        "immortal_jobs": "unverified",
+        "browser_grid": "unverified",
+        "zygote_canary": "unverified",
+        "vault_sql": "unverified",
+        "ghost_bubble": "unverified",
+        "hyper_desk": "unverified",
+        "cosmos_entity": "unverified",
+        "omega_entity": "unverified",
+        "agent_hyper_bus": "unverified"
+      }
+    }
+  }
+}
