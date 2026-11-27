@@ -13,10 +13,10 @@ import time
 from pathlib import Path
 from typing import Any
 
-from .gf256 import INV, MUL_BYTES, encode_lehmer
-from .holo_backup import shannon_entropy
-from .native import gf256_decode_matrix, gf256_encode_block, slepian_syndrome
-from .telepathy import TelepathicCodec
+from ..gf256 import INV, MUL_BYTES, encode_lehmer
+from ..holo_backup import shannon_entropy
+from ..native import gf256_decode_matrix, gf256_encode_block, slepian_syndrome
+from ..telepathy import TelepathicCodec
 
 # ============================================================================
 # Idea #5: Ghost-Block 4 KB Sub-File Engine + OS FUSE/WinFsp Capability Probe

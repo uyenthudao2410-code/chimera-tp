@@ -9,12 +9,17 @@ class LegacyLayoutTests(unittest.TestCase):
     def test_old_and_new_names_share_one_module_in_either_order(self):
         root = str(Path(__file__).resolve().parents[1])
         program = """
-import importlib, pkgutil, sys
+import importlib, pickle, pkgutil, sys
+from pathlib import Path
 sys.path.insert(0, sys.argv[1])
 import chimera_tp
 from chimera_tp import legacy
 names = sorted(legacy._NAMES)
-assert len(names) == 11
+moved = {'omega_bench', 'omega_compute', 'omega_storage', 'omega_transport', 'singularity_airgap_crypto',
+         'singularity_bench', 'singularity_kolmogorov_swarm', 'singularity_time_crdt'}
+assert len(names) == 19 and moved <= set(names)
+package = Path(chimera_tp.__file__).resolve().parent
+assert all((package / 'legacy' / (n + '.py')).is_file() and not (package / (n + '.py')).exists() for n in moved)
 assert not any('chimera_tp.legacy.' + n in sys.modules or 'chimera_tp.' + n in sys.modules for n in names)
 visible = {m.name for m in pkgutil.iter_modules(chimera_tp.__path__)}
 assert set(names) <= visible
@@ -30,7 +35,11 @@ for name in names:
 from chimera_tp import LiveClusterIndexer
 from chimera_tp.legacy.v9_app_index import LiveClusterIndexer as from_legacy
 assert LiveClusterIndexer is from_legacy
-import pickle
+from chimera_tp import MerkleCrdtShadowTwin, RegeneratingMeshVault
+assert MerkleCrdtShadowTwin is legacy.singularity_time_crdt.MerkleCrdtShadowTwin
+assert RegeneratingMeshVault is legacy.omega_storage.RegeneratingMeshVault
+assert pickle.loads(b'cchimera_tp.singularity_time_crdt\\nMerkleCrdtShadowTwin\\n.') is MerkleCrdtShadowTwin
+assert pickle.loads(b'cchimera_tp.omega_storage\\nRegeneratingMeshVault\\n.') is RegeneratingMeshVault
 assert pickle.loads(b'cchimera_tp.v9_app_index\\nLiveClusterIndexer\\n.') is from_legacy
 """
         for order in ("old", "new"):

@@ -14,9 +14,9 @@ import urllib.request
 import wave
 from typing import Any
 
-from .gf256 import INV, MUL_BYTES
-from .holo_backup import shannon_entropy
-from .native import (
+from ..gf256 import INV, MUL_BYTES
+from ..holo_backup import shannon_entropy
+from ..native import (
     chacha20_xor,
     fsk_demod_bits,
     gf256_decode_matrix,

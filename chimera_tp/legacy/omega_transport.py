@@ -17,9 +17,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from .gf256 import MUL_BYTES
-from .hyper_wire import _disable_connreset
-from .native import chacha20_xor, gf256_decode_matrix, gf256_encode_block, gf256_recode
+from ..gf256 import MUL_BYTES
+from ..hyper_wire import _disable_connreset
+from ..native import chacha20_xor, gf256_decode_matrix, gf256_encode_block, gf256_recode
 
 # ============================================================================
 # Idea #1: Curve25519 + ChaCha20/BLAKE2s Silicon Data-Plane & OS TUN Caps
@@ -104,7 +104,7 @@ def detect_os_tun_caps() -> dict[str, Any]:
             Path(cand).is_file()
             for cand in (
                 r"C:\Windows\System32\wintun.dll",
-                str(Path(__file__).resolve().parent / "wintun.dll"),
+                str(Path(__file__).resolve().parents[1] / "wintun.dll"),
             )
         )
         return {
@@ -234,7 +234,7 @@ class MultiIspBondingEngine:
             if found < 0:
                 continue
             mat[pivs], mat[found] = mat[found], mat[pivs]
-            from .gf256 import INV
+            from ..gf256 import INV
 
             inv = INV[mat[pivs][col]]
             if inv != 1:

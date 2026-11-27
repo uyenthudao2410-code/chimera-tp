@@ -6,7 +6,7 @@ import json
 import time
 from typing import Any
 
-from .native import v7_native_caps
+from ..native import v7_native_caps
 from .omega_compute import (
     NeuralPpmCodec,
     RemoteRamPool,

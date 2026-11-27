@@ -13,8 +13,8 @@ import urllib.request
 from typing import Any
 import zlib
 
-from .gf256 import INV, MUL_BYTES
-from .native import gf256_mul_add, ppm_compress, ppm_decompress
+from ..gf256 import INV, MUL_BYTES
+from ..native import gf256_mul_add, ppm_compress, ppm_decompress
 
 # ==============================================================================
 # IDEA #7 — Sandboxed WebAssembly MVP Active-Pipe (AQ03)

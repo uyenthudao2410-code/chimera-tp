@@ -1,6 +1,9 @@
-"""Historical v9Ã¢â‚¬â€œv12 experiments. Engines load only when explicitly imported."""
+"""Historical v7 through v12 experiments, loaded on their first explicit import."""
 
 _NAMES = frozenset({
+    "omega_bench", "omega_compute", "omega_storage", "omega_transport",
+    "singularity_airgap_crypto", "singularity_bench", "singularity_kolmogorov_swarm",
+    "singularity_time_crdt",
     "v9_app_index", "v9_bench", "v9_dataplane", "v9_nvme_grid",
     "v10_outlaw_engines", "v10_sovereign_crypto", "v10_sovereign_runtime",
     "v11_autopoietic_systems", "v11_organism_mesh", "v12_bench", "v12_galactic_engines",

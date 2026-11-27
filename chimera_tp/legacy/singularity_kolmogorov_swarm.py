@@ -16,7 +16,7 @@ import time
 from typing import Any
 import zlib
 
-from .native import gf256_decode_matrix, gf256_encode_block, gf256_recode, ppm_compress, ppm_decompress
+from ..native import gf256_decode_matrix, gf256_encode_block, gf256_recode, ppm_compress, ppm_decompress
 from .omega_compute import NeuralPpmCodec
 from .omega_storage import RegeneratingMeshVault
 
