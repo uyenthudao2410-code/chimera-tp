@@ -125,6 +125,21 @@ def decide_placement(
     return "receiver"
 
 
+def _iter_log_lines(data: bytes):
+    """Decode ordinary LF/CRLF logs in bounded blocks, preserving splitlines semantics."""
+    start = 0
+    while start < len(data):
+        end = min(start + 64 * 1024, len(data))
+        if end < len(data):
+            # LF is a complete line terminator and cannot split a UTF-8 character.
+            boundary = data.rfind(b"\n", start, end)
+            if boundary < start:
+                boundary = data.find(b"\n", end)
+            end = len(data) if boundary < 0 else boundary + 1
+        yield from data[start:end].decode("utf-8", errors="replace").splitlines()
+        start = end
+
+
 def _normalize_log_template(line: str) -> str:
     s = _TS_RE.sub("<TS>", line)
     s = _IPV4_RE.sub("<IP>", s)
@@ -252,7 +267,7 @@ def execute_operator(data: bytes, plan: ComputePlan) -> tuple[bytes, int, list[s
         hourly: dict[str, int] = {}
         templates: dict[str, dict[str, Any]] = {}
         total_lines = 0
-        for raw_line in data.decode("utf-8", errors="replace").splitlines():
+        for raw_line in _iter_log_lines(data):
             if not raw_line.strip():
                 continue
             total_lines += 1

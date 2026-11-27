@@ -16,6 +16,7 @@ import urllib.error
 import urllib.request
 from pathlib import Path
 
+from chimera_tp import __version__
 from chimera_tp.active_pipe import ActiveQueryServer, ComputePlan, remote_active_query
 from chimera_tp.autopilot import GENOMES, OpsConfig, TelemetryStore, get_zero_weight_status
 from chimera_tp.dashboard import ChimeraDaemon
@@ -38,6 +39,24 @@ from chimera_tp.telepathy import (
 
 
 class TestChimeraV3HyperGrid(unittest.TestCase):
+    def test_block_log_reader_matches_utf8_splitlines_at_boundaries(self):
+        from chimera_tp.active_pipe import _iter_log_lines
+
+        separators = ("\r\n", "\n", "\r", "\v", "\f", "\x1c", "\x1d",
+                      "\x1e", "\x85", "\u2028", "\u2029")
+        mixed = b"".join(b"warn " + s.encode("utf8") for s in separators)
+        prefix = b"x" * (64 * 1024 - 1)
+        cases = (
+            b"", b"\n", b"\n\n", b"final line", mixed, mixed * 1600,
+            prefix + b"\r\nfirst\n", prefix + b"\xf0\x9f\x8c\x8d\n",
+            b"head\n" + prefix * 4 + b"\r\n", prefix + b"\xc2\xff\nend\xe2",
+            prefix + mixed + prefix, b"\xff\n" * 70000,
+        )
+        for i, data in enumerate(cases):
+            with self.subTest(i=i):
+                self.assertEqual(list(_iter_log_lines(data)),
+                                 data.decode("utf-8", errors="replace").splitlines())
+
     def test_telepathic_dict_and_lossless_beating_plain_zlib(self) -> None:
         lines = [
             f"[2026-09-28 17:{10 + (i % 45):02d}:{i % 60:02d}] [HR] ERROR: git fetch thất bại repo_id={i % 7}\n".encode("utf-8")
@@ -300,7 +319,7 @@ class TestChimeraV3HyperGrid(unittest.TestCase):
             base = f"http://127.0.0.1:{daemon.http_addr[1]}"
             try:
                 h = json.loads(urllib.request.urlopen(f"{base}/api/health", timeout=5.0).read().decode())
-                self.assertIn(h["version"], ("3.0.0", "4.0.0", "5.0.0", "6.0.0", "7.0.0", "8.0.0", "9.0.0", "10.0.0", "11.0.0", "12.0.0"))
+                self.assertEqual(h["version"], __version__)
                 self.assertGreater(h["zero_weight"]["daemon_ram_mb"], 0.0)
                 self.assertIn("zero_weight_ok", h["zero_weight"])
 
