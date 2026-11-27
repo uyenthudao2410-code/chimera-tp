@@ -1,0 +1,218 @@
+{
+  "schema": "chimera.persisted-user-io-delegation/1",
+  "unit": "user@1000.service",
+  "uid": 1000,
+  "checked_utc": "2026-11-27T04:48:31.779574+00:00",
+  "installed_utc": "2026-11-27T04:47:17.501328+00:00",
+  "runtime_source": "/run/systemd/system/user@1000.service.d/80-chimera-guest-io.conf",
+  "persistent_file": "/etc/systemd/system/user@1000.service.d/80-chimera-guest-io.conf",
+  "sha256_both": "9690213e48af615f42210c7d649a6f346e9cc84bed22a74468878755a6c529ea",
+  "mode": "0644",
+  "owner": "root:root",
+  "contents": "[Service]\nDelegate=cpu io memory pids\n",
+  "boot_id": "d5c75ce1-4b30-490d-a98e-42cf884a0b3c",
+  "systemd_version": "systemd 259 (259.9-0ubuntu0.1)",
+  "offline_search_path": [
+    "/etc/systemd/system.control",
+    "/etc/systemd/system",
+    "/etc/systemd/system.attached",
+    "/usr/local/lib/systemd/system",
+    "/usr/lib/systemd/system"
+  ],
+  "offline_parsed_before": "cpu memory pids",
+  "offline_parsed_after": "cpu io memory pids",
+  "live_manager": {
+    "ActiveState": "active",
+    "MainPID": "5331",
+    "DelegateControllers": "cpu io memory pids"
+  },
+  "active_user_services": 36,
+  "all_service_start_times_predate_install": true,
+  "user_services": {
+    "chimera-hyper-daemon.service": {
+      "pid": 4083925,
+      "started_epoch": 1795753683,
+      "systemd_restarts": 0
+    },
+    "dbus.service": {
+      "pid": 5491,
+      "started_epoch": 1793283939,
+      "systemd_restarts": 0
+    },
+    "dconf.service": {
+      "pid": 7158,
+      "started_epoch": 1793283949,
+      "systemd_restarts": 0
+    },
+    "dgnl-web.service": {
+      "pid": 1896649,
+      "started_epoch": 1795196979,
+      "systemd_restarts": 0
+    },
+    "gcr-ssh-agent.service": {
+      "pid": 5994,
+      "started_epoch": 1793283940,
+      "systemd_restarts": 0
+    },
+    "gnome-remote-desktop.service": {
+      "pid": 2579034,
+      "started_epoch": 1795520060,
+      "systemd_restarts": 0
+    },
+    "gnome-session-manager@ubuntu.service": {
+      "pid": 6048,
+      "started_epoch": 1793283941,
+      "systemd_restarts": 0
+    },
+    "gnome-session-monitor.service": {
+      "pid": 5997,
+      "started_epoch": 1793283940,
+      "systemd_restarts": 0
+    },
+    "gvfs-daemon.service": {
+      "pid": 6005,
+      "started_epoch": 1793283940,
+      "systemd_restarts": 0
+    },
+    "gvfs-metadata.service": {
+      "pid": 7112,
+      "started_epoch": 1793283949,
+      "systemd_restarts": 0
+    },
+    "gvfs-udisks2-volume-monitor.service": {
+      "pid": 6983,
+      "started_epoch": 1793283948,
+      "systemd_restarts": 0
+    },
+    "m365-hub.service": {
+      "pid": 1896650,
+      "started_epoch": 1795196979,
+      "systemd_restarts": 0
+    },
+    "obex.service": {
+      "pid": 1898161,
+      "started_epoch": 1795197335,
+      "systemd_restarts": 0
+    },
+    "org.freedesktop.IBus.session.GNOME.service": {
+      "pid": 6461,
+      "started_epoch": 1793283946,
+      "systemd_restarts": 0
+    },
+    "org.gnome.SettingsDaemon.Datetime.service": {
+      "pid": 6470,
+      "started_epoch": 1793283946,
+      "systemd_restarts": 0
+    },
+    "org.gnome.SettingsDaemon.Housekeeping.service": {
+      "pid": 6472,
+      "started_epoch": 1793283946,
+      "systemd_restarts": 0
+    },
+    "org.gnome.SettingsDaemon.Keyboard.service": {
+      "pid": 6475,
+      "started_epoch": 1793283946,
+      "systemd_restarts": 0
+    },
+    "org.gnome.SettingsDaemon.MediaKeys.service": {
+      "pid": 6477,
+      "started_epoch": 1793283946,
+      "systemd_restarts": 0
+    },
+    "org.gnome.SettingsDaemon.Power.service": {
+      "pid": 6483,
+      "started_epoch": 1793283946,
+      "systemd_restarts": 0
+    },
+    "org.gnome.SettingsDaemon.ScreensaverProxy.service": {
+      "pid": 6492,
+      "started_epoch": 1793283946,
+      "systemd_restarts": 0
+    },
+    "org.gnome.SettingsDaemon.UsbProtection.service": {
+      "pid": 6501,
+      "started_epoch": 1793283946,
+      "systemd_restarts": 0
+    },
+    "org.gnome.SettingsDaemon.XSettings.service": {
+      "pid": 960426,
+      "started_epoch": 1793960980,
+      "systemd_restarts": 0
+    },
+    "org.gnome.Shell@ubuntu.service": {
+      "pid": 6057,
+      "started_epoch": 1793283941,
+      "systemd_restarts": 0
+    },
+    "pipewire.service": {
+      "pid": 5498,
+      "started_epoch": 1793283939,
+      "systemd_restarts": 0
+    },
+    "radar-dashboard.service": {
+      "pid": 4068385,
+      "started_epoch": 1795749018,
+      "systemd_restarts": 0
+    },
+    "snap.snapd-desktop-integration.snapd-desktop-integration.service": {
+      "pid": 5502,
+      "started_epoch": 1793283939,
+      "systemd_restarts": 0
+    },
+    "ssh-agent.service": {
+      "pid": 5998,
+      "started_epoch": 1793283940,
+      "systemd_restarts": 0
+    },
+    "thu-vien-phap-ly-reader.service": {
+      "pid": 1920300,
+      "started_epoch": 1795260489,
+      "systemd_restarts": 0
+    },
+    "tquota-tailnet-proxy.service": {
+      "pid": 2566588,
+      "started_epoch": 1795518684,
+      "systemd_restarts": 0
+    },
+    "tquota.service": {
+      "pid": 4083191,
+      "started_epoch": 1795753594,
+      "systemd_restarts": 0
+    },
+    "wireplumber.service": {
+      "pid": 5565,
+      "started_epoch": 1793283939,
+      "systemd_restarts": 0
+    },
+    "xdg-desktop-portal-gnome.service": {
+      "pid": 713798,
+      "started_epoch": 1793786421,
+      "systemd_restarts": 0
+    },
+    "xdg-desktop-portal-gtk.service": {
+      "pid": 7352,
+      "started_epoch": 1793283952,
+      "systemd_restarts": 0
+    },
+    "xdg-desktop-portal.service": {
+      "pid": 713800,
+      "started_epoch": 1793786421,
+      "systemd_restarts": 0
+    },
+    "xdg-document-portal.service": {
+      "pid": 5716,
+      "started_epoch": 1793283939,
+      "systemd_restarts": 0
+    },
+    "xdg-permission-store.service": {
+      "pid": 5751,
+      "started_epoch": 1793283939,
+      "systemd_restarts": 0
+    }
+  },
+  "service_restarts_requested": 0,
+  "manager_reloaded": false,
+  "reboot_tested": false,
+  "earlier_io_proof": "guest_io_reexec_5e25fafe4a8f.json",
+  "rollback": "Remove only the recorded /etc drop-in after checking its SHA-256. The original /run copy remains."
+}
