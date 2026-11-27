@@ -1,0 +1,367 @@
+{
+  "platform": "svhome",
+  "stage": "/home/svhome/.local/share/chimera/releases/962efbbc09a1",
+  "parent": "/home/svhome/.local/share/chimera/releases/9d578fa676f7",
+  "tree": "a4ed4b774b83054deba48ea36445a9928c26073ce04d2f952e8b3d11272a5f2d",
+  "native": "64e250008d7ed1884b1225607866179c1d38cb24deb62b6d3e343a0f895b53e2",
+  "verified_release_files": 491,
+  "tests": 10,
+  "skipped": 0,
+  "test_selection": [
+    "test_vsa_disk_budget",
+    "test_v15_trinity_cortex.TestV15TrinityCortex.test_05_reverse_phantom_bidirectional_loopback_and_vsa_peer_sync",
+    "test_v18_overmind_cortex.TestV18OvermindCortex.test_03_vsa_hippocampus_ingest_tquota_and_capsule",
+    "test_v4_hyperos.TestV4HyperOS.test_code_search_fts5_merkle_incremental_and_sanitization"
+  ],
+  "python": "3.14.4",
+  "sqlite": "3.46.1",
+  "benchmark": {
+    "export_bytes": 709505,
+    "export_sha256": "a2b2a4ba189d2ffe86239ed672f039cb3215b82341c4035e4495aae38bbdaaaa",
+    "module_sha256": {
+      "baseline": "71db03ee60854ad50b5780edef0e01633f323a0cebbcd3a327c4f2a14383e5d4",
+      "candidate": "461d101e04efb3eaff9cf21d68fafd43aaee55acdf158ce68ecd1c352ece46bc"
+    },
+    "python": "3.14.4",
+    "trials": [
+      {
+        "pair": 1,
+        "version": "baseline",
+        "opened_kib": {
+          "VmHWM": 32068,
+          "VmRSS": 32068
+        },
+        "passes": [
+          {
+            "pass": "cold",
+            "fetched": 300,
+            "stored": 300,
+            "sqlite_changes": 300,
+            "wal_bytes": 1260752,
+            "timestamps_sha256": "4af51bad10b73d1a365c8266380256e7d3ccb6d0a1e4431052366c4bfab471e3",
+            "wall_ms": 296.44,
+            "cpu_ms": 279.14,
+            "after_kib": {
+              "VmHWM": 34456,
+              "VmRSS": 33052
+            },
+            "cache_entries": 256,
+            "rows": 300,
+            "data_sha256": "5f7c4186e4c4b385066db6ba4e4a4d390baa39458fa43cca5c15635cf1be4189"
+          },
+          {
+            "pass": "warm",
+            "fetched": 300,
+            "stored": 300,
+            "sqlite_changes": 300,
+            "wal_bytes": 1236032,
+            "timestamps_sha256": "a637040594fb6c04722e8ef06db166b48aa54ef64fc32f6bc3006896e2ee17c6",
+            "wall_ms": 326.52,
+            "cpu_ms": 305.33,
+            "after_kib": {
+              "VmHWM": 35992,
+              "VmRSS": 33804
+            },
+            "cache_entries": 256,
+            "rows": 300,
+            "data_sha256": "5f7c4186e4c4b385066db6ba4e4a4d390baa39458fa43cca5c15635cf1be4189"
+          }
+        ]
+      },
+      {
+        "pair": 1,
+        "version": "candidate",
+        "opened_kib": {
+          "VmHWM": 32000,
+          "VmRSS": 32000
+        },
+        "passes": [
+          {
+            "pass": "cold",
+            "fetched": 300,
+            "stored": 300,
+            "sqlite_changes": 300,
+            "wal_bytes": 1260752,
+            "timestamps_sha256": "b2d99d9a0359a94de7f5269c75a06c64302a3ebd6ddf74828c55c2c1a8218c96",
+            "wall_ms": 310.45,
+            "cpu_ms": 295.34,
+            "after_kib": {
+              "VmHWM": 34396,
+              "VmRSS": 32992
+            },
+            "cache_entries": 256,
+            "rows": 300,
+            "data_sha256": "5f7c4186e4c4b385066db6ba4e4a4d390baa39458fa43cca5c15635cf1be4189"
+          },
+          {
+            "pass": "warm",
+            "fetched": 300,
+            "stored": 300,
+            "sqlite_changes": 0,
+            "wal_bytes": 0,
+            "timestamps_sha256": "b2d99d9a0359a94de7f5269c75a06c64302a3ebd6ddf74828c55c2c1a8218c96",
+            "wall_ms": 303.84,
+            "cpu_ms": 284.63,
+            "after_kib": {
+              "VmHWM": 35924,
+              "VmRSS": 33752
+            },
+            "cache_entries": 256,
+            "rows": 300,
+            "data_sha256": "5f7c4186e4c4b385066db6ba4e4a4d390baa39458fa43cca5c15635cf1be4189"
+          }
+        ]
+      },
+      {
+        "pair": 2,
+        "version": "candidate",
+        "opened_kib": {
+          "VmHWM": 32064,
+          "VmRSS": 32064
+        },
+        "passes": [
+          {
+            "pass": "cold",
+            "fetched": 300,
+            "stored": 300,
+            "sqlite_changes": 300,
+            "wal_bytes": 1260752,
+            "timestamps_sha256": "ccdb944018462723630839421422e928e05609c871a8892e550ffa78beeefe6d",
+            "wall_ms": 298.24,
+            "cpu_ms": 276.98,
+            "after_kib": {
+              "VmHWM": 34448,
+              "VmRSS": 33056
+            },
+            "cache_entries": 256,
+            "rows": 300,
+            "data_sha256": "5f7c4186e4c4b385066db6ba4e4a4d390baa39458fa43cca5c15635cf1be4189"
+          },
+          {
+            "pass": "warm",
+            "fetched": 300,
+            "stored": 300,
+            "sqlite_changes": 0,
+            "wal_bytes": 0,
+            "timestamps_sha256": "ccdb944018462723630839421422e928e05609c871a8892e550ffa78beeefe6d",
+            "wall_ms": 358.75,
+            "cpu_ms": 332.83,
+            "after_kib": {
+              "VmHWM": 35988,
+              "VmRSS": 33816
+            },
+            "cache_entries": 256,
+            "rows": 300,
+            "data_sha256": "5f7c4186e4c4b385066db6ba4e4a4d390baa39458fa43cca5c15635cf1be4189"
+          }
+        ]
+      },
+      {
+        "pair": 2,
+        "version": "baseline",
+        "opened_kib": {
+          "VmHWM": 31980,
+          "VmRSS": 31980
+        },
+        "passes": [
+          {
+            "pass": "cold",
+            "fetched": 300,
+            "stored": 300,
+            "sqlite_changes": 300,
+            "wal_bytes": 1260752,
+            "timestamps_sha256": "634466752cd1151da344f4e35a9dd54baf81c9c3a1bcce3c7b6a6b53fdb89390",
+            "wall_ms": 349.43,
+            "cpu_ms": 327.03,
+            "after_kib": {
+              "VmHWM": 34436,
+              "VmRSS": 32964
+            },
+            "cache_entries": 256,
+            "rows": 300,
+            "data_sha256": "5f7c4186e4c4b385066db6ba4e4a4d390baa39458fa43cca5c15635cf1be4189"
+          },
+          {
+            "pass": "warm",
+            "fetched": 300,
+            "stored": 300,
+            "sqlite_changes": 300,
+            "wal_bytes": 1236032,
+            "timestamps_sha256": "0708d36ead12b0bd4c7271cf6c7440946a2cbf12da96caaa270f4552203916e8",
+            "wall_ms": 320.34,
+            "cpu_ms": 294.51,
+            "after_kib": {
+              "VmHWM": 35968,
+              "VmRSS": 33716
+            },
+            "cache_entries": 256,
+            "rows": 300,
+            "data_sha256": "5f7c4186e4c4b385066db6ba4e4a4d390baa39458fa43cca5c15635cf1be4189"
+          }
+        ]
+      },
+      {
+        "pair": 3,
+        "version": "baseline",
+        "opened_kib": {
+          "VmHWM": 32024,
+          "VmRSS": 32024
+        },
+        "passes": [
+          {
+            "pass": "cold",
+            "fetched": 300,
+            "stored": 300,
+            "sqlite_changes": 300,
+            "wal_bytes": 1260752,
+            "timestamps_sha256": "511cd9acacfdbe3a68c998fb1d84697ae40dfd3115d141849fa1b9a898e73a19",
+            "wall_ms": 290.2,
+            "cpu_ms": 273.98,
+            "after_kib": {
+              "VmHWM": 34480,
+              "VmRSS": 33008
+            },
+            "cache_entries": 256,
+            "rows": 300,
+            "data_sha256": "5f7c4186e4c4b385066db6ba4e4a4d390baa39458fa43cca5c15635cf1be4189"
+          },
+          {
+            "pass": "warm",
+            "fetched": 300,
+            "stored": 300,
+            "sqlite_changes": 300,
+            "wal_bytes": 1236032,
+            "timestamps_sha256": "822939463345e71b887d855e2dae088810e105913c6e4a76ea92df92b73534f9",
+            "wall_ms": 302.22,
+            "cpu_ms": 282.01,
+            "after_kib": {
+              "VmHWM": 36012,
+              "VmRSS": 33760
+            },
+            "cache_entries": 256,
+            "rows": 300,
+            "data_sha256": "5f7c4186e4c4b385066db6ba4e4a4d390baa39458fa43cca5c15635cf1be4189"
+          }
+        ]
+      },
+      {
+        "pair": 3,
+        "version": "candidate",
+        "opened_kib": {
+          "VmHWM": 32012,
+          "VmRSS": 32012
+        },
+        "passes": [
+          {
+            "pass": "cold",
+            "fetched": 300,
+            "stored": 300,
+            "sqlite_changes": 300,
+            "wal_bytes": 1260752,
+            "timestamps_sha256": "0cbc61a0097210527319c68d8b526a5bb752e11ac13375da79b7fdea28f06c58",
+            "wall_ms": 342.61,
+            "cpu_ms": 313.8,
+            "after_kib": {
+              "VmHWM": 34404,
+              "VmRSS": 33008
+            },
+            "cache_entries": 256,
+            "rows": 300,
+            "data_sha256": "5f7c4186e4c4b385066db6ba4e4a4d390baa39458fa43cca5c15635cf1be4189"
+          },
+          {
+            "pass": "warm",
+            "fetched": 300,
+            "stored": 300,
+            "sqlite_changes": 0,
+            "wal_bytes": 0,
+            "timestamps_sha256": "0cbc61a0097210527319c68d8b526a5bb752e11ac13375da79b7fdea28f06c58",
+            "wall_ms": 322.21,
+            "cpu_ms": 299.95,
+            "after_kib": {
+              "VmHWM": 35936,
+              "VmRSS": 33764
+            },
+            "cache_entries": 256,
+            "rows": 300,
+            "data_sha256": "5f7c4186e4c4b385066db6ba4e4a4d390baa39458fa43cca5c15635cf1be4189"
+          }
+        ]
+      }
+    ]
+  },
+  "guard": {
+    "request_id": "106dba5355c143d08143df14736b5841",
+    "attempt_id": "aa25dc618b8d437ea46bb0673ab41a43",
+    "ssh_route": "phantom_ssh",
+    "elapsed_end_to_end_ms": 12547.0,
+    "admission": {
+      "accepted": true,
+      "decision": "accept",
+      "reason": "capacity",
+      "limits_verified": true,
+      "health": {
+        "available_ram_mib": 7969.76953125,
+        "available_disk_mib": 31594.9140625,
+        "load1": 0.296875,
+        "temp_c": 50.0,
+        "psi_some_avg10": {
+          "cpu": 0.56,
+          "memory": 0.0,
+          "io": 0.28
+        },
+        "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/chimera-peer-guest.service",
+        "limits": {
+          "memory_high": 429494272,
+          "memory_max": 536870912,
+          "swap_max": 0,
+          "tasks_max": 128,
+          "cpu_quota_pct": 95.0,
+          "io_write_bps": 8388608,
+          "io_devices": [
+            "8:0",
+            "8:2"
+          ]
+        },
+        "user_controllers": [
+          "cpu",
+          "io",
+          "memory",
+          "pids"
+        ],
+        "service_p95_ms": {
+          "http://127.0.0.1:9780/.well-known/chimera.json": 3.3708768896758556
+        },
+        "samples_per_service": 5,
+        "sample_age_s": 0.018306918907910585,
+        "measured_at": 1795762677.7066143
+      },
+      "effective_policy": {
+        "ram_reserve_mib": 2560,
+        "job_memory_mib": 512,
+        "disk_reserve_mib": 14306,
+        "job_disk_mib": 110,
+        "cpu_quota_pct": 95,
+        "max_tasks": 128,
+        "runtime_seconds": 250,
+        "psi_cpu_pct": 25.0,
+        "psi_memory_pct": 1.0,
+        "psi_io_pct": 5.0,
+        "max_load1": 1.8,
+        "max_temp_c": 70.0,
+        "service_urls": [
+          "http://127.0.0.1:9780/.well-known/chimera.json"
+        ],
+        "service_p95_ms": 150.0,
+        "service_samples": 5,
+        "service_timeout_s": 0.5,
+        "max_sample_age_s": 5.0,
+        "require_io_cap": true,
+        "io_write_bps": 8388608,
+        "disk_path": "/home/svhome"
+      }
+    },
+    "snapshot": "e6ccd0f6820cbc2c09c3ffca2517dcf7ad18dad00496306722297c70a6dc219f"
+  },
+  "artifact_sha256": "129acb70bc46ec519ce0f6166aab46980665ae4859f53a5c12d4f7344d1b2714"
+}

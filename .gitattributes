@@ -20,3 +20,9 @@ tasks/workstation_rollout_bd18ec94f55c_win25476.json text eol=lf
 scripts/measure_vsa_ingest.py text eol=lf
 tasks/vsa_encoder_replay_20261127.json text eol=lf
 tasks/workstation_rollout_9d578fa676f7_win6020.json text eol=lf
+
+# Preserve the bytes authenticated by the running observer and its benchmark receipt.
+tasks/workstation_rollout_962efbbc09a1_win8996.json -text
+tasks/vsa_periodic_writes_962efbbc09a1.json -text
+tests/test_vsa_disk_budget.py text eol=lf
+tests/test_v15_trinity_cortex.py text eol=lf

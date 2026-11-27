@@ -2621,7 +2621,9 @@ class ChimeraDaemon:
                     try:
                         body = json.loads(self._read_body().decode("utf-8") or "{}")
                         if isinstance(body.get("items"), list):
-                            res = daemon_ref.vsa_memory.store_batch(body["items"])
+                            res = daemon_ref.vsa_memory.store_batch(
+                                body["items"], skip_unchanged=body.get("skip_unchanged") is True
+                            )
                         else:
                             res = daemon_ref.vsa_memory.store(
                                 str(body.get("item_id") or ""),

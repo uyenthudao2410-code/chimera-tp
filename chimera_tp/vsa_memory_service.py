@@ -175,36 +175,43 @@ class SharedVsaMemoryService:
                 pass
         return encode_text_10k(text)
 
-    def _persist_items(self, rows: list[dict[str, Any]]) -> None:
+    def _persist_item(self, row: dict[str, Any], *, skip_unchanged: bool = False) -> bool:
         if self._conn is None:
-            for row in rows:
-                self._items[row["item_id"]] = row
-            return
-        self._conn.executemany(
-            """
+            previous = self._items.get(row["item_id"])
+            if skip_unchanged and previous is not None:
+                fields = ("domain", "text", "vec", "reward")
+                if (all(row[k] == previous[k] for k in fields)
+                        and json.dumps(row["payload"]) == json.dumps(previous["payload"])):
+                    return False
+            self._items[row["item_id"]] = row
+            return True
+
+        sql = """
             INSERT INTO vsa_items
             (item_id, domain, text, payload_json, vsa_blob, reward, updated_at)
             VALUES (?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT(item_id) DO UPDATE SET domain=excluded.domain, text=excluded.text,
                 payload_json=excluded.payload_json, vsa_blob=excluded.vsa_blob,
                 reward=excluded.reward, updated_at=excluded.updated_at
-            """,
-            (
-                (
-                    r["item_id"],
-                    r["domain"],
-                    r["text"],
-                    json.dumps(r["payload"], ensure_ascii=False),
-                    sqlite3.Binary(r["vec"]),
-                    float(r["reward"]),
-                    r["updated_at"],
-                )
-                for r in rows
-            ),
-        )
+            """
+        if skip_unchanged:
+            # The ingestion time is local. A replay with identical stored bytes
+            # must not advance the timestamp or dirty the database's WAL pages.
+            sql += """
+                WHERE (domain, text, payload_json, vsa_blob, reward) IS NOT
+                      (excluded.domain, excluded.text, excluded.payload_json,
+                       excluded.vsa_blob, excluded.reward)
+                """
+        cursor = self._conn.execute(sql, (
+            row["item_id"], row["domain"], row["text"],
+            json.dumps(row["payload"], ensure_ascii=False), sqlite3.Binary(row["vec"]),
+            float(row["reward"]), row["updated_at"],
+        ))
+        return cursor.rowcount == 1
 
-    def _store_records(self, records):
+    def _store_records(self, records, *, skip_unchanged=False):
         # Preserve feedback on repeated IDs, including two updates in one submitted batch.
+        changed = 0
         with self._lock, self._transaction(write=True):
             for row in records:
                 previous = self._get(row["item_id"])
@@ -212,8 +219,8 @@ class SharedVsaMemoryService:
                 if (isinstance(payload, dict) and "_midbrain" in payload
                         and isinstance(row["payload"], dict) and "_midbrain" not in row["payload"]):
                     row["payload"] = {**row["payload"], "_midbrain": payload["_midbrain"]}
-                self._persist_items([row])
-            return self._count()
+                changed += self._persist_item(row, skip_unchanged=skip_unchanged)
+            return self._count(), changed
 
     def store(
         self,
@@ -240,7 +247,7 @@ class SharedVsaMemoryService:
             "reward": float(reward),
             "updated_at": now_iso,
         }
-        total = self._store_records([rec])
+        total, _ = self._store_records([rec])
         caps = v12_native_caps()
         return {
             "ok": True,
@@ -252,7 +259,7 @@ class SharedVsaMemoryService:
             "elapsed_ms": round((time.perf_counter() - t0) * 1000.0, 3),
         }
 
-    def store_batch(self, items: list[dict[str, Any]]) -> dict[str, Any]:
+    def store_batch(self, items: list[dict[str, Any]], *, skip_unchanged: bool = False) -> dict[str, Any]:
         t0 = time.perf_counter()
         now_iso = datetime.now(timezone.utc).isoformat()
         recs: list[dict[str, Any]] = []
@@ -275,11 +282,12 @@ class SharedVsaMemoryService:
                     "updated_at": now_iso,
                 }
             )
-        total = self._store_records(recs)
+        total, changed = self._store_records(recs, skip_unchanged=skip_unchanged)
         caps = v12_native_caps()
         return {
             "ok": True,
             "stored_count": len(recs),
+            "changed_count": changed,
             "total_items": total,
             "backend": "c11_avx2" if caps.get("vsa_hamming") else "python_fallback",
             "elapsed_ms": round((time.perf_counter() - t0) * 1000.0, 3),
@@ -426,11 +434,11 @@ class SharedVsaMemoryService:
                 items = iter(json.loads(raw)["items"])
                 del raw
             while batch := list(islice(items, 24)):
-                pulled += self.store_batch(batch)["stored_count"]
+                pulled += self.store_batch(batch, skip_unchanged=True)["stored_count"]
         if bidirectional:
             items = self.iter_export(domain=domain, limit=limit)
             while batch := list(islice(items, 24)):
-                body = json.dumps({"items": batch}, ensure_ascii=False).encode("utf-8")
+                body = json.dumps({"items": batch, "skip_unchanged": True}, ensure_ascii=False).encode("utf-8")
                 req = urllib.request.Request(base + "/api/vsa/store", data=body,
                                              headers={"Content-Type": "application/json"})
                 authorize(req)
@@ -499,11 +507,12 @@ class SharedVsaMemoryService:
                     "vsa_hex": raw.get("vsa_hex"),
                 }
             )
-        res = self.store_batch(clean_items)
+        res = self.store_batch(clean_items, skip_unchanged=True)
         return {
             "ok": True,
             "fetched": len(raw_items),
-            "stored_count": int(res.get("stored_count", 0)),
+            "stored_count": int(res["stored_count"]),
+            "changed_count": int(res["changed_count"]),
             "total_items": res["total_items"],
             "elapsed_ms": round((time.perf_counter() - t0) * 1000.0, 2),
         }
@@ -620,7 +629,7 @@ class SharedVsaMemoryService:
                 if not isinstance(mb, dict):
                     mb = {"uses": 0, "wins": 0, "ema_impact": 0.5}
                 rec["payload"] = {**pl, "_midbrain": {**mb, "immune_pinned": iid in pinned_ids}}
-                self._persist_items([rec])
+                self._persist_item(rec)
         return {"pinned_count": len(pinned_ids), "pin_cap": pin_cap, "total_items": total}
 
     def record_causal_feedback(
@@ -654,7 +663,7 @@ class SharedVsaMemoryService:
                 }
                 rec["payload"] = pl
                 rec["reward"] = round(max(0.2, min(5.0, float(rec.get("reward") or 1.0) + (0.3 if success else -0.15))), 3)
-                self._persist_items([rec])
+                self._persist_item(rec)
                 updated += 1
             vault_info = self._refresh_immune_vault_locked()
         return {"ok": True, "updated_count": updated, **vault_info}

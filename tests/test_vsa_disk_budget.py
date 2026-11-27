@@ -105,6 +105,57 @@ class DiskLedgerTests(unittest.TestCase):
         self.assertEqual(payload["_midbrain"]["uses"], 2)
         self.assertTrue(payload["_midbrain"]["immune_pinned"])
 
+    def test_replay_keeps_dates_and_changes_only_the_rows_with_new_content(self):
+        memory = SharedVsaMemoryService()
+        self.addCleanup(memory.close)
+        for service in (memory, self.service()):
+            with self.subTest(persistent=service.db_path is not None):
+                item = {"item_id": "bearing", "text": "rotor", "domain": "cad",
+                        "vsa_hex": self.vec.hex(), "reward": 1.5, "payload": {"tags": [True]}}
+                other = {**item, "item_id": "shaft"}
+                first = service.store_batch([item, other, {"item_id": ""}], skip_unchanged=True)
+                self.assertEqual((first["stored_count"], first["changed_count"]), (2, 2))
+                original = service.export_items()
+                if service.db_path is not None:
+                    service._conn.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchall()
+                    writes = service._conn.total_changes
+                repeated = service.store_batch([item, other, item], skip_unchanged=True)
+                self.assertEqual((repeated["stored_count"], repeated["changed_count"]), (3, 0))
+                self.assertEqual(service.export_items(), original)
+                if service.db_path is not None:
+                    self.assertEqual(service._conn.total_changes, writes)
+                    self.assertEqual(Path(str(service.db_path) + "-wal").stat().st_size, 0)
+
+                for field, value in (("payload", {"tags": [1]}), ("reward", 2.5),
+                                     ("domain", "drawing"), ("text", "rotor layout"),
+                                     ("vsa_hex", bytes(reversed(self.vec)).hex())):
+                    item = {**item, field: value}
+                    receipt = service.store_batch([item, other, item], skip_unchanged=True)
+                    self.assertEqual((receipt["stored_count"], receipt["changed_count"]), (3, 1))
+                changed, untouched = service.export_items()
+                self.assertIs(type(changed["payload"]["tags"][0]), int)
+                self.assertEqual(changed["vsa_hex"], item["vsa_hex"])
+                self.assertEqual(untouched, original[1])
+
+                # Default user-initiated writes retain their refresh semantics.
+                self.assertEqual(service.store_batch([other])["changed_count"], 1)
+
+    def test_replay_preserves_feedback_after_reopening_and_rolls_back_a_failed_batch(self):
+        service = self.service()
+        row = {"item_id": "bracket", "text": "support", "payload": {"rev": 2}}
+        service.store_batch([row])
+        service.record_causal_feedback(["bracket"], success=True)
+        service.close()
+        service = self.service()
+        previous = service.export_items()[0]
+        row["reward"] = previous["reward"]
+        self.assertEqual(service.store_batch([row], skip_unchanged=True)["changed_count"], 0)
+        with self.assertRaises(TypeError):
+            service.store_batch([{**row, "text": "altered"}, {"item_id": "bad", "payload": object()}],
+                                skip_unchanged=True)
+        self.assertEqual(service.export_items(), [previous])
+        self.assertTrue(previous["payload"]["_midbrain"]["immune_pinned"])
+
     def test_memory_mode_preserves_the_same_ranking_and_pin_rules(self):
         memory = SharedVsaMemoryService()
         self.addCleanup(memory.close)

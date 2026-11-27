@@ -76,6 +76,12 @@ def exercise(root, file, snapshot):
             try:
                 urllib.request.urlopen = replay
                 for temperature in ("cold", "warm"):
+                    # Each private SQLite file has a single connection. Measure the
+                    # WAL produced by this pass without counting previous frames.
+                    checkpoint = ledger._conn.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchone()
+                    if checkpoint != (0, 0, 0):
+                        raise RuntimeError(f"incomplete private WAL checkpoint: {checkpoint}")
+                    changes_before = ledger._conn.total_changes
                     before_cpu = time.process_time()
                     before_wall = time.perf_counter()
                     result = ledger.ingest_tquota_thought_briefs()
@@ -84,9 +90,18 @@ def exercise(root, file, snapshot):
                     after = memory()
                     if not result.get("ok") or not result["stored_count"]:
                         raise RuntimeError("no valid replayed items")
+                    wal = Path(str(ledger.db_path) + "-wal")
+                    stamp_digest = hashlib.sha256()
+                    for (stamp,) in ledger._conn.execute("SELECT updated_at FROM vsa_items ORDER BY item_id"):
+                        stamp_digest.update(stamp.encode("utf-8") + b"\n")
+                    writes = ledger._conn.total_changes - changes_before
+                    if "changed_count" in result and result["changed_count"] != writes:
+                        raise RuntimeError("ingest counter differs from SQLite changes")
                     cache = getattr(module, "_expand_token", module._token_hypervector).cache_info()
                     passes.append({"pass": temperature, "fetched": result["fetched"],
-                                   "stored": result["stored_count"], "wall_ms": round(wall_ms, 2),
+                                   "stored": result["stored_count"], "sqlite_changes": writes,
+                                   "wal_bytes": wal.stat().st_size if wal.exists() else 0,
+                                   "timestamps_sha256": stamp_digest.hexdigest(), "wall_ms": round(wall_ms, 2),
                                    "cpu_ms": round(cpu_ms, 2), "after_kib": after,
                                    "cache_entries": cache.currsize, **digest_rows(ledger._conn)})
             finally:

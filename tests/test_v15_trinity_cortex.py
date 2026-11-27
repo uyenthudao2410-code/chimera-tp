@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+from contextlib import closing, ExitStack
 import gzip
 import http.server
 import json
 from pathlib import Path
+import sqlite3
 import tempfile
 import threading
 import time
@@ -355,6 +357,19 @@ class TestV15TrinityCortex(unittest.TestCase):
                 self.assertTrue(sync_res["ok"])
                 self.assertEqual(sync_res["local_total"], sync_res["peer_total"])
                 self.assertEqual(sync_res["local_total"], 2)
+
+                # A second two-way sync acknowledges both peers' rows without
+                # refreshing their timestamps or appending to either private WAL.
+                snapshots = [d.vsa_memory.export_items() for d in (d1, d2)]
+                with ExitStack() as stack:
+                    readers = [stack.enter_context(closing(sqlite3.connect(d.ops_dir / "vsa_memory.db")))
+                               for d in (d1, d2)]
+                    versions = [db.execute("PRAGMA data_version").fetchone() for db in readers]
+                    with urllib.request.urlopen(sync_req, timeout=4.0) as response:
+                        repeat = json.load(response)
+                    self.assertEqual((repeat["pulled"], repeat["pushed"]), (2, 2))
+                    self.assertEqual([db.execute("PRAGMA data_version").fetchone() for db in readers], versions)
+                self.assertEqual([d.vsa_memory.export_items() for d in (d1, d2)], snapshots)
             finally:
                 d2.close()
                 d1.close()
