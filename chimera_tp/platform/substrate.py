@@ -41,9 +41,20 @@ from .flight_recorder import DisklessSecretVault, FlightRecorderBlackBox
 from .folded_cavity_rlnc import CristaeFoldedCavityRLNC
 from .ghost_bubble import GhostBubbleEngine
 from .hybrid_search import HybridPlatformSearch
+from .ct_scanner import (
+    ModelDnaRegistry,
+    anthropic_to_openai_response,
+    audit_instruction_durability,
+    classify_http_fault,
+    classify_response,
+    ct_scan,
+    openai_to_anthropic_request,
+    sanitize_prompt,
+)
 from .immortal_jobs import ImmortalJobEngine
 from .peer_guard import fast_egress_fuse
 from .precog_conduit import PrecognitionStreamTap, PrecogWarmupPool, TurnTimeMachine
+from .spore import QuarantineGuard, SporeAutopoieticWatcher, SporeEngine
 from .pulse_bus import PulseBus
 from .browser_grid import SharedBrowserGrid
 from .hyper_desk import HyperDeskEngine
@@ -199,6 +210,17 @@ class PlatformSubstrate:
         self._turn_tm = TurnTimeMachine(
             state_dir=(Path(daemon.ops_dir) / "timemachine") if self.ephemeral else None,
         )
+        self._dna = ModelDnaRegistry(
+            path=(Path(daemon.ops_dir) / "model_dna.json") if self.ephemeral else None,
+        )
+        self._spore = SporeEngine(
+            chimera_dir=(Path(daemon.ops_dir) / "chimera_spore_home") if self.ephemeral else None,
+            ops_dir=Path(daemon.ops_dir),
+        )
+        self._spore_watcher = SporeAutopoieticWatcher(
+            self._spore,
+            auto_discover_defaults=(not self.ephemeral),
+        )
         self._trim_tick: int = 0
         self._pulse_beat: int = 0
         self._unify_check_ts: float = 0.0
@@ -207,6 +229,7 @@ class PlatformSubstrate:
         self._pulse_cache_ts: float = 0.0
         self._pulse_cache_val: dict[str, Any] | None = None
         self._agent_bus: Any = None
+        self._prometheus: Any = None
 
         self._cart_cfg_path = Path(daemon.ops_dir) / "cartridges.json"
         self._cartridge_enabled: dict[str, bool] = {
@@ -227,9 +250,24 @@ class PlatformSubstrate:
             "omega_entity": True,
             "agent_hyper_bus": True,
             "bios": True,
+            "prometheus": True,
         }
         self._load_cartridge_config()
         self._beacon_paths: list[Path] = []
+
+    @property
+    def prometheus(self) -> Any:
+        if self._prometheus is None:
+            from .prometheus import ChimeraPrometheusCore, get_prometheus_core
+
+            if self.ephemeral:
+                self._prometheus = ChimeraPrometheusCore(
+                    data_dir=Path(self.daemon.ops_dir) / "prometheus",
+                    ephemeral=True,
+                )
+            else:
+                self._prometheus = get_prometheus_core()
+        return self._prometheus
 
     @property
     def agent_bus(self) -> Any:
@@ -297,6 +335,18 @@ class PlatformSubstrate:
         zw = get_zero_weight_status()
         ram_mb = float(zw.get("daemon_ram_mb", 0.0))
         self._trim_memory_if_needed(ram_mb)
+        if not self.ephemeral:
+            try:
+                coroner_cb = None
+                if self._agent_bus is not None and hasattr(self._agent_bus, "symbiont"):
+                    coroner_cb = lambda: self._agent_bus.symbiont.coroner.scan(auto_seed_immune=True)
+                self._spore_watcher.tick_if_due(
+                    coroner_fn=coroner_cb,
+                    node_name=str(self.daemon.config.node_name),
+                    pulse_fn=lambda topic, payload: self.pulse.publish(topic, payload, app="spore-watcher", relay=False),
+                )
+            except Exception:
+                pass
         eg = self.egress.stats()
         return {
             "ram_mb": ram_mb,
@@ -595,6 +645,19 @@ class PlatformSubstrate:
                 "lazy_loaded": self._bios is None,
                 "organs_count": 10,
                 "description": "CHIMERA-BIOS 10-organ living physiology, immunity, cognition & Open Ecosystem Soul (0 B boot RSS)",
+            },
+            "prometheus": {
+                "status": (
+                    ("active" if self._prometheus is not None else "lazy_ready")
+                    if self._cartridge_enabled.get("prometheus", True)
+                    else "disabled"
+                ),
+                "endpoint": f"{anchor}/v1/prometheus/status",
+                "oracle_endpoint": f"{anchor}/v1/prometheus/oracle/probe",
+                "epoch_endpoint": f"{anchor}/v1/prometheus/epoch/status",
+                "ghost_endpoint": f"{anchor}/v1/prometheus/ghost/status",
+                "lazy_loaded": self._prometheus is None,
+                "description": "CHIMERA-PROMETHEUS Empirical Axioms, Sovereign Epoch Arbiter, Galileo Science, PHANTOM-RPC Oracle, Ghost Pool & Native Micronucleus (0 B boot RSS)",
             },
         }
         for cname, cinfo in cartridges.items():
@@ -957,6 +1020,21 @@ class PlatformSubstrate:
                 "checkpoints": self._turn_tm.list_checkpoints(limit=lim),
             }
 
+        if path == "/v1/spore/status":
+            st_sp = self._spore.status()
+            st_sp["watch"] = self._spore_watcher.status()
+            return 200, st_sp
+
+        if path == "/v1/spore/watch":
+            return 200, self._spore_watcher.status()
+
+        if path == "/v1/dna/list":
+            return 200, {"ok": True, "models": self._dna.list_all()}
+
+        if path == "/v1/dna/rank":
+            tc = str((qs.get("task_class") or ["general"])[0] or "general")
+            return 200, {"ok": True, "task_class": tc, "ranked": self._dna.rank_models(task_class=tc)}
+
         if path == "/v1/vgpu/workers/list":
             return 200, {"ok": True, "workers": self.vgpu.list_remote_workers()}
 
@@ -1235,6 +1313,34 @@ class PlatformSubstrate:
                 "prime", repo=repo_q, cid=cid_q, include_raw_recall=inc_raw
             )
 
+        # --- CHIMERA-PROMETHEUS (Waves 1-3 Empirical Evolution) GET routes ---
+        if path == "/v1/prometheus" or path.startswith("/v1/prometheus/"):
+            pr = self.prometheus
+            if path in ("/v1/prometheus", "/v1/prometheus/status"):
+                return 200, pr.status()
+            if path == "/v1/prometheus/axioms":
+                st_f = (qs.get("status") or [None])[0]
+                return 200, pr.dispatch("axioms", filter_status=st_f)
+            if path == "/v1/prometheus/epoch/status":
+                return 200, pr.dispatch("epoch_status")
+            if path == "/v1/prometheus/epoch/worktrees":
+                repo_q = (qs.get("repo") or ["."])[0]
+                return 200, pr.dispatch("worktrees", repo=repo_q, execute_prune=False)
+            if path == "/v1/prometheus/galileo/status":
+                return 200, pr.dispatch("galileo_status")
+            if path == "/v1/prometheus/oracle/probe":
+                repo_q = (qs.get("repo_dir") or [None])[0]
+                rel_q = (qs.get("release_dir") or [None])[0]
+                return 200, pr.dispatch("oracle_probe", repo_dir=repo_q, release_dir=rel_q)
+            if path == "/v1/prometheus/oracle/brief":
+                repo_q = (qs.get("repo_dir") or [None])[0]
+                return 200, pr.dispatch("morning_brief", repo_dir=repo_q)
+            if path == "/v1/prometheus/ghost/status":
+                return 200, pr.dispatch("ghost_status")
+            if path == "/v1/prometheus/spine/status":
+                return 200, pr.dispatch("spine_status")
+            return 404, {"ok": False, "error": f"unknown_prometheus_route:{path}"}
+
         # --- v20 CHIMERA-COSMOS GET routes ---
         if path == "/v1/cosmos/status":
             return 200, self.cosmos.status()
@@ -1448,6 +1554,100 @@ class PlatformSubstrate:
                 return (200 if res.get("ok") else 409), res
             except ValueError as exc:
                 return 400, {"error": str(exc)}
+
+        if path in ("/v1/spore/distill", "/v1/spore/pack", "/v1/spore/hatch", "/v1/spore/engram", "/v1/spore/screen", "/v1/spore/watch"):
+            if path != "/v1/spore/screen" and client_ip not in ("127.0.0.1", "::1", "localhost"):
+                return 403, {"error": "loopback_only"}
+            try:
+                if path == "/v1/spore/watch":
+                    w_act = str(body.get("action") or "status").lower()
+                    if w_act in ("tick", "sync", "sync_now"):
+                        coroner_cb = None
+                        if bool(body.get("run_coroner", True)) and self._agent_bus is not None and hasattr(self._agent_bus, "symbiont"):
+                            coroner_cb = lambda: self._agent_bus.symbiont.coroner.scan(auto_seed_immune=True)
+                        return 200, self._spore_watcher.tick_if_due(
+                            force=bool(body.get("force", True)),
+                            coroner_fn=coroner_cb,
+                            node_name=str(self.daemon.config.node_name),
+                            pulse_fn=lambda topic, payload: self.pulse.publish(topic, payload, app="spore-watcher", relay=False),
+                        )
+                    if w_act == "add_source":
+                        res_a = self._spore_watcher.add_source(str(body.get("path") or ""), kind=str(body.get("kind") or "lesson"))
+                        return (200 if res_a.get("ok") else 400), res_a
+                    if w_act == "remove_source":
+                        return 200, self._spore_watcher.remove_source(str(body.get("path") or ""))
+                    if w_act in ("enable", "disable", "configure"):
+                        return 200, self._spore_watcher.configure(
+                            enabled=(True if w_act == "enable" else (False if w_act == "disable" else (body.get("enabled") if "enabled" in body else None))),
+                            interval_s=(float(body["interval_s"]) if body.get("interval_s") is not None else None),
+                            auto_pack=(bool(body["auto_pack"]) if "auto_pack" in body else None),
+                            auto_coroner=(bool(body["auto_coroner"]) if "auto_coroner" in body else None),
+                        )
+                    return 200, self._spore_watcher.status()
+                if path == "/v1/spore/screen":
+                    qg = QuarantineGuard.from_policy_file(body["policy_file"]) if body.get("policy_file") else self._spore.quarantine
+                    return 200, qg.screen_text(str(body.get("text") or ""), source_path=str(body.get("source_path") or ""))
+                if path == "/v1/spore/distill":
+                    return 200, self._spore.distill_to_local(
+                        extra_lessons_paths=list(body.get("lessons") or []),
+                        policy_file=(str(body["policy_file"]) if body.get("policy_file") else None),
+                    )
+                if path == "/v1/spore/pack":
+                    sp = Path(str(body["path"])) if body.get("path") else (self._spore.chimera_dir / "chimera.spore")
+                    return 200, self._spore.pack(
+                        sp,
+                        extra_lessons_paths=list(body.get("lessons") or []),
+                        policy_file=(str(body["policy_file"]) if body.get("policy_file") else None),
+                        passphrase=str(body.get("passphrase") or ""),
+                        node_name=str(self.daemon.config.node_name),
+                    )
+                if path == "/v1/spore/hatch":
+                    sp = Path(str(body["path"])) if body.get("path") else (self._spore.chimera_dir / "chimera.spore")
+                    res = self._spore.hatch(
+                        sp,
+                        target_chimera_dir=(Path(str(body["target_dir"])) if body.get("target_dir") else None),
+                        passphrase=str(body.get("passphrase") or ""),
+                        dry_run=bool(body.get("dry_run", False)),
+                    )
+                    if res.get("ok") and not body.get("dry_run") and not body.get("target_dir"):
+                        self._dna._load()
+                    return 200, res
+                return 200, self._spore.record_engram(
+                    str(body.get("title") or "engram"),
+                    str(body.get("body") or body.get("text") or ""),
+                    kind=str(body.get("kind") or "lesson"),
+                    tags=list(body.get("tags") or []),
+                    proof_receipt=(body.get("proof_receipt") if isinstance(body.get("proof_receipt"), dict) else None),
+                )
+            except (ValueError, PermissionError, OSError) as exc:
+                return 400, {"error": str(exc)}
+
+        if path in ("/v1/dna/scan", "/v1/dna/classify", "/v1/dna/sanitize", "/v1/dna/durability"):
+            if path == "/v1/dna/classify":
+                return 200, classify_response(str(body.get("text") or ""), marker=str(body.get("marker") or ""))
+            if path == "/v1/dna/sanitize":
+                return 200, sanitize_prompt(str(body.get("text") or ""))
+            if path == "/v1/dna/durability":
+                return 200, audit_instruction_durability(
+                    str(body.get("path") or ""),
+                    measured_lift=(float(body["measured_lift"]) if body.get("measured_lift") is not None else None),
+                    pinned_sha256=str(body.get("pinned_sha256") or ""),
+                )
+            if client_ip not in ("127.0.0.1", "::1", "localhost"):
+                return 403, {"error": "loopback_only"}
+            base_u = str(body.get("base_url") or "").strip()
+            mdl = str(body.get("model") or "").strip()
+            if not base_u or not mdl:
+                return 400, {"error": "missing_base_url_or_model"}
+            dna = ct_scan(
+                base_u,
+                mdl,
+                api_key=str(body.get("api_key") or ""),
+                protocol=str(body.get("protocol") or "openai"),
+                mode=str(body.get("mode") or "quick"),
+                timeout_s=float(body.get("timeout_s") or 25.0),
+            )
+            return 200, self._dna.upsert(dna)
 
         if path in ("/v1/secrets/set", "/v1/secrets/get"):
             if client_ip not in ("127.0.0.1", "::1", "localhost"):
@@ -2410,6 +2610,33 @@ class PlatformSubstrate:
                 return 404, {"ok": False, "error": f"unknown_mnemosyne_route:{path}"}
             return (200 if res_m.get("ok") else 400), res_m
 
+        # --- CHIMERA-PROMETHEUS POST routes ---
+        if path.startswith("/v1/prometheus/"):
+            pr = self.prometheus
+            route_map = {
+                "/v1/prometheus/axioms/check": "axiom_check",
+                "/v1/prometheus/axioms/record": "axiom_record",
+                "/v1/prometheus/epoch/seal": "epoch_seal",
+                "/v1/prometheus/epoch/verify": "epoch_verify",
+                "/v1/prometheus/epoch/soak/acquire": "soak_acquire",
+                "/v1/prometheus/epoch/soak/release": "soak_release",
+                "/v1/prometheus/epoch/promote": "epoch_promote",
+                "/v1/prometheus/epoch/worktrees": "worktrees",
+                "/v1/prometheus/oracle/probe": "oracle_probe",
+                "/v1/prometheus/oracle/phantom-probe": "phantom_probe",
+                "/v1/prometheus/oracle/speculate": "oracle_speculate",
+                "/v1/prometheus/ghost/read": "ghost_read",
+                "/v1/prometheus/ghost/ingest": "ghost_ingest",
+            }
+            if path == "/v1/prometheus/dispatch":
+                act_p = str(body.get("action") or "status").strip().lower()
+                res_p = pr.dispatch(act_p, **{k: v for k, v in body.items() if k != "action"})
+            elif path in route_map:
+                res_p = pr.dispatch(route_map[path], **body)
+            else:
+                return 404, {"ok": False, "error": f"unknown_prometheus_route:{path}"}
+            return (200 if res_p.get("ok") else 400), res_p
+
         # --- v20 CHIMERA-COSMOS POST routes ---
         if path.startswith("/v1/cosmos/"):
             if not self._cartridge_enabled.get("cosmos_entity", True):
@@ -3156,7 +3383,16 @@ class PlatformSubstrate:
             except Exception:
                 pass
 
-        # 3. Forward raw_body verbatim to the highest-priority healthy OpenAI gateway
+        # 3. Forward raw_body verbatim (or via Universal Protocol Shim + Self-Healing Conduit Shield)
+        t_req_start = time.perf_counter()
+        self_heal = str(headers.get("X-Chimera-Self-Heal") or "1").strip() not in ("0", "false", "no")
+        dna_entry = self._dna.get(model) if model else None
+        upstream_proto = str(
+            headers.get("X-Chimera-Upstream-Protocol")
+            or (dna_entry.get("protocol") if isinstance(dna_entry, dict) else "")
+            or "openai"
+        ).strip().lower()
+
         gateways = self._discover_openai_gateways(headers, model=model)
         fwd_headers: dict[str, str] = {
             "Content-Type": str(headers.get("Content-Type") or "application/json"),
@@ -3175,16 +3411,30 @@ class PlatformSubstrate:
             if val:
                 fwd_headers[passthru] = str(val)
 
+        send_body = raw_body
+        proto_shimmed = False
+        if upstream_proto == "anthropic" and "/chat/completions" in sub_ep:
+            anth_obj = openai_to_anthropic_request(body)
+            anth_obj.pop("stream", None)
+            send_body = json.dumps(anth_obj, ensure_ascii=False).encode("utf-8")
+            fwd_headers["Content-Length"] = str(len(send_body))
+            fwd_headers["Accept"] = "application/json"
+            fwd_headers.setdefault("anthropic-version", "2023-06-01")
+            if "X-Api-Key" in fwd_headers and "x-api-key" not in fwd_headers:
+                fwd_headers["x-api-key"] = fwd_headers["X-Api-Key"]
+            proto_shimmed = True
+
         conn: http.client.HTTPConnection | None = None
         resp: http.client.HTTPResponse | None = None
         chosen_base = ""
+        self_healed_tag = ""
         last_err = "no_gateways"
-        for base_url, extra_hdrs in gateways:
+        for gw_idx, (base_url, extra_hdrs) in enumerate(gateways):
             u = urllib.parse.urlsplit(base_url)
             u_host = u.hostname or "127.0.0.1"
             u_port = int(u.port or (443 if u.scheme == "https" else 80))
             u_prefix = u.path.rstrip("/")
-            target_path = f"{u_prefix}{sub_ep}"
+            target_path = f"{u_prefix}/v1/messages" if proto_shimmed else f"{u_prefix}{sub_ep}"
             c_try: http.client.HTTPConnection | None = None
             try:
                 if u.scheme == "https":
@@ -3198,8 +3448,67 @@ class PlatformSubstrate:
                     except OSError:
                         pass
                 req_hdrs = {**fwd_headers, **extra_hdrs}
-                c_try.request("POST", target_path, body=raw_body, headers=req_hdrs)
-                resp = c_try.getresponse()
+                c_try.request("POST", target_path, body=send_body, headers=req_hdrs)
+                r_try = c_try.getresponse()
+
+                # Self-Heal #1: Automatic failover across gateways on 502/503 maintenance
+                if self_heal and r_try.status in (502, 503) and gw_idx < len(gateways) - 1:
+                    _err_preview = r_try.read(512).decode("utf-8", errors="ignore")
+                    c_try.close()
+                    if model:
+                        self._dna.record_runtime_outcome(model, ok=False, fault_class=classify_http_fault(r_try.status, _err_preview))
+                    self_healed_tag = "gateway_failover"
+                    last_err = f"{base_url}: HTTP {r_try.status}"
+                    continue
+
+                # Self-Heal #2: On HTTP 400 retry_blocked, jitter temperature -0.04 and retry once!
+                if self_heal and r_try.status == 400 and (not proto_shimmed):
+                    err_bytes = r_try.read()
+                    err_txt = err_bytes.decode("utf-8", errors="ignore")
+                    if classify_http_fault(400, err_txt) == "retry_blocked":
+                        c_try.close()
+                        if model:
+                            self._dna.record_runtime_outcome(model, ok=False, fault_class="retry_blocked")
+                        try:
+                            j_retry = dict(body)
+                            cur_t = float(j_retry.get("temperature") if j_retry.get("temperature") is not None else 0.7)
+                            j_retry["temperature"] = round(max(0.05, cur_t - 0.04), 3)
+                            rb_jitter = json.dumps(j_retry, ensure_ascii=False).encode("utf-8")
+                            c_try = (
+                                http.client.HTTPSConnection(u_host, u_port, timeout=300.0)
+                                if u.scheme == "https"
+                                else http.client.HTTPConnection(u_host, u_port, timeout=300.0)
+                            )
+                            c_try.connect()
+                            if c_try.sock is not None:
+                                try:
+                                    c_try.sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+                                except OSError:
+                                    pass
+                            j_hdrs = {**req_hdrs, "Content-Length": str(len(rb_jitter))}
+                            c_try.request("POST", target_path, body=rb_jitter, headers=j_hdrs)
+                            r_try = c_try.getresponse()
+                            self_healed_tag = "retry_jitter"
+                        except Exception:
+                            raise
+                    else:
+                        # Replay exact 400 error body back to client cleanly
+                        c_try.close()
+                        handler.send_response(400)
+                        handler.send_header("Content-Type", str(r_try.getheader("Content-Type") or "application/json"))
+                        handler.send_header("Content-Length", str(len(err_bytes)))
+                        handler.send_header("X-Chimera-Conduit", "hydra-json")
+                        handler.send_header("X-Chimera-Upstream", base_url)
+                        handler.send_header("X-Chimera-Turn-Id", turn_id)
+                        handler.send_header("Connection", "close")
+                        handler.end_headers()
+                        handler.wfile.write(err_bytes)
+                        handler.wfile.flush()
+                        if model:
+                            self._dna.record_runtime_outcome(model, ok=False, fault_class=classify_http_fault(400, err_txt))
+                        return True
+
+                resp = r_try
                 conn = c_try
                 chosen_base = base_url
                 break
@@ -3238,21 +3547,48 @@ class PlatformSubstrate:
                     conn.close()
                 except Exception:
                     pass
+            fault_detected = classify_http_fault(resp.status, body_out.decode("utf-8", errors="ignore"))
             if resp.status == 200 and "json" in ctype.lower():
                 try:
                     jobj = json.loads(body_out.decode("utf-8"))
                     if isinstance(jobj, dict):
+                        if proto_shimmed:
+                            jobj = anthropic_to_openai_response(jobj, model=model)
                         jobj.setdefault("chimera_relay_via", f"{chosen_base}{sub_ep}")
+                        # Detect silent fake-empty 200 antibody!
+                        chs = jobj.get("choices")
+                        if isinstance(chs, list) and chs and isinstance(chs[0], dict):
+                            msg = chs[0].get("message") or {}
+                            if isinstance(msg, dict) and not (msg.get("content") or msg.get("reasoning_content") or msg.get("tool_calls")):
+                                fault_detected = "fake_empty_200"
+                                try:
+                                    self.blackbox.record_forensic(
+                                        "model_fault",
+                                        {"turn_id": turn_id, "model": model, "fault": "fake_empty_200", "upstream": chosen_base},
+                                    )
+                                except Exception:
+                                    pass
                         body_out = json.dumps(jobj, ensure_ascii=False).encode("utf-8")
                 except Exception:
                     pass
+            if model:
+                self._dna.record_runtime_outcome(
+                    model,
+                    ok=(resp.status == 200 and fault_detected == "ok"),
+                    latency_ms=(time.perf_counter() - t_req_start) * 1000.0,
+                    fault_class=("" if fault_detected == "ok" else fault_detected),
+                )
             handler.send_response(resp.status)
-            handler.send_header("Content-Type", ctype)
+            handler.send_header("Content-Type", "application/json" if proto_shimmed else ctype)
             handler.send_header("Content-Length", str(len(body_out)))
             handler.send_header("X-Chimera-Conduit", "hydra-json")
             handler.send_header("X-Chimera-Upstream", chosen_base)
             handler.send_header("X-Chimera-Turn-Id", turn_id)
             handler.send_header("X-Chimera-Prefix-Clean", "1" if prefix_clean else "0")
+            if proto_shimmed:
+                handler.send_header("X-Chimera-Protocol-Shim", "anthropic->openai")
+            if self_healed_tag:
+                handler.send_header("X-Chimera-Self-Healed", self_healed_tag)
             if prefix_root:
                 handler.send_header("X-Chimera-Prefix-Root", prefix_root)
             if sticky_key:
@@ -3301,6 +3637,8 @@ class PlatformSubstrate:
             handler.send_header("X-Chimera-Prefix-Root", prefix_root)
         if sticky_key:
             handler.send_header("X-Chimera-Prefix-Sticky", sticky_key)
+        if self_healed_tag:
+            handler.send_header("X-Chimera-Self-Healed", self_healed_tag)
         handler.end_headers()
         handler.wfile.flush()
 
@@ -3490,6 +3828,13 @@ class PlatformSubstrate:
                 self._openai_conduit_stats["sse_flushes_out"] += flushes_out
                 self._openai_conduit_stats["bytes_streamed"] += bytes_out
             turn_status = "detached" if detached_flag[0] else ("completed" if saw_done or not client_gone.is_set() else "aborted")
+            if model:
+                self._dna.record_runtime_outcome(
+                    model,
+                    ok=(bytes_out > 0 and not read_err),
+                    latency_ms=(time.perf_counter() - t_req_start) * 1000.0,
+                    fault_class=("" if (bytes_out > 0 and not read_err) else ("fake_empty_200" if not read_err else "network")),
+                )
             self._record_turn_state(
                 turn_id,
                 {

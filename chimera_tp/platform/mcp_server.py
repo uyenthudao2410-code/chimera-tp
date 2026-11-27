@@ -920,6 +920,48 @@ _TOOLS = [
             "required": ["action"],
         },
     },
+    {
+        "name": "chimera_spore",
+        "description": "Portable Knowledge Spore & Anti-Poisoning Quarantine: distill 6 verified antibody groups, pack/hatch/inspect chimera.spore (<15 MB), screen untrusted prompts, or record verified green-proof engrams (0 daemon RSS).",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "action": {"type": "string", "enum": ["status", "distill", "pack", "hatch", "inspect", "engram", "screen", "antibodies", "watch", "sync_now", "add_source", "remove_source"]},
+                "path": {"type": "string"},
+                "target_dir": {"type": "string"},
+                "passphrase": {"type": "string"},
+                "policy_file": {"type": "string"},
+                "title": {"type": "string"},
+                "body": {"type": "string"},
+                "text": {"type": "string"},
+                "source_path": {"type": "string"},
+                "kind": {"type": "string", "default": "lesson"},
+                "dry_run": {"type": "boolean", "default": False},
+            },
+            "required": ["action"],
+        },
+    },
+    {
+        "name": "chimera_ct_dna",
+        "description": "Blind-CT-Scanner & ModelDNA Router: 30s probe of any unknown vendor model (OpenAI/Anthropic), UCB1 capability ranking, 6-class refusal/template/pivot classifier, 6-trigger prompt hygiene sanitizer, and D1-D6 durability audit (0 daemon RSS).",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "action": {"type": "string", "enum": ["scan", "list", "rank", "classify", "sanitize", "durability"]},
+                "base_url": {"type": "string"},
+                "model": {"type": "string"},
+                "api_key": {"type": "string"},
+                "protocol": {"type": "string", "enum": ["openai", "anthropic"], "default": "openai"},
+                "mode": {"type": "string", "enum": ["quick", "deep"], "default": "quick"},
+                "task_class": {"type": "string", "enum": ["general", "re_system", "fast_draft"], "default": "general"},
+                "text": {"type": "string"},
+                "marker": {"type": "string"},
+                "path": {"type": "string"},
+                "measured_lift": {"type": "number"},
+            },
+            "required": ["action"],
+        },
+    },
 ]
 
 
@@ -1203,6 +1245,89 @@ def handle_mcp_request(msg: dict[str, Any], anchor_url: str | None = None) -> di
                             timeout_s=20,
                         )
                 out = res
+            elif tname == "chimera_spore":
+                from pathlib import Path as _Path
+                from .spore import CANONICAL_ANTIBODIES, QuarantineGuard, SporeAutopoieticWatcher, SporeEngine
+
+                act = str(args.get("action") or "status").lower()
+                eng = SporeEngine()
+                sp_path = _Path(str(args["path"])) if args.get("path") else (eng.chimera_dir / "chimera.spore")
+                if act == "status":
+                    out = eng.status()
+                    out["watch"] = SporeAutopoieticWatcher(eng).status()
+                elif act == "watch":
+                    out = client.spore_watch()
+                elif act == "sync_now":
+                    out = client.spore_sync_now(force=True)
+                elif act == "add_source":
+                    out = SporeAutopoieticWatcher(eng).add_source(str(args.get("path") or ""), kind=str(args.get("kind") or "lesson"))
+                elif act == "remove_source":
+                    out = SporeAutopoieticWatcher(eng).remove_source(str(args.get("path") or ""))
+                elif act == "antibodies":
+                    out = {"ok": True, "count": len(CANONICAL_ANTIBODIES), "antibodies": list(CANONICAL_ANTIBODIES)}
+                elif act == "distill":
+                    out = eng.distill_to_local(policy_file=(str(args["policy_file"]) if args.get("policy_file") else None))
+                elif act == "pack":
+                    out = eng.pack(
+                        sp_path,
+                        policy_file=(str(args["policy_file"]) if args.get("policy_file") else None),
+                        passphrase=str(args.get("passphrase") or ""),
+                    )
+                elif act == "inspect":
+                    out = eng.inspect(sp_path, passphrase=str(args.get("passphrase") or ""))
+                elif act == "hatch":
+                    out = eng.hatch(
+                        sp_path,
+                        target_chimera_dir=(_Path(str(args["target_dir"])) if args.get("target_dir") else None),
+                        passphrase=str(args.get("passphrase") or ""),
+                        dry_run=bool(args.get("dry_run", False)),
+                    )
+                elif act == "engram":
+                    out = eng.record_engram(
+                        str(args.get("title") or "engram"),
+                        str(args.get("body") or args.get("text") or ""),
+                        kind=str(args.get("kind") or "lesson"),
+                    )
+                elif act == "screen":
+                    qg = QuarantineGuard.from_policy_file(args["policy_file"]) if args.get("policy_file") else QuarantineGuard()
+                    out = qg.screen_text(str(args.get("text") or ""), source_path=str(args.get("source_path") or ""))
+                else:
+                    out = {"ok": False, "error": f"unknown_spore_action:{act}"}
+            elif tname == "chimera_ct_dna":
+                from .ct_scanner import (
+                    ModelDnaRegistry,
+                    audit_instruction_durability,
+                    classify_response,
+                    ct_scan,
+                    sanitize_prompt,
+                )
+
+                act = str(args.get("action") or "list").lower()
+                reg = ModelDnaRegistry()
+                if act == "list":
+                    out = {"ok": True, "models": reg.list_all()}
+                elif act == "rank":
+                    out = {"ok": True, "ranked": reg.rank_models(task_class=str(args.get("task_class") or "general"))}
+                elif act == "classify":
+                    out = classify_response(str(args.get("text") or ""), marker=str(args.get("marker") or ""))
+                elif act == "sanitize":
+                    out = sanitize_prompt(str(args.get("text") or ""))
+                elif act == "durability":
+                    out = audit_instruction_durability(
+                        str(args.get("path") or ""),
+                        measured_lift=(float(args["measured_lift"]) if args.get("measured_lift") is not None else None),
+                    )
+                elif act == "scan":
+                    dna = ct_scan(
+                        str(args.get("base_url") or ""),
+                        str(args.get("model") or ""),
+                        api_key=str(args.get("api_key") or ""),
+                        protocol=str(args.get("protocol") or "openai"),
+                        mode=str(args.get("mode") or "quick"),
+                    )
+                    out = reg.upsert(dna)
+                else:
+                    out = {"ok": False, "error": f"unknown_dna_action:{act}"}
             elif tname == "chimera_xray_batch":
                 out = client.xray_batch(
                     list(args.get("ops") or []),

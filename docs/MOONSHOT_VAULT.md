@@ -565,3 +565,29 @@ Các lệnh dưới nhóm `chimera-tp aether` hoạt động theo yêu cầu tr�
 5. **Vòng 5 — `ENTROPY ANNIHILATOR × NOCTURNAL RAW-ARENA` (`mnemosyne.py`):**
    - `EntropyCommitAuditor`: Kiểm toán nguyên nhân gốc Commit Charge `80.9%` (`office_print.py` → `office_pdl.warmup_pool()` giữ `6 × 388 MB = 2.33 GB` worker rảnh + `office_dashboard.py` `411 MB` + `OneDrive` `1.49 GB / 2,485s CPU`) và đề xuất thu hồi an toàn chuẩn Luật 2/6 (`auto_activated=False`).
    - `NocturnalRawArena`: Đấu trường A/B tự động chạy trên chính kho raw thật của Anh so sánh `RAW-RAG` vs `CAUSAL-RAW-RAG` vs `Lossy Summary (thought_briefs)` xuất thẻ đề xuất `Autophagy` chuẩn Luật 6.
+
+---
+
+## Phần XXIX — `CHIMERA-PROMETHEUS` (Tiến Hóa Thực Chứng 3 Wave Từ 11 MB Dữ Liệu Thực Chiến: Vi Hạt Nhân Native `<= 10 MiB`, Hiến Pháp Chống Nội Chiến Đa Phiên & Động Cơ Khoa Học Tự Trị — Đang Triển Khai 2026-11-27)
+
+*Đúc kết trực tiếp từ `104.321` dòng biên bản thực chiến (`1.205` lệnh shell, `2.680` gọi MCP, `719` phiên SSH, `10/10` cặp PresentMon AutoCAD, `4` cửa sổ soak 24h bị cắt bởi đổi PID ngoại lai, Linux RSS chạm đáy Python `54,625 / 55 MiB`, Precog `0 hit`, tách CUDA giảm `137,35 → 23,45 MiB`). Toàn bộ 6 đột phá gắn đúng vào **5 Cơ Quan Chuẩn** (`0 B` boot RSS thêm nhờ nạp trễ, tuân thủ tuyệt đối 7 Định Luật `CHIMERA-ONE`).*
+
+1. **Wave 1A — `CHIMERA-AXIOM` (`platform/prometheus.py` — Kho Tiên Đề Vật Lý Phản Chứng `PROVEN / REFUTED`):**
+   - Lưu chuỗi tiên đề thực nghiệm có chữ ký `SHA-256` & `hw_fingerprint` (`autocad_build_offload_svhome=REFUTED`, `svhome_allocator_swap_idle_rss=REFUTED`, `svhome_guest_cpu95_io8_cap=PROVEN`, `windows_cuda_out_of_process_worker=PROVEN`, `svhome_fts5_compact_cache_384k=PROVEN`, `webview_shared_profile_merge=PROVEN`, `sentinel_tail_block_reuse=PROVEN`, `vsa_batch_encoder_replay=PROVEN`).
+   - Phủ quyết tự động `< 1 ms` mọi hành động lặp lại vết xe đổ `REFUTED` khi `hw_fingerprint` chưa đổi; tiêm digest `<= 220` token tại `SessionStart` Birth-Primer.
+2. **Wave 1B — `CHIMERA-SOVEREIGN-EPOCH` (Hiến Pháp Chống Nội Chiến Đa Phiên):**
+   - `Immutable Release Store`: niêm phong `releases/<tree_sha256>` chỉ-đọc (`chmod a-w` / `FILE_ATTRIBUTE_READONLY`) kèm `.chimera_seal.json` kiểm toàn vẹn 0-drift.
+   - `Soak-Freeze Arbiter`: khóa PID đang chạy cửa sổ đo `660s`/`24h`; yêu cầu promote/restart từ phiên AI thứ 2 được chuyển hướng an toàn sang **Shadow Canary Port (`:9796`)** thay vì giết tiến trình chính.
+   - `Zero-Orphan Worktree Reaper`: kiểm toán và thu hồi an toàn các worktree thử nghiệm `V:\ChimeraTrials\*` đã hợp nhất (mặc định `dry_run=True` chuẩn Luật 6).
+3. **Wave 2A — `CHIMERA-GALILEO` (Động Cơ Thực Nghiệm Khoa Học Tự Trị & Resumable Soak):**
+   - Nén chu kỳ A/B + Soak thủ công (`3.885` tool calls) thành 1 đặc tả khai báo `experiment_run`: khóa `workload_sha256` / `collector_sha256` / `source_identity`, kiểm chứng bit-exact parity, **Resumable Soak Checkpoint** tự dừng lịch sự khi `peer_guard` báo bận rồi nối tiếp thay vì mất mẫu.
+4. **Wave 2B — `CHIMERA-ORACLE` (`PHANTOM-RPC` `8–25 ms` Thay `719` SSH + Bóng Ma Tiên Tri `svhome`):**
+   - Đọc `/proc`, `systemd`, `cgroup`, `sha256`, `release_seal` của `svhome` qua 1 lượt HTTP `PHANTOM-5MS` (`~15–25 ms` vs `1.267 ms` SSH → nhanh **`50×–80×`**).
+   - `Speculative Shadow Oracle`: chạy ngầm kiểm tra AST/syntax/secret/drift trên `svhome` trong trần `CPU <= 85% / IO <= 8 MiB/s` và xuất `Morning Brief <= 20 dòng`.
+5. **Wave 2C — `CHIMERA-GHOST-POOL` (`Shared Read-Ring` Kéo Precog Từ `0 Hit` Lên Sống Thật + `Socket-Activation` Zero-Idle):**
+   - Vòng đệm đọc chung `<= 16 MiB` nạp thụ động từ `PostToolUse` + `agent_probe` + `Tquota`, kiểm `mtime_ns` (`< 0.05 ms`).
+   - `SocketActivationProxy` (100% hợp tác, 0 `NtSuspendProcess` Luật 2): `0` worker lúc nghỉ (`0 MiB` Commit), tự đánh thức trên kết nối thật rồi tự ngủ lại sau idle.
+6. **Wave 3 — `CHIMERA-MICRONUCLEUS` (Vi Hạt Nhân Native Rust/C11 `<= 10 MiB` + Cơ Quan Python Bốc Hơi Về `0 B` + Mạch Kín `Tquota ⇄ Chimera`):**
+   - **Windows:** binary Rust thuần `std` (`native/chimera_core/src/bin/chimera_spine.rs` → `chimera_spine.exe`, `0` crate ngoài).
+   - **Linux `svhome`:** binary C11 POSIX thuần (`native/chimera_core/c_linux/chimera_spine.c` → `chimera_spine`, biên dịch `gcc -O2 -pthread`).
+   - Phục vụ trực tiếp đường nóng (`/healthz`, `/.well-known/chimera.json`, `/v1/nixl/hormones`, `/v1/peer/telemetry`, `/v1/ghost/get|put`) ở mức **`~2–8 MiB` RSS** (`0 B` Python lúc nghỉ), tự đánh thức Ephemeral Python Organ khi có route phức tạp rồi giải phóng về **`0 B`** sau khi rảnh; kết nối mạch kín KV-safe với `Tquota` (`/api/prometheus/symbiont`).

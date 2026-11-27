@@ -12,6 +12,7 @@ chimera_eval.json
 chimera_dashboard.html
 chimera_eval_dashboard.html
 native/chimera_core/target/
+native/chimera_core/c_linux/chimera_spine
 *.dll
 *.dll.prev
 /ErrorReports/

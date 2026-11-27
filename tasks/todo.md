@@ -122,6 +122,28 @@
 
 ---
 
+# v27.0 CHIMERA-SPORE-DNA — Portable Knowledge Spore, Verified Antibodies, Blind-CT-Scanner & Self-Healing Protocol Conduit
+
+## Architecture Spec & Checklist (100% Pure Infrastructure · 0 GGUF · 0 GPU · `< 80 MiB` RSS)
+- [x] **Pillar 1 — `chimera_tp/platform/spore.py` (`QuarantineGuard`, `CANONICAL_ANTIBODIES`, `SporeEngine`)**: Anti-poisoning quarantine blocking issue #69 SHA-256 (`a08c870d...`), covert loader/exfil/DLP patterns & out-of-scope categories; distills all 6 verified antibody groups (6-class refusal/fault classifier, 6-trigger prompt hygiene, 4-rung escalation + Assistant Anchor, `<2.2 KB` Provenance/Intensity contract, D1–D6 durability + RE gates, 10-surface ownership & drift guard) + 3 atomic playbooks + verified lessons/engrams into encrypted/integrity-checked portable `chimera.spore` (`pack`, `hatch`, `inspect`, `record_engram`) hydrating SQLite (`recall.sqlite`, `model_dna.json`, `antibodies.json`, `playbooks.json`) in `< 0.3s` with `0` persistent daemon RAM
+- [x] **Pillar 2 — `chimera_tp/platform/ct_scanner.py` (`BlindCTScanner`, `ModelDnaRegistry`, Protocol Shim)**: Standalone 6-class refusal/template/pivot/silent-block classifier (with Unicode smart-quote normalization), 8-class HTTP fault classifier, 6-trigger prompt sanitizer (`score 62 -> 0` with 100% hex/localhost payload preserved), D1–D6 durability auditor, reasoning-aware Blind-CT-Scanner (`delta.reasoning_content` + `is_reasoning_model` detection) measuring Transport DNA, Context/Fidelity DNA, and RE/Refusal Topology DNA for any unknown vendor model -> persistent bounded `ModelDNA` driver + closed-loop UCB1 capability ranker + OpenAI↔Anthropic protocol translator
+- [x] **Pillar 3 — Conduit, CLI & MCP Wiring (`substrate.py`, `cli.py`, `client.py`, `mcp_server.py`)**: Self-healing conduit extensions (`retry_blocked` `-0.04` temp-jitter, fake-empty `200` detection -> forensic blackbox + live `force_stream=True` auto-learning, `502/503` gateway failover, transparent OpenAI↔Anthropic protocol shim, live `ModelDNA` runtime updates on both JSON & SSE — preserving default Zero-IQ-Loss verbatim forwarding!); HTTP `/v1/spore/*` & `/v1/dna/*`; CLI `chimera-tp spore`, `chimera-tp ct-scan`, `chimera-tp dna`; 2 new 0-daemon-RSS MCP tools (`chimera_spore`, `chimera_ct_dna`)
+- [x] **Verification, Real Spore Pack/Cold-Hatch Proof & Cross-Node Sync (`win-desktop` + `svhome`)**: Passed `tests/test_v27_spore_dna.py` (`5/5 PASS`) + full regression suites on Windows (`64/64 PASS` across 11 suites) & `svhome` Linux Python 3.14 (`32/32 PASS` across 5 suites, `0` skipped); packed live `C:\Users\Admin\.chimera\chimera.spore` (`11,917 B`), proved blank cold-machine hatch in `206.86 ms` & live `svhome` hatch in `841.22 ms`, ran live `ct-scan` against `:9780` (`deepseek-v4.1-flash-sg`: `18.74s`, `81.54 tok/s`, `is_reasoning_model=true`, `needle_ok=true`, `identifier_lock_ok=true`, `re_usable_rate=1.0`, `ucb1_prior=1.0`), verified `147/147` 3-way SHA-256 parity (`0` mismatches) and live `< 80 MiB` RSS on both daemons (`49.45 MiB` Win / `52.82 MiB` `svhome`). Evidence saved to `tasks/v27_spore_dna_results.json`.
+
+## Review — Measured Live Dual-Node Results (v27 Spore-DNA, 2026-11-27)
+| Capability / Metric | Verified Live Measurement | Status |
+|---|---|---|
+| Portable Knowledge Spore (`C:\Users\Admin\.chimera\chimera.spore`) | **`11,917 B`** (`11.6 KiB`, `30,852 B` raw) · `6` antibodies · `3` playbooks · `26` engrams · `1` live ModelDNA · `1` poisoned hash blocklist (`14.37 ms` pack) | **PASS (`< 15 MB` budget)** |
+| Cold-Machine Blank Hatch Proof (`chimera-tp spore hatch`) | **`206.86 ms`** (`0.21s`) · `0` blocked · SQLite FTS5 immediate hits (`2` antibodies, `1` lesson) · `0` daemon RAM | **PASS (`< 3s` budget)** |
+| Cross-Node Live Hatch (`win-desktop` → `svhome`) | `svhome:/home/svhome/.chimera` hydrated live (`6` antibodies, `32` recall engrams, `deepseek-v4.1-flash-sg` ModelDNA) | **PASS Live E2E** |
+| Live Blind-CT-Scan (`deepseek-v4.1-flash-sg` via `:9780`) | **`18.74s`** · `TTFT 666.8 ms` · **`81.54 tok/s`** · `is_reasoning_model=true` · `needle_ok=true` · `identifier_lock_ok=true` · **`re_usable_rate=1.0`** (`0` refusals/pivots) · `ucb1_prior=1.0` | **PASS Live E2E** |
+| Conduit Self-Healing & Universal Protocol Shim (`:9780`) | Anthropic↔OpenAI shim (`X-Chimera-Protocol-Shim`), `400 retry_blocked` `-0.04` temp-jitter (`X-Chimera-Self-Healed: retry_jitter`), `503` failover (`gateway_failover`), `fake_empty_200` forensic + `force_stream=True` auto-learn | **PASS Verified** |
+| Windows Daemon (`win-desktop`) | `PID 38752`, `in_job=False`, **`49.45 MiB` WS (`39.04 MiB` private) / `80 MiB`**, `0` GGUF, `0` GPU | **PASS (Law 7)** |
+| Linux Daemon (`svhome`) | `PID 76949`, `active`, **`52.82 MiB` RSS / `80 MiB`** (`bios_13f684d79832`, Python 3.14.4) | **PASS (Law 7)** |
+| 3-Way Source Parity & Automated Tests (`win-desktop` + `svhome`) | **`147/147` SHA-256 parity (`0` mismatches)** · Windows **`64/64 PASS`** (11 suites) · `svhome` Linux **`32/32 PASS`** (`0` skipped) | **100% Green** |
+
+---
+
 # Organ 3 — Zero-Spawn Agent Hyper-Bus (`agent_probe.py`, 2026-11-27)
 
 ## Checklist
@@ -513,3 +535,37 @@
 | Remote `svhome` Probe (`ssh python3` vs `remote_xray`) | `1,355.32 ms` cold SSH | **`71.02 ms` over `PHANTOM-5MS`** (`0` SSH spawns) | **`19.08×` faster (`-94.8%`)** |
 | Python Snippet Exec (Cold PS+Py vs `WARM-REPL`) | `342.35 ms` ConPTY + AMSI | **`15.42 ms` persistent warm worker + Singleflight** | **`22.20×` faster (`-95.5%`)** |
 | Swarm Micro-Burst KV Pacer & Dual-Node RSS (`<80M`) | Unpaced `6`-worker prefix thrash | **`/api/swarm/pacer` LIVE × 2 (`effortMutationAllowed=false`) · `28.6` / `55.1 MiB`** | **`88/88` tests · `0` SHA drift · Law 7 PASS** |
+
+
+---
+
+# CHIMERA-PROMETHEUS — Empirical Axiom Ledger, Sovereign Epoch, Galileo A/B, PHANTOM Oracle, Ghost-Pool & Native Micronucleus (All 3 Waves, 2026-11-27)
+
+## Checklist
+- [x] **Architecture Spec (`docs/MOONSHOT_VAULT.md` Phần XXIX)**: Codified all 3 Waves strictly mapped to CHIMERA-ONE's 5 Canonical Organs & 7 Invariant Laws (`auto_activated=False`, `< 80 MiB` RSS, `0` `NtSuspendProcess`, `0` KV-cache prefix mutations)
+- [x] **Wave 1 (`chimera_tp/platform/prometheus.py`)**:
+  - `EmpiricalAxiomLedger` (`CHIMERA-AXIOM`): SQLite WAL + SHA-256 tamper-evident hash chain seeded with 8 empirical axioms (`6 PROVEN`, `2 REFUTED`), `< 0.1 ms` veto (`0.070 ms` median / `0.128 ms` P95), automatic unlock on `hw_fingerprint` change, compact Birth-Primer summary
+  - `SovereignEpochArbiter` (`CHIMERA-SOVEREIGN-EPOCH`): read-only release sealing (`.chimera_seal.json` `tree_sha256`), active Soak-Freeze leases redirecting conflicting sibling restarts to **Shadow Canary Port `:9796`** (clear of `PHANTOM-5MS :9789`), safe worktree auditor (`dry_run=True` default)
+- [x] **Wave 2 (`chimera_tp/platform/prometheus.py`, `substrate.py`, `hook_router.py`, `agent_probe.py`, `streamable_mcp.py`, `cli.py`, Tquota `chimera-symbiote-bridge.js` & `routes-hyperdrive.js`)**:
+  - `GalileoExperimentEngine` (`CHIMERA-GALILEO`): 1-call interleaved `AB/BA` scientific runner with bit-exact SHA-256 output parity, Welch `t`-stat, signed `receipt_sha256`, and `peer_guard`-aware **Resumable Soak Checkpointing**
+  - `SvhomeOracleEngine` (`CHIMERA-ORACLE`): `< 2 ms` zero-subprocess local telemetry (64-bit `K32GetProcessMemoryInfo` / `/proc`), persistent HTTP keep-alive `phantom_probe` (`127.0.0.1:9789 -> svhome:9780`), SHA-256 cached `speculative_verify`, `<= 20`-line `morning_brief`
+  - `GhostPoolEngine` (`CHIMERA-GHOST-POOL`): `GhostReadRing` (`<= 16 MiB` RAM + zlib SQLite WAL cross-process cache, passively fed by `PostToolUse` + Tquota prefetch) + Law-2 cooperative `SocketActivationProxy` (`0 MiB` idle backend -> wake -> auto-sleep)
+  - Full wiring across `/v1/prometheus/*`, `chimera_xray_batch` (`axiom_check`, `phantom_oracle`, `ghost_read`), `chimera_hive_cortex`, `chimera-tp prometheus`, and Tquota `GET /api/prometheus/symbiont` (`zeroKvPrefixMutation: true`, `effortMutationAllowed: false`)
+- [x] **Wave 3 (`native/chimera_core/src/bin/chimera_spine.rs` & `native/chimera_core/c_linux/chimera_spine.c`) — `CHIMERA-MICRONUCLEUS`**:
+  - Compiled zero-crate pure-Rust `chimera_spine.exe` on Windows (`309,248 B` = `302 KiB`, `0` warnings) serving `/healthz`, `/.well-known/chimera.json`, `/v1/spine/status`, direct 64B `NIXL` ring decode, `/v1/ghost/get|put`, and Ephemeral Python Organ wake/proxy/auto-sleep (`0.00 MiB` idle)
+  - Compiled zero-dependency POSIX C11 `chimera_spine` on `svhome` (`32,192 B` = `31.4 KiB`, `gcc 15.2.0 -O2 -pthread`) with identical wire contract + direct `/proc` telemetry + Ephemeral Python Organ wake/proxy/auto-sleep (`0.00 MiB` idle)
+- [x] **Cross-OS Verification, 2-Way Win ⇄ `svhome` Sync & Live A/B (`tasks/chimera_prometheus_ab.json`)**:
+  - **`90/90` tests PASS (`0` fail)**: `35/35` Windows Py + `35/35` `svhome` Linux Py + `10/10` Windows Tquota Node + `10/10` `svhome` Tquota Node
+  - Zero SHA-256 drift across Windows DEV, `svhome` DEV, live release `bios_13f684d79832`, and `Tqouta` on both hosts; both repos committed & pushed to GitHub (`origin/main`)
+
+## Review — Measured BEFORE vs AFTER (CHIMERA-PROMETHEUS All 3 Waves, 2026-11-27)
+| Wave / Capability | BEFORE (Baseline) | AFTER (`CHIMERA-PROMETHEUS` Verified Live) | Delta |
+|---|---:|---:|---|
+| Wave 1A `CHIMERA-AXIOM` Falsification Shield | `0` executable axioms (repeating dead-ends) | **`8` chained axioms (`6 PROVEN`, `2 REFUTED`), `0.070 ms` median (`0.128 ms` P95) veto** | **Instant `<0.1 ms` dead-end immunity** |
+| Wave 1B `CHIMERA-SOVEREIGN-EPOCH` Soak-Freeze | `4` soak windows broken by sibling restarts | **Active lease redirects siblings → Shadow Port `:9796` + read-only release seal (`9` worktrees audited, `2` safe to prune)** | **Zero sibling soak sabotage** |
+| Wave 2A `CHIMERA-GALILEO` Scientific A/B & Soak | Ad-hoc scripts, aborted soak on pressure | **Honest `AB/BA` (`REFUTED` on hot NVMe `0.722 vs 0.315 ms`, `parity_ok=true`, signed receipt `b625e34b...`) + Resumable Soak (`paused_peer_guard` → `4/4 completed`)** | **Zero confirmation bias · `0` lost soak samples** |
+| Wave 2B `CHIMERA-ORACLE` Cross-Host Probe | `1,267.35 ms` median (`ssh svhome python3`) | **`49.81 ms` median (`127.0.0.1:9789 PHANTOM-5MS → svhome:9780`, `0` SSH spawns)** | **`25.4×` faster (`-96.1%` latency)** |
+| Wave 2C `CHIMERA-GHOST-POOL` Ring & Socket-Act | `0` passive hits · `2.38 GB` idle worker commit | **`100.0%` cross-proc hit (`18/18`, `1.05 MiB` saved) · Socket-Activation `0` idle → `28.37 ms` wake → auto-sleep** | **Law-2 cooperative `0 MiB` idle backend** |
+| Wave 3 Windows Rust `chimera_spine.exe` (`302 KiB`) | Python `33.08–52.12 MiB` WS · `41.32–65.18 MiB` Commit · `16.53 ms` `/healthz` | **`5.227 MiB` WS · `0.996 MiB` Commit · `8.57 ms` `/healthz` · Organ wake `170.47 ms` → `0.00 MiB` sleep** | **`-84%` to `-90%` WS · `-98.5%` Commit (`65×` smaller!)** |
+| Wave 3 Linux `svhome` C11 `chimera_spine` (`31.4 KiB`) | Python `57.63 / 60.52 MiB` `VmRSS/HWM` | **`2.246 / 2.246 MiB` `VmRSS/HWM` · `12.78 ms` boot · `0.50 ms` `/healthz` · Organ wake `81.83 ms` → `0.00 MiB` sleep** | **`-96.1%` RAM (`25.7×` smaller!)** |
+| Tquota ⇄ Chimera Symbiont & Dual-Node Parity | Unbridged passive reads / `0` axiom feed | **`/api/prometheus/symbiont` LIVE × 2 (`chimeraConnected=true`, `zeroKvPrefixMutation=true`, `effortMutationAllowed=false`, `gatePass=true`, `micronucleusReady=true`) · `90/90` tests PASS** | **`0` SHA-256 drift · Law 6 & 7 PASS** |

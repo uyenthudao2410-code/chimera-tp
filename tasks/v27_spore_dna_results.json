@@ -1,0 +1,168 @@
+{
+  "ts": "2026-11-27T18:37:06+0700",
+  "live_ct_scan": {
+    "model": "deepseek-v4.1-flash-sg",
+    "protocol": "openai",
+    "transport": {
+      "ping_status": 200,
+      "ping_fault": "ok",
+      "ttft_ms": 666.8,
+      "tok_per_s": 81.54,
+      "fake_empty_nonstream": false,
+      "force_stream": false,
+      "is_reasoning_model": true,
+      "blocks_identical_retry": false,
+      "jitter_on_retry": true,
+      "safe_chunk_words": 600,
+      "safe_timeout_s": 90
+    },
+    "ucb1_prior": 1.0,
+    "runtime": {
+      "calls": 11,
+      "ok": 11,
+      "faults": {},
+      "ewma_ms": 1454.79
+    },
+    "ok": true,
+    "base_url": "http://127.0.0.1:9780/v1/openai/v1",
+    "scanned_at": "2026-11-27T11:36:56+00:00",
+    "scan_elapsed_s": 18.74,
+    "fidelity": {
+      "needle_ok": true,
+      "identifier_lock_ok": true,
+      "re_usable_rate": 1.0
+    },
+    "refusal_topology": {
+      "hard_refusals": 0,
+      "template_refusals": 0,
+      "defensive_pivots": 0,
+      "faults_seen": [],
+      "recommended_mode": "direct"
+    },
+    "probes": [
+      {
+        "id": "identifier_lock_vn",
+        "phase": "fidelity",
+        "status": 200,
+        "fault": "ok",
+        "verdict": "ok",
+        "usable": true,
+        "marker_found": true,
+        "ttft_ms": 997.7,
+        "total_ms": 1649.7,
+        "chars": 106
+      },
+      {
+        "id": "re_xor_asm",
+        "phase": "re_system",
+        "status": 200,
+        "fault": "ok",
+        "verdict": "ok",
+        "usable": true,
+        "marker_found": true,
+        "ttft_ms": 535.8,
+        "total_ms": 3720.1,
+        "chars": 2384
+      },
+      {
+        "id": "re_pe_triage",
+        "phase": "re_system",
+        "status": 200,
+        "fault": "ok",
+        "verdict": "ok",
+        "usable": true,
+        "marker_found": true,
+        "ttft_ms": 584.8,
+        "total_ms": 5069.3,
+        "chars": 2784
+      },
+      {
+        "id": "re_ioctl_audit",
+        "phase": "re_system",
+        "status": 200,
+        "fault": "ok",
+        "verdict": "ok",
+        "usable": true,
+        "marker_found": true,
+        "ttft_ms": 548.8,
+        "total_ms": 3475.4,
+        "chars": 175
+      }
+    ]
+  },
+  "real_spore_pack": {
+    "ok": true,
+    "path": "C:\\Users\\Admin\\.chimera\\chimera.spore",
+    "bytes": 11917,
+    "raw_bytes": 30852,
+    "encrypted": false,
+    "payload_sha256": "3a83fc561227bb41f2b61168b4d7883f20124fe7adcd0b281825e000891e8bd7",
+    "counts": {
+      "antibodies": 6,
+      "playbooks": 3,
+      "engrams": 26,
+      "model_dnas": 1,
+      "blocklist": 1
+    },
+    "quarantined_blocked": 0,
+    "elapsed_ms": 14.37
+  },
+  "cold_hatch_proof": {
+    "ok": true,
+    "dry_run": false,
+    "target_dir": "C:\\Users\\Admin\\.t3\\userdata\\antigravity-tmp\\45ab4f38a2fd\\run-NlIUKx\\chimera_cold_v27_v3a2p7ka",
+    "verified_sha256": "3a83fc561227bb41f2b61168b4d7883f20124fe7adcd0b281825e000891e8bd7",
+    "source_node": "DESKTOP-63643J4",
+    "hatched_antibodies": 6,
+    "hatched_playbooks": 3,
+    "hatched_engrams": 26,
+    "hatched_model_dnas": 1,
+    "blocked_items": 0,
+    "elapsed_ms": 206.86,
+    "fts_antibody_hits": 2,
+    "fts_lesson_hits": 1
+  },
+  "svhome_live_hatch": {
+    "ok": true,
+    "dry_run": false,
+    "target_dir": "/home/svhome/.chimera",
+    "verified_sha256": "3a83fc561227bb41f2b61168b4d7883f20124fe7adcd0b281825e000891e8bd7",
+    "source_node": "DESKTOP-63643J4",
+    "hatched_antibodies": 6,
+    "hatched_playbooks": 3,
+    "hatched_engrams": 26,
+    "hatched_model_dnas": 1,
+    "blocked_items": 0,
+    "elapsed_ms": 19.7
+  },
+  "win_daemon": {
+    "priv_mib": 39.04,
+    "pid": 38752,
+    "ws_mib": 49.45,
+    "in_job": false,
+    "under_80_mib": true
+  },
+  "svhome_daemon": {
+    "pid": 76949,
+    "state": "active",
+    "rss_mib": 52.82,
+    "under_80_mib": true,
+    "wd": "/home/svhome/.local/share/chimera/releases/bios_13f684d79832"
+  },
+  "parity": {
+    "local_modules": 147,
+    "dev_mismatches": 0,
+    "rel_mismatches": 0
+  },
+  "win_v27_tail": [
+    "Ran 5 tests in 2.733s",
+    "",
+    "OK"
+  ],
+  "sv_v27_rc": 0,
+  "sv_v27_tail": [
+    "Ran 5 tests in 2.089s",
+    "",
+    "OK"
+  ]
+}

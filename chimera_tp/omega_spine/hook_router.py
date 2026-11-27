@@ -218,8 +218,11 @@ class HookRouter:
             "shell_short_circuits": 0,
             "raw_tool_captures": 0,
             "raw_whispers": 0,
+            "ghost_ring_ingests": 0,
+            "epoch_soak_redirects": 0,
         }
         self._mnemosyne_ref: Any = None
+        self._prometheus_ref: Any = None
 
     def _get_mnemosyne(self) -> Any | None:
         if self._mnemosyne_ref is not None:
@@ -228,6 +231,16 @@ class HookRouter:
             from ..platform.mnemosyne import get_mnemosyne_core
             self._mnemosyne_ref = get_mnemosyne_core()
             return self._mnemosyne_ref
+        except Exception:
+            return None
+
+    def _get_prometheus(self) -> Any | None:
+        if self._prometheus_ref is not None:
+            return self._prometheus_ref
+        try:
+            from ..platform.prometheus import get_prometheus_core
+            self._prometheus_ref = get_prometheus_core()
+            return self._prometheus_ref
         except Exception:
             return None
 
@@ -397,11 +410,28 @@ class HookRouter:
             try:
                 pr = mn.primer.prime(ws, cid=cid, include_raw_recall=True)
                 if pr.get("compact_text"):
-                    parts.append(f"Mnemosyne: {pr['compact_text'][:640]}")
+                    parts.append(f"Mnemosyne: {pr['compact_text'][:560]}")
             except Exception:
                 pass
 
-        sys_msg = " | ".join(parts)[:1800]
+        # CHIMERA-PROMETHEUS Empirical Axioms + Active Soak-Freeze Guard (<=220 tok)
+        prom = self._get_prometheus()
+        if prom is not None:
+            try:
+                ax_sum = prom.axioms.birth_primer_summary(max_chars=420)
+                if ax_sum:
+                    parts.append(ax_sum)
+                active_soaks = prom.epoch.active_soak_leases()
+                if active_soaks:
+                    lead = active_soaks[0]
+                    parts.append(
+                        f"SOAK-FREEZE ACTIVE: {lead['lease_id']} (owner={lead['owner_id']}, PID={lead['target_pid']}, "
+                        f"{lead['remaining_s']}s left) -> DO NOT restart live daemon; use Shadow Port :{prom.epoch.default_shadow_port}"
+                    )
+            except Exception:
+                pass
+
+        sys_msg = " | ".join(parts)[:2100]
         badge = (
             f"**CHIMERA Omega-Spine** | `{repo_name}`"
             + (f" (`{branch}`)" if branch else "")
@@ -467,6 +497,26 @@ class HookRouter:
         if tlow in _CMD_TOOLS:
             cmd = _extract_command(args)
             if cmd:
+                # CHIMERA-SOVEREIGN-EPOCH Soak-Freeze Guard: prevent sibling restart from killing active soak PID
+                if re.search(r"\b(restart|stop|kill|Stop-Process|taskkill)\b.*(chimera|9780)", cmd, re.I):
+                    prom = self._get_prometheus()
+                    if prom is not None:
+                        try:
+                            dec = prom.epoch.request_promote(
+                                requester_id=cid,
+                                candidate_tree_sha256="hook_cmd_check",
+                            )
+                            if not dec.get("allowed", True):
+                                with self._lock:
+                                    self._stats["epoch_soak_redirects"] += 1
+                                self.sessions.push_advisory(
+                                    cid,
+                                    "soak_freeze_redirect",
+                                    f"{dec.get('reason', 'Soak-Freeze active')} Use Shadow Port :{dec.get('shadow_port', 9796)}.",
+                                )
+                        except Exception:
+                            pass
+
                 # CHIMERA-MNEMOSYNE PreToolUse Shell Idempotent Replay Shield (< 3 ms across Swarm!)
                 mn = self._get_mnemosyne()
                 if mn is not None:
@@ -580,6 +630,23 @@ class HookRouter:
                 self.precog.schedule(cid, ws, rel)
                 with self._lock:
                     self._stats["precog_schedules"] += 1
+
+        # CHIMERA-GHOST-POOL Passive Shared Read-Ring ingestion (turns 0-hit Precog into cross-agent hits!)
+        if ok and raw_paths:
+            prom = self._get_prometheus()
+            if prom is not None:
+                try:
+                    abs_targets = [
+                        str((Path(ws) / p).resolve()) if (ws and not Path(p).is_absolute()) else str(Path(p).resolve())
+                        for p in raw_paths[:6]
+                        if p
+                    ]
+                    ing = prom.ghost.ingest_paths(abs_targets, source=f"hook:{tlow}")
+                    if ing.get("ingested"):
+                        with self._lock:
+                            self._stats["ghost_ring_ingests"] += int(ing["ingested"])
+                except Exception:
+                    pass
 
         # CHIMERA-MNEMOSYNE Dual-Channel PostToolUse Lossless Raw Capture (100% verbatim + <=1.2KB cache!)
         if tlow in _CMD_TOOLS:
@@ -836,6 +903,12 @@ class OmegaSpineRuntime:
                 self.hooks._mnemosyne_ref = MnemosyneCore(ephemeral=True)
             except Exception:
                 pass
+            try:
+                from ..platform.prometheus import ChimeraPrometheusCore
+                p_dir = (Path(ops_dir) / "prometheus") if ops_dir is not None else (Path.home() / ".chimera_ops" / "prometheus_eph")
+                self.hooks._prometheus_ref = ChimeraPrometheusCore(data_dir=p_dir, ephemeral=True)
+            except Exception:
+                pass
         self.mcp.attach_runtime(self)
 
     @property
@@ -870,6 +943,12 @@ class OmegaSpineRuntime:
         if mn is not None and hasattr(mn, "close"):
             try:
                 mn.close()
+            except Exception:
+                pass
+        prom = getattr(self.hooks, "_prometheus_ref", None)
+        if prom is not None and hasattr(prom, "close"):
+            try:
+                prom.close()
             except Exception:
                 pass
         close_fn = getattr(self._cortex, "close", None)

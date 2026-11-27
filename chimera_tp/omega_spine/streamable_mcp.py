@@ -2065,6 +2065,31 @@ class StreamableMcpServer:
                 return mn.shell_guard.status()
             return mn.dispatch(action, **{k: v for k, v in args.items() if k != "action"})
 
+        if action in (
+            "prometheus_status",
+            "axioms",
+            "axiom_check",
+            "epoch_status",
+            "epoch_seal",
+            "epoch_verify",
+            "soak_acquire",
+            "soak_release",
+            "epoch_promote",
+            "worktrees",
+            "galileo_status",
+            "oracle_probe",
+            "phantom_probe",
+            "oracle_speculate",
+            "morning_brief",
+            "ghost_status",
+            "ghost_read",
+            "spine_status",
+        ):
+            from ..platform.prometheus import get_prometheus_core
+            prom = get_prometheus_core()
+            act_norm = "status" if action == "prometheus_status" else action
+            return prom.dispatch(act_norm, **{k: v for k, v in args.items() if k != "action"})
+
         raise ValueError(f"Unsupported hive_cortex action: {action}")
 
     def attach_runtime(self, runtime: Any) -> None:

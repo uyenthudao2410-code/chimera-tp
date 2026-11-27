@@ -1029,6 +1029,42 @@ class OmniProbeBatchEngine:
                     rel_path=str(spec.get("path") or spec.get("rel_path") or ""),
                     page=int(spec.get("page") or 1),
                 )
+            elif op in ("axiom_check", "prometheus_axiom"):
+                from .prometheus import get_prometheus_core
+                res = get_prometheus_core().dispatch(
+                    "axiom_check",
+                    target_action=str(spec.get("target_action") or spec.get("action") or ""),
+                    params=spec.get("params") if isinstance(spec.get("params"), dict) else None,
+                    hw_fingerprint=spec.get("hw_fingerprint"),
+                )
+            elif op in ("phantom_oracle", "oracle_probe"):
+                from .prometheus import get_prometheus_core
+                peer_b = str(spec.get("peer_base") or "").strip()
+                if not peer_b and callable(self._peer_base_getter):
+                    try:
+                        peer_b = str(self._peer_base_getter() or "").strip()
+                    except Exception:
+                        peer_b = ""
+                if peer_b:
+                    res = get_prometheus_core().dispatch(
+                        "phantom_probe",
+                        peer_base=peer_b,
+                        repo_dir=spec.get("repo_dir"),
+                        release_dir=spec.get("release_dir"),
+                        check_files=spec.get("check_files"),
+                    )
+                else:
+                    res = get_prometheus_core().dispatch(
+                        "oracle_probe",
+                        repo_dir=spec.get("repo_dir") or (str(base_dir) if base_dir else None),
+                        release_dir=spec.get("release_dir"),
+                        check_files=spec.get("check_files"),
+                    )
+            elif op in ("ghost_read", "ghost_ring"):
+                from .prometheus import get_prometheus_core
+                raw_p = str(spec.get("path") or "")
+                resolved = str(_safe_resolve(raw_p, base_dir)) if raw_p else ""
+                res = get_prometheus_core().dispatch("ghost_read", path=resolved)
             else:
                 res = {"ok": False, "error": f"unsupported_op:{op}"}
         except Exception as exc:

@@ -620,6 +620,49 @@ class ChimeraClient:
             params["kind"] = kind
         return self._get_json(f"/v1/blackbox/forensics?{urllib.parse.urlencode(params)}")
 
+    def spore_status(self) -> dict[str, Any]:
+        if not self.available:
+            from .spore import SporeEngine
+
+            return SporeEngine().status()
+        return self._get_json("/v1/spore/status")
+
+    def spore_pack(self, path: str = "", passphrase: str = "") -> dict[str, Any]:
+        if not self.available:
+            from .spore import SporeEngine
+
+            eng = SporeEngine()
+            return eng.pack(Path(path) if path else (eng.chimera_dir / "chimera.spore"), passphrase=passphrase)
+        return self._post_json("/v1/spore/pack", {"path": path, "passphrase": passphrase})
+
+    def spore_watch(self) -> dict[str, Any]:
+        if not self.available:
+            from .spore import SporeAutopoieticWatcher, SporeEngine
+
+            return SporeAutopoieticWatcher(SporeEngine()).status()
+        return self._get_json("/v1/spore/watch")
+
+    def spore_sync_now(self, *, force: bool = True) -> dict[str, Any]:
+        if not self.available:
+            from .spore import SporeAutopoieticWatcher, SporeEngine
+
+            return SporeAutopoieticWatcher(SporeEngine()).tick_if_due(force=force)
+        return self._post_json("/v1/spore/watch", {"action": "sync_now", "force": force})
+
+    def dna_list(self) -> dict[str, Any]:
+        if not self.available:
+            from .ct_scanner import ModelDnaRegistry
+
+            return {"ok": True, "models": ModelDnaRegistry().list_all()}
+        return self._get_json("/v1/dna/list")
+
+    def dna_rank(self, task_class: str = "general") -> dict[str, Any]:
+        if not self.available:
+            from .ct_scanner import ModelDnaRegistry
+
+            return {"ok": True, "ranked": ModelDnaRegistry().rank_models(task_class=task_class)}
+        return self._get_json(f"/v1/dna/rank?{urllib.parse.urlencode({'task_class': task_class})}")
+
     # --- CHIMERA-ONE Organ 3: Zero-Spawn Agent Hyper-Bus (auto local in-process fallback!) ---
     def xray_batch(
         self,

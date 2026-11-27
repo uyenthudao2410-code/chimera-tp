@@ -9,6 +9,10 @@ license = "MIT"
 name = "chimera_core"
 crate-type = ["cdylib"]
 
+[[bin]]
+name = "chimera_spine"
+path = "src/bin/chimera_spine.rs"
+
 [profile.release]
 opt-level = 3
 lto = true

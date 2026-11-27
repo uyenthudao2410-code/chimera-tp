@@ -408,6 +408,37 @@ def main(argv: list[str] | None = None) -> int:
     p_mcp = sub.add_parser("mcp", help="Run stdio JSON-RPC 2.0 CHIMERA-MCP server for AI coding agents")
     p_mcp.add_argument("--anchor", default="", help="Override CHIMERA anchor URL")
 
+    # ---- CHIMERA-SPORE-DNA v27.0 Portable Knowledge Spore & Blind-CT-Scanner ----
+    p_sp = sub.add_parser("spore", help="Pack, hatch, inspect, watch, or distill portable chimera.spore knowledge bundles")
+    p_sp.add_argument("action", choices=("status", "distill", "pack", "hatch", "inspect", "engram", "watch"), help="Spore action")
+    p_sp.add_argument("--path", default="", help="Path to .spore file (default: ~/.chimera/chimera.spore)")
+    p_sp.add_argument("--target-dir", default="", help="Optional target ~/.chimera dir for isolated hatch")
+    p_sp.add_argument("--passphrase", default="", help="Optional passphrase to encrypt/decrypt spore")
+    p_sp.add_argument("--policy-file", default="", help="Optional review-policy.json quarantine file")
+    p_sp.add_argument("--lessons", action="append", default=[], help="Extra markdown lesson paths to distill")
+    p_sp.add_argument("--title", default="", help="Engram title (for engram action)")
+    p_sp.add_argument("--body", default="", help="Engram body (for engram action)")
+    p_sp.add_argument("--dry-run", action="store_true", help="Validate hatch without writing files")
+    p_sp.add_argument("--sync", action="store_true", help="Force immediate local watch sync (for watch action)")
+    p_sp.add_argument("--add", default="", help="Add a trusted read-only rule/lesson file to local watcher")
+    p_sp.add_argument("--remove", default="", help="Remove a file from local watcher")
+    p_sp.add_argument("--enable", action="store_true", help="Enable local autopoietic knowledge watcher")
+    p_sp.add_argument("--disable", action="store_true", help="Disable local autopoietic knowledge watcher")
+
+    p_ct = sub.add_parser("ct-scan", help="30s Blind-CT-Scan any unknown vendor model and persist its ModelDNA driver")
+    p_ct.add_argument("base_url", help="Target API base URL (e.g. http://127.0.0.1:9780/v1/openai/v1)")
+    p_ct.add_argument("model", help="Target model id")
+    p_ct.add_argument("--api-key", default="", help="Optional Bearer / x-api-key")
+    p_ct.add_argument("--protocol", default="openai", choices=("openai", "anthropic"), help="Upstream protocol")
+    p_ct.add_argument("--mode", default="quick", choices=("quick", "deep"), help="Scan depth")
+    p_ct.add_argument("--timeout", type=float, default=25.0, help="Per-probe timeout seconds")
+
+    p_dna = sub.add_parser("dna", help="Inspect ModelDNA registry, rank models via UCB1, classify responses, or sanitize prompts")
+    p_dna.add_argument("action", choices=("list", "rank", "classify", "sanitize"), help="DNA action")
+    p_dna.add_argument("--task-class", default="general", choices=("general", "re_system", "fast_draft"), help="Task class for UCB1 rank")
+    p_dna.add_argument("--text", default="", help="Input text for classify or sanitize")
+    p_dna.add_argument("--marker", default="", help="Optional expected marker for classify")
+
     p_cart = sub.add_parser("cartridge", help="List, enable, or disable hot-loadable CHIMERA Cartridges")
     p_cart.add_argument("action", choices=("list", "enable", "disable"), help="Cartridge action")
     p_cart.add_argument("name", nargs="?", default="", help="Cartridge name (for enable/disable)")
@@ -511,6 +542,13 @@ def main(argv: list[str] | None = None) -> int:
     p_ome.add_argument("--service", default="cosmic-app", help="Service name for intent compiler")
     p_ome.add_argument("--p99-ms", type=float, default=25.0, help="Target p99 latency SLA in ms")
     p_ome.add_argument("--anchor", default="", help="Override CHIMERA anchor URL")
+
+    p_prom = sub.add_parser("prometheus", help="CHIMERA-PROMETHEUS Waves 1-3 (status, axioms, check, epoch, worktrees, oracle, brief, ghost, spine)")
+    p_prom.add_argument("action", choices=("status", "axioms", "check", "epoch", "worktrees", "oracle", "brief", "ghost", "spine"))
+    p_prom.add_argument("--target", default="", help="Target action name for axiom check")
+    p_prom.add_argument("--repo", default="", help="Repository path for worktrees/oracle/brief")
+    p_prom.add_argument("--execute-prune", action="store_true", help="Prune clean merged trial worktrees")
+    p_prom.add_argument("--anchor", default="", help="Override CHIMERA anchor URL")
 
     p_bios = sub.add_parser(
         "bios",
@@ -1379,6 +1417,87 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(HolographicSlpEngine.run_benchmark(), indent=2))
         return 0
 
+    if args.command == "spore":
+        from .platform.spore import SporeAutopoieticWatcher, SporeEngine
+
+        eng = SporeEngine()
+        sp_path = Path(args.path) if args.path else (eng.chimera_dir / "chimera.spore")
+        if args.action == "watch":
+            watcher = SporeAutopoieticWatcher(eng)
+            if args.add:
+                out = watcher.add_source(args.add)
+            elif args.remove:
+                out = watcher.remove_source(args.remove)
+            elif args.enable:
+                out = watcher.configure(enabled=True)
+            elif args.disable:
+                out = watcher.configure(enabled=False)
+            elif args.sync:
+                out = watcher.tick_if_due(force=True)
+            else:
+                out = watcher.status()
+            print(json.dumps(out, indent=2, ensure_ascii=False))
+            return 0 if out.get("ok", True) else 1
+        if args.action == "status":
+            out = eng.status()
+            out["watch"] = SporeAutopoieticWatcher(eng).status()
+        elif args.action == "distill":
+            out = eng.distill_to_local(
+                extra_lessons_paths=list(args.lessons or []),
+                policy_file=(args.policy_file or None),
+            )
+        elif args.action == "pack":
+            out = eng.pack(
+                sp_path,
+                extra_lessons_paths=list(args.lessons or []),
+                policy_file=(args.policy_file or None),
+                passphrase=str(args.passphrase or ""),
+            )
+        elif args.action == "inspect":
+            out = eng.inspect(sp_path, passphrase=str(args.passphrase or ""))
+        elif args.action == "hatch":
+            out = eng.hatch(
+                sp_path,
+                target_chimera_dir=(Path(args.target_dir) if args.target_dir else None),
+                passphrase=str(args.passphrase or ""),
+                dry_run=bool(args.dry_run),
+            )
+        else:
+            out = eng.record_engram(str(args.title or "engram"), str(args.body or ""))
+        print(json.dumps(out, indent=2, ensure_ascii=False))
+        return 0
+
+    if args.command == "ct-scan":
+        from .platform.ct_scanner import ModelDnaRegistry, ct_scan
+
+        dna = ct_scan(
+            args.base_url,
+            args.model,
+            api_key=str(args.api_key or ""),
+            protocol=str(args.protocol or "openai"),
+            mode=str(args.mode or "quick"),
+            timeout_s=float(args.timeout or 25.0),
+        )
+        reg = ModelDnaRegistry()
+        saved = reg.upsert(dna)
+        print(json.dumps(saved, indent=2, ensure_ascii=False))
+        return 0 if dna.get("ok") else 1
+
+    if args.command == "dna":
+        from .platform.ct_scanner import ModelDnaRegistry, classify_response, sanitize_prompt
+
+        reg = ModelDnaRegistry()
+        if args.action == "list":
+            out = {"ok": True, "models": reg.list_all()}
+        elif args.action == "rank":
+            out = {"ok": True, "ranked": reg.rank_models(task_class=str(args.task_class or "general"))}
+        elif args.action == "classify":
+            out = classify_response(str(args.text or ""), marker=str(args.marker or ""))
+        else:
+            out = sanitize_prompt(str(args.text or ""))
+        print(json.dumps(out, indent=2, ensure_ascii=False))
+        return 0
+
     if args.command == "smi":
         import urllib.request as _urlreq
         from .platform import discover_runtime_file, render_smi
@@ -2084,5 +2203,31 @@ def main(argv: list[str] | None = None) -> int:
             return 0 if ok else 1
         finally:
             rx.close()
+
+    if args.command == "prometheus":
+        from .platform.prometheus import get_prometheus_core
+
+        prom = get_prometheus_core()
+        act = args.action
+        if act == "status":
+            res = prom.status()
+        elif act == "axioms":
+            res = prom.dispatch("axioms")
+        elif act == "check":
+            res = prom.dispatch("axiom_check", target_action=args.target)
+        elif act == "epoch":
+            res = prom.dispatch("epoch_status")
+        elif act == "worktrees":
+            res = prom.dispatch("worktrees", repo=args.repo or os.getcwd(), execute_prune=bool(args.execute_prune))
+        elif act == "oracle":
+            res = prom.dispatch("oracle_probe", repo_dir=args.repo or os.getcwd())
+        elif act == "brief":
+            res = prom.dispatch("morning_brief", repo_dir=args.repo or os.getcwd())
+        elif act == "ghost":
+            res = prom.dispatch("ghost_status")
+        else:
+            res = prom.dispatch("spine_status")
+        print(json.dumps(res, indent=2, ensure_ascii=False))
+        return 0 if res.get("ok") else 1
 
     return 2

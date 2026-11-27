@@ -1,0 +1,117 @@
+{
+  "schema": "chimera.prometheus.ab.v1",
+  "ts": 1795779682.542,
+  "before_baseline": {
+    "win_python_ws_mib": 33.08,
+    "win_python_commit_mib": 65.18,
+    "win_http_9780_median_ms": 16.53,
+    "svhome_python_rss_mib": 57.63,
+    "svhome_python_hwm_mib": 60.52,
+    "ssh_svhome_py_median_ms": 1267.35,
+    "precog_live_hits": 0,
+    "executable_axioms": 0,
+    "soak_windows_broken_by_sibling": 4,
+    "win_worktrees_total": 9
+  },
+  "wave1_axiom": {
+    "total": 8,
+    "proven": 6,
+    "refuted": 2,
+    "chain_ok": true,
+    "veto_median_ms": 0.07,
+    "veto_p95_ms": 0.128
+  },
+  "wave1_epoch": {
+    "seal_ok": true,
+    "soak_redirect_ok": true,
+    "worktrees_before": 9,
+    "worktrees_safe_to_prune": 2
+  },
+  "wave2_galileo": {
+    "ab_verdict": "REFUTED",
+    "parity_ok": true,
+    "baseline_ms": 0.3154,
+    "candidate_ms": 0.722,
+    "speedup": 0.44,
+    "resumable_soak_paused_status": "paused_peer_guard",
+    "resumable_soak_final_status": "completed",
+    "resumable_soak_samples": 4,
+    "receipt_sha256": "b625e34b23a4a53e"
+  },
+  "wave2_oracle": {
+    "phantom_ok": true,
+    "target": "http://127.0.0.1:9789 (svhome via PHANTOM-5MS)",
+    "phantom_rtt_median_ms": 49.81,
+    "speedup_vs_ssh": 25.4,
+    "remote_rss_mib": 55.332
+  },
+  "wave2_ghost_pool": {
+    "ring_status": {
+      "ok": true,
+      "entries": 3,
+      "mem_bytes": 182901,
+      "max_bytes": 16777216,
+      "hits": 18,
+      "misses": 0,
+      "hit_rate_pct": 100.0,
+      "bytes_saved": 1097406,
+      "passive_ingests": 3,
+      "evictions": 0
+    },
+    "socket_activation_idle_zero": true,
+    "socket_activation_wake_ms": 28.37,
+    "socket_activation_first_req_ms": 32.41,
+    "socket_activation_auto_slept": true
+  },
+  "wave3_micronucleus_win_rust": {
+    "ok": true,
+    "binary_bytes": 309248,
+    "boot_ms": 507.97,
+    "rss_mib": 5.227,
+    "commit_mib": 0.996,
+    "healthz_median_ms": 8.57,
+    "nixl_ok": true,
+    "nixl_ms": 8.56,
+    "ghost_miss_ms": 8.36,
+    "ghost_hit_ms": 21.03,
+    "ghost_hit_verified": true,
+    "organ_wake_proxy_ms": 170.47,
+    "organ_awake_state": "awake",
+    "organ_slept_state": "sleeping_0_bytes",
+    "organ_wakes": 1,
+    "organ_sleeps": 1
+  },
+  "wave3_micronucleus_svhome_c11": {
+    "ok": true,
+    "binary_bytes": 32192,
+    "boot_ms": 12.78,
+    "rss_mib": 2.246,
+    "hwm_mib": 2.246,
+    "healthz_median_ms": 0.5,
+    "telemetry_ms": 0.55,
+    "load_1m": 0.55,
+    "mem_avail_gb": 7.63,
+    "organ_wake_proxy_ms": 81.83,
+    "organ_awake_state": "awake",
+    "organ_slept_state": "sleeping_0_bytes",
+    "organ_wakes": 1,
+    "organ_sleeps": 1
+  },
+  "tquota_symbiont_live": {
+    "endpoint_ms": 1235.36,
+    "symbiont": {
+      "ok": true,
+      "chimeraConnected": true,
+      "zeroKvPrefixMutation": true,
+      "effortMutationAllowed": false,
+      "ghostRingIngestsDispatched": 0,
+      "soakFrozen": false,
+      "activeSoakLeases": 0,
+      "axiomsTotal": 8,
+      "axiomsRefuted": 2,
+      "ghostHitRatePct": 0,
+      "micronucleusReady": true
+    },
+    "invariant_gate_pass": true
+  }
+}

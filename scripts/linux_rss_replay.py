@@ -26,7 +26,8 @@ def source_identity(baseline, candidate):
     left, right = inventory(baseline), inventory(candidate)
     changed = {name: [left.get(name), right.get(name)] for name in sorted(left.keys() | right.keys())
                if left.get(name) != right.get(name)}
-    if set(changed) != {"native.py", "code_search.py"}:
+    # Identical packages isolate the FTS connection setting on a newer release.
+    if changed and set(changed) != {"native.py", "code_search.py"}:
         raise ValueError(f"unexpected differences between the two package copies: {sorted(changed)}")
 
     def summary(files):

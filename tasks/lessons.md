@@ -32,6 +32,13 @@
   1. Always inspect physical display-to-GPU topology via Win32 `EnumDisplayDevicesW`; when all displays are on the dGPU, set `GpuPreference=2` (Zero-Copy dGPU) + `SwapEffectUpgradeEnable=1`.
   2. Prefer remote offload (`svhome` / `Colab`) and VIP thread/MMCSS prioritization over choking local CPU cores, disabling Turbo Boost, or suspending active IPC processes.
 
+## 2026-11-27 — Chimera Is Pure Infrastructure Brain, NEVER a Local LLM Weight Host
+- **Correction:** The user clarified that Chimera's mission is to be an ultra-lightweight (`< 80 MiB` RAM), hyper-intelligent **infrastructure brain** that optimizes, stabilizes, and empowers *all* ecosystems and external models running on top of it — even on weak machines — NOT to become a heavy local LLM/GGUF model replacement (`Sparse MoE 30B-A3B` is strictly out of scope for Chimera core).
+- **Permanent Rule:**
+  1. NEVER require or bundle multi-GB GGUF weights / local LLM inference servers as part of Chimera's core architecture.
+  2. Keep every Chimera breakthrough strictly at the **infrastructure primitive layer** (`< 80 MiB` daemon RSS, 0 GPU required, weak-machine friendly): portable knowledge spores (`chimera.spore`), blind model CT-scanning (`ModelDNA`), universal protocol/transport self-healing (`:9780`/`:9781`), deterministic verification/rollback (`GhostBubble`/`TurnTimeMachine`), and exact AST/VSA context offloading (`MCP`).
+  3. If an external local or cloud model server already exists on a host, Chimera only discovers and optimizes traffic to it declaratively via `AppRegistry` — never owns or hosts model weights itself.
+
 ## 2026-11-27 — Never Pass Raw Replacement Strings With Windows Backslashes to `re.sub`
 - **Root Cause:** `_upsert_marked_block` in `chimera_tp/platform/unify.py` called `pat.sub(wrapped, existing, count=1)`. On the *second* run (when updating an existing marked block in `~/.codex/config.toml`), Python's `re.sub` interpreted `\\` in `"C:\\Program Files\\Python311\\python.exe"` as regex escapes, collapsing it to `"C:\Program Files\Python311\python.exe"` and breaking TOML parsing (`missing escaped value` at `\P`).
 - **Permanent Rule:**
