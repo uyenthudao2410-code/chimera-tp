@@ -17,6 +17,7 @@ _TRAFFIC = {
     "pulse.publish": ("pulse", "sequence"),
     "pulse.relay": ("pulse.relay", "sequence"),
     "egress.forward": ("egress_membrane", "http_status"),
+    "agent.xray_batch": ("agent_hyper_bus", "operations"),
 }
 
 

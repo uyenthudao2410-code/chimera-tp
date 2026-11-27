@@ -5,8 +5,10 @@ from __future__ import annotations
 import hashlib
 import json
 import sqlite3
+import sys
 import tempfile
 import unittest
+import urllib.error
 import urllib.request
 from pathlib import Path
 from unittest.mock import patch
@@ -209,6 +211,43 @@ class TestAgentHyperBus(unittest.TestCase):
         self.assertFalse(by_id["sql_bad"]["ok"])
         self.assertEqual(by_id["sql_bad"]["error"], "readonly_sql_only")
 
+    def test_completed_batches_supply_scoped_evidence_without_read_side_effects(self):
+        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+
+        def evidence():
+            with opener.open(f"{self.anchor}/v1/truth-matrix", timeout=5) as response:
+                return json.load(response)["capabilities"]["agent_hyper_bus"]
+
+        before = evidence()
+        read = {"op": "file_slice", "path": "src/math_core.py", "first": 1}
+        request = {"ops": [read], "cwd": str(self.repo)}
+        code, result = self._post("/v1/agent/xray-batch", request)
+        self.assertEqual((code, result["ok_count"]), (200, 1))
+        passed = evidence()
+        self.assertEqual(passed["basis"], "fixture_traffic")
+        self.assertEqual(passed["sample_count"], before["sample_count"] + 1)
+        self.assertEqual(passed["execution_node"], "agent-bus-unit")
+        self.assertEqual(passed["metrics"], {
+            "operation": "agent.xray_batch", "successful": True, "operations": 1,
+        })
+        self.assertEqual(evidence(), passed)
+
+        request["ops"] = [read, {**read, "path": "missing.py"}]
+        _, partial = self._post("/v1/agent/xray-batch", request)
+        self.assertEqual((partial["ok"], partial["ok_count"]), (False, 1))
+        failed = evidence()
+        self.assertEqual(failed["basis"], "unverified")
+        self.assertEqual(failed["sample_count"], passed["sample_count"] + 1)
+        self.assertEqual(failed["last_verified_at"], passed["last_verified_at"])
+        self.assertEqual(failed["metrics"], {
+            "operation": "agent.xray_batch", "successful": False, "operations": 2,
+        })
+        with self.assertRaises(urllib.error.HTTPError) as rejection:
+            self._post("/v1/agent/xray-batch", {"ops": []})
+        self.assertEqual(rejection.exception.code, 400)
+        rejection.exception.close()
+        self.assertEqual(evidence(), failed)
+
     def test_03_callgraph_telepathy_js_and_python_2hop(self) -> None:
         code_js, js_res = self._post(
             "/v1/agent/callgraph-slice",
@@ -231,10 +270,19 @@ class TestAgentHyperBus(unittest.TestCase):
         self.assertTrue(any("test_math_core.py" in t["file"] for t in py_res["related_tests"]))
 
     def test_04_atomic_commit_verify_impacted_tests_and_blake2s_cache(self) -> None:
-        code1, r1 = self._post(
-            "/v1/agent/commit-verify",
-            {"repo": str(self.repo), "files": ["src/math_core.py"], "run_tests": True},
-        )
+        request = {"repo": str(self.repo), "files": ["src/math_core.py"], "run_tests": True}
+        if sys.platform.startswith("linux"):
+            with self.assertRaises(urllib.error.HTTPError) as error:
+                self._post("/v1/agent/commit-verify", request)
+            with error.exception as response:
+                self.assertEqual(response.code, 409)
+                result = json.load(response)
+            self.assertEqual(result["error"], "guarded_build_required")
+            self.assertEqual(result["state"], "deferred")
+            self.assertEqual(result["queue"], {"stored": False})
+            return
+
+        code1, r1 = self._post("/v1/agent/commit-verify", request)
         self.assertEqual(code1, 200)
         self.assertTrue(r1["ok"], r1)
         self.assertFalse(r1["cache_hit"])

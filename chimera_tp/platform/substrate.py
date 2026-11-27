@@ -69,13 +69,13 @@ class PlatformSubstrate:
         self.registry = AppRegistry(reg_path)
         self.port_scanner = PassivePortScanner(cache_ttl_s=10.0)
         self.evidence = EvidenceLedger(ops_dir=Path(daemon.ops_dir))
-        observe_activity = self.evidence.activity_observer(daemon.config.node_name, synthetic=self.ephemeral)
+        self._observe_activity = self.evidence.activity_observer(daemon.config.node_name, synthetic=self.ephemeral)
         self.egress = EgressMembraneProxy(
             listen_host="127.0.0.1",
             listen_port=0 if self.ephemeral else 9781,
             cassettes_dir=Path(daemon.ops_dir) / "cassettes",
             on_flow=daemon.record_flow,
-            on_activity=observe_activity,
+            on_activity=self._observe_activity,
             peer_proxy_resolver=self._resolve_peer_egress_proxy,
             peer_hop_fuse=(None if self.ephemeral else fast_egress_fuse),
         )
@@ -93,7 +93,7 @@ class PlatformSubstrate:
                 else None
             ),
             on_flow=daemon.record_flow,
-            on_activity=observe_activity,
+            on_activity=self._observe_activity,
         )
         self.search = HybridPlatformSearch(
             db_path=Path(daemon.ops_dir) / "platform_search.db",
@@ -1751,15 +1751,7 @@ class PlatformSubstrate:
                     compact=bool(body.get("compact", True)),
                     agent_id=str(body.get("agent_id") or ""),
                 )
-                try:
-                    self.evidence.record(
-                        "agent_hyper_bus",
-                        verified=bool(res.get("ok")),
-                        source="runtime_traffic",
-                        metrics={"op": "xray_batch", "ops": res.get("ops_count", 0), "ms": res.get("elapsed_ms", 0.0)},
-                    )
-                except Exception:
-                    pass
+                self._observe_activity("agent.xray_batch", res["ok"], res["ops_count"])
                 try:
                     self.daemon.record_flow(
                         "compute",
