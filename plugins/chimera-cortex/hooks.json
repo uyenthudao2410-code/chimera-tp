@@ -1,0 +1,50 @@
+{
+  "chimera-omega-spine": {
+    "enabled": true,
+    "SessionStart": [
+      {
+        "type": "command",
+        "command": "E:\\dev\\chimera-tp\\bin\\chimera-hook.exe session_start",
+        "timeout": 5
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "edit_file|write_file|run_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "E:\\dev\\chimera-tp\\bin\\chimera-hook.exe pre_tool_use",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "edit_file|write_file|run_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "E:\\dev\\chimera-tp\\bin\\chimera-hook.exe post_tool_use",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreInvocation": [
+      {
+        "type": "command",
+        "command": "E:\\dev\\chimera-tp\\bin\\chimera-hook.exe pre_invocation",
+        "timeout": 5
+      }
+    ],
+    "Stop": [
+      {
+        "type": "command",
+        "command": "E:\\dev\\chimera-tp\\bin\\chimera-hook.exe stop",
+        "timeout": 5
+      }
+    ]
+  }
+}

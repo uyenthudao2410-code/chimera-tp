@@ -1,0 +1,123 @@
+{
+  "generated_at": "2026-11-27T11:26:15+0700",
+  "simulation_12turn_codex": {
+    "before": {
+      "turns": 12,
+      "effortFlips": 11,
+      "effortFlipsPrevented": 0,
+      "trueMidPrefixBreaks": 2,
+      "kvMissTurns": 11,
+      "totalInputTokens": 127200,
+      "totalCachedTokens": 0,
+      "totalUncachedTokens": 127200,
+      "effectiveCacheHitPct": 0,
+      "effectiveQuotaCostUnits": 127200,
+      "gatePass": false
+    },
+    "after": {
+      "turns": 12,
+      "effortFlips": 0,
+      "effortFlipsPrevented": 11,
+      "trueMidPrefixBreaks": 0,
+      "kvMissTurns": 0,
+      "totalInputTokens": 127200,
+      "totalCachedTokens": 110000,
+      "totalUncachedTokens": 17200,
+      "effectiveCacheHitPct": 86.48,
+      "effectiveQuotaCostUnits": 44700,
+      "gatePass": true
+    },
+    "delta": {
+      "effortFlipsDelta": -11,
+      "kvMissTurnsDelta": -11,
+      "uncachedTokensSaved": 110000,
+      "uncachedReductionPct": 86.48,
+      "cacheHitGainPp": 86.48,
+      "quotaCostSavedPct": 64.86
+    }
+  },
+  "svhome_tests": {
+    "returncode": 0,
+    "tail": [
+      "✔ M8. v21.1 auditPrefixItems hash parity eliminates false breakIndex:0 when alternating precomputedDigests and fallback (1.458676ms)",
+      "✔ M9. v21.1 Thermal Stall Hedge rescues BOTH empty reasoning_summary_part shells AND post-progress mid-stream silent freezes (3212.194597ms)",
+      "ℹ tests 58",
+      "ℹ suites 0",
+      "ℹ pass 58",
+      "ℹ fail 0",
+      "ℹ cancelled 0",
+      "ℹ skipped 0",
+      "ℹ todo 0",
+      "ℹ duration_ms 8102.905099"
+    ]
+  },
+  "parity": {
+    "files_checked": 7,
+    "drift_count": 0,
+    "hashes": {
+      "src/optimizer.js": "0990c89419be3ad2",
+      "src/responses-payload.js": "59c4a90f0ea2a414",
+      "src/thought-briefs.js": "089c4d0cfaab870d",
+      "src/chimera-symbiote-bridge.js": "3e1a9b148d4fee78",
+      "src/server.js": "29cb105d331dba98",
+      "src/routes-hyperdrive.js": "1523a345ea2cf1a1",
+      "test/codex-effort-invariant-gate.test.js": "3a8944e770702990"
+    }
+  },
+  "live_nodes": {
+    "win_invariant_gate": {
+      "ok": true,
+      "gatePass": true,
+      "invariants": {
+        "effortInvariantOk": true,
+        "kvPrefixInvariantOk": true,
+        "completedLeakInvariantOk": true,
+        "zeroDuplicateHedgeOk": true
+      },
+      "effortAudits": 0,
+      "effortInvariantHits": 0,
+      "effortFlipsPrevented": 0,
+      "effortFlipsObserved": 0,
+      "effortUpwardRatchets": 0,
+      "trueMidPrefixBreaks": 0,
+      "freshTurnResets": 0,
+      "compactionResets": 0,
+      "completedLeaks": 0,
+      "duplicateUpstreamHedges": 0,
+      "cacheHitPct": null,
+      "totalInputTokens": 0,
+      "totalCachedTokens": 0,
+      "totalOutputTokens": 0,
+      "totalReasoningTokens": 0,
+      "lastEffortFlip": null,
+      "lastBreak": null
+    },
+    "svhome_invariant_gate": {
+      "ok": true,
+      "gatePass": true,
+      "invariants": {
+        "effortInvariantOk": true,
+        "kvPrefixInvariantOk": true,
+        "completedLeakInvariantOk": true,
+        "zeroDuplicateHedgeOk": true
+      },
+      "effortAudits": 0,
+      "effortInvariantHits": 0,
+      "effortFlipsPrevented": 0,
+      "effortFlipsObserved": 0,
+      "effortUpwardRatchets": 0,
+      "trueMidPrefixBreaks": 0,
+      "freshTurnResets": 0,
+      "compactionResets": 0,
+      "completedLeaks": 0,
+      "duplicateUpstreamHedges": 0,
+      "cacheHitPct": null,
+      "totalInputTokens": 0,
+      "totalCachedTokens": 0,
+      "totalOutputTokens": 0,
+      "totalReasoningTokens": 0,
+      "lastEffortFlip": null,
+      "lastBreak": null
+    }
+  }
+}

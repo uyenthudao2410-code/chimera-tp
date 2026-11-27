@@ -16,6 +16,8 @@ const root = dirname(scripts);
 const powerShell = "powershell.exe";
 const ps = ["-NoLogo", "-NoProfile", "-NonInteractive"];
 const options = {
+  "secondary-display": { type: "string" }, "deferred-retries": { type: "string", default: "0" },
+  "capture-retries": { type: "string", default: "0" },
   out: { type: "string" }, dwg: { type: "string" }, presentmon: { type: "string" },
   "prog-id": { type: "string", default: "AutoCAD.Application" },
   jobs: { type: "string" }, peer: { type: "string", default: "svhome" }, python: { type: "string", default: "python" },
@@ -27,8 +29,8 @@ const options = {
 };
 const usage = `node scripts/measure_cad_build.mjs preflight [--out NEW_DIR] [--check-jobs]
 node scripts/measure_cad_build.mjs peer-preflight --service-p95-ms LIMIT [--out NEW_DIR]
-node scripts/measure_cad_build.mjs run --service-p95-ms LIMIT [--out NEW_DIR]
-  [--pairs 10] [--seconds 30] [--rounds 240] [--peer svhome] [--python python] [--cpu-quota-pct 95]
+node scripts/measure_cad_build.mjs run --service-p95-ms LIMIT [--out NEW_DIR] [--secondary-display DEVICE]
+  [--pairs 10] [--seconds 30] [--rounds 240] [--peer svhome] [--python python] [--cpu-quota-pct 95] [--deferred-retries N] [--capture-retries N]
   [--dwg PATH] [--prog-id AutoCAD.Application] [--presentmon PATH] [--swap-chain 0x...]
   [--service-url http://host/service] [--jobs FILE] [--timeout 180] [--local-build shared|independent]
 
@@ -46,6 +48,8 @@ Windows runs both directly or shares one build with --local-build shared. The gu
 Swarm API coalesces the two Linux requests. Both senders verify the artifact.
 --cpu-quota-pct limits only the guarded Linux job to 1..100 percent of one CPU.
 Each sender must receive the kernel quota and verified admission in its receipt.
+With --deferred-retries, replay an entire deferred pair on the same CAD instance.
+Every deferral is recorded, counts against automatic placement, and is followed by a cooldown.
 Use --reference-ssh to measure one bare compile per site without the scheduler.
 For another build pass a JSON object with "local" and "remote".
 Each contains "argv" (a command argument array) and optionally "cwd", relative to
@@ -219,7 +223,8 @@ async function benchmark(a, dir, info, binary) {
   if (sha256(await readFile(join(dir, "scene.dwg"))) !== info.drawing_sha256) throw new Error("Drawing changed during copy");
   const args = [...ps, "-ExecutionPolicy", "RemoteSigned", "-File", join(scripts, "cad_viewport.ps1"),
     "-RunDirectory", dir, "-ProgId", a["prog-id"], "-OwnerPid", String(process.pid),
-    "-Arms", String(a.pairs * 2), "-Seconds", String(a.seconds)];
+    "-Arms", String((a.pairs + a["deferred-retries"] + a["capture-retries"]) * 2), "-Seconds", String(a.seconds)];
+  if (a["secondary-display"]) args.push("-SecondaryDisplay", a["secondary-display"]);
   const scene = child(powerShell, args);
   const controller = new AbortController();
   const onCancel = () => controller.abort(new Error("CAD benchmark cancelled"));
@@ -230,30 +235,84 @@ async function benchmark(a, dir, info, binary) {
   try {
     const ready = await marker(dir, "ready.json", 120000, scene, controller.signal);
     info.cad = ready;
-    if (ready.warmup.foreground_misses) throw new Error("The dedicated CAD viewport was obscured during warmup");
-    collector = await startCapture(binary, Number(ready.pid), csv, a.pairs * 2 * (a.timeout + 55) + 15);
+    if (a["secondary-display"] && ready.display !== a["secondary-display"])
+      throw new Error("CAD did not confirm the requested secondary display");
+    if (ready.warmup.exposure_misses) throw new Error("The dedicated CAD viewport was obscured during warmup");
+    const maxArms = 2 * (a.pairs + a["deferred-retries"] + a["capture-retries"]);
+    collector = await startCapture(binary, Number(ready.pid), csv, maxArms * (a.timeout + 55) + 15);
+    const deferrals = info.guard_deferrals = [];
+    const invalidCaptures = info.invalid_captures = [];
+    let attemptIndex = 0;
     for (let pair = 1; pair <= a.pairs; pair++) {
       const order = pair % 2 ? ["local", "remote"] : ["remote", "local"];
+      const pairRows = [];
       for (const site of order) {
-        const idx = rows.length;
-        const arm = await observedArm(a, jobs, site, controller.signal, async () => {
-          await writeFile(join(dir, "arm-" + idx + ".go"), "go", { flag: "wx" });
-          return marker(dir, "arm-" + idx + ".done.json", (a.seconds + 15) * 1000, scene, controller.signal);
-        });
-        rows.push({ pair, ...arm });
-        await writeFile(join(dir, "arm-" + idx + ".json"), JSON.stringify(rows.at(-1), null, 2), { flag: "wx" });
+        const idx = attemptIndex++;
+        let sweepDone, arm;
+        try {
+          arm = await observedArm(a, jobs, site, controller.signal, () => {
+            sweepDone = writeFile(join(dir, "arm-" + idx + ".go"), "go", { flag: "wx" })
+              .then(() => marker(dir, "arm-" + idx + ".done.json", (a.seconds + 15) * 1000, scene, controller.signal));
+            return sweepDone;
+          });
+        } catch (error) {
+          const reason = /Swarm deferred: ([a-z0-9_]+)/.exec(error.message)?.[1];
+          if (site !== "remote" || !reason || !sweepDone) throw error;
+          const deferred = { pair, site, arm_index: idx, reason, sweep: await sweepDone,
+            discarded_completed_arms: pairRows.map(r => r.arm_index) };
+          deferrals.push(deferred);
+          await writeFile(join(dir, "deferred-" + idx + ".json"), JSON.stringify(deferred, null, 2), { flag: "wx" });
+          if (deferrals.length > a["deferred-retries"]) throw error;
+          await sleep(15000, undefined, { signal: controller.signal });
+          break;
+        }
+        const measured = { pair, arm_index: idx, ...arm };
+        await writeFile(join(dir, "arm-" + idx + ".json"), JSON.stringify(measured, null, 2), { flag: "wx" });
+        const frameIssues = [...arm.overlap.issues];
+        if (arm.sweep.exposure_misses) frameIssues.push("viewport was obscured during camera sweep");
+        if (!frameIssues.length) {
+          const { from_qpc_ms: from, until_qpc_ms: until } = arm.overlap;
+          let live;
+          for (let attempt = 0; attempt < 5; attempt++) {
+            if (attempt) await sleep(500, undefined, { signal: controller.signal });
+            if (await exists(csv)) live = await inspectFrames(csv, Number(ready.pid), from, until, a["swap-chain"] ?? null);
+            if (live && !live.issues.length) break;
+          }
+          frameIssues.push(...(live?.issues ?? ["PresentMon did not deliver frame data"]));
+        }
+        if (frameIssues.length) {
+          const invalid = { pair, site, arm_index: idx, issues: frameIssues,
+            discarded_completed_arms: [...pairRows.map(r => r.arm_index), idx] };
+          invalidCaptures.push(invalid);
+          await writeFile(join(dir, "invalid-" + idx + ".json"), JSON.stringify(invalid, null, 2), { flag: "wx" });
+          if (invalidCaptures.length > a["capture-retries"]) throw new Error(frameIssues.join(", "));
+          await sleep(5000, undefined, { signal: controller.signal });
+          break;
+        }
+        pairRows.push(measured);
       }
+      if (pairRows.length === 2) rows.push(...pairRows);
+      else pair--; // Preserve the assigned AB/BA order when replaying a complete pair.
     }
-    await collector.stop();
+    const trace = await collector.stop();
     collector = null;
+    info.presentmon_trace = {
+      pid: Number(ready.pid), display: ready.display ?? null,
+      events_lost: Number(/(\d+) ETW events were lost/i.exec(trace.stderr)?.[1] ?? 0),
+      buffers_lost: Number(/(\d+) ETW buffers were lost/i.exec(trace.stderr)?.[1] ?? 0),
+    };
     for (const r of rows) {
       const { from_qpc_ms: from, until_qpc_ms: until, issues } = r.overlap;
       r.frames = issues.length ? { issues: [...issues], p99_ms: null, displayed_intervals: 0 }
         : await inspectFrames(csv, Number(ready.pid), from, until, a["swap-chain"] ?? null);
-      if (r.sweep.foreground_misses) r.frames.issues.push("viewport lost foreground during camera sweep");
+      if (r.sweep.exposure_misses) r.frames.issues.push("viewport was obscured during camera sweep");
     }
-    return { ...info, state: "completed", cad_trials: rows.length, rows,
-      summary: comparePairs(rows, a["service-p95-ms"] ?? null) };
+    const summary = comparePairs(rows, a["service-p95-ms"] ?? null, deferrals);
+    if (info.presentmon_trace.events_lost || info.presentmon_trace.buffers_lost) {
+      summary.issues.push("PresentMon reported ETW loss during capture");
+      summary.decision = "insufficient_evidence";
+    }
+    return { ...info, state: "completed", cad_trials: rows.length, rows, summary };
   } finally {
     controller.abort();
     process.removeListener("SIGINT", onCancel);
@@ -282,6 +341,8 @@ async function main() {
   }
   a.rounds = numberIn(a.rounds, "rounds", 1, 3000, true);
   a.pairs = numberIn(a.pairs, "pairs", 1, 30, true);
+  a["deferred-retries"] = numberIn(a["deferred-retries"], "deferred-retries", 0, 10, true);
+  a["capture-retries"] = numberIn(a["capture-retries"], "capture-retries", 0, 10, true);
   a.seconds = numberIn(a.seconds, "seconds", 3, 120);
   a.timeout = numberIn(a.timeout, "timeout", a.seconds + 2, 900);
   if (a["service-p95-ms"] !== undefined) a["service-p95-ms"] = numberIn(a["service-p95-ms"], "service-p95-ms", 0.01, 60000);
@@ -296,6 +357,7 @@ async function main() {
   info.local_build_strategy = a.jobs ? "custom" : a["reference-ssh"] ? "single-reference" : a["local-build"];
   if (mode !== "preflight") {
     info.protocol = {
+      viewport: a["secondary-display"] ? { device: a["secondary-display"], focus: "unclaimed", visibility: "nine window hit tests on each camera step" } : { focus: "foreground" },
       rounds: a.rounds, peer: a.peer, sweep_seconds: mode === "run" ? a.seconds : null,
       cache: a.jobs ? "operator-defined" : a["reference-ssh"] ? "fresh compile" : "fresh Swarm action key in each arm",
       receiver: "Two fresh HTTP GETs on Linux loopback, verified Radar health and linked CSS; host counters read on that same sample.",

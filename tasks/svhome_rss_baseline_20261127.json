@@ -1,0 +1,48 @@
+{
+  "schema": "chimera.svhome-live-memory/1",
+  "unit": "chimera-hyper-daemon.service",
+  "main_pid": 4158151,
+  "started_at": "2026-11-27T15:49:20+07:00",
+  "runtime": "/home/svhome/.local/share/chimera/releases/65bbee57e75f",
+  "package_files": 130,
+  "source_fingerprint": "01d9f5c720eedad28611c12549b7f917d23c4d9a3edb5cb2998074f7202b5c31",
+  "version": "18.0.0",
+  "rss_limit_bytes": 57671680,
+  "peak_budget_bytes": 83886080,
+  "env": {
+    "MALLOC_ARENA_MAX": "2",
+    "MALLOC_CONF": "",
+    "PYTHONMALLOC": "",
+    "MIMALLOC_PURGE_DELAY": "",
+    "GLIBC_TUNABLES": "",
+    "LD_PRELOAD": ""
+  },
+  "vsa": 1081,
+  "health": true,
+  "samples": [
+    {
+      "utc": "2026-11-27T16:45:00.883079+07:00",
+      "VmHWM": 101650432,
+      "VmRSS": 77389824,
+      "RssAnon": 59949056,
+      "RssFile": 17375232,
+      "VmSwap": 0
+    },
+    {
+      "utc": "2026-11-27T16:45:01.383453+07:00",
+      "VmHWM": 101650432,
+      "VmRSS": 77352960,
+      "RssAnon": 59912192,
+      "RssFile": 17375232,
+      "VmSwap": 0
+    },
+    {
+      "utc": "2026-11-27T16:45:01.883806+07:00",
+      "VmHWM": 101650432,
+      "VmRSS": 77291520,
+      "RssAnon": 59850752,
+      "RssFile": 17375232,
+      "VmSwap": 0
+    }
+  ]
+}

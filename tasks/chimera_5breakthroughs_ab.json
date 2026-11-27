@@ -1,0 +1,80 @@
+{
+  "started_at": "2026-11-27T12:27:06+0700",
+  "full_project_parity": {
+    "chimera_total_files_verified_4loc": 284,
+    "chimera_4loc_drift_count": 0,
+    "tquota_total_files_verified_2loc": 697,
+    "tquota_2loc_drift_count": 0,
+    "zero_drift_ok": true,
+    "svhome_vsa_so_exists": "-rwxrwxr-x 1 svhome svhome 20K Nov 27 12:22 /home/svhome/.local/share/chimera/releases/e13c4da7d80b/chimera_tp/_chimera_vsa.so"
+  },
+  "ab_results": {
+    "b1_green_ctx_5s_lease": {
+      "before_cold_total_ms": 154.314,
+      "after_leased_warm_total_ms": 10.419,
+      "kernel_ms": 3.935,
+      "lease_total_speedup": 14.81,
+      "lease_release_ms": 28.602,
+      "vram_retained_mb": 0.0,
+      "bit_exact_match_vs_cpu": true
+    },
+    "b2_rust_c_simd_zero_numpy": {
+      "before_win_full_rss_mb": 71.71,
+      "after_win_full_rss_mb": 45.01,
+      "win_rss_saved_mb": 26.7,
+      "before_sv_full_rss_mb": 56.66,
+      "after_sv_full_rss_mb": 60.61,
+      "sv_rss_saved_mb": -3.95,
+      "before_win_vsa_16k_numpy_ms": 77.346,
+      "after_win_rust_popcnt_ms": 9.172,
+      "win_rust_speedup_vs_numpy": 8.43,
+      "after_sv_gcc_popcnt_ms": 19.081,
+      "sv_gcc_speedup_vs_pure_py": 3.35,
+      "before_ingest_275_briefs_ms": 12535.68,
+      "after_ingest_275_briefs_ms": 133.7,
+      "ingest_speedup": 93.76,
+      "before_recall_275_cpu_ms": 1466.225,
+      "after_recall_275_cpu_ms": 12.567,
+      "recall_speedup": 116.67,
+      "win_native_vsa_simd": true,
+      "sv_native_vsa_simd": true,
+      "zero_numpy_daemon": true
+    },
+    "b3_cross_node_radix_kv": {
+      "before_turn1_hits": 0,
+      "after_turn1_hits": 4,
+      "total_subagents": 4,
+      "estimated_cold_tokens_saved": 192000,
+      "cross_effort_blocked": true,
+      "win_telemetry_field_live": true,
+      "sv_telemetry_field_live": true
+    },
+    "b4_nixl_mmap_ring": {
+      "ring_path": "V:\\nixl\\chimera_nixl_ring.bin",
+      "node_write_avg_us": 34.69,
+      "python_mmap_drain_events": 100,
+      "python_mmap_drain_sptc_executed": 100,
+      "python_mmap_drain_elapsed_us": 1603830.3,
+      "python_pure_mmap_drain_us": 22.9,
+      "python_pure_mmap_publish_us": 274.4
+    },
+    "b5_supervisor_truth_radar": {
+      "win_runtime_dir": "C:/Users/Admin/AppData/Local/chimera/releases/e13c4da7d80b",
+      "win_supervisor_drift": "false",
+      "sv_runtime_dir": "/home/svhome/.local/share/chimera/releases/e13c4da7d80b",
+      "sv_supervisor_drift": "false",
+      "systemd_dropin_precedence_verified": true
+    },
+    "final_live_health": {
+      "win_chimera_pid": 28460,
+      "win_chimera_ram_mb": 63.61,
+      "win_law7_ok": true,
+      "sv_chimera_pid": 4107834,
+      "sv_chimera_ram_mb": 57.6,
+      "sv_law7_ok": true,
+      "win_invariant_gate_pass": true,
+      "sv_invariant_gate_pass": true
+    }
+  },
+  "finished_at": "2026-11-27T12:29:02+0700"
+}

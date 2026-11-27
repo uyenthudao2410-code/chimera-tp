@@ -1,0 +1,254 @@
+{
+  "started_at": "2026-11-27T10:02:22+0700",
+  "before_daemons": {
+    "win_pid": 20084,
+    "win_ram_mb": 33.05,
+    "sv_pid": 4064823,
+    "sv_ram_mb": 59.81,
+    "sv_dirs": {
+      "chimera_rel": "/home/svhome/.local/share/chimera/releases/5e25fafe4a8f",
+      "chimera_repo": "/home/svhome/DEV/chimera-tp",
+      "tquota_dir": "/home/svhome/DEV/Tqouta/local-relay",
+      "tquota_svc": "tquota.service"
+    }
+  },
+  "win_release_promote": {
+    "ok": true,
+    "epoch_id": "rel_1795748546_c04411a0",
+    "promoted_files": [
+      "chimera_tp/platform/darwin_engine.py",
+      "chimera_tp/platform/agent_symbiont.py",
+      "chimera_tp/platform/substrate.py",
+      "chimera_tp/platform/client.py",
+      "chimera_tp/platform/mcp_server.py",
+      "tests/test_darwin_engine.py"
+    ],
+    "sha256_map": {
+      "chimera_tp/platform/darwin_engine.py": "c706cdc69449389e",
+      "chimera_tp/platform/agent_symbiont.py": "b0512709714f5e22",
+      "chimera_tp/platform/substrate.py": "d532ae4db564bb8f",
+      "chimera_tp/platform/client.py": "60b3ce53d7951ff7",
+      "chimera_tp/platform/mcp_server.py": "d9391cef5eb3da83",
+      "tests/test_darwin_engine.py": "70f90e6f1e7b0e08"
+    },
+    "canary_ok": true,
+    "canary_detail": "passed",
+    "rollback_dir": "V:\\releases\\rollback_rel_1795748546_c04411a0",
+    "epoch_receipt": "ep_c3e947d3",
+    "elapsed_ms": 483.77
+  },
+  "svhome_chimera_tests": {
+    "returncode": 0,
+    "tail": [
+      "test_cuda_request_rejects_cpu_receipt_and_lost_provision_attempts_stop (tests.test_guarded_build.ColabTests.test_cuda_request_rejects_cpu_receipt_and_lost_provision_attempts_stop) ... ok",
+      "test_legacy_local_anchor_validates_budget_before_opening_any_session (tests.test_guarded_build.ColabTests.test_legacy_local_anchor_validates_budget_before_opening_any_session) ... ok",
+      "test_real_runner_compiles_declared_sources_and_adapter_checks_result (tests.test_guarded_build.ColabTests.test_real_runner_compiles_declared_sources_and_adapter_checks_result) ... ok",
+      "test_artifact_receipt_rejects_changed_bytes (tests.test_guarded_build.QueueTests.test_artifact_receipt_rejects_changed_bytes) ... ok",
+      "test_defer_retry_uses_original_snapshot_and_removes_completed_ticket (tests.test_guarded_build.QueueTests.test_defer_retry_uses_original_snapshot_and_removes_completed_ticket) ... ok",
+      "test_manifest_tampering_and_path_errors (tests.test_guarded_build.SnapshotTests.test_manifest_tampering_and_path_errors) ... ok",
+      "test_worktree_changes_modes_and_exact_verification (tests.test_guarded_build.SnapshotTests.test_worktree_changes_modes_and_exact_verification) ... ok",
+      "",
+      "----------------------------------------------------------------------",
+      "Ran 25 tests in 12.068s",
+      "",
+      "OK"
+    ]
+  },
+  "svhome_tquota_tests": {
+    "returncode": 0,
+    "tail": [
+      "✔ S8. healExactDuplicateToolCallReplays repairs 3x identical duplicate replay while preserving strict divergent duplicate rejection (3.063543ms)",
+      "✔ S9. RequestDeadline.dispose detaches parentSignal listener with zero gcPersistentSignals leak (284.881485ms)",
+      "ℹ tests 21",
+      "ℹ suites 0",
+      "ℹ pass 21",
+      "ℹ fail 0",
+      "ℹ cancelled 0",
+      "ℹ skipped 0",
+      "ℹ todo 0",
+      "ℹ duration_ms 2010.445268"
+    ]
+  },
+  "parity": {
+    "chimera_files_checked": 6,
+    "chimera_4loc_drift_count": 0,
+    "chimera_drift_files": [],
+    "tquota_files_checked": 4,
+    "tquota_2loc_drift_count": 0,
+    "win_repo_hashes": {
+      "chimera_tp/platform/darwin_engine.py": "c706cdc69449389e",
+      "chimera_tp/platform/agent_symbiont.py": "b0512709714f5e22",
+      "chimera_tp/platform/substrate.py": "d532ae4db564bb8f",
+      "chimera_tp/platform/client.py": "60b3ce53d7951ff7",
+      "chimera_tp/platform/mcp_server.py": "d9391cef5eb3da83",
+      "tests/test_darwin_engine.py": "70f90e6f1e7b0e08"
+    }
+  },
+  "ab_benchmark": {
+    "generated_at": "2026-11-27T10:03:18+0700",
+    "p1_p2_seed_es_and_genome_teleport": {
+      "genome_id": "darwin_reflex_live_v1",
+      "zero_backprop": true,
+      "param_count": 1426,
+      "generations": 55,
+      "forward_passes": 1816,
+      "baseline_accuracy_pct": 16.67,
+      "evolved_accuracy_pct": 86.11,
+      "accuracy_gain_pct": 69.44,
+      "baseline_nll": 1.79068,
+      "evolved_nll": 0.452042,
+      "vram_reduction_ratio_vs_adam": 6.0,
+      "binary_wire_bytes_total": 7810,
+      "avg_binary_bytes_per_gen": 142.0,
+      "teleported_genome_json_bytes": 27077,
+      "compression_ratio_vs_fp16": 0.37,
+      "win_weights_sha256": "ef30f6899e102a2cd1ad3abc",
+      "svhome_replayed_weights_sha256": "ef30f6899e102a2cd1ad3abc",
+      "cross_node_bit_exact_match": true,
+      "svhome_replayed_accuracy_pct": 86.11,
+      "svhome_weight_bytes_stored": 0,
+      "python_vs_nodejs_prng_max_abs_diff": 1.1102230246251565e-16,
+      "win_evolve_ms": 1381.76,
+      "svhome_replay_ms": 1151.62
+    },
+    "p3_es_param_policy_evolution": {
+      "chimera_mode": "shadow_only",
+      "doctrine_law6_compliant": true,
+      "trace_sources": [
+        "peer_service_slo_5e25fafe4a8f.json",
+        "peer_service_slo_5e25fafe4a8f_cpu95.json",
+        "peer_service_slo_6076079bd54c.json",
+        "swarm_placement_trials.json",
+        "tquota_flight_recorder:40"
+      ],
+      "trace_counts": {
+        "peer_samples": 30,
+        "placement_rows": 18,
+        "tquota_capsules": 40
+      },
+      "chimera_baseline_fitness": 11.057432,
+      "chimera_evolved_fitness": 12.15985,
+      "chimera_fitness_gain": 1.102418,
+      "chimera_knobs_tuned": 17,
+      "chimera_top_diffs": {
+        "peer_ram_reserve_mib": {
+          "before": 2560.0,
+          "after": 3333.5731,
+          "delta": 773.5731,
+          "domain": "chimera.peer_guard"
+        },
+        "peer_max_load1": {
+          "before": 1.8,
+          "after": 1.7046,
+          "delta": -0.0954,
+          "domain": "chimera.peer_guard"
+        },
+        "peer_max_temp_c": {
+          "before": 70.0,
+          "after": 58.1356,
+          "delta": -11.8644,
+          "domain": "chimera.peer_guard"
+        },
+        "peer_psi_cpu_pct": {
+          "before": 25.0,
+          "after": 22.1979,
+          "delta": -2.8021,
+          "domain": "chimera.peer_guard"
+        },
+        "peer_service_p95_ms": {
+          "before": 150.0,
+          "after": 113.3415,
+          "delta": -36.6585,
+          "domain": "chimera.peer_guard"
+        },
+        "placement_remote_wall_weight": {
+          "before": 1.0,
+          "after": 0.2,
+          "delta": -0.8,
+          "domain": "chimera.build_placement"
+        }
+      },
+      "chimera_elapsed_ms": 481.58,
+      "tquota_mode": "shadow_only",
+      "tquota_baseline_fitness": 11.158775,
+      "tquota_evolved_fitness": 11.997211,
+      "tquota_fitness_gain": 0.838436,
+      "tquota_baseline_499": 11,
+      "tquota_simulated_499": 2,
+      "tquota_avg_saved_ms": 288544,
+      "tquota_genome_bytes": 5078,
+      "tquota_elapsed_ms": 13.51
+    },
+    "p4_prompt_es_harness_evolution": {
+      "mode": "shadow_only",
+      "scenarios_evolved": 5,
+      "baseline_total_chars": 990,
+      "evolved_total_chars": 385,
+      "prompt_token_reduction_pct": 61.11,
+      "baseline_mean_fitness": 11.3693,
+      "evolved_mean_fitness": 14.13,
+      "reward_hacking_mutants_rejected": 40,
+      "elapsed_ms": 81.13
+    },
+    "p6_mirror_race_v2_crossover": {
+      "before_gen1_ok": false,
+      "before_gen1_best_fitness": 66.6467,
+      "before_gen1_candidates": 2,
+      "after_gen2_ok": true,
+      "after_gen2_committed": true,
+      "after_gen2_winner_id": "g2_xover_parent_loa_parent_ram",
+      "after_gen2_winner_generation": 2,
+      "after_gen2_winner_parents": [
+        "parent_load_fix",
+        "parent_ram_fix"
+      ],
+      "after_gen2_best_fitness": 99.98,
+      "after_gen2_offspring_tested": 2,
+      "after_gen2_elapsed_ms": 71.38
+    },
+    "p5_sleep_cycle_and_doctrine_health": {
+      "sleep_card_written": true,
+      "sleep_card_status": "shadow_ready_for_approval",
+      "auto_activated": false,
+      "colab_cu_spent": 0.0,
+      "mcp_tools_count": 40,
+      "win_chimera_pid": 33212,
+      "win_chimera_ram_mb_before_darwin": 58.77,
+      "win_chimera_ram_mb_after_darwin": 45.2,
+      "win_zero_weight_ok": true,
+      "svhome_chimera_pid": 4066005,
+      "svhome_chimera_ram_mb_before_darwin": 51.17,
+      "svhome_chimera_ram_mb_after_darwin": 53.52,
+      "svhome_zero_weight_ok": true,
+      "win_tquota_darwin_live": {
+        "restarted": false,
+        "status": {
+          "ok": true,
+          "engine": "tquota-darwin-es",
+          "mode": "shadow_only",
+          "zeroIqLossAxiom": true,
+          "knobsCount": 6,
+          "runs": 1,
+          "lastReceipt": {
+            "genomeId": "tquota_es_f23c49f9",
+            "fitnessGain": 0.838394,
+            "baseline499": 11,
+            "simulated499": 2,
+            "avgSavedMs": 288342,
+            "genomeBytes": 5106,
+            "elapsedMs": 21.2
+          }
+        }
+      },
+      "svhome_tquota_darwin_live": {
+        "ok": true,
+        "engine": "tquota-darwin-es",
+        "mode": "shadow_only",
+        "zeroIqLossAxiom": true,
+        "knobsCount": 6,
+        "runs": 0,
+        "lastReceipt": null
+      }
+    }
+  }
+}

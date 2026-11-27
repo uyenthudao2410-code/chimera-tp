@@ -460,6 +460,25 @@ class OmniProbeBatchEngine:
         self._shells_avoided = 0
         self._coalesced_hits = 0
         self._spec_cache_lookup: Callable[[Path], tuple[str, _CachedTextLines] | None] | None = None
+        # CHIMERA-NOOSPHERE Source-Side Zero-Echo Guard (bounded 256-entry session slice cache)
+        self._echo_seen: dict[tuple[str, str, int, int], tuple[float, str, int]] = {}
+        self._echo_hits = 0
+        self._echo_bytes_saved = 0
+        self._peer_base_getter: Any = None
+        self._peer_auth_fn: Any = None
+
+    def attach_peer_transport(self, *, peer_base_getter: Any = None, peer_auth_fn: Any = None) -> None:
+        self._peer_base_getter = peer_base_getter
+        self._peer_auth_fn = peer_auth_fn
+
+    def echo_guard_stats(self) -> dict[str, Any]:
+        with self._lock:
+            return {
+                "tracked_slices": len(self._echo_seen),
+                "echo_hits": self._echo_hits,
+                "echo_bytes_saved": self._echo_bytes_saved,
+                "estimated_tokens_saved": self._echo_bytes_saved // 4,
+            }
 
     def _op_file_slice(
         self,
@@ -524,10 +543,40 @@ class OmniProbeBatchEngine:
                 end = start + 399
 
         numbered = spec.get("numbered", True)
+        dedupe_echo = bool(spec.get("dedupe_echo", False))
+        session_tag = str(spec.get("session_id") or "default")[:64]
+        echo_key = (session_tag, os.path.normcase(str(p)), int(start), int(end))
+        now_m = time.monotonic()
+        if dedupe_echo:
+            with self._lock:
+                prev = self._echo_seen.get(echo_key)
+                if prev is not None and prev[1] == sha and (now_m - prev[0]) <= 600.0:
+                    self._echo_hits += 1
+                    self._echo_bytes_saved += prev[2]
+                    return {
+                        "ok": True,
+                        "path": str(p),
+                        "total_lines": total,
+                        "start_line": start,
+                        "end_line": end,
+                        "hash": sha,
+                        "echo_deduped": True,
+                        "bytes_saved": prev[2],
+                        **source,
+                        "text": f"[chimera-zero-echo: unchanged since earlier read in session; sha={sha}; lines {start}-{end}]",
+                    }
         sliced = [
             (f"{i}: {line}" if numbered else line)
             for i, line in enumerate(read_range(start, end), start)
         ] if total > 0 and start <= total else []
+        out_text = "\n".join(sliced)
+        if dedupe_echo:
+            out_bytes = len(out_text.encode("utf-8", errors="replace"))
+            with self._lock:
+                if len(self._echo_seen) >= 256:
+                    oldest_k = min(self._echo_seen.items(), key=lambda kv: kv[1][0])[0]
+                    self._echo_seen.pop(oldest_k, None)
+                self._echo_seen[echo_key] = (now_m, sha, out_bytes)
         return {
             "ok": True,
             "path": str(p),
@@ -536,7 +585,7 @@ class OmniProbeBatchEngine:
             "end_line": end if sliced else start,
             "hash": sha,
             **source,
-            "text": "\n".join(sliced),
+            "text": out_text,
         }
 
     def _op_regex_search(self, spec: dict[str, Any], base_dir: Path | None) -> dict[str, Any]:
@@ -809,6 +858,119 @@ class OmniProbeBatchEngine:
             "outline": items,
         }
 
+    def _op_file_hash(self, spec: dict[str, Any], base_dir: Path | None) -> dict[str, Any]:
+        paths = spec.get("paths") or ([spec.get("path")] if spec.get("path") else [])
+        if not isinstance(paths, list) or not paths:
+            return {"ok": False, "error": "paths_required"}
+        out: dict[str, Any] = {}
+        for raw in paths[:64]:
+            p = _safe_resolve(str(raw), base_dir)
+            if not p.is_file():
+                out[str(raw)] = {"exists": False}
+                continue
+            h = hashlib.sha256()
+            try:
+                with p.open("rb") as fh:
+                    for blk in iter(lambda: fh.read(65536), b""):
+                        h.update(blk)
+                st = p.stat()
+                out[str(raw)] = {"exists": True, "sha256": h.hexdigest(), "bytes": st.st_size, "mtime": round(st.st_mtime, 2)}
+            except OSError as exc:
+                out[str(raw)] = {"exists": False, "error": str(exc)}
+        return {"ok": True, "count": len(out), "hashes": out}
+
+    def _op_win_probe(self, spec: dict[str, Any]) -> dict[str, Any]:
+        from .mnemosyne import audit_system_entropy
+        ent = audit_system_entropy()
+        ports = spec.get("ports") or [9780, 9781, 12500]
+        port_state: dict[str, bool] = {}
+        import socket
+        for pt in list(ports)[:12]:
+            try:
+                pno = int(pt)
+                with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sk:
+                    sk.settimeout(0.15)
+                    port_state[str(pno)] = (sk.connect_ex(("127.0.0.1", pno)) == 0)
+            except Exception:
+                port_state[str(pt)] = False
+        return {"ok": True, "os": os.name, "memory": ent.get("memory"), "ports": port_state, "findings": ent.get("findings")}
+
+    def _op_watch_until(self, spec: dict[str, Any], base_dir: Path | None) -> dict[str, Any]:
+        cond = str(spec.get("condition") or "file_exists").strip().lower()
+        timeout_s = max(0.2, min(30.0, float(spec.get("timeout_s") or 5.0)))
+        poll_s = max(0.05, min(1.0, float(spec.get("poll_s") or 0.15)))
+        deadline = time.monotonic() + timeout_s
+        p_raw = str(spec.get("path") or "")
+        target = _safe_resolve(p_raw, base_dir) if p_raw else None
+        init_mtime = target.stat().st_mtime if (target and target.exists()) else 0.0
+        pattern = re.compile(str(spec.get("pattern") or "")) if spec.get("pattern") else None
+        min_count = int(spec.get("min_count") or 1)
+        checks = 0
+        while True:
+            checks += 1
+            matched = False
+            detail: Any = None
+            if cond == "file_exists" and target is not None:
+                matched = target.exists()
+                detail = str(target) if matched else None
+            elif cond == "file_mtime_changed" and target is not None and target.exists():
+                mt = target.stat().st_mtime
+                matched = mt > init_mtime
+                detail = mt
+            elif cond == "dir_count_gte" and target is not None and target.is_dir():
+                cnt = sum(1 for _ in target.iterdir())
+                matched = cnt >= min_count
+                detail = cnt
+            elif cond == "regex_in_file" and target is not None and target.is_file() and pattern is not None:
+                txt = target.read_text("utf-8", errors="replace")
+                m = pattern.search(txt)
+                matched = m is not None
+                detail = m.group(0)[:120] if m else None
+            elif cond == "http_200" and spec.get("url"):
+                try:
+                    u = str(spec["url"])
+                    if u.startswith(("http://127.0.0.1", "http://localhost")):
+                        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+                        with opener.open(u, timeout=0.6) as r:
+                            matched = int(r.status) == 200
+                            detail = int(r.status)
+                except Exception:
+                    matched = False
+            if matched:
+                return {"ok": True, "matched": True, "condition": cond, "checks": checks, "detail": detail}
+            if time.monotonic() >= deadline:
+                return {"ok": True, "matched": False, "timed_out": True, "condition": cond, "checks": checks, "detail": detail}
+            time.sleep(poll_s)
+
+    def _op_remote_xray(self, spec: dict[str, Any]) -> dict[str, Any]:
+        sub_ops = spec.get("ops")
+        if not isinstance(sub_ops, list) or not sub_ops:
+            return {"ok": False, "error": "remote_xray_requires_ops"}
+        peer_base = str(spec.get("peer_base") or "").strip().rstrip("/")
+        if not peer_base and callable(self._peer_base_getter):
+            try:
+                peer_base = str(self._peer_base_getter() or "").strip().rstrip("/")
+            except Exception:
+                peer_base = ""
+        if not peer_base:
+            return {"ok": False, "error": "no_peer_transport_configured"}
+        body = json.dumps({"ops": sub_ops[:20], "cwd": spec.get("cwd") or ""}, separators=(",", ":")).encode("utf-8")
+        req = urllib.request.Request(
+            f"{peer_base}/v1/agent/xray-batch",
+            data=body,
+            method="POST",
+            headers={"Content-Type": "application/json"},
+        )
+        if callable(self._peer_auth_fn):
+            try:
+                self._peer_auth_fn(req)
+            except Exception:
+                pass
+        opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+        with opener.open(req, timeout=float(spec.get("timeout_s") or 5.0)) as resp:
+            data = json.loads(resp.read(262144).decode("utf-8", errors="replace"))
+        return {"ok": bool(data.get("ok")), "peer_base": peer_base, "remote": data}
+
     def _exec_one(
         self,
         idx: int,
@@ -841,6 +1003,31 @@ class OmniProbeBatchEngine:
                     str(spec.get("ref_id") or ""),
                     start_line=int(spec.get("start_line") or 1),
                     max_lines=int(spec.get("max_lines") or 150),
+                )
+            elif op in ("file_hash", "sha256", "hash"):
+                res = self._op_file_hash(spec, base_dir)
+            elif op in ("win_probe", "sys_probe", "os_probe"):
+                res = self._op_win_probe(spec)
+            elif op in ("watch_until", "wait_until"):
+                res = self._op_watch_until(spec, base_dir)
+            elif op in ("remote_xray", "peer_xray"):
+                res = self._op_remote_xray(spec)
+            elif op in ("raw_recall", "mnemosyne_recall"):
+                from .mnemosyne import get_mnemosyne_core
+                res = get_mnemosyne_core().dispatch(
+                    "raw_recall",
+                    query=str(spec.get("query") or ""),
+                    repo=str(spec.get("repo") or (str(base_dir) if base_dir else "")),
+                    top_k=int(spec.get("top_k") or 6),
+                    causal_hops=int(spec.get("causal_hops") if spec.get("causal_hops") is not None else 1),
+                )
+            elif op in ("doc_page", "pdf_page"):
+                from .mnemosyne import get_mnemosyne_core
+                res = get_mnemosyne_core().dispatch(
+                    "doc_page",
+                    repo=str(spec.get("repo") or (str(base_dir) if base_dir else ".")),
+                    rel_path=str(spec.get("path") or spec.get("rel_path") or ""),
+                    page=int(spec.get("page") or 1),
                 )
             else:
                 res = {"ok": False, "error": f"unsupported_op:{op}"}

@@ -1,0 +1,128 @@
+{
+  "generated_at": "2026-11-27T13:46:53+0700",
+  "elapsed_s": 38.29,
+  "effort_mutation_allowed": false,
+  "ab_benchmark": {
+    "live_sqlite_remaining_targets": {
+      "flash_rows_ge_30k": 25,
+      "flash_uncached_tokens_before": 2545008,
+      "flash_tokens_saved_est_93pct": 2366857,
+      "baseline_cold_rows": 232,
+      "prefix_edit_rows": 7,
+      "prefix_edit_uncached_tokens_before": 243797,
+      "ttl_samples_measured": 285
+    },
+    "node_nexus_ab": {
+      "phantom_prefix": {
+        "before_relation": "prefix-edit (240K cache cliff)",
+        "after_relation": "append-only",
+        "after_first_diff": -1,
+        "heals": 2,
+        "protected_tokens": 10568,
+        "latency_ms": 4.719
+      },
+      "universal_anchor": {
+        "before_cross_thread_match": false,
+        "after_cross_thread_match": true,
+        "anchor_hash": "1b4bcb4caa2f14c8",
+        "moved_volatile_lines": 2
+      },
+      "flash_liposuction": {
+        "tokens_before": 81251,
+        "tokens_after": 2832,
+        "tokens_saved": 78419,
+        "reduction_pct": 96.51,
+        "evidence_preserved": true,
+        "latency_ms": 7.238
+      },
+      "chrono_fork": {
+        "hints_attached": 1,
+        "hint_chars": 404,
+        "latency_ms": 1.237
+      },
+      "poly_brain_valve": {
+        "effortMutationAllowed": false,
+        "gemini5hUsedPct": 80,
+        "geminiWeeklyUsedPct": 0,
+        "healthyChatgptAccounts": 5,
+        "chatgptBurnRatePctHr": 0,
+        "geminiUnderPressure": true,
+        "codexHasHeadroom": true,
+        "recommendCodexOffload": true,
+        "recommendedTarget": "codex-pool:gpt-5.4-full",
+        "adviceHeader": "offload-readonly-to-codex"
+      },
+      "thermodynamic_cortex": {
+        "real_sqlite_samples_ingested": 285,
+        "effective_ttl_ms": 285000,
+        "weather_status": "STORM_WARNING",
+        "recommended_action": "OPEN_POLYBRAIN_VALVE_AND_HANDOFF"
+      },
+      "focus_pulse_keepalive": {
+        "active_due_count": 1,
+        "active_roi_multiple": 291.7,
+        "afk_due_count": 0,
+        "afk_suppressed": 1
+      }
+    },
+    "python_chimera_nexus_ab": {
+      "thought_briefs_ingested": 294,
+      "hippo_graph_edges": 6998,
+      "hippo_ppr_hits": 5,
+      "hippo_multi_hop_hits": 0,
+      "hippo_ppr_ms": 32.781,
+      "turn0_crystal_tokens": 483.0,
+      "turn0_briefs_awakened": 6,
+      "chrono_fork_py_ms": 38.09,
+      "chrono_fork_py_siblings": 0,
+      "reality_twin_json_healed_0tok": true,
+      "reality_twin_py_healed_0tok": true,
+      "reality_twin_ms": 4.36
+    }
+  },
+  "dual_node_sync_and_live_verification": {
+    "files_synced": {
+      "chimera_total_files": 487,
+      "tquota_total_files": 721,
+      "win_release_updated": 13,
+      "svhome_chimera_repo_updated": 7,
+      "svhome_chimera_release_updated": 13,
+      "svhome_tquota_updated": 7
+    },
+    "zero_drift_sha256": {
+      "win_release_drift": 0,
+      "svhome_chimera_repo_drift": 0,
+      "svhome_chimera_release_drift": 0,
+      "svhome_tquota_drift": 0,
+      "total_drift": 0
+    },
+    "svhome_tests": {
+      "python_ok": true,
+      "python_tail": "rk_and_reality_twin (tests.test_aeon_dynamo.TestAeonDynamoUnified.test_09_chimera_nexus_hippo_ppr_turn0_crystal_chrono_fork_and_reality_twin) ... ok\n\n----------------------------------------------------------------------\nRan 11 tests in 0.302s\n\nOK (skipped=1)\n",
+      "node_ok": true,
+      "node_tail": "✔ CHIMERA-PRISM Pillar 5: 3-Way Static Envelope Forensics + Canonical Stabilizer pinpoints exact drift component (29.727834ms)\n✔ CHIMERA-PRISM Pillar 6: Quota Oracle + Black-Scholes Cache Handoff + /api/gemini/prism & /api/darwin/invariant-gate (18.882041ms)\nℹ tests 73\nℹ suites 0\nℹ pass 73\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 4729.38356\n"
+    },
+    "live_win": {
+      "chimera_pid": 30832,
+      "chimera_rss_mb": 61.73,
+      "zero_weight_ok": true,
+      "invariant_gate_pass": true,
+      "nexus_engine": "chimera-nexus-v1",
+      "nexus_effort_mutation_allowed": false,
+      "nexus_weather": "CLEAR",
+      "nexus_effective_ttl_ms": 285000,
+      "nexus_polybrain_idle_codex": 5
+    },
+    "live_svhome": {
+      "chimera_pid": 4124640,
+      "chimera_rss_mb": 46.94,
+      "zero_weight_ok": true,
+      "invariant_gate_pass": true,
+      "nexus_engine": "chimera-nexus-v1",
+      "nexus_effort_mutation_allowed": false,
+      "nexus_weather": "CLEAR",
+      "nexus_effective_ttl_ms": 285000,
+      "nexus_polybrain_idle_codex": 4
+    }
+  }
+}

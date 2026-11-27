@@ -5,7 +5,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from scripts.check_daemon_soak import BUDGET, DAY, check
+from scripts.check_daemon_soak import BUDGET, DAY, SVHOME_RSS_TARGET, check
 
 
 class SoakReceiptTests(unittest.TestCase):
@@ -71,6 +71,23 @@ class SoakReceiptTests(unittest.TestCase):
         self.receipt(900, state="running", miss=[300])
         self.assertEqual(self.inspect(920)["state"], "running")
         self.assertEqual(self.inspect(2000)["state"], "stale")
+
+    def test_linux_rss_target_uses_each_sample_in_bytes(self):
+        self.nodes["svhome"]["peak_bytes"] = 72 * 1024**2
+        self.receipt(600, state="running")
+        path = self.report_file.with_suffix(".jsonl")
+        rows = [json.loads(line) for line in path.read_bytes().splitlines()]
+        values = (SVHOME_RSS_TARGET + 1, SVHOME_RSS_TARGET, SVHOME_RSS_TARGET - 1)
+        for row, rss in zip(rows, values):
+            row["nodes"]["svhome"]["rss_bytes"] = rss
+        path.write_bytes(b"".join(json.dumps(row).encode() + b"\n" for row in rows))
+        result = self.inspect(605)
+        self.assertEqual(result["state"], "running")
+        self.assertEqual(result["svhome_sampled_rss"], {
+            "exclusive_target_bytes": SVHOME_RSS_TARGET, "samples": 3,
+            "at_or_above_target": 2, "last_bytes": values[-1], "max_bytes": max(values),
+        })
+        self.assertEqual(result["peak_mib"]["svhome"], 72.0)
 
     def test_changed_rollout_or_kernel_budget_is_never_accepted(self):
         self.nodes["svhome"]["peak_bytes"] = BUDGET

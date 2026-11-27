@@ -1,0 +1,471 @@
+{
+  "schema": "chimera.bios.live_release_receipt.v1",
+  "verified_at_utc": "2026-11-27T10:18:14Z",
+  "verified_by": "release-verifier",
+  "release_epoch": "bios_13f684d79832",
+  "svhome_release_epoch": "bios_13f684d79832",
+  "epochs_match": true,
+  "rollback_epoch": "65bbee57e75f",
+  "rollback_ready_win": true,
+  "hosts": {
+    "win_desktop": {
+      "anchor_url": "http://127.0.0.1:9780",
+      "pid": 35940,
+      "started_at": "2026-11-27T17:08:29+07:00",
+      "version": "18.0.0",
+      "runtime_source_dir": "C:/Users/Admin/AppData/Local/chimera/releases/bios_13f684d79832",
+      "cartridges_count": 17,
+      "bios_cartridge_status": "active",
+      "organs_count": 10,
+      "organs_loaded": [
+        "endocrine",
+        "friston",
+        "autophagy",
+        "parasite",
+        "octopus",
+        "stigmergy",
+        "umwelt",
+        "hgt",
+        "mycelium",
+        "soul"
+      ],
+      "rss_mb_zero_weight": 43.0,
+      "rss_mb_bios_status": 43.01,
+      "peak_rss_mb": 62.32,
+      "law7_rss_under_80mib": true,
+      "spore_pwa_bytes": 16102,
+      "spore_pwa_under_50kb": true,
+      "abi_endpoints_count": 29,
+      "nixl_ring_path": "V:\\nixl\\chimera_nixl_ring.bin",
+      "nixl_endo_valid": true,
+      "nixl_endo_magic": "ENDO",
+      "nixl_endo_seq": 55,
+      "nixl_endo_crc16": 1193,
+      "hormones": {
+        "adrenaline": 0.092363,
+        "cortisol": 0.100005,
+        "dopamine": 0.500005,
+        "melatonin": 0.861374,
+        "cytokine": 0.050003,
+        "oxytocin": 0.650003
+      },
+      "soul_scar_count": 13,
+      "soul_lineage_valid": true,
+      "soul_6models": {
+        "models": {
+          "gemini": {
+            "status": 200,
+            "token_est": 475,
+            "core_sha256": "11df4c83f0151e04396d6b9ab77110e5ce35e83dc250750d1ef6bdf3762ae1bf",
+            "lineage_hash": "6e5a9206fc8bab388e2898b6597bdb6ceeb3150ff3f37c111d23ce7d4e627131",
+            "scar_count": 13
+          },
+          "codex": {
+            "status": 200,
+            "token_est": 474,
+            "core_sha256": "11df4c83f0151e04396d6b9ab77110e5ce35e83dc250750d1ef6bdf3762ae1bf",
+            "lineage_hash": "6e5a9206fc8bab388e2898b6597bdb6ceeb3150ff3f37c111d23ce7d4e627131",
+            "scar_count": 13
+          },
+          "claude": {
+            "status": 200,
+            "token_est": 475,
+            "core_sha256": "11df4c83f0151e04396d6b9ab77110e5ce35e83dc250750d1ef6bdf3762ae1bf",
+            "lineage_hash": "6e5a9206fc8bab388e2898b6597bdb6ceeb3150ff3f37c111d23ce7d4e627131",
+            "scar_count": 13
+          },
+          "local-qwen": {
+            "status": 200,
+            "token_est": 476,
+            "core_sha256": "11df4c83f0151e04396d6b9ab77110e5ce35e83dc250750d1ef6bdf3762ae1bf",
+            "lineage_hash": "6e5a9206fc8bab388e2898b6597bdb6ceeb3150ff3f37c111d23ce7d4e627131",
+            "scar_count": 13
+          },
+          "gpt-5-codex": {
+            "status": 200,
+            "token_est": 476,
+            "core_sha256": "11df4c83f0151e04396d6b9ab77110e5ce35e83dc250750d1ef6bdf3762ae1bf",
+            "lineage_hash": "6e5a9206fc8bab388e2898b6597bdb6ceeb3150ff3f37c111d23ce7d4e627131",
+            "scar_count": 13
+          },
+          "any": {
+            "status": 200,
+            "token_est": 474,
+            "core_sha256": "11df4c83f0151e04396d6b9ab77110e5ce35e83dc250750d1ef6bdf3762ae1bf",
+            "lineage_hash": "6e5a9206fc8bab388e2898b6597bdb6ceeb3150ff3f37c111d23ce7d4e627131",
+            "scar_count": 13
+          }
+        },
+        "core_sha256_identical_6of6": true,
+        "lineage_hash_identical_6of6": true,
+        "max_token_est": 476,
+        "all_under_500_tokens": true,
+        "core_sha256": "11df4c83f0151e04396d6b9ab77110e5ce35e83dc250750d1ef6bdf3762ae1bf",
+        "lineage_hash": "6e5a9206fc8bab388e2898b6597bdb6ceeb3150ff3f37c111d23ce7d4e627131"
+      },
+      "merkle_root_pre": "e7bc3c3944bbfa558c1ec0b7f36878f5",
+      "merkle_root_post": "ed9e6c46c8d146edf3cd34b02eb9fe3e",
+      "has_release_scar": true
+    },
+    "svhome": {
+      "anchor_url": "http://100.116.112.22:9780",
+      "pid": 34425,
+      "started_at": "2026-11-27T17:10:08+07:00",
+      "version": "18.0.0",
+      "runtime_source_dir": "/home/svhome/.local/share/chimera/releases/bios_13f684d79832",
+      "cartridges_count": 17,
+      "bios_cartridge_status": "active",
+      "organs_count": 10,
+      "organs_loaded": [
+        "endocrine",
+        "friston",
+        "autophagy",
+        "parasite",
+        "octopus",
+        "stigmergy",
+        "umwelt",
+        "hgt",
+        "mycelium",
+        "soul"
+      ],
+      "rss_mb_zero_weight": 59.48,
+      "rss_mb_bios_status": 59.48,
+      "peak_rss_mb": 66.54,
+      "host_free_ram_gb": 7.76,
+      "law7_rss_under_80mib": true,
+      "spore_pwa_bytes": 16095,
+      "spore_pwa_under_50kb": true,
+      "abi_endpoints_count": 29,
+      "nixl_ring_path": "/dev/shm/chimera_nixl_ring.bin",
+      "nixl_endo_seq": 37,
+      "nixl_endo_synced": true,
+      "hormones": {
+        "adrenaline": 0.099022,
+        "cortisol": 0.100005,
+        "dopamine": 0.500005,
+        "melatonin": 0.814835,
+        "cytokine": 0.050003,
+        "oxytocin": 0.650003
+      },
+      "soul_scar_count": 6,
+      "soul_lineage_valid": true,
+      "soul_6models": {
+        "models": {
+          "gemini": {
+            "status": 200,
+            "token_est": 474,
+            "core_sha256": "86d82fdb97c3eabd26d6bb79c904364dd8001395f9281ab4397e369c0798b6b4",
+            "lineage_hash": "890c9f021a055b8f4d07d7a151ee0da6bf33ce75b76b3ee84a276afc307d11d6",
+            "scar_count": 6
+          },
+          "codex": {
+            "status": 200,
+            "token_est": 474,
+            "core_sha256": "86d82fdb97c3eabd26d6bb79c904364dd8001395f9281ab4397e369c0798b6b4",
+            "lineage_hash": "890c9f021a055b8f4d07d7a151ee0da6bf33ce75b76b3ee84a276afc307d11d6",
+            "scar_count": 6
+          },
+          "claude": {
+            "status": 200,
+            "token_est": 474,
+            "core_sha256": "86d82fdb97c3eabd26d6bb79c904364dd8001395f9281ab4397e369c0798b6b4",
+            "lineage_hash": "890c9f021a055b8f4d07d7a151ee0da6bf33ce75b76b3ee84a276afc307d11d6",
+            "scar_count": 6
+          },
+          "local-qwen": {
+            "status": 200,
+            "token_est": 475,
+            "core_sha256": "86d82fdb97c3eabd26d6bb79c904364dd8001395f9281ab4397e369c0798b6b4",
+            "lineage_hash": "890c9f021a055b8f4d07d7a151ee0da6bf33ce75b76b3ee84a276afc307d11d6",
+            "scar_count": 6
+          },
+          "gpt-5-codex": {
+            "status": 200,
+            "token_est": 476,
+            "core_sha256": "86d82fdb97c3eabd26d6bb79c904364dd8001395f9281ab4397e369c0798b6b4",
+            "lineage_hash": "890c9f021a055b8f4d07d7a151ee0da6bf33ce75b76b3ee84a276afc307d11d6",
+            "scar_count": 6
+          },
+          "any": {
+            "status": 200,
+            "token_est": 474,
+            "core_sha256": "86d82fdb97c3eabd26d6bb79c904364dd8001395f9281ab4397e369c0798b6b4",
+            "lineage_hash": "890c9f021a055b8f4d07d7a151ee0da6bf33ce75b76b3ee84a276afc307d11d6",
+            "scar_count": 6
+          }
+        },
+        "core_sha256_identical_6of6": true,
+        "lineage_hash_identical_6of6": true,
+        "max_token_est": 476,
+        "all_under_500_tokens": true,
+        "core_sha256": "86d82fdb97c3eabd26d6bb79c904364dd8001395f9281ab4397e369c0798b6b4",
+        "lineage_hash": "890c9f021a055b8f4d07d7a151ee0da6bf33ce75b76b3ee84a276afc307d11d6"
+      },
+      "merkle_root_pre": "b7b2f7e778f7077d1964fe15a9c49354",
+      "merkle_root_post": "ed9e6c46c8d146edf3cd34b02eb9fe3e",
+      "has_release_scar": true
+    }
+  },
+  "phantom_5ms": {
+    "mode": "PHANTOM_5MS_DIRECT",
+    "connected": true,
+    "direct_rtt_ms": 5.3,
+    "win_listeners": {
+      "22": 2222,
+      "9780": 9789,
+      "12500": 12550,
+      "9781": 9791
+    }
+  },
+  "live_2way_sync": {
+    "release_scar_title": "CHIMERA-BIOS v27.0 Dual-Host Live Release",
+    "release_scar_newly_recorded": true,
+    "forward_win_to_svhome": {
+      "http_status": 200,
+      "elapsed_ms": 75.16,
+      "receipt": {
+        "ok": true,
+        "direction": "bidirectional",
+        "node_name": "win-desktop",
+        "peer_node": "svhome",
+        "peer_url": "http://127.0.0.1:9789",
+        "local_merkle_root": "ed9e6c46c8d146edf3cd34b02eb9fe3e",
+        "peer_merkle_root": "ed9e6c46c8d146edf3cd34b02eb9fe3e",
+        "merkle_converged": true,
+        "rtt_ms": 61.85,
+        "round_trips": 2,
+        "endocrine_wire_bytes": 12,
+        "endocrine_mmap_ok": true,
+        "peer_endocrine_mmap_ok": true,
+        "hormones": {
+          "adrenaline": 0.08685,
+          "cortisol": 0.100004,
+          "dopamine": 0.500003,
+          "melatonin": 0.899927,
+          "cytokine": 0.050002,
+          "oxytocin": 0.650002
+        },
+        "events_merged": 6,
+        "scars_synced": {
+          "pushed_to_peer": 1,
+          "pulled_from_peer": 0,
+          "total": 1
+        },
+        "alarms_synced": {
+          "pushed_to_peer": 0,
+          "pulled_from_peer": 0,
+          "total": 0
+        },
+        "seeds_synced": {
+          "pushed_to_peer": 0,
+          "pulled_from_peer": 0,
+          "total": 0
+        },
+        "local_bundle_sha256": "0e65330caab497bef919ee6327bdda4c3c82c01968285e70a40cff7311c2e9f5",
+        "peer_bundle_sha256": "f0c8ad08fede37445331f226344058c5282f7feda081c7a2525f0b32c7ae5af4",
+        "auto_activated": false,
+        "receipt_sha256": "79bb094d9cca14dcaa149e9b23d3e953b8e2c3328239a59084cf1c7e9604d52c",
+        "transport": "phantom_5ms"
+      }
+    },
+    "reverse_svhome_to_win": {
+      "http_status": 200,
+      "elapsed_ms": 249.33,
+      "receipt": {
+        "ok": true,
+        "direction": "bidirectional",
+        "node_name": "svhome",
+        "peer_node": "win-desktop",
+        "peer_url": "http://127.0.0.1:9790",
+        "local_merkle_root": "ed9e6c46c8d146edf3cd34b02eb9fe3e",
+        "peer_merkle_root": "ed9e6c46c8d146edf3cd34b02eb9fe3e",
+        "merkle_converged": true,
+        "rtt_ms": 28.08,
+        "round_trips": 1,
+        "endocrine_wire_bytes": 12,
+        "endocrine_mmap_ok": true,
+        "peer_endocrine_mmap_ok": true,
+        "hormones": {
+          "adrenaline": 0.099022,
+          "cortisol": 0.100005,
+          "dopamine": 0.500005,
+          "melatonin": 0.814835,
+          "cytokine": 0.050003,
+          "oxytocin": 0.650003
+        },
+        "events_merged": 6,
+        "scars_synced": {
+          "pushed_to_peer": 0,
+          "pulled_from_peer": 0,
+          "total": 0
+        },
+        "alarms_synced": {
+          "pushed_to_peer": 0,
+          "pulled_from_peer": 0,
+          "total": 0
+        },
+        "seeds_synced": {
+          "pushed_to_peer": 0,
+          "pulled_from_peer": 0,
+          "total": 0
+        },
+        "local_bundle_sha256": "d750324a4d575b5ceddd0e94db50884efadabfbc750415674c999b1eb7a99228",
+        "peer_bundle_sha256": "1061ecbbf1da740d2f3524c5da9f6eb5cef0a71bc2203c58eacf2c1ad6b004a7",
+        "auto_activated": false,
+        "receipt_sha256": "722f2064f5327558bc39de6031da12d5cfada6af15632d4b629dd64ca1208ab6",
+        "transport": "phantom_5ms"
+      }
+    },
+    "post_sync_merkle_converged": true,
+    "converged_merkle_root": "ed9e6c46c8d146edf3cd34b02eb9fe3e",
+    "both_hosts_hold_release_scar": true
+  },
+  "live_open_ecosystem_checks": {
+    "cli_bios_status_rc": 0,
+    "cli_bios_status_ok": true,
+    "cli_bios_status_organs": 10,
+    "cli_bios_sync_rc": 0,
+    "cli_bios_sync_ok": true,
+    "cli_bios_sync_converged": true,
+    "cli_bios_sync_transport": "phantom_5ms",
+    "cli_bios_sync_rtt_ms": 17.09,
+    "sdk_bios_sync_ok": true,
+    "sdk_bios_sync_converged": true,
+    "sdk_bios_sync_rtt_ms": 17.39,
+    "mcp_live_tools": {
+      "chimera_bios_status": {
+        "ms": 55.28,
+        "bytes": 7945,
+        "within_spill_shield_8600b": true,
+        "is_error": false,
+        "ok": true
+      },
+      "chimera_bios_hormones": {
+        "ms": 7.48,
+        "bytes": 3090,
+        "within_spill_shield_8600b": true,
+        "is_error": false,
+        "ok": true
+      },
+      "chimera_bios_soul": {
+        "ms": 31.37,
+        "bytes": 2189,
+        "within_spill_shield_8600b": true,
+        "is_error": false,
+        "ok": true
+      }
+    },
+    "agents_infra_md": {
+      "path": "C:\\Users\\Admin\\.chimera\\AGENTS_INFRA.md",
+      "bytes": 6335,
+      "has_bios_section": true
+    }
+  },
+  "sha256_parity": {
+    "bios_modules_12_of_12_win_match": true,
+    "wired_modules_6_of_6_win_match": true,
+    "bios_modules": {
+      "__init__.py": {
+        "workspace_sha256": "072f8a16f7eddbebccd136ebcdace90dc5add3a0d7ae1024b0a18656b63dec18",
+        "win_desktop_sha256": "072f8a16f7eddbebccd136ebcdace90dc5add3a0d7ae1024b0a18656b63dec18",
+        "win_match": true
+      },
+      "autophagy.py": {
+        "workspace_sha256": "587f2573519136734008972f715af92d126d87df745b248eabb0be5fb9f23282",
+        "win_desktop_sha256": "587f2573519136734008972f715af92d126d87df745b248eabb0be5fb9f23282",
+        "win_match": true
+      },
+      "endocrine.py": {
+        "workspace_sha256": "1a0ff2e1e04065c9b7aeb1a1a0f7e9320aa21b231ad1fa532d977ec41082bcf8",
+        "win_desktop_sha256": "1a0ff2e1e04065c9b7aeb1a1a0f7e9320aa21b231ad1fa532d977ec41082bcf8",
+        "win_match": true
+      },
+      "friston.py": {
+        "workspace_sha256": "6e990339d9937995db85acb8e86fd1e9bd8ceeff53c2965376dc1cd24ff7e46f",
+        "win_desktop_sha256": "6e990339d9937995db85acb8e86fd1e9bd8ceeff53c2965376dc1cd24ff7e46f",
+        "win_match": true
+      },
+      "hgt.py": {
+        "workspace_sha256": "3d8b416091fe94b77f12f184eaa514ce3651bfc7bddf75141c6b613aee5d43a2",
+        "win_desktop_sha256": "3d8b416091fe94b77f12f184eaa514ce3651bfc7bddf75141c6b613aee5d43a2",
+        "win_match": true
+      },
+      "mycelium.py": {
+        "workspace_sha256": "156067c024a370cdf3b55d053adb78c8aeebb4adc5ae296ba261adbe8f5a173c",
+        "win_desktop_sha256": "156067c024a370cdf3b55d053adb78c8aeebb4adc5ae296ba261adbe8f5a173c",
+        "win_match": true
+      },
+      "octopus.py": {
+        "workspace_sha256": "4d161085c167d166ae8c479d615ace23d5b830df63b5a0769c15fb4c481aa5a7",
+        "win_desktop_sha256": "4d161085c167d166ae8c479d615ace23d5b830df63b5a0769c15fb4c481aa5a7",
+        "win_match": true
+      },
+      "organism.py": {
+        "workspace_sha256": "8444903d0dace2c83abd139ce541df158fec4cae78e659579fda5b2ecd454af3",
+        "win_desktop_sha256": "8444903d0dace2c83abd139ce541df158fec4cae78e659579fda5b2ecd454af3",
+        "win_match": true
+      },
+      "parasite.py": {
+        "workspace_sha256": "7255da22ea39addbd0790f5dcfc4b29fde53817bf4b5001064a2b83c3dad7dda",
+        "win_desktop_sha256": "7255da22ea39addbd0790f5dcfc4b29fde53817bf4b5001064a2b83c3dad7dda",
+        "win_match": true
+      },
+      "soul.py": {
+        "workspace_sha256": "c9f0ea4af226d8446534031400898659afde520df60dd1405d42b2cf6b59121f",
+        "win_desktop_sha256": "c9f0ea4af226d8446534031400898659afde520df60dd1405d42b2cf6b59121f",
+        "win_match": true
+      },
+      "stigmergy.py": {
+        "workspace_sha256": "841dea7f58fe43c12a042570fe69257970d5d3063ce454a9ddcf168f5408f648",
+        "win_desktop_sha256": "841dea7f58fe43c12a042570fe69257970d5d3063ce454a9ddcf168f5408f648",
+        "win_match": true
+      },
+      "umwelt.py": {
+        "workspace_sha256": "fd8e55d5665e8a8dbde7221c964986e12d886788b8be0ba084c513080b7f73fa",
+        "win_desktop_sha256": "fd8e55d5665e8a8dbde7221c964986e12d886788b8be0ba084c513080b7f73fa",
+        "win_match": true
+      }
+    },
+    "wired_modules": {
+      "chimera_tp/platform/substrate.py": {
+        "workspace_sha256": "05b73a28a14436c9679b5926b47b461978623ebcc3e3617a5d7f18325f843117",
+        "win_desktop_sha256": "05b73a28a14436c9679b5926b47b461978623ebcc3e3617a5d7f18325f843117",
+        "win_match": true
+      },
+      "chimera_tp/platform/client.py": {
+        "workspace_sha256": "5b5a7a819ce92e1f541c2a5b7750f303c7ec381a77f0cc3c54e1cd77b2e8fcc8",
+        "win_desktop_sha256": "5b5a7a819ce92e1f541c2a5b7750f303c7ec381a77f0cc3c54e1cd77b2e8fcc8",
+        "win_match": true
+      },
+      "chimera_tp/platform/discovery.py": {
+        "workspace_sha256": "11e4df2ba78570b32552eae8c6ce726708d71b4bd37c682d54459f9858153a4f",
+        "win_desktop_sha256": "11e4df2ba78570b32552eae8c6ce726708d71b4bd37c682d54459f9858153a4f",
+        "win_match": true
+      },
+      "chimera_tp/platform/mcp_server.py": {
+        "workspace_sha256": "1994cb02bcef6e318718c290f4731a88f0cf628e5c2e46df28c840bafee1faae",
+        "win_desktop_sha256": "1994cb02bcef6e318718c290f4731a88f0cf628e5c2e46df28c840bafee1faae",
+        "win_match": true
+      },
+      "chimera_tp/platform/noosphere_organism.py": {
+        "workspace_sha256": "548909730ed52c890f9d27b8f78c2ece3601ab34bd45ad9511a12842c0ff4390",
+        "win_desktop_sha256": "548909730ed52c890f9d27b8f78c2ece3601ab34bd45ad9511a12842c0ff4390",
+        "win_match": true
+      },
+      "chimera_tp/cli.py": {
+        "workspace_sha256": "f229799cd5f682b8045b604cde130c54eebd2e4b2b96ed3e69357ad57df0d919",
+        "win_desktop_sha256": "f229799cd5f682b8045b604cde130c54eebd2e4b2b96ed3e69357ad57df0d919",
+        "win_match": true
+      }
+    },
+    "svhome_xray_check": {
+      "checked": true,
+      "status": 403,
+      "result": {
+        "ok": false,
+        "error": "loopback_only"
+      }
+    }
+  },
+  "receipt_sha256": "f83968f4b114acf58f5d5649ab8c782c6ce2a3d5af51327756316436867bb338"
+}

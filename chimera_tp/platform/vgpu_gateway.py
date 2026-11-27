@@ -367,21 +367,39 @@ class VgpuParetoGateway:
         chosen = sorted(viable, key=lambda c: (c["est_cost_usd"], c["est_ms"], -tier_rank.get(c["tier"], 1)))[0]
         return {"ok": True, "selected": chosen, "eligibility": elig, "candidates": candidates}
 
+    def run_ptx_benchmark(self, n: int, force: bool = False) -> dict[str, Any]:
+        """Construct potentially large synthetic vectors in the worker that uses them."""
+        count = max(64, min(262144, int(n)))
+        return self._run_dot(None, None, force, count)
+
     def run_ptx_kernel_if_eligible(self, vec_a: list[float], vec_b: list[float], force: bool = False) -> dict[str, Any]:
-        """Run real GTX 1650 PTX JIT kernel ONLY when workstation is cool/idle (or forced in bench), else AVX2 CPU."""
+        return self._run_dot(vec_a, vec_b, force, None)
+
+    def _run_dot(self, vec_a, vec_b, force, benchmark_count):
         elig = self.evaluate_gpu_eligibility(respect_work_first=not force)
         if elig["gpu_ready"] and self.ptx.probe()["available"]:
-            res = self.ptx.run_vec_dot_kernel(vec_a, vec_b)
+            if benchmark_count is not None and hasattr(self.ptx, "run_dot_benchmark"):
+                res = self.ptx.run_dot_benchmark(benchmark_count)
+            else:
+                if benchmark_count is not None:
+                    vec_a = [float(i % 13 - 6) for i in range(benchmark_count)]
+                    vec_b = [float(i % 7 - 3) for i in range(benchmark_count)]
+                res = self.ptx.run_vec_dot_kernel(vec_a, vec_b)
             with self._lock:
                 self._stats["ptx_jit_served"] += 1
             return {**res, "engine": "win_nvcuda_ptx"}
         t0 = time.perf_counter()
-        dot = sum(a * b for a, b in zip(vec_a, vec_b))
+        if benchmark_count is None:
+            count = min(len(vec_a), len(vec_b))
+            dot = sum(a * b for a, b in zip(vec_a, vec_b))
+        else:
+            count = benchmark_count
+            dot = sum((i % 13 - 6) * (i % 7 - 3) for i in range(count))
         return {
             "ok": True,
             "engine": "cpu_yield_fallback",
             "yield_reason": elig["reason"],
-            "n": min(len(vec_a), len(vec_b)),
+            "n": count,
             "dot": round(float(dot), 6),
             "total_ms": round((time.perf_counter() - t0) * 1000.0, 3),
         }

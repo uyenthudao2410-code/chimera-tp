@@ -1,0 +1,65 @@
+{
+  "schema": "chimera.node-source-parity/1",
+  "measured_utc": "2026-11-27T10:02:10.029827+00:00",
+  "scope": "Hashes of saved Python files on disk. A running interpreter may still hold older modules.",
+  "windows": {
+    "root": "C:\\Users\\Admin\\AppData\\Local\\chimera\\releases\\bios_13f684d79832",
+    "root_basis": "directory_of_native_library_mapped_by_serving_pid",
+    "root_error": null,
+    "pid": 39940,
+    "node": "win-desktop",
+    "version": "18.0.0",
+    "reachable": true,
+    "last_error": null,
+    "package_version": "18.0.0",
+    "started_at": "2026-11-27T16:56:15+07:00",
+    "route_status": {
+      "/api/health": 200,
+      "/v1/truth-matrix": 200
+    },
+    "process_working_set_mib": {
+      "current": 24.934,
+      "process_peak": 57.543
+    },
+    "evidence_counts": {
+      "verified": 1,
+      "unverified": 18,
+      "violated": 0,
+      "disabled": 0
+    }
+  },
+  "linux": {
+    "pid": 21503,
+    "node": "svhome",
+    "version": "18.0.0",
+    "package_version": "18.0.0",
+    "root": "/home/svhome/.local/share/chimera/releases/bios_13f684d79832",
+    "process_memory_bytes": {
+      "VmHWM": 57692160,
+      "VmRSS": 56647680
+    },
+    "mapped_native_sha256": "64e250008d7ed1884b1225607866179c1d38cb24deb62b6d3e343a0f895b53e2",
+    "evidence_counts": {
+      "verified": 3,
+      "unverified": 14,
+      "violated": 0,
+      "disabled": 0
+    }
+  },
+  "platform": {
+    "windows_files": 78,
+    "linux_files": 78,
+    "windows_only": [],
+    "linux_only": [],
+    "identical": 78,
+    "different": {}
+  },
+  "package": {
+    "windows_files": 142,
+    "linux_files": 142,
+    "windows_only": [],
+    "linux_only": [],
+    "identical": 142,
+    "different": {}
+  }
+}

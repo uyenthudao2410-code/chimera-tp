@@ -28,6 +28,14 @@ test("counts only complete displayed intervals for the target PID inside the job
   assert.deepEqual(result.issues, []);
 });
 
+test("reads PresentMon Unicode stdout with the same QPC intervals as a CSV file", async t => {
+  const lines = Array.from({ length: 100 }, (_, i) => `acad,42,0xff,${i * 10},0,10`);
+  const path = await csv(t, lines);
+  const expected = await inspectFrames(path, 42, 0, 1000);
+  await writeFile(path, "\uFEFF" + [header, ...lines].join("\r\n"), "utf16le");
+  assert.deepEqual(await inspectFrames(path, 42, 0, 1000), expected);
+});
+
 test("reports ambiguous swap chains unless a measured viewport chain is supplied", async t => {
   const lines = [];
   for (let i = 0; i < 100; i++) {
@@ -64,6 +72,10 @@ function pairedRuns() {
 test("acceptance gates require alternating pairs, identical receipts, service capacity and frame evidence", () => {
   assert.equal(comparePairs(pairedRuns(), 40).decision, "pass");
   assert.equal(comparePairs(pairedRuns(), 10).decision, "below_criteria");
+  const retry = comparePairs(pairedRuns(), 40, [{ pair: 2, arm_index: 2, reason: "running_guard_service_latency" }]);
+  assert.equal(retry.valid_frame_pairs, 10);
+  assert.equal(retry.decision, "below_criteria");
+  assert.match(retry.receiver_threshold_breaches[0], /receiver deferred running_guard_service_latency/);
   assert.equal(comparePairs(pairedRuns(), null).decision, "insufficient_evidence");
   assert.equal(comparePairs(pairedRuns().slice(0, 2), 40).decision, "insufficient_evidence");
   const rows = pairedRuns();

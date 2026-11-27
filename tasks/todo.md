@@ -266,3 +266,218 @@
 | #5 `tool-log.mjs` Chimera Shim & Direct Exec | `224.53 ms` local (`conhost`/temp churn) | **Transparent shim live** · **`158.65 ms`** direct (`0` pwsh/node) | **`1.42×` direct · `0` conhost** |
 | #6 Dual-Node CoW Mirror-Race Exile (`svhome`) | `100%` Windows CPU/HDD shadow clone | **`execution_node: "svhome"`** (`212 ms` AST reject → winner verified) | **`0%` Windows CPU/disk** |
 | #7 Always-On `aether` Soft-Shield (`:9780`) | Manual one-shot (`ticks = 0`) | **Running 24/7 (`34.2 ms`/tick)** · **`7` VIPs** · **`38` gateways spared** | **`46.48 MiB` Win / `51.28 MiB` `svhome`** |
+
+
+---
+
+# CHIMERA-DARWIN — Zero-Backprop Antithetic Evolution Strategies (All 6 Subsystems, 2026-11-27)
+
+## Checklist
+- [x] **#1 `128-Byte Genome Foundry` (`chimera_tp/platform/darwin_engine.py`)**: Cross-OS SHA-256 Box-Muller Gaussian PRNG (`1.11e-16` parity across Python 3.11 NumPy / Python 3.14 Linux / Node.js V8), SQLite-WAL `GenomeLedger` (`142.0 B/gen` binary wire, `0 B` weights stored on `svhome`), canonical `float32` tensor digest achieving **100% bit-exact `win-desktop → svhome` weightless `.genome.json` reconstruction**
+- [x] **#2 `Darwin-Reflex` Zero-Backprop Seed-ES (`SeedEsNeuralFoundry`)**: Real MIT/Cognizant ES-at-Scale Algorithm 1 (Z-score normalized Antithetic Seed-ES, `0` backprop, `0` Adam states, **`6.0×` VRAM reduction**), `16.67% → 86.11%` accuracy (`+69.44 pp`) on bilingual Chimera tool routing with anti-collapse reward-hacking penalty
+- [x] **#3 `CHIMERA-ES-PARAM` (`EsParamOptimizer` + `E:\DEV\Chung\.ch-relay\local-relay\src\darwin-es-tuner.js`)**: 18-knob CHIMERA + 6-knob Tquota Antithetic ES strictly inside Law 2/3 rails (`shadow_only`, `auto_activated=false`), replayed live against `30` real `peer_service_slo` pairs, `18` `swarm_placement` rows, and **`40` real live Tquota Flight Recorder capsules** (`11 → 2` simulated 499s, `288.5s` avg saved latency)
+- [x] **#4 `Prompt-ES` Harness Evolution (`PromptEsEvolver`)**: Whole-trajectory rule evolution compressing Coroner/Immune prompts by **`-61.11%`** (`990 → 385` chars) while rejecting **`40/40`** degenerate/repetitive reward-hacking mutants
+- [x] **#5 `Darwin Sleep-Cycle` (`DarwinSleepCycle` + `/v1/darwin/sleep-cycle`)**: Idle/thermal-gated nightly shadow evolution generating Law-6 approval receipt `tasks/darwin_sleep_cycle_receipt.json` (`auto_activated=false`, `colab_cu_spent=0.0`)
+- [x] **#6 `Mirror-Race 2.0` (`MirrorRaceEngine` in `agent_symbiont.py`)**: Continuous `unittest` fitness scoring + multi-generation non-conflicting hunk/file AST crossover breeding turning two failing partial patches (`66.65%`) into a **`100%` passing Gen-2 winner (`99.98` fitness)** committed atomically in `71.38 ms`
+- [x] **API, MCP 40th Tool, Dual-Node Promotion & Verification**: Lazy-loaded `AgentSymbiontCore.darwin` (`0 B` startup RSS), `/v1/darwin/*` (preserving Linux `409` guards), **`40` MCP tools** (`chimera_darwin`), Tquota `/api/darwin/status` + `/api/darwin/es-tune`, **`93/93` PASS** (`26+21` Win, `25+21` `svhome`), **`0` SHA-256 drift** (`6/6` × 4 Chimera + `4/4` × 2 Tquota), Chimera RSS **`45.20 MiB` Win / `53.52 MiB` `svhome`** (`< 80 MiB` Law 7), A/B saved to `tasks/chimera_darwin_ab.json`
+
+## Review — Measured BEFORE vs AFTER (CHIMERA-DARWIN, 2026-11-27)
+| Subsystem | BEFORE | AFTER (CHIMERA-DARWIN Live) | Delta |
+|---|---:|---:|---|
+| #1–#2 `Darwin-Reflex` Seed-ES + Weightless Sync | `16.67%` acc · `1.7907` NLL · full weights sync | **`86.11%` acc** · **`0.4520` NLL** · **`142 B/gen`** · **bit-exact `svhome` SHA-256 (`0 B` weights)** | **`+69.44 pp` · `6.0×` less VRAM · `0` backprop** |
+| #3 `CHIMERA-ES-PARAM` (`30` SLO + `18` place + `40` FR) | Default policy (`11.0574` fitness) | **`12.1599` fitness** (`17` knobs tuned, `shadow_only`, `481.6 ms`) | **`+1.1024` Doctrine Điều 0 fitness** |
+| #3 Tquota Live `ES-Tune` (`40` real FR capsules) | `11` HTTP `499` · `11.1588` fitness | **`2` simulated `499`** · **`11.9972` fitness** · **`288.5s` avg saved** (`13.5 ms`) | **`-81.8%` 499s · `+0.8384` fitness** |
+| #4 `Prompt-ES` Harness / Immune Rules | `990` chars · `11.37` fitness | **`385` chars** · **`14.13` fitness** · **`40/40` hacks blocked** (`81.1 ms`) | **`-61.11%` prompt tokens · `0` reward-hacking** |
+| #6 `Mirror-Race 2.0` Crossover Breeding (`V:\shadows`) | Gen-1 `FAIL` (`66.65` fitness, 2/3 pass) | **Gen-2 `PASS` (`99.98` fitness, 3/3 pass, committed)** in `71.4 ms` | **Partial fixes bred → `100%` green winner** |
+| #5 `Darwin Sleep-Cycle` & Live Daemon RAM | Manual tuning · `39` MCP tools | **Shadow card written (`0` CU, `auto_activated=false`) · `40` MCP tools** · **`45.20` Win / `53.52 MiB` `svhome`** | **`93/93` tests · `0` drift · `< 80 MiB` Law 7** |
+
+---
+
+# CHIMERA-DYNAMO / AEON Unified Cognitive Infrastructure + Effort-Invariant Gate (2026-11-27)
+
+## Checklist
+- [x] **Codex Effort-Invariant + KV-Prefix Break Classifier + Quota-Reasoning Gate** (`E:\DEV\Chung\.ch-relay\local-relay\src\optimizer.js`, `responses-payload.js`, `thought-briefs.js`, `chimera-symbiote-bridge.js`, `server.js`, `routes-hyperdrive.js`): Monotonic Session Effort-Invariant Clamp (`0` mid-session flips), append-only ThoughtBriefs (`turn1Only`), 3-class Merkle prefix classifier (`fresh_turn_same_scope` / `compaction_reset` / `true_mid_prefix_mutation`), `GET /api/darwin/invariant-gate`, verified `66/66` Win & `58/58` `svhome` (`tasks/codex_effort_invariant_ab.json`: uncached `-86.48%`, quota cost `-64.86%`)
+- [x] **Nấc 1 — `Dynamo KV PrefillRouter` + `ChronoSynapseEngine` + `TitansSurpriseCompactor`** (`hive-mind.js`, `pool-manager.js`, `chimera-symbiote-bridge.js`, `server.js`, `routes-hyperdrive.js`, `chimera_tp/platform/aeon_dynamo.py`): 2-tier KV block router (`sessionKey > exact prefixRoot > shared head0`) strictly scoped by `(wireModel, effort)` (`Effort-Invariant`), SHA-256-TTL shared hippocampus + live ingest of all `275` Tquota ThoughtBriefs into 10,016-bit Kanerva VSA Fractal Recall + Turn-0 `<= 420 B` Cheatsheet, and Titans line-level Surprise-Gated Log Compactor
+- [x] **Nấc 2 — `CHIMERA-GREEN-PTX` (`nvcuda_ptx.py`) + `EagleActionSpeculator` (`aeon_dynamo.py`, `chimera-symbiote-bridge.js`, `server.js`)**: Real `sm_75` PTX kernels on GTX 1650 silicon (`vsa_hamming_batch` using hardware `xor.b32` + `popc.b32`, and `es_axpy_perturb` using `fma.rn.f32`) with `0.0 MB` retained VRAM (`cuCtxDestroy_v2`), plus PASTE Markov + `sPTC` partial-JSON mid-stream pre-executor wired into Tquota `onToolCallEvent` (`POST /v1/aeon/speculate`)
+- [x] **Nấc 3 — `HomeostasisGovernor` (8D) + `DgmArchiveEngine` (4-Oracle Mini-DGM) + Unified API / 41st MCP Tool** (`agent_symbiont.py`, `substrate.py`, `client.py`, `mcp_server.py`): 100% lazy-loaded `AgentSymbiontCore.aeon` (`0 B` boot RSS), `/v1/aeon/status`, `/v1/aeon/evolve`, `/v1/aeon/speculate`, **41st MCP tool `chimera_aeon`**, `effort_mutation_allowed: false` hard invariant, and 4-Oracle SQLite Archive rejecting reward-hacking shortcut mutants and emitting `shadow_only` winners
+- [x] **Dual-Node Promotion, Full Test Parity & Live BEFORE vs AFTER A/B (`tasks/chimera_aeon_unified_ab.json`)**: Windows `test_aeon_dynamo` + `test_darwin_engine` + `test_agent_symbiont` + `test_agent_hyper_bus` + `48/48` Tquota PASS; `svhome` `32/32` Python (`1` CUDA-only skipped) + `48/48` Tquota PASS; **`0` SHA-256 drift** (`8/8` × 4 Chimera + `6/6` × 2 Tquota); live daemons promoted to release `e13c4da7d80b` with `41` MCP tools, `gatePass: true` on both nodes, and RSS `< 80 MiB` on both nodes
+
+## Review — Measured BEFORE vs AFTER (CHIMERA-DYNAMO / AEON Unified, 2026-11-27)
+| Subsystem / Metric | BEFORE | AFTER (Verified Live) | Delta |
+|---|---:|---:|---|
+| Real GTX 1650 `sm_75` PTX `popc.b32` (`16,384 × 10K-bit` VSA) | `77.35 ms` NumPy · `35.42 ms` Py | **`4.14 ms` GPU kernel** (`bit_exact=true`, **`0.0 MB` VRAM**) | **`18.68×` vs NumPy · `8.55×` vs Py** |
+| Real GTX 1650 `sm_75` PTX `fma.rn.f32` ES AXPY (`65,536` fp32) | `17.88 ms` CPU | **`0.86 ms` GPU kernel** (`max_abs_err=0.0`, **`0.0 MB` VRAM**) | **`20.70×` faster kernel** |
+| Tquota `ThoughtBriefs` Recall (`Chrono-Synapse` VSA) | `275` stored · **`0` hits** | **`275` indexed** · **`0.51 ms` GTX 1650 GPU match** (`top_hit_matches_cpu=true`) | **Woke dead memory → sub-ms GPU recall** |
+| `TitansSurpriseCompactor` (1,000-line / `61.0 KB` noisy test log) | `61,005 B` (**spills `output.txt`**) | **`2,402 B`** (`964` folded, **`100%` error & 409 kept**, `0` spills) | **`-96.06%` bytes · `0` disk spills** |
+| `Dynamo KV PrefillRouter` (4 parallel agents × 3 turns, 48K head) | `0` affinity routes · `192K` cold tok | **`11` routes** (`8` local + `3` Turn-1 shared head0) · **`48K` cold tok** | **`-75.0%` cold prefill · `0` effort flips** |
+| `EAGLE-Action sPTC` Partial-JSON Pre-Exec (`/v1/aeon/speculate`) | Cold file open after full tool JSON | **`15.17 ms` mid-stream syntax+SHA-256 pre-cache** (`syntax_ok=true`) | **Zero-wait speculative hit** |
+| `Mini-DGM` 4-Oracle Kernel Evolution (1,200-line log filter) | `3.74 ms` p95 regex baseline | **`0.15 ms` p95** (`shadow_only`, broken shortcut **rejected** by Oracle 1) | **`-95.85%` p95 (`24.1×`) · `0` reward-hack** |
+| Live Dual-Node Daemon RSS & Invariant Gates (`< 80 MiB` Law 7) | `45.20` Win / `53.52 MiB` `svhome` · `40` MCP | **`59.0` boot / `71.71 MiB` full** Win · **`42.61` boot / `56.66 MiB` full** `svhome` · **`41` MCP** | **PASS Law 7 × 2 · `0` drift · `Gate PASS` × 2** |
+
+---
+
+# 5 Evolutionary Breakthroughs + Full-Project Dual-Node Sync (`win-desktop ⇄ svhome`, 2026-11-27)
+
+## Checklist
+- [x] **#1 Focus-Hooked 5s Green-Context Micro-Lease (`nvcuda_ptx.py`, `aeon_dynamo.py`)**: Persistent PTX module cache + 5s idle auto-destroy + zero-spawn Win32 foreground VIP focus watcher (`acad.exe`/`revit.exe`/`blender.exe`/`obs64.exe` instant `cuCtxDestroy_v2` -> `0.0 MB` retained VRAM)
+- [x] **#2 Zero-NumPy Hardware POPCNT Native VSA SIMD (`native/chimera_core/src/lib.rs`, `native/chimera_core/src/vsa_simd.c`, `chimera_tp/native.py`, `aeon_dynamo.py`)**: Bit-exact Rust `_chimera_core.dll` (Windows) + GCC `-O3 -march=native -mpopcnt` `_chimera_vsa.so` (`20 KB`, Linux `svhome`), completely removing `import numpy` from `aeon_dynamo.py`
+- [x] **#3 Tailscale Cross-Node Radix KV Pool (`hive-mind.js`, `server.js`, `routes-hyperdrive.js`)**: Gossip `prefixHead + wireModel + effort` across `win-desktop ⇄ svhome` with `cross_node_radix_kv_affinity` routing, Effort-Invariant isolation, and live `crossNodeRadixHits` telemetry
+- [x] **#4 Zero-Copy Shared-Memory `mmap` NIXL Signal Ring + SHA-256 Epistemic Decay (`src/nixl-signal-ring.js`, `chimera-symbiote-bridge.js`, `aeon_dynamo.py`)**: Matching 256 KiB binary ring (`NXLR` on `V:\nixl\chimera_nixl_ring.bin` / `/dev/shm/chimera_nixl_ring.bin`), `nixl_publish`/`nixl_drain` MCP actions, and auto-emitted `epistemic_decay` + `Precog` self-healing on file SHA-256 drift
+- [x] **#5 Supervisor-Truth Release Radar (`agent_symbiont.py`)**: Zero-spawn parser for Windows `ChimeraHyperDashboard` ScheduledTask XML + Linux systemd unit & lexically sorted `.service.d/*.conf` drop-ins surfaced in `bootstrap_snapshot` & `ReleasePromoteEngine`
+- [x] **Comprehensive Full-Project Dual-Node Sync & Verification (`tasks/chimera_5breakthroughs_ab.json`)**: Synced **100%** of source files (**`284/284` Chimera files × 4 locations + `697/697` Tquota files × 2 locations = `981` files, `0` drift**), pruned 11 obsolete pre-`legacy/` files from both release dirs, compiled `_chimera_core.dll` (Win) & `_chimera_vsa.so` (`svhome`), verified Windows & `svhome` full test suites (**`62/62` Tquota PASS × 2**, full Python suites PASS × 2, `Gate PASS` × 2, `supervisor_drift=false` × 2)
+
+## Review — Measured BEFORE vs AFTER (5 Breakthroughs + Full Sync, 2026-11-27)
+| Breakthrough / Metric | BEFORE | AFTER (Verified Live) | Delta |
+|---|---:|---:|---|
+| #1 GTX 1650 `16K × 10K` VSA End-to-End (Cold vs 5s Lease) | `154.31 ms` (WDDM ctx tax) | **`10.42 ms`** (`3.94 ms` kernel · `28.6 ms` release → **`0.0 MB` VRAM**) | **`14.81×` faster end-to-end** |
+| #2 `275 ThoughtBriefs` Live Ingest (Py vs Rust POPCNT) | `12,535.68 ms` | **`133.70 ms`** (`zero_numpy_daemon=true`) | **`93.76×` faster (`-98.9%`)** |
+| #2 `275` VSA Fractal Recall CPU (NumPy vs Rust POPCNT) | `1,466.23 ms` | **`12.57 ms`** (`native_vsa_simd=true` on Win & `svhome`) | **`116.67×` faster (`-99.1%`)** |
+| #2 `16,384 × 10K` CPU VSA Batch (NumPy vs Native SIMD) | `77.35 ms` (NumPy) | **`9.17 ms` Win Rust** · **`19.08 ms` `svhome` GCC** (`bit_exact`) | **`8.43×` Win · `3.35×` `svhome`** |
+| #2 Windows Full-Load Daemon RSS (Zero-NumPy Diet) | `71.71 MiB` (with NumPy) | **`45.01 MiB`** full load (`63.61` Win / `57.60 MiB` `svhome` post-restart) | **`-26.70 MiB` (`-37.2%`) · Law 7 PASS** |
+| #3 Cross-Node Radix KV Pool (`win-desktop → svhome` Turn-1) | `0 / 4` Turn-1 hits | **`4 / 4` hits** (`192K` cold tok saved · cross-effort **blocked**) | **`+100%` Turn-1 cross-node KV** |
+| #4 Zero-Copy `mmap` NIXL Ring (Node → Python `V:\nixl`) | `~1,500–4,000 µs` HTTP JSON | **`34.69 µs` Node write · `22.9 µs` Python `mmap` drain** (`100/100` sPTC) | **`~65×` faster · `0` TCP sockets** |
+| #5 Supervisor-Truth Radar & Full-Project Sync (`981` files) | Unsynced docs/legacy/Gemini (`sv` drift) | **`284/284` Chimera (4 locs) + `697/697` Tquota (2 locs) = `0` drift** | **`100%` full-project parity × 2 nodes** |
+
+---
+
+# CHIMERA-PRISM — Gemini / Antigravity Quota Singularity Engine (`xhigh` 100% Preserved, 2026-11-27)
+
+## Checklist
+- [x] **Forensic Audit of Live `local-usage.sqlite` (`1,540` Gemini rows, `163.68M` prompt / `57.40M` uncached tokens)**: Identified 4 live quota-burn smoking guns — `77` cold `side-query` rows >= 6K (`3,640,444` uncached tokens, up to `154,894` input for `21–510` output), `83` `HTTP 499` prefill storm rows (`11,480,062` uncached tokens, top single session `11×` = `5,021,851` tokens), `5` mid-prefix `prefix-edit` breaks + `115` `settings-change` events, and `0` `geminiPrefix` coverage on `/v1/responses`
+- [x] **Safe 1-Request Antigravity Upstream Capability Probe (Chặng 2)**: Confirmed `daily-cloudcode-pa.googleapis.com/v1internal:createCachedContent` returns **`HTTP 404 Not Found`** (no explicit cache RPC on Cloud Code Assist) -> **Implicit-Only Prefix Invariance + Waste Elimination** is the sole valid physical lever on Antigravity
+- [x] **Core Engine `E:\DEV\Chung\.ch-relay\local-relay\src\gemini-prism.js`**: Implemented all 6 CHIMERA-PRISM pillars (`effortMutationAllowed: false`) — (1) Freeze-On-Send Pre-Send Titans Surprise Firewall (`applyPreSendTitansFirewall`, `compactTextWithTitansSurprise`), (2) Exact Break-Even Compaction + Mask-by-Append (`evaluateBreakEvenCompaction`, `buildMaskByAppendEntry`), (3) Cold Side-Query Context Shield (`shieldColdSideQuery`), (4) Gemini Detached Immortal Harvest Vault + Pre-Dispatch Abort Gate + Warm-Account Rotation Block (`GeminiImmortalVault`, `computeGeminiGenerationKey`), (5) 3-Way Static Envelope Forensics + Canonical Stabilizer (`inspectStaticEnvelope3Way`, `diffStaticEnvelope3Way`, `stabilizeGeminiStaticEnvelope`), (6) Quota Oracle + Focus-Aware TTL Keepalive + Black-Scholes Cache Handoff (`predictGeminiQuotaTurn`, `evaluateCacheHandoffOption`, `GeminiPrismCoordinator`)
+- [x] **Full Tquota + CHIMERA Wiring**: Wired into `gemini-armor-defense.js` (3-way `changedStaticParts` + live Prism observer), `gemini-context-optimizer.js` (Freeze-On-Send Titans Firewall + Turn Aliasing + Break-Even gate + Static Stabilizer), `gemini-native-gateway.js` (Side-Query Shield, Pre-Dispatch Abort Gate, Detached Immortal Harvest on `createGeminiSseObserverStream.cancel()`, Warm-Account Rotation Block, Quota Oracle telemetry across both `v1internal` & `v1beta`), `antigravity-runtime.js` (closed `/v1/responses` `geminiPrefix` gap + Side-Query Shield), `routes-hyperdrive.js` & `server.js` (`GET /api/gemini/prism`, unified `GET /api/darwin/invariant-gate`, `/api/overmind/telemetry`), and `chimera_tp/platform/aeon_dynamo.py` + `mcp_server.py` (Homeostasis live Gemini Prism probe + Win32 `native_focus_state` Focus-Aware TTL + `prism_status` & `prism_quota_oracle` MCP actions)
+- [x] **Verification, Dual-Node Zero-Drift Sync & Live A/B (`tasks/chimera_gemini_prism_ab.json`)**: **`68/68` Tquota tests PASS** on Windows AND **`68/68` PASS** on `svhome`; **`10/10` Chimera Python tests PASS** on Windows AND **`10/10` (`1` CUDA-only skipped) PASS** on `svhome`; **`480/480` Chimera (4 locs) + `719/719` Tquota (2 locs) = `1,199` files, `0` SHA-256 drift**; live `GET /api/gemini/prism` & `GET /api/darwin/invariant-gate` **`gatePass: true`** on both nodes
+
+## Review — Measured BEFORE vs AFTER (CHIMERA-PRISM, 2026-11-27)
+| Vector / Metric | BEFORE (Live SQLite / Legacy) | AFTER (CHIMERA-PRISM Live) | Delta |
+|---|---:|---:|---|
+| Cold `side-query` (`gemini-3.8-flash-low`, `114.7K` replay) | `114,736` tok (`77` DB rows = `3.64M`) | **`71` tok** (`1.83 ms`, DB est `138.6K`) | **`-99.94%` replay · `3.50M` DB tok saved** |
+| `HTTP 499` Prefill Storm (`13×` `152.2K` replay) | `1,978,925` tok (`13` calls · DB `11.48M`) | **`152,225` tok** (`1` call + `12` RAM in `0.13 ms`) | **`-92.31%` (`49.37%` wk quota / 1 storm)** |
+| Pre-Send Titans Firewall (`30.5 KB` noisy tool log) | `30,451` chars raw (or mid-prefix break) | **`1,033` chars** (`13.37 ms` · **`append-only`, `-1`**) | **`-96.61%` chars · `100%` error kept · `0` break** |
+| Static Envelope (`settings-change` `115` DB rows) | Opaque single hash · unsorted tools | **3-Way `changedStaticParts` + auto canonical** | **Instant drift attribution + stable head** |
+| Warm `200K` Compaction & Transient `503` Rotation | Retroactive cliff / cold account rotation | **Break-Even Mask-by-Append + Rotation Block** | **`0` warm-cache cliffs · `xhigh` 100% intact** |
+| Antigravity Explicit `cachedContent` Probe (Chặng 2) | Unverified assumption | **`v1internal:createCachedContent` = `HTTP 404`** | **Implicit-Only physics proven empirically** |
+| Combined Real-DB Waste Eliminated (`1,540` rows) | `15,120,506` waste tok (499 + side-query) | **`13,259,897` uncached tok eliminated** | **`~358.4%` weekly quota / `~1,489.9%` 5h saved** |
+| Dual-Node Parity & Tests (`win-desktop` ⇄ `svhome`) | — | **`68/68` Node × 2 · `10/10` Py × 2 · `1,199` files** | **`0` SHA-256 drift · `Gate PASS` × 2** |
+
+---
+
+# CHIMERA-NEXUS — All 3 S-Tier Evolutionary Packs (`win-desktop ⇄ svhome`, 2026-11-27)
+
+## Checklist
+- [x] **S-Tier #1A `PHANTOM-PREFIX` (`src/gemini-nexus.js`, `src/gemini-context-optimizer.js`)**: Self-Healing Append-Only Merkle Prefix Reconciler restoring bit-exact `frozenContents[0..k-1]` on retroactive mid-prefix client edits and appending surgical `<chimera_state_delta>` at tail -> turns warm `prefix-edit` cliffs into `append-only` (`firstDiffIndex: -1`)
+- [x] **S-Tier #1B `UNIVERSAL-ANCHOR` (`src/gemini-nexus.js`, `src/gemini-context-optimizer.js`)**: Hoists volatile timestamps/session IDs out of `systemInstruction` into trailing `<chimera_dynamic_meta>` so all threads in the same project share a 100% bit-identical Google implicit cache prefix head (`crossThreadAnchorHits`)
+- [x] **S-Tier #1C `HIPPO-CRYSTAL` (`chimera_tp/platform/aeon_dynamo.py`, `mcp_server.py`)**: Biomorphic HippoRAG 2 SQLite edge graph (`hippo_edges`) + 12-iteration Personalized PageRank seeded by Rust/GCC POPCNT VSA (`hippo_ppr_recall`) + SHA-256-verified `<= 500`-token `compile_turn0_crystal` waking up all `294` live Tquota ThoughtBriefs
+- [x] **S-Tier #2A `FLASH-LIPOSUCTION` (`src/gemini-nexus.js`, `src/gemini-native-gateway.js`)**: Fast VSA/SimHash relevance trimmer cutting bloated `>= 30K` read-only Flash payloads by **`-96.51%`** while keeping 100% key evidence and strictly sparing flagship `gemini-4-neon*` & mutating coding loops
+- [x] **S-Tier #2B `CHRONO-FORK` + #2C `POLY-BRAIN VALVE` (`src/gemini-nexus.js`, `src/gemini-context-optimizer.js`, `aeon_dynamo.py`)**: Freeze-On-Send 2-hop sibling signature bundler (`<chimera_2hop_hint>` in `1.24 ms`) + Cross-Cloud Quota Valve bridging Gemini 5h/weekly pressure with idle healthy Codex pool (`5` accounts Win / `4` `svhome`, `effortMutationAllowed: false`)
+- [x] **S-Tier #3 `THERMODYNAMIC CORTEX` + `FOCUS-LOCKED PULSE KEEPALIVE` + `REALITY TWIN` (`src/gemini-nexus.js`, `src/gemini-armor-defense.js`, `src/routes-hyperdrive.js`, `src/server.js`, `aeon_dynamo.py`)**: Bayesian Beta-Binomial online Google KV-TTL survival estimator (`285` real SQLite samples -> `285,000 ms` empirical TTL) + Quota Weather Forecast + Win32 focus-gated `>= 120K` keepalive scheduler (`291.7×` ROI active / `0` AFK burn) + `GET /api/gemini/nexus` & `POST /api/gemini/nexus/focus` + zero-token `RealityTwinEngine` shadow syntax healer (`4.36 ms`)
+- [x] **Dual-Node Zero-Drift Verification (`tasks/chimera_nexus_ab.json`)**: **`73/73` Tquota Node PASS** × 2 nodes (`win-desktop` & `svhome`), **`11/11` Chimera Python PASS** × 2 nodes (`1` CUDA skip on `svhome`), **`487` Chimera × 4 locs + `721` Tquota × 2 locs = `1,208` files, `0` SHA-256 drift**, live daemons **`61.73 MiB` Win (`PID 30832`)** & **`46.94 MiB` `svhome` (`PID 4124640`)** (`< 80 MiB` Law 7), `Gate PASS` × 2
+
+## Review — Measured BEFORE vs AFTER (CHIMERA-NEXUS All 3 S-Tier Packs, 2026-11-27)
+| S-Tier Subsystem | BEFORE | AFTER (CHIMERA-NEXUS Verified Live) | Delta |
+|---|---:|---:|---|
+| #1A `PHANTOM-PREFIX` (240K warm edit) | `prefix-edit` (`240K` cache cliff) | **`append-only` (`firstDiffIndex: -1`, `4.72 ms`)** | **`0` warm-cache cliff** |
+| #1B `UNIVERSAL-ANCHOR` (2 threads) | `0%` cross-thread head match | **`100%` match (`1b4bcb4caa2f14c8`, `2` lines hoisted)** | **Turn-1 cross-thread KV hit** |
+| #1C `HIPPO-CRYSTAL` (`294` live briefs) | `0` hits · `232` cold `baseline` | **`6,998` edges · `32.78 ms` PPR · `483`-tok crystal (`6` briefs)** | **Woke `294` ThoughtBriefs** |
+| #2A `FLASH-LIPOSUCTION` (`81.3K` Flash) | `81,251` tok (`25` DB rows = `2.55M`) | **`2,832` tok (`7.24 ms`, error kept · DB est `2.37M` saved)** | **`-96.51%` Flash uncached** |
+| #2B `CHRONO-FORK` + #2C `POLY-BRAIN` | Serial reads · `5` idle Codex accs | **`404 B` 2-hop hint (`1.24 ms`) · `5` Win / `4` `sv` Codex ready** | **Cuts `N` loops · `xhigh` intact** |
+| #3A `THERMODYNAMIC CORTEX` (`285` rows) | Static hardcoded `305s` TTL | **Empirical `285,000 ms` Bayesian TTL + Quota Weather** | **Adapts live to peak TTL** |
+| #3B `FOCUS PULSE KEEPALIVE` (`350K`) | Cold cliff after `5m` reading | **Active: `291.7×` ROI (`1` due) · AFK: `0` (`1` suppressed)** | **Zero AFK token waste** |
+| #3C `REALITY TWIN` + Dual-Node Sync | Broken JSON/Py burns 1 LLM turn | **`4.36 ms` 0-tok shadow fix · `1,208` files (`0` drift) · `61.7`/`46.9 MiB`** | **`73/73` Node ×2 · `11/11` Py ×2** |
+
+---
+
+# CHIMERA-NOOSPHERE — Living Self-Evolving Whole-Infrastructure Organism (`win-desktop ⇄ svhome`, 2026-11-27)
+
+## Checklist
+- [x] **13:49 Regression Hotfix & Live 9-Minute Proof**: Disabled unaliased multi-turn mutations by default (`nexusUniversalAnchorMutate/PhantomPrefix/ChronoFork: false`) + fixed single-blob (`contents.length === 1`) `side-query` Flash shield -> live post-hotfix proof (`13:56→14:05`): **`88` turns, `89.03%` cache hit (`93.9–99.1%` warm Neon `xhigh`), `0` `prefix-edit`, `0` `settings-change`, `806,147` tokens saved (`21.79%` weekly quota)**
+- [x] **Organ 1–5 Core (`chimera_tp/platform/noosphere_organism.py`, 100% stdlib, Zero-NumPy, `< 2 MiB` RAM)**:
+  - `AutonomicLivingPulse`: Adaptive background daemon thread (`30s` active / `120s` idle, `0` subprocesses, `0.016 ms` in-proc tick) draining `256 KiB` NIXL `mmap` ring + sampling 8D Homeostasis + Tquota PRISM
+  - `ImmuneSelfHealingReflex`: Continuous nociceptive `pain_score [0..1]`, real Win64 `K32GetProcessMemoryInfo` & Linux `/proc/self/statm` Law 7 RSS guard (`>= 72 MiB` auto `gc.collect()`), Hive Immune Antibody crystallization, and `< 3 ms` `ReleasePromote` rollback proposals (`auto_activated=False`, Law 6 safe)
+  - `GlobalWorkspaceCortex` & `MetacognitiveObserver`: Baars/Dehaene `<= 64`-item SHA-256-bound cross-node workspace (`epistemic_decay` + `merge_peer_items`) + Tunnel-Vision Loop, Single-Account `>= 220K` KV Saturation & Side-Query Storm watchdog
+  - `NocturnalDreamConsolidator`: Two-phase NREM (HippoRAG 2 `300` ThoughtBriefs + `404`-tok Turn-0 Crystal + GC) + REM (4-Oracle Mini-DGM shadow winner `+93.33%`, `auto_activated=False`) -> atomic `~/.chimera/morning_epiphany.json`
+  - `SubconsciousSideQueryEngine`: `< 2 ms`, `0`-Google-token local responder for UI `side-query` bursts + idle-Codex escalation hint
+- [x] **Substrate, MCP #42, Source-Side Zero-Echo & Tquota Integration**:
+  - Wired `AgentSymbiontCore.noosphere`, `PlatformSubstrate.start()` autonomic pulse + `/v1/noosphere/*` routes, `ChimeraClient.agent_noosphere`, and **42nd MCP tool `chimera_noosphere`**
+  - Added **Source-Side Zero-Echo Guard** (`dedupe_echo=True`) in `agent_probe.py` `OmniProbeBatchEngine._op_file_slice` (`-79.1%` over 5 reads / `>95%` per unchanged echo, `0` prefix-edits)
+  - Added **`GeminiSideQueryDedupeCache`** (`600s` exact + `25s` semantic Jaccard burst coalesce, zero-tools guard), **`SingleAccountWavefrontTracker`**, and opt-in `prismLocalSubconscious` bridge in `gemini-prism.js` + `gemini-native-gateway.js`
+- [x] **Dual-Node Zero-Drift Verification (`tasks/chimera_noosphere_ab.json`)**: **`18/18` Python PASS** (`win-desktop` `12.10s`, `svhome` `0.49s` w/ `1` CUDA skip), **`77/77` Tquota Node PASS** × 2 nodes (`2.32s` Win / `7.15s` `svhome`), **`0` SHA-256 drift** across `962efbbc09a1`, `e13c4da7d80b`, and `svhome`, live daemons **`75.79 MiB` Win** (post-dream) & **`48.05–48.62 MiB` `svhome`** (`< 80 MiB` Law 7), cross-node workspace synced (`merged: 1`), `effortMutationAllowed: false`
+
+## Review — Measured BEFORE vs AFTER (CHIMERA-NOOSPHERE, 2026-11-27)
+| Organ / Live Production Metric | BEFORE | AFTER (Verified Live) | Delta |
+|---|---:|---:|---|
+| 13:49 Warm Cache & Single-Blob Recovery (`13:56→14:05`) | `56.45%` hit · `15` `prefix-edit` | **`89.03%` (`93.9–99.1%` warm) · `0` `prefix-edit` · `806K` tok saved** | **`+32.6 pp` hit · `21.79%` wk quota saved in 9m** |
+| 14:04 37s Flash `side-query` Storm (`18` calls) | `18` calls · `55,800` uncached tok | **`2` calls + `16` RAM hits (`2.18 ms`)** / **`0` tok Subconscious (`1.08 ms`)** | **`-88.9%` default · `-100%` opt-in local** |
+| Source-Side Zero-Echo (`5×` 300-line `file_slice`) | `43,405 B` echoed to context | **`9,093 B`** (`34,312 B` eliminated at MCP source) | **`-79.1%` total (`-99%` per repeat) · `0` breaks** |
+| Immune Reflex (`13:49` cliff `93.9% → 56.5%` + `75.2 MiB`) | Manual (~`600,000 ms` audit) | **`3.184 ms` detect (`pain=1.0`), `2` antibodies, `1` GC, `<3ms` proposal** | **`~188,000×` faster · Law 6 `auto_activated=false`** |
+| Autonomic Living Pulse Heartbeat (`0` subprocesses) | Static request-only scripts | **`0.016 ms` in-proc · `140.3 ms` Win live · `23.1 ms` `svhome` live** | **24/7 living loop · `pulse_alive=true` × 2** |
+| Live Nocturnal Dream (`NREM + REM` on `win-desktop`) | No autonomous sleep consolidation | **`454.5 ms` · `300` briefs -> `404t` crystal · DGM `+93.33%` (`4/4` oracles)** | **`morning_epiphany.json` + cross-node sync (`merged=1`)** |
+| Law 7 RSS & Dual-Node Zero-Drift Parity | Win `rss_mb` untracked / rel drift | **`75.79 MiB` Win (post-dream) · `48.62 MiB` `svhome` · `0` SHA drift** | **`18/18` Py × 2 · `77/77` Node × 2 · `42` MCP tools** |
+
+---
+
+# CHIMERA-NOOSPHERE v2 — Autonomous 2-Way Bidirectional Symbiosis & Safe Local Subconscious (2026-11-27)
+
+## Checklist
+- [x] **1-RTT Autonomous Bidirectional Sync (`win-desktop ⇄ svhome`)**: Wired `POST /v1/noosphere/sync` & `POST /v1/noosphere/sync_exchange` + `MCP sync_peer` over CHIMERA `active_edge_peer_base()` (`PHANTOM_5MS_DIRECT` `http://127.0.0.1:9789` + `authenticate_peer_request`), autonomously exchanging `GlobalWorkspaceCortex` items, `HiveMindCortex` Immune Rules (`add_immune_rule` fixed & verified!), and live node vitals every 2nd autonomic heartbeat
+- [x] **100% Zero-Token Stateless UI `Subconscious` Activation + Safety Gate**: Enabled `prismLocalSubconscious: true` by default in `gemini-context-optimizer.js` & `gemini-native-gateway.js` strictly gated on `safe_for_local_offload === true` (pure UI metadata titles/tags/step-summaries -> `0` Google tokens in `2.14 ms`; complex coding/debug/SQL queries -> `safe_for_local_offload: false` escalated cleanly); fixed stem deduplication in title synthesis; wired `subconsciousLocalHits` & `subconsciousTokensSaved` into `GET /api/gemini/prism`
+- [x] **Live Production Fix (`GeminiSideQueryDedupeCache`)**: Live `GET /api/gemini/prism` audit (`94.99%` live cache hit, `400,382` tok saved) revealed Antigravity rotates random per-request `sessionId`s on `side-query`s -> switched burst bucket key to `(wireModel, category, streamMode)` + strict Jaccard similarity & zero-tools safety, verified with random-session unit test
+- [x] **Dual-Node Live Proof & Zero-Drift Parity (`tasks/chimera_noosphere_ab.json`)**: **`19/19` Python PASS** × 2 (`12.12s` Win / `0.49s` `svhome` w/ 1 CUDA skip), **`77/77` Tquota Node PASS** × 2 (`3.06s` Win / `6.98s` `svhome`), **`0` SHA-256 drift**, live 2-way sync proven in BOTH directions (`win_received_sv_beacon=true`, `sv_received_win_beacon=true`, `win -> sv` `29.82 ms` via `PHANTOM_5MS_DIRECT`, `sv -> win` `10.24 ms` auto-pulse, `0` errors), live RSS **`41.26 MiB` Win** & **`55.72 MiB` `svhome`** (`< 80 MiB` Law 7)
+
+---
+
+# CHIMERA-TRANSCENDENCE (Moonshot Phần XXVI Full Rollout: `IMMORTAL-RELAY` + `EIDOLON` + Moonshot `#2–#5`, 2026-11-27)
+
+## Checklist
+- [x] **Pack 1 — `CHIMERA-IMMORTAL-RELAY`** (`src/tool-generation-guard.js`, `src/server.js`, `chimera_tp/platform/immortal_relay.py`):
+  - `CHIMERA-STEER-PREEMPT`: `preemptStaleDetachedGeneration()` aborts stale detached generation & releases `#activeGenerations` in **`0.449 ms`** when user steers (`nextStepSig !== ctx.stepSig`), eliminating `14:16` `11× 503` / `12.2s` freeze while keeping identical-sig coalescing & unconfirmed publication pinning 100% intact
+  - `ImmortalSocketShield` + `StreamResurrector`: `< 1.5 MiB` Blue-Green HTTP/SSE proxy with atomic slot flip, `Graceful Drain` preserving live SSE streams mid-upgrade, and `svhome` Phoenix Failover
+  - `SwarmMaintenanceLock` (`Zero-Friendly-Fire Deploy Gate` `/v1/noosphere/deploy-gate`) + `CrossThreadPanopticon` (`/v1/noosphere/panopticon`, passive WAL scan of `local-usage.sqlite` + `logs_2.sqlite`)
+- [x] **Pack 2 — `CHIMERA-EIDOLON`** (`src/gemini-cold-bridge.js`, `src/gemini-native-gateway.js`, `src/gemini-prism.js`, `chimera_tp/platform/eidolon_exoskeleton.py`):
+  - `EAGLE-Stream` pre-dispatch NIXL mmap (`22 µs`) speculative thought-prefetcher + `Protocol-Transparent Cold-Bridge` (`Gemini SSE ⇄ Idle Codex Pool`, `0` Google tokens, strictly non-tool `0%`-cache side-queries, opt-in `prismColdBridgeToCodex`)
+  - `Sha256VerifiedScout` (`-99.79%` bloat on 23 real files / `779 KB → 1.6 KB` = `403` tok, `0` Google tok), `SilentAdversarialFuzzer` (`0` tok on PASS, `<=120t` alert on FAIL), `CounterfactualRealitySimulator` (parallel A vs B sandbox race picking proven winner)
+- [x] **Pack 3 — Moonshot `#2–#5` & MCP #43** (`chimera_tp/platform/eidolon_exoskeleton.py`, `substrate.py`, `agent_symbiont.py`, `client.py`, `mcp_server.py`):
+  - `#2 AutopoiesisNightlyHealer` (`shadow_only`, `auto_activated=false` — autonomously caught `FRIENDLY_FIRE_PID_CHURN` P0 live!)
+  - `#3 PrecogShadowTwin` (live off-Windows offload `win-desktop → svhome` via `PHANTOM :9789`: `executed_on="peer_svhome"`, `0.12 ms` verify / `25.65 ms` RTT, `0%` Win CPU)
+  - `#4 PreCompactionCrystalBridge` (stages `<=500t` Crystal before `220K+` IDE blind compaction)
+  - `#5 EcosystemSynesthesiaGraph` (indexed **4 real repos** `.ch-relay`, `Autocad`, `chimera-tp`, `makefun_entries` = `160` episodic memories in `6.18 ms`, recall `0.245 ms`)
+  - Registered **43rd MCP tool `chimera_eidolon`**
+- [x] **Dual-Node Zero-Drift Verification (`tasks/chimera_moonshot_xxvi_ab.json`)**: **`23/23` Python PASS** × 2 (`win-desktop` & `svhome` w/ 1 skip CUDA), **`80/80` Tquota Node PASS** × 2 (`206/206` total!), dynamically synced active live release `65bbee57e75f` + `962efbbc09a1` + `svhome` with **`0` SHA-256 drift**, `SwarmMaintenanceLock` verified `active_streams=0` before reloading Tquota (`0` Codex streams cut), live 2-way sync `win → sv` **`25.73 ms`** & `sv → win` **`10.12 ms`** (`sync_errors=0`), live daemon RSS **`29.29 MiB` Win** & **`59.16 MiB` `svhome`** (`< 80 MiB` Law 7)
+
+## Review — Measured BEFORE vs AFTER (Moonshot Phần XXVI, 2026-11-27)
+| Breakthrough / Metric | BEFORE | AFTER (Verified Live) | Delta |
+|---|---:|---:|---|
+| `CHIMERA-STEER-PREEMPT` (`14:16` Steer Lock) | `12,200 ms` wait · `11× 503` | **`0.449 ms` preempt · `0× 503`** | **`27,171×` faster · 0 steer errors** |
+| `IMMORTAL-SOCKET` Blue-Green + Phoenix | Cold restart cuts TCP `:12500` | **Live SSE drained on Blue · new→Green · crash→`svhome`** | **`0` stream drops on upgrade** |
+| `EIDOLON` SHA-256 Scout (`23` platform files) | `778,997 B` raw (`~195K` tok) | **`1,613 B` (`403` tok) in `66.85 ms` (`0` Google tok)** | **`-99.79%` context bloat** |
+| `EIDOLON` Silent Fuzzer + Counterfactual | Verbose chatter / sequential trial | **`0` tok on PASS (`53.8 ms`) · parallel winner (`15t`)** | **Zero chatter · 1-turn decision** |
+| Moonshot `#3` `PrecogShadowTwin` (`win → svhome`) | `100%` local Win CPU verify | **`executed_on="peer_svhome"` (`0.12 ms` / `25.65 ms` RTT)** | **`0%` Win CPU · `<1 ms` cache hit** |
+| Moonshot `#5` `EcosystemSynesthesia` (`4` repos) | Siloed project knowledge | **`160` memories indexed in `6.18 ms` · recall `0.245 ms`** | **Cross-project episodic memory** |
+| Moonshot `#2` `Autopoiesis` + `Panopticon` | Manual 2-DB forensic dig | **Scanned `400` rows + `logs_2` in `135 ms` · P0 shadow fix** | **Autonomous Law 6 self-diagnosis** |
+| Live 2-Way Sync, RSS & Parity (`win ⇄ svhome`) | Manual sync / stale rel drift | **`25.7`/`10.1 ms` 2-way · `29.3`/`59.2 MiB` · `0` drift** | **`206/206` tests PASS · `43` MCP** |
+
+
+---
+
+# CHIMERA // LIVING ORGANISM v27 — Comprehensive Living-Entity Console UI (`win-desktop ⇄ svhome`, 2026-11-27)
+
+## Checklist
+- [x] **Enrich `PlatformSubstrate.pulse_summary()` (`chimera_tp/platform/substrate.py`)**: Exposed zero-lazy-load-violation live `organism` telemetry (`alive`, `ticks`, `tick_ms`, `pain`, `antibodies`, `gc_trims`, `fatigue`, `ws_items`, `ws_top`, `dreams`, `has_epiphany`, `sub_hits`, `sub_saved`, `sync_on`, `sync_cnt`, `sync_err`, `sync_rtt`, `peer_node`, `peer_rss`, `echo_hits`, `mcp_tools: 43`, `eidolon: {...}`) + 4s-TTL cached Tquota `prism` snapshot (`hit_pct`, `turns`, `edits`, `saved_tok`, `saved_wk`, `sq_hits`, `sub_hits`, `cb_hits`, `cb_on`, `sub_on`, `xhigh_ok`, `wf_sessions`, `wf_kv`)
+- [x] **Rebuild `chimera_tp/universe_ui.py` (`v26 INFRASTRUCTURE COMMAND` → `v27 LIVING ORGANISM`)**:
+  - Bioluminescent Zero-WebGL (`0% GPU UI`) console preserving all strict byte budgets (`44,048 B` raw `<= 46 KB`, `16,713 B` gzip9 `<= 18.5 KB`, `22,720 B` packed `<= 25 KB`, `0` external assets, `node --check` PASS)
+  - Live header status pills (`ALIVE #N`, dynamic `PAIN 0.00 · HEALTHY/STRESS/ALERT`, `WIN/SVH <80M`, `2-WAY RTT`, `PRISM hit% · xhigh`) + 1-click `Sync ⇄`, `Dream`, `ROI Guard`, `Compact`, `Ctrl+K`
+  - Interactive 6-node **Living Cognitive Organism Topology**: `1. NOOSPHERE BRAIN`, `2. WIN-DESKTOP SOMA`, `3. GTX 1650 · SYNESTHESIA`, `4. SVHOME TWIN HUB`, `5. EIDOLON EXOSKELETON`, `6. QUOTA · IMMORTAL` wired by animated neural pipes (`NIXL 22µs`, `VSA / PTX`, `2-Way RTT`, `Precog / VSA`, `Cold-Bridge`, `Immune Gate`)
+  - 4 live telemetry cards (`Living Soma · Law 7 RAM`, `2-Way Symbiosis & RTT`, `GTX 1650 · Synesthesia`, `Cortex Shield · PRISM` with `5 LIVING ORGANS VITALITY (LIVE)` heatmap) + bottom-right default **`[1] Organs`** panel (9 clickable living-organ cards + live `GlobalWorkspace` feed) alongside `[2] Carts`, `[3] Ops` (11 1-click Eidolon/Noosphere commands), `[0] v9`, `[X] v12`
+- [x] **Root-Cause Heartbeat Fix & 1280×800 Visual Polish**: Fixed release drift where `65bbee57e75f/noosphere_organism.py` lacked `attach_bios` (blocking `start_autonomic_pulse()` in `substrate.start()`), guarded `hasattr(noo, "attach_bios")`, tightened 1280px spacing (`0` wrapped buttons, `0` clipped tabs/headers, `0` console errors)
+- [x] **Full Verification & Dual-Node Zero-Drift Sync**: **`16/16` PASS** on Windows (`test_v13_cortex_ui`, `test_noosphere_organism`, `test_eidolon_moonshot` in `14.63s`) + **`4/4` PASS** on `svhome` (`test_v13_cortex_ui` in `4.97s`), **`0` SHA-256 drift** across `65bbee57e75f`, `962efbbc09a1`, and `svhome`, zero touch to Tquota `:12500`, live visual screenshot verified at `1280×800`
+
+## Review — Measured BEFORE vs AFTER (Living Organism UI v27, 2026-11-27)
+| Dimension / Metric | BEFORE (`v26` Infra Command) | AFTER (`v27` Living Organism) | Delta / Budget |
+|---|---:|---:|---|
+| Raw / Gzip9 / Packed HTML Size | `38,271 B` / `14,845 B` / `20,248 B` | **`44,048 B` / `16,713 B` / `22,720 B`** | **PASS (`< 46K / 18.5K / 25K`) · `0% GPU`** |
+| Living Organism Visibility (Noosphere/Eidolon/PRISM) | `0` panels (infra-only) | **6-node Neural Topology + 9 Organ Cards + Vitality Heatmap + GlobalWorkspace** | **100% living-entity coverage (`43 MCP`)** |
+| Live `AutonomicLivingPulse` (`win` / `svhome`) | `alive: false` on stale release | **`LIVE · #2` (`Pain 0.00 · HEALTHY`, `14.7 ms` 2-way, `0` err)** | **Auto-pulse + 2-way symbiosis LIVE × 2** |
+| Live Tquota PRISM + Bridge Telemetry Surfaced | Invisible in Chimera UI | **`93.8%` hit · `15.99M` tok (`432%` wk) · `41` Sub · `1` CB · `xhigh 100%`** | **Real-time single-pane quota shield** |
+| Live Visual Audit (`1280×800` Chromium) | — | **`0` console errors · `0` wrapped buttons · `0` clipped tabs** | **10/10 verified visually** |
+| Live Daemon RAM & Sync Parity (`win ⇄ svhome`) | `65.6` / `70.0 MiB` (old shot) | **`23.4–32.3 MiB` Win · `52.0–52.9 MiB` `svhome` · `0` SHA drift** | **Well under `< 80 MiB` Law 7** |

@@ -1,0 +1,170 @@
+{
+  "schema": "chimera.darwin.sleep_cycle/1",
+  "generated_at": "2026-11-27T10:03:28+0700",
+  "status": "shadow_ready_for_approval",
+  "auto_activated": false,
+  "doctrine_law6_compliant": true,
+  "colab_cu_spent": 0.0,
+  "colab_cu_budget_requested": 0.0,
+  "safety": {
+    "safe_to_evolve": true,
+    "reason": "gpu_cool_and_low_util",
+    "gpu": {
+      "present": true,
+      "name": "NVIDIA GeForce GTX 1650",
+      "vram_total_mb": 4096,
+      "vram_used_mb": 3239,
+      "vram_free_mb": 697,
+      "util_pct": 23.0,
+      "temp_c": 49.1
+    }
+  },
+  "coroner_findings_count": 3,
+  "es_param_shadow": {
+    "genome_id": "es_param_cee9f1a2",
+    "baseline_fitness": 11.057432,
+    "evolved_fitness": 12.0805,
+    "fitness_gain": 1.023068,
+    "changed_knobs": 17,
+    "param_diffs": {
+      "peer_ram_reserve_mib": {
+        "before": 2560.0,
+        "after": 3082.0233,
+        "delta": 522.0233,
+        "domain": "chimera.peer_guard"
+      },
+      "peer_max_load1": {
+        "before": 1.8,
+        "after": 1.7848,
+        "delta": -0.0152,
+        "domain": "chimera.peer_guard"
+      },
+      "peer_max_temp_c": {
+        "before": 70.0,
+        "after": 62.492,
+        "delta": -7.508,
+        "domain": "chimera.peer_guard"
+      },
+      "peer_psi_cpu_pct": {
+        "before": 25.0,
+        "after": 11.492,
+        "delta": -13.508,
+        "domain": "chimera.peer_guard"
+      },
+      "peer_service_p95_ms": {
+        "before": 150.0,
+        "after": 140.3264,
+        "delta": -9.6736,
+        "domain": "chimera.peer_guard"
+      },
+      "placement_remote_wall_weight": {
+        "before": 1.0,
+        "after": 1.9665,
+        "delta": 0.9665,
+        "domain": "chimera.build_placement"
+      },
+      "placement_win_cpu_weight": {
+        "before": 1.0,
+        "after": 3.0,
+        "delta": 2.0,
+        "domain": "chimera.build_placement"
+      },
+      "placement_min_units_remote": {
+        "before": 192.0,
+        "after": 32.0,
+        "delta": -160.0,
+        "domain": "chimera.build_placement"
+      },
+      "vgpu_temp_yield_c": {
+        "before": 72.0,
+        "after": 70.3743,
+        "delta": -1.6257,
+        "domain": "chimera.vgpu_pareto"
+      },
+      "vgpu_util_yield_pct": {
+        "before": 45.0,
+        "after": 26.884,
+        "delta": -18.116,
+        "domain": "chimera.vgpu_pareto"
+      },
+      "soft_shield_cadence_s": {
+        "before": 15.0,
+        "after": 14.9643,
+        "delta": -0.0357,
+        "domain": "chimera.hyper_desk"
+      },
+      "tquota_first_byte_hedge_ms": {
+        "before": 12000.0,
+        "after": 3500.0,
+        "delta": -8500.0,
+        "domain": "tquota.hedge"
+      },
+      "tquota_spiral_rescue_ms": {
+        "before": 60000.0,
+        "after": 20000.0,
+        "delta": -40000.0,
+        "domain": "tquota.autocut"
+      },
+      "tquota_spiral_rescue_bytes": {
+        "before": 98304.0,
+        "after": 151814.9699,
+        "delta": 53510.9699,
+        "domain": "tquota.autocut"
+      },
+      "tquota_idle_rss_threshold_mb": {
+        "before": 350.0,
+        "after": 282.2249,
+        "delta": -67.7751,
+        "domain": "tquota.memory"
+      },
+      "tquota_tool_slice_cache_max": {
+        "before": 256.0,
+        "after": 1024.0,
+        "delta": 768.0,
+        "domain": "tquota.wire_delta"
+      },
+      "tquota_shell_storm_threshold": {
+        "before": 5.0,
+        "after": 4.5316,
+        "delta": -0.4684,
+        "domain": "tquota.symbiote"
+      }
+    },
+    "rollback_policy": {
+      "peer_cpu_quota_pct": 95.0,
+      "peer_ram_reserve_mib": 2560.0,
+      "peer_max_load1": 1.8,
+      "peer_max_temp_c": 70.0,
+      "peer_psi_cpu_pct": 25.0,
+      "peer_service_p95_ms": 150.0,
+      "placement_remote_wall_weight": 1.0,
+      "placement_win_cpu_weight": 1.0,
+      "placement_min_units_remote": 192.0,
+      "vgpu_temp_yield_c": 72.0,
+      "vgpu_util_yield_pct": 45.0,
+      "soft_shield_cadence_s": 15.0,
+      "tquota_first_byte_hedge_ms": 12000.0,
+      "tquota_spiral_rescue_ms": 60000.0,
+      "tquota_spiral_rescue_bytes": 98304.0,
+      "tquota_idle_rss_threshold_mb": 350.0,
+      "tquota_tool_slice_cache_max": 256.0,
+      "tquota_shell_storm_threshold": 5.0
+    }
+  },
+  "prompt_es_shadow": {
+    "scenarios_evolved": 5,
+    "prompt_token_reduction_pct": 61.11,
+    "reward_hacking_mutants_rejected": 40,
+    "baseline_mean_fitness": 11.3693,
+    "evolved_mean_fitness": 14.13
+  },
+  "neural_es_shadow": {
+    "genome_id": "darwin_reflex_2069204a",
+    "baseline_acc": 0.166667,
+    "evolved_acc": 0.444444,
+    "accuracy_gain_pct": 27.78,
+    "binary_wire_bytes": 1260,
+    "vram_reduction_ratio": 6.0
+  },
+  "elapsed_ms": 917.08
+}

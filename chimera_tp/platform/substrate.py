@@ -157,6 +157,7 @@ class PlatformSubstrate:
         self._engines_closed = False
         self._cosmos = None
         self._omega = None
+        self._bios = None
         self._exile_handoff = None
         self._peer_apps_lock = threading.Lock()
         self._peer_apps_ts: float = 0.0
@@ -225,6 +226,7 @@ class PlatformSubstrate:
             "cosmos_entity": True,
             "omega_entity": True,
             "agent_hyper_bus": True,
+            "bios": True,
         }
         self._load_cartridge_config()
         self._beacon_paths: list[Path] = []
@@ -333,6 +335,24 @@ class PlatformSubstrate:
             self.blackbox.start()
             if self._cartridge_enabled.get("hyper_desk", True) and self.hyper_desk._autonomic_policy.get("enabled", True):
                 self.hyper_desk.start_autonomic()
+            try:
+                noo = self.agent_bus.symbiont.noosphere
+                peer_getter = lambda: self.daemon.active_edge_peer_base()
+                peer_auth = lambda req: self.daemon.authenticate_peer_request(req)
+                noo.attach_peer_transport(
+                    peer_base_getter=peer_getter,
+                    peer_auth_fn=peer_auth,
+                )
+                if hasattr(self.agent_bus.probe, "attach_peer_transport"):
+                    self.agent_bus.probe.attach_peer_transport(
+                        peer_base_getter=peer_getter,
+                        peer_auth_fn=peer_auth,
+                    )
+                if hasattr(noo, "attach_bios"):
+                    noo.attach_bios(lambda: self._bios)
+                noo.start_autonomic_pulse()
+            except Exception:
+                pass
         else:
             self.blackbox.record_once()
         self._seed_startup_evidence()
@@ -360,6 +380,27 @@ class PlatformSubstrate:
                 from .omega_entity import OmegaEntityEngine
                 self._omega = OmegaEntityEngine(ops_dir=Path(self.daemon.ops_dir), substrate=self)
             return self._omega
+
+    @property
+    def bios(self):
+        with self._engine_lock:
+            if self._engines_closed:
+                raise RuntimeError("substrate_closed")
+            if self._bios is None:
+                from .bios.organism import ChimeraBiosOrganism
+
+                self._bios = ChimeraBiosOrganism(
+                    ops_dir=Path(self.daemon.ops_dir) / "bios",
+                    repo_root=Path(__file__).resolve().parents[2],
+                    node_name=str(self.daemon.config.node_name),
+                    nixl_ring_path=(
+                        (Path(self.daemon.ops_dir) / "bios" / "chimera_nixl_ring.bin")
+                        if self.ephemeral
+                        else None
+                    ),
+                    ephemeral=self.ephemeral,
+                )
+            return self._bios
 
     @property
     def exile_handoff(self):
@@ -393,6 +434,8 @@ class PlatformSubstrate:
                 self._cosmos.close()
             if self._omega is not None:
                 self._omega.close()
+            if self._bios is not None:
+                self._bios.close()
             bus = getattr(self, "_agent_bus", None) or self.__dict__.get("agent_bus")
             if bus is not None:
                 bus.close()
@@ -536,6 +579,23 @@ class PlatformSubstrate:
                 "endpoint": f"{anchor}/v1/agent/xray-batch",
                 "description": "Zero-Spawn Organ 3 Agent Hyper-Bus: concurrent 40-op xray-batch, 2-hop AST/JS/Rust callgraph-slice, atomic BLAKE2s commit-verify & Token-Diet compactor",
             },
+            "bios": {
+                "status": (
+                    ("active" if self._bios is not None else "lazy_ready")
+                    if self._cartridge_enabled.get("bios", True)
+                    else "disabled"
+                ),
+                "endpoint": f"{anchor}/v1/bios",
+                "abi_endpoint": f"{anchor}/v1/bios/abi",
+                "sync_endpoint": f"{anchor}/v1/bios/sync",
+                "spore_pwa": f"{anchor}/v1/bios/spore",
+                "stream_sse": f"{anchor}/v1/bios/stream",
+                "nixl_endocrine_offset": 32,
+                "nixl_endocrine_bytes": 32,
+                "lazy_loaded": self._bios is None,
+                "organs_count": 10,
+                "description": "CHIMERA-BIOS 10-organ living physiology, immunity, cognition & Open Ecosystem Soul (0 B boot RSS)",
+            },
         }
         for cname, cinfo in cartridges.items():
             en = True if cname == "connect" else bool(self._cartridge_enabled.get(cname, True))
@@ -640,9 +700,105 @@ class PlatformSubstrate:
             oai_cnt = len(self._openai_models_cache) or 3
         host_cpu = hm.get("cpu_pct")
         real_cpu = round(float(host_cpu), 1) if host_cpu is not None else round(float(th.get("cpu_pct") or 0.0), 1)
+        # Compact living-organism telemetry (never triggers lazy-load in ephemeral tests!)
+        bus_live = getattr(self, "_agent_bus", None) or self.__dict__.get("agent_bus")
+        noo_live = getattr(getattr(bus_live, "symbiont", None), "_noosphere", None) if bus_live is not None else None
+        eid_live = getattr(getattr(bus_live, "symbiont", None), "_eidolon", None) if bus_live is not None else None
+        org_data: dict[str, Any] = {"alive": False, "mcp_tools": 43}
+        if noo_live is not None:
+            try:
+                ns = noo_live.status()
+                ap = ns.get("autonomic_pulse") or {}
+                bs = ns.get("bidirectional_sync") or {}
+                im = ns.get("immune") or {}
+                mc = ns.get("metacognition") or {}
+                ws = ns.get("workspace") or {}
+                sub = ns.get("subconscious") or {}
+                dr = ns.get("dreamer") or {}
+                pv = bs.get("peer_vitals") or {}
+                eg_st = ns.get("source_echo_guard") or {}
+                org_data = {
+                    "alive": bool(ap.get("alive")),
+                    "ticks": int(ap.get("ticks") or 0),
+                    "tick_ms": round(float(ap.get("last_tick_ms") or 0.0), 1),
+                    "pain": round(float(im.get("last_pain_score") or 0.0), 2),
+                    "antibodies": int(im.get("antibodies_emitted") or 0),
+                    "gc_trims": int(im.get("gc_trims_total") or 0),
+                    "fatigue": round(float(mc.get("cognitive_fatigue") or 0.0), 2),
+                    "ws_items": int(ws.get("total_items") or 0),
+                    "ws_top": [
+                        {"k": str(it.get("kind") or "")[:16], "s": str(it.get("summary") or "")[:96]}
+                        for it in (ws.get("top_items") or [])[:3]
+                    ],
+                    "dreams": int(dr.get("dreams_completed") or 0),
+                    "has_epiphany": bool(dr.get("has_epiphany")),
+                    "sub_hits": int(sub.get("offloaded_locally_total") or sub.get("handled_total") or 0),
+                    "sub_saved": int(sub.get("google_tokens_saved_total") or 0),
+                    "sync_on": bool(bs.get("enabled")),
+                    "sync_cnt": int(bs.get("sync_count") or 0),
+                    "sync_err": int(bs.get("sync_errors") or 0),
+                    "sync_rtt": round(float(bs.get("last_rtt_ms") or 0.0), 1),
+                    "peer_node": str(pv.get("node") or ""),
+                    "peer_rss": round(float(pv.get("rss_mb") or 0.0), 1),
+                    "echo_hits": int(eg_st.get("echo_hits") or 0),
+                    "mcp_tools": 43,
+                }
+            except Exception:
+                pass
+        if eid_live is not None:
+            try:
+                es = eid_live.status()
+                org_data["eidolon"] = {
+                    "scout": int((es.get("scout") or {}).get("scans") or 0),
+                    "fuzz": int((es.get("silent_fuzzer") or {}).get("runs") or 0),
+                    "precog": int((es.get("precog_twin") or {}).get("verifies") or 0),
+                    "syn_proj": len((es.get("synesthesia") or {}).get("projects_indexed") or []),
+                    "syn_mem": int((es.get("synesthesia") or {}).get("memories_indexed") or 0),
+                    "bg_req": bool((es.get("maintenance_lock") or {}).get("blue_green_required")),
+                }
+            except Exception:
+                pass
+
+        # Fast cached Tquota PRISM/Cold-Bridge snapshot (non-ephemeral only, 4s TTL, 0.28s timeout)
+        prism_data: dict[str, Any] = getattr(self, "_prism_pulse_cache", None) or {}
+        if not self.ephemeral and (now_m - float(getattr(self, "_prism_pulse_ts", 0.0))) >= 4.0:
+            self._prism_pulse_ts = now_m
+            try:
+                import urllib.request as _ur
+
+                opener = _ur.build_opener(_ur.ProxyHandler({}))
+                with opener.open("http://127.0.0.1:12500/api/gemini/prism", timeout=0.28) as r:
+                    pr = json.loads(r.read(65536).decode("utf-8", errors="replace"))
+                if isinstance(pr, dict) and pr.get("ok"):
+                    inv = pr.get("invariants") or {}
+                    sqd = pr.get("sideQueryDedupe") or {}
+                    wf = pr.get("singleAccountWavefront") or {}
+                    prism_data = {
+                        "ok": True,
+                        "gate": bool(pr.get("gatePass")),
+                        "hit_pct": pr.get("cacheHitPct"),
+                        "turns": int(pr.get("turnsObserved") or 0),
+                        "edits": int(pr.get("prefixEditsObserved") or 0),
+                        "saved_tok": int(pr.get("totalSavedTokens") or 0),
+                        "saved_wk": float(pr.get("savedWeeklyPct") or 0.0),
+                        "sq_hits": int(sqd.get("exactHits") or 0) + int(sqd.get("semanticBurstHits") or 0),
+                        "sub_hits": int(pr.get("subconsciousLocalHits") or 0),
+                        "cb_hits": int(pr.get("coldBridgeHits") or 0),
+                        "cb_on": bool(inv.get("coldBridgeToCodexEnabled")),
+                        "sub_on": bool(inv.get("subconsciousLocalEnabled")),
+                        "xhigh_ok": not bool(pr.get("effortMutationAllowed")),
+                        "wf_sessions": int(wf.get("activeWarmSessions") or 0),
+                        "wf_kv": int(wf.get("totalWarmKvTokens") or 0),
+                    }
+                    self._prism_pulse_cache = prism_data
+            except Exception:
+                pass
+
         out = {
-            "version": "24.0.0",
+            "version": "27.0.0",
             "heartbeat": self._pulse_beat,
+            "organism": org_data,
+            "prism": prism_data,
             "anchor_url": self.anchor_url,
             "egress_proxy_url": self.egress.url,
             "apps_online": [a["app"] for a in apps if a.get("online")],
@@ -1037,6 +1193,47 @@ class PlatformSubstrate:
             return 200, self.agent_bus.symbiont.worktree_epoch.epoch_status(rel_q)
         if path == "/v1/agent/release-promote":
             return 200, self.agent_bus.symbiont.release_promote.status()
+        if path == "/v1/darwin/status":
+            return 200, self.agent_bus.symbiont.darwin.status()
+        if path == "/v1/darwin/genome":
+            gid = (qs.get("genome_id") or [""])[0].strip()
+            if gid:
+                res_g = self.agent_bus.symbiont.darwin.dispatch("genome_export", genome_id=gid)
+                return (200 if res_g.get("ok") else 404), res_g
+            return 200, self.agent_bus.symbiont.darwin.dispatch("genome_list")
+        if path == "/v1/aeon/status":
+            return 200, self.agent_bus.symbiont.aeon.status()
+        if path == "/v1/noosphere/status":
+            return 200, self.agent_bus.symbiont.noosphere.status()
+        if path == "/v1/noosphere/workspace":
+            lim_raw = (qs.get("limit") or ["16"])[0]
+            lim = int(lim_raw) if lim_raw.isdigit() else 16
+            kind = (qs.get("kind") or [""])[0].strip() or None
+            return 200, self.agent_bus.symbiont.noosphere.dispatch("workspace", limit=lim, kind=kind)
+        if path == "/v1/noosphere/epiphany":
+            return 200, self.agent_bus.symbiont.noosphere.dispatch("epiphany")
+        if path == "/v1/noosphere/deploy-gate":
+            svc = (qs.get("service") or ["tquota"])[0]
+            return 200, self.agent_bus.symbiont.eidolon.dispatch("deploy_gate", service=svc)
+        if path == "/v1/noosphere/panopticon":
+            return 200, self.agent_bus.symbiont.eidolon.dispatch("panopticon")
+        if path == "/v1/eidolon/status":
+            return 200, self.agent_bus.symbiont.eidolon.status()
+
+        # --- CHIMERA-MNEMOSYNE (Unified Zero-Loss Raw-Memory & Zero-Shell Execution) GET routes ---
+        if path == "/v1/mnemosyne/status":
+            return 200, self.agent_bus.symbiont.mnemosyne.status()
+        if path == "/v1/mnemosyne/entropy-audit":
+            return 200, self.agent_bus.symbiont.mnemosyne.dispatch("entropy_audit")
+        if path == "/v1/mnemosyne/watchdog":
+            return 200, self.agent_bus.symbiont.mnemosyne.dispatch("swarm_watchdog")
+        if path == "/v1/agent/prime":
+            repo_q = (qs.get("repo") or [""])[0]
+            cid_q = (qs.get("cid") or qs.get("conversation_id") or ["agent"])[0]
+            inc_raw = (qs.get("include_raw_recall") or ["1"])[0].lower() not in ("0", "false", "no")
+            return 200, self.agent_bus.symbiont.mnemosyne.dispatch(
+                "prime", repo=repo_q, cid=cid_q, include_raw_recall=inc_raw
+            )
 
         # --- v20 CHIMERA-COSMOS GET routes ---
         if path == "/v1/cosmos/status":
@@ -1061,6 +1258,51 @@ class PlatformSubstrate:
             return 200, self.omega.status()
         if path == "/v1/omega/gravity":
             return 200, self.omega.omega_gravity_status()
+
+        # --- CHIMERA-BIOS Open Ecosystem Soul GET routes (100% lazy-loaded, 0 B boot RSS) ---
+        if path == "/v1/bios" or path.startswith("/v1/bios/"):
+            if not self._cartridge_enabled.get("bios", True):
+                return 503, {"error": "cartridge_disabled:bios"}
+            if path in ("/v1/bios", "/v1/bios/status"):
+                return 200, self.bios.status()
+            if path == "/v1/bios/abi":
+                return 200, self.bios.open_abi_manifest(anchor_url=self.anchor_url)
+            if path == "/v1/bios/hormones":
+                return 200, self.bios.hormones()
+            if path == "/v1/bios/autophagy":
+                return 200, self.bios.autophagy_dispatch(action="status")
+            if path == "/v1/bios/parasite/status":
+                return 200, self.bios.parasite_status()
+            if path == "/v1/bios/ganglia":
+                return 200, self.bios.ganglia_status()
+            if path == "/v1/bios/pheromone":
+                repo_q = (qs.get("repo") or ["."])[0]
+                rel_q = (qs.get("rel_path") or qs.get("path") or [""])[0]
+                max_tok_raw = (qs.get("max_tokens") or ["40"])[0]
+                max_tok = int(max_tok_raw) if max_tok_raw.isdigit() else 40
+                return 200, self.bios.pheromone(repo=repo_q, rel_path=rel_q, max_tokens=max_tok)
+            if path == "/v1/bios/umwelt":
+                return 200, self.bios.umwelt_dispatch(action="status")
+            if path == "/v1/bios/hgt":
+                tag_q = (qs.get("tag") or [""])[0].strip() or None
+                return 200, self.bios.hgt_dispatch(action="list", payload={"tag": tag_q})
+            if path == "/v1/bios/spores":
+                return 200, self.bios.spores_list()
+            if path == "/v1/bios/soul":
+                q_s = (qs.get("query") or qs.get("q") or [""])[0]
+                mdl = (qs.get("target_model") or qs.get("model") or ["any"])[0]
+                mt_raw = (qs.get("max_tokens") or ["500"])[0]
+                mt = int(mt_raw) if mt_raw.isdigit() else 500
+                return 200, self.bios.soul_capsule(query=q_s, target_model=mdl, max_tokens=mt)
+            if path == "/v1/bios/sync/bundle":
+                me_raw = (qs.get("max_events") or ["32"])[0]
+                ma_raw = (qs.get("max_alarms") or ["16"])[0]
+                ms_raw = (qs.get("max_scars") or ["16"])[0]
+                return 200, self.bios.export_sync_bundle(
+                    max_events=int(me_raw) if me_raw.isdigit() else 32,
+                    max_alarms=int(ma_raw) if ma_raw.isdigit() else 16,
+                    max_scars=int(ms_raw) if ms_raw.isdigit() else 16,
+                )
 
         return None
 
@@ -1468,10 +1710,9 @@ class PlatformSubstrate:
                 return 400, {"error": str(exc)}
 
         if path == "/v1/vgpu/ptx-bench":
-            n = max(64, min(262144, int(body.get("n") or 16384)))
-            va = [float((i % 13) - 6) for i in range(n)]
-            vb = [float((i % 7) - 3) for i in range(n)]
-            return 200, self.vgpu.run_ptx_kernel_if_eligible(va, vb, force=bool(body.get("force", False)))
+            return 200, self.vgpu.run_ptx_benchmark(
+                int(body.get("n") or 16384), force=bool(body.get("force", False))
+            )
 
         if path == "/v1/rlnc/folded-bench":
             return 200, CristaeFoldedCavityRLNC.run_benchmark(
@@ -1948,6 +2189,7 @@ class PlatformSubstrate:
                     offload_peer=bool(body.get("offload_peer", False)),
                     peer_host=str(body.get("peer_host") or "svhome"),
                     peer_repo=(str(body["peer_repo"]) if body.get("peer_repo") else None),
+                    generations=int(body.get("generations") or 1),
                 )
                 try:
                     self.daemon.record_flow(
@@ -2054,6 +2296,119 @@ class PlatformSubstrate:
                         rollback_dir=(str(body["rollback_dir"]) if body.get("rollback_dir") else None),
                     )
                 return 200, rp.status()
+
+        # --- CHIMERA-DARWIN POST routes (lazy-loaded; Law-6 Shadow-only by default) ---
+        if path.startswith("/v1/darwin/"):
+            darwin = self.agent_bus.symbiont.darwin
+            if path == "/v1/darwin/evolve":
+                act = str(body.get("action") or "status").strip().lower()
+                # Law 3: Protect svhome 2C/4T from heavy neural training loops unless replay/read-only
+                if sys.platform.startswith("linux") and act == "neural_evolve" and int(body.get("generations") or 30) > 10:
+                    return 409, {"ok": False, "error": "svhome_neural_training_offload_required", "max_svhome_generations": 10}
+                res_d = darwin.dispatch(act, **{k: v for k, v in body.items() if k != "action"})
+                return (200 if res_d.get("ok") else 400), res_d
+            if path == "/v1/darwin/sleep-cycle":
+                res_s = darwin.dispatch("sleep_cycle", **body)
+                return 200, res_s
+
+        # --- CHIMERA-DYNAMO / AEON POST routes (100% lazy-loaded, 0 B boot RSS) ---
+        if path.startswith("/v1/aeon/"):
+            aeon = self.agent_bus.symbiont.aeon
+            if path == "/v1/aeon/evolve":
+                act = str(body.get("action") or "status").strip().lower()
+                res_a = aeon.dispatch(act, **{k: v for k, v in body.items() if k != "action"})
+                return (200 if res_a.get("ok") else 400), res_a
+            if path == "/v1/aeon/speculate":
+                res_sp = aeon.dispatch("sptc_speculate", **body)
+                return (200 if res_sp.get("ok") else 400), res_sp
+
+        # --- CHIMERA-NOOSPHERE Living Organism POST routes ---
+        if path.startswith("/v1/noosphere/"):
+            noo = self.agent_bus.symbiont.noosphere
+            if path == "/v1/noosphere/dispatch":
+                act = str(body.get("action") or "status").strip().lower()
+                res_n = noo.dispatch(act, **{k: v for k, v in body.items() if k != "action"})
+                return (200 if res_n.get("ok") else 400), res_n
+            if path == "/v1/noosphere/tick":
+                res_t = noo.dispatch("tick", **body)
+                return (200 if res_t.get("ok") else 400), res_t
+            if path == "/v1/noosphere/dream":
+                res_d = noo.dispatch("dream", **body)
+                return (200 if res_d.get("ok") else 400), res_d
+            if path == "/v1/noosphere/subconscious":
+                res_s = noo.dispatch("subconscious", **body)
+                return (200 if res_s.get("ok") else 400), res_s
+            if path == "/v1/noosphere/workspace":
+                if isinstance(body.get("items"), list):
+                    res_w = noo.dispatch("merge_workspace", items=body["items"])
+                else:
+                    res_w = noo.dispatch("publish_fact", **body)
+                return (200 if res_w.get("ok") else 400), res_w
+            if path == "/v1/noosphere/sync":
+                res_sy = noo.sync_with_peer(
+                    peer_base=body.get("peer_base"),
+                    timeout=float(body.get("timeout") or 2.5),
+                )
+                return (200 if res_sy.get("ok") or res_sy.get("skipped") else 502), res_sy
+            if path == "/v1/noosphere/sync_exchange":
+                res_ex = noo.handle_sync_exchange(body)
+                return (200 if res_ex.get("ok") else 400), res_ex
+            if path == "/v1/noosphere/deploy-gate":
+                res_dg = self.agent_bus.symbiont.eidolon.dispatch("deploy_gate", **body)
+                return (200 if res_dg.get("ok") else 400), res_dg
+
+        # --- CHIMERA-EIDOLON & MOONSHOT #2-#5 POST routes ---
+        if path.startswith("/v1/eidolon/"):
+            eid = self.agent_bus.symbiont.eidolon
+            if path == "/v1/eidolon/dispatch":
+                act = str(body.get("action") or "status").strip().lower()
+                res_e = eid.dispatch(act, **{k: v for k, v in body.items() if k != "action"})
+                return (200 if res_e.get("ok") else 400), res_e
+            if path == "/v1/eidolon/precog-verify":
+                res_pv = eid.dispatch("precog_verify", **body)
+                return (200 if res_pv.get("ok") else 400), res_pv
+            if path == "/v1/eidolon/scout":
+                res_sc = eid.dispatch("scout", **body)
+                return (200 if res_sc.get("ok") else 400), res_sc
+            if path == "/v1/eidolon/fuzz":
+                res_fz = eid.dispatch("fuzz", **body)
+                return (200 if res_fz.get("ok") else 400), res_fz
+            if path == "/v1/eidolon/counterfactual":
+                res_cf = eid.dispatch("counterfactual", **body)
+                return (200 if res_cf.get("ok") else 400), res_cf
+            if path == "/v1/eidolon/autopoiesis":
+                res_ap = eid.dispatch("autopoiesis", **body)
+                return (200 if res_ap.get("ok") else 400), res_ap
+            if path == "/v1/eidolon/synesthesia":
+                act_syn = "synesthesia_recall" if body.get("query") else "synesthesia_index"
+                res_sy = eid.dispatch(act_syn, **body)
+                return (200 if res_sy.get("ok") else 400), res_sy
+
+        # --- CHIMERA-MNEMOSYNE POST routes ---
+        if path.startswith("/v1/mnemosyne/") or path in ("/v1/agent/prime", "/v1/agent/shell-guard", "/v1/agent/warm-repl"):
+            mn = self.agent_bus.symbiont.mnemosyne
+            if path == "/v1/agent/prime":
+                res_m = mn.dispatch("prime", **body)
+            elif path == "/v1/agent/shell-guard":
+                res_m = mn.dispatch("shell_guard", **body)
+            elif path == "/v1/agent/warm-repl":
+                res_m = mn.dispatch("warm_repl", **body)
+            elif path == "/v1/mnemosyne/dispatch":
+                act_m = str(body.get("action") or "status").strip().lower()
+                res_m = mn.dispatch(act_m, **{k: v for k, v in body.items() if k != "action"})
+            elif path == "/v1/mnemosyne/recall":
+                res_m = mn.dispatch("raw_recall", **body)
+            elif path == "/v1/mnemosyne/ingest":
+                res_m = mn.dispatch("raw_ingest", **body)
+            elif path == "/v1/mnemosyne/raw-slice":
+                res_m = mn.dispatch("raw_slice", **body)
+            elif path == "/v1/mnemosyne/doc-page":
+                res_m = mn.dispatch("doc_page", **body)
+            elif path == "/v1/mnemosyne/arena":
+                res_m = mn.dispatch("raw_arena", **body)
+            else:
+                return 404, {"ok": False, "error": f"unknown_mnemosyne_route:{path}"}
+            return (200 if res_m.get("ok") else 400), res_m
 
         # --- v20 CHIMERA-COSMOS POST routes ---
         if path.startswith("/v1/cosmos/"):
@@ -2162,6 +2517,207 @@ class PlatformSubstrate:
                 return 200, self.omega.global_ctrl_z(body.get("snap_id"))
             if path == "/v1/omega/autopoietic/evolve":
                 return 200, self.omega.autopoietic_evolve()
+
+        # --- CHIMERA-BIOS Open Ecosystem Soul POST routes (100% lazy-loaded, Law 1-7 compliant) ---
+        if path.startswith("/v1/bios/"):
+            if not self._cartridge_enabled.get("bios", True):
+                return 503, {"error": "cartridge_disabled:bios"}
+            try:
+                if path == "/v1/bios/hormones":
+                    sec = body.get("secrete") if isinstance(body.get("secrete"), dict) else None
+                    return 200, self.bios.hormones(
+                        secrete=sec,
+                        action=body.get("action"),
+                        payload=body,
+                    )
+                if path == "/v1/bios/pulse":
+                    obs_d = body.get("obs") if isinstance(body.get("obs"), dict) else None
+                    return 200, self.bios.pulse(obs=obs_d, context=body.get("context"))
+                if path == "/v1/bios/predict":
+                    obs_d = body.get("obs") if isinstance(body.get("obs"), dict) else None
+                    return 200, self.bios.predict(
+                        obs=obs_d,
+                        context=str(body.get("context") or "general"),
+                        horizon_s=float(body.get("horizon_s") or 60.0),
+                        action=str(body.get("action") or "all"),
+                    )
+                if path == "/v1/bios/autophagy":
+                    return 200, self.bios.autophagy_dispatch(
+                        action=str(body.get("action") or "status"),
+                        payload=body,
+                    )
+                if path == "/v1/bios/parasite/run":
+                    return 200, self.bios.parasite_run(
+                        rounds=int(body.get("rounds") or 4),
+                        seed=body.get("seed"),
+                        scenarios=(list(body["scenarios"]) if isinstance(body.get("scenarios"), list) else None),
+                    )
+                if path == "/v1/bios/ganglia/reconcile":
+                    return 200, self.bios.ganglia_reconcile(
+                        local_events=(list(body["local_events"]) if isinstance(body.get("local_events"), list) else None),
+                        peer_events=(list(body["peer_events"]) if isinstance(body.get("peer_events"), list) else []),
+                    )
+                if path == "/v1/bios/pheromone":
+                    act_p = str(body.get("action") or "").strip().lower()
+                    alarm_d = body.get("alarm") if isinstance(body.get("alarm"), dict) else None
+                    if alarm_d is None and (act_p == "alarm" or body.get("signal_kind")):
+                        alarm_d = {
+                            "rel_path": body.get("rel_path") or body.get("path") or ".",
+                            "signal_kind": body.get("signal_kind") or "regression",
+                            "severity": body.get("severity", 0.6),
+                            "reason": body.get("reason") or "",
+                            "agent_id": body.get("agent_id") or "ecosystem",
+                        }
+                    coedits_l = body.get("coedits") if isinstance(body.get("coedits"), list) else None
+                    if coedits_l is None and isinstance(body.get("files"), list):
+                        coedits_l = body["files"]
+                    meth_d = body.get("methylation") if isinstance(body.get("methylation"), dict) else None
+                    if meth_d is None and (act_p == "methylate" or body.get("gene_policy")):
+                        meth_d = {
+                            "locus": body.get("locus") or body.get("rel_path") or body.get("path") or ".",
+                            "gene_policy": body.get("gene_policy") or "extra_verify",
+                            "strength": body.get("strength", 0.8),
+                            "half_life_days": body.get("half_life_days", 7.0),
+                            "reason": body.get("reason") or "",
+                        }
+                    return 200, self.bios.pheromone(
+                        repo=str(body.get("repo") or "."),
+                        rel_path=str(body.get("rel_path") or body.get("path") or ""),
+                        action=act_p or None,
+                        alarm=alarm_d,
+                        coedits=coedits_l,
+                        methylation=meth_d,
+                        max_tokens=int(body.get("max_tokens") or 40),
+                    )
+                if path == "/v1/bios/umwelt":
+                    sig = body.get("signal") if isinstance(body.get("signal"), dict) else None
+                    if sig is None and body.get("event_kind"):
+                        sig = body
+                    act_u = str(body.get("action") or ("assess" if sig is not None else "status"))
+                    return 200, self.bios.umwelt_dispatch(
+                        signal=sig,
+                        action=act_u,
+                        lead_minutes=float(body.get("lead_minutes") or 5.0),
+                    )
+                if path == "/v1/bios/hgt":
+                    return 200, self.bios.hgt_dispatch(
+                        action=str(body.get("action") or "list"),
+                        payload=body,
+                    )
+                if path == "/v1/bios/spore/attach":
+                    return 200, self.bios.spore_attach(body)
+                if path == "/v1/bios/spore/autotomy":
+                    sid = str(body.get("spore_id") or "").strip()
+                    if not sid:
+                        return 400, {"ok": False, "error": "missing_spore_id"}
+                    return 200, self.bios.spore_autotomy(sid, reason=str(body.get("reason") or "detach"))
+                if path == "/v1/bios/spore/seed":
+                    return 200, self.bios.spore_seed(body)
+                if path == "/v1/bios/soul/scar":
+                    return 200, self.bios.soul_record_scar(body)
+                if path == "/v1/bios/sync":
+                    blend_val = float(body.get("blend") if body.get("blend") is not None else 0.35)
+                    # Mode 1: Inbound peer sync carrying an explicit sync bundle
+                    if isinstance(body.get("bundle"), dict):
+                        if client_ip not in ("127.0.0.1", "::1", "localhost"):
+                            presented_auth = headers.get("X-Chimera-Peer-Auth") if headers else None
+                            if presented_auth is not None:
+                                from .peer_guard import verify_peer_auth
+
+                                if not verify_peer_auth(presented_auth):
+                                    return 403, {"ok": False, "error": "peer_auth_required"}
+                        bidir = bool(body.get("bidirectional", False))
+                        res_in = self.bios.apply_sync_bundle(
+                            body["bundle"],
+                            blend=blend_val,
+                            return_reply_bundle=bidir,
+                        )
+                        try:
+                            self.daemon.record_flow(
+                                "phantom",
+                                str(res_in.get("peer_node") or "peer"),
+                                str(self.daemon.config.node_name),
+                                "BIOS_SYNC_IN",
+                                wire_bytes=len(raw_body),
+                                elapsed_ms=float(res_in.get("elapsed_ms") or 0.0),
+                                detail=f"merkle={str(res_in.get('merkle_root') or '')[:12]} scars+={res_in.get('scars_imported', 0)}",
+                                ok=True,
+                            )
+                        except Exception:
+                            pass
+                        return 200, res_in
+
+                    # Mode 2: Active 2-way bidirectional sync trigger (PHANTOM-5MS first, HTTP peer fallback)
+                    explicit_peer = str(body.get("peer_url") or body.get("peer_base") or "").strip().rstrip("/")
+                    timeout_s = max(0.5, min(15.0, float(body.get("timeout_s") or body.get("timeout") or 4.0)))
+                    self_base = self.anchor_url.rstrip("/")
+                    direct_base = ""
+                    try:
+                        direct_base = str(self.daemon.peer_http_base() or "").strip().rstrip("/")
+                    except Exception:
+                        direct_base = ""
+
+                    candidates: list[tuple[str, str]] = []
+                    if explicit_peer:
+                        candidates.append((explicit_peer, "explicit"))
+                    else:
+                        try:
+                            act_base = str(self.daemon.active_edge_peer_base() or "").strip().rstrip("/")
+                        except Exception:
+                            act_base = ""
+                        if act_base and act_base != self_base:
+                            t_kind = "phantom_5ms" if (direct_base and act_base != direct_base) else "direct_http"
+                            candidates.append((act_base, t_kind))
+                        if (
+                            direct_base
+                            and direct_base != self_base
+                            and getattr(self.daemon.config, "peer_ipv4", "")
+                            and all(c[0] != direct_base for c in candidates)
+                        ):
+                            candidates.append((direct_base, "direct_http"))
+
+                    if not candidates:
+                        return 503, {
+                            "ok": False,
+                            "error": "no_peer_configured",
+                            "node_name": str(self.daemon.config.node_name),
+                            "merkle_converged": False,
+                            "auto_activated": False,
+                        }
+
+                    last_res: dict[str, Any] = {"ok": False, "error": "peer_sync_failed"}
+                    tried: list[str] = []
+                    for cand_url, transport_kind in candidates:
+                        tried.append(cand_url)
+                        res_sync = self.bios.sync_with_peer(
+                            cand_url,
+                            blend=blend_val,
+                            timeout_s=timeout_s,
+                            request_authorizer=self.daemon.authenticate_peer_request,
+                        )
+                        if res_sync.get("ok"):
+                            res_sync["transport"] = transport_kind
+                            try:
+                                self.daemon.record_flow(
+                                    "phantom",
+                                    str(self.daemon.config.node_name),
+                                    str(res_sync.get("peer_node") or self.daemon.config.peer_name or "peer"),
+                                    "BIOS_SYNC_2WAY",
+                                    wire_bytes=12,
+                                    elapsed_ms=float(res_sync.get("rtt_ms") or 0.0),
+                                    detail=f"via={transport_kind} converged={res_sync.get('merkle_converged')}",
+                                    ok=True,
+                                )
+                            except Exception:
+                                pass
+                            return 200, res_sync
+                        last_res = res_sync
+                    last_res["tried_urls"] = tried
+                    return 502, last_res
+            except KeyError as exc:
+                return 404, {"ok": False, "error": str(exc)}
+            except (TypeError, ValueError) as exc:
+                return 400, {"ok": False, "error": str(exc)}
 
         return None
 
@@ -2954,6 +3510,80 @@ class PlatformSubstrate:
             except Exception:
                 pass
 
+        return True
+
+    def handle_bios_get_stream(
+        self,
+        handler: Any,
+        parsed: urllib.parse.ParseResult,
+        headers: Any,
+    ) -> bool:
+        """Serve non-JSON CHIMERA-BIOS GET endpoints: Spore PWA HTML and live SSE pulse stream."""
+        path = parsed.path
+        if path not in ("/v1/bios/spore", "/v1/bios/stream"):
+            return False
+
+        if not self._cartridge_enabled.get("bios", True):
+            raw_err = json.dumps({"ok": False, "error": "cartridge_disabled:bios"}).encode("utf-8")
+            handler.send_response(503)
+            handler.send_header("Content-Type", "application/json; charset=utf-8")
+            handler.send_header("Content-Length", str(len(raw_err)))
+            handler.end_headers()
+            handler.wfile.write(raw_err)
+            return True
+
+        qs = urllib.parse.parse_qs(parsed.query)
+        if path == "/v1/bios/spore":
+            anchor_override = (qs.get("anchor") or [""])[0].strip()
+            html = self.bios.spore_pwa_html(anchor_url=anchor_override)
+            raw_html = html.encode("utf-8")
+            handler.send_response(200)
+            handler.send_header("Content-Type", "text/html; charset=utf-8")
+            handler.send_header("Cache-Control", "no-cache")
+            handler.send_header("Content-Length", str(len(raw_html)))
+            handler.end_headers()
+            handler.wfile.write(raw_html)
+            handler.wfile.flush()
+            return True
+
+        # GET /v1/bios/stream -> bounded or live SSE (text/event-stream)
+        once = (qs.get("once") or ["0"])[0].strip().lower() in ("1", "true", "yes")
+        max_ev_raw = (qs.get("max_events") or [""])[0].strip()
+        bounded = once or bool(max_ev_raw)
+        if once:
+            max_events = 1
+        elif max_ev_raw.isdigit():
+            max_events = max(1, min(100, int(max_ev_raw)))
+        else:
+            max_events = 30
+        int_raw = (qs.get("interval_ms") or [""])[0].strip()
+        if int_raw.isdigit():
+            interval_ms = max(20, min(10000, int(int_raw)))
+        else:
+            interval_ms = 80 if bounded else 2000
+
+        try:
+            handler.connection.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+        except OSError:
+            pass
+        handler.send_response(200)
+        handler.send_header("Content-Type", "text/event-stream; charset=utf-8")
+        handler.send_header("Cache-Control", "no-cache")
+        handler.send_header("Connection", "close")
+        handler.end_headers()
+        handler.wfile.flush()
+
+        for idx in range(max_events):
+            try:
+                frame = self.bios.pulse(context="sse_stream")
+                payload = json.dumps(frame, separators=(",", ":"), ensure_ascii=False)
+                chunk = f"id: {frame.get('seq', idx + 1)}\ndata: {payload}\n\n".encode("utf-8")
+                handler.wfile.write(chunk)
+                handler.wfile.flush()
+            except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError, OSError):
+                break
+            if idx + 1 < max_events:
+                time.sleep(interval_ms / 1000.0)
         return True
 
 

@@ -1472,7 +1472,147 @@ class MirrorRaceEngine:
         self.verifier = verifier
         self.hive = hive
         self._lock = threading.Lock()
-        self._stats = {"races_run": 0, "winners_committed": 0, "candidates_evaluated": 0}
+        self._stats = {
+            "races_run": 0,
+            "winners_committed": 0,
+            "candidates_evaluated": 0,
+            "crossover_generations_run": 0,
+            "crossover_winners": 0,
+        }
+
+    @staticmethod
+    def _score_candidate_fitness(res: dict[str, Any], edits: list[dict[str, Any]]) -> dict[str, Any]:
+        """Continuous Mirror-Race 2.0 fitness score from real unittest output + syntax + diff size."""
+        gate_errs = len(res.get("gate_errors") or []) if res.get("gate_rejected") else 0
+        verify = res.get("verify") or {}
+        syntax_errs = len(verify.get("syntax_errors") or [])
+        tests_block = verify.get("tests") or {}
+        raw_out = str(tests_block.get("output") or "")
+        diff_lines = sum(
+            max(1, str(e.get("replacement") or "").count("\n") + 1)
+            for e in (edits or [])
+            if isinstance(e, dict)
+        )
+
+        # Parse real unittest pass/fail/error counts
+        ran_m = re.search(r"Ran\s+(\d+)\s+tests?", raw_out)
+        total_tests = int(ran_m.group(1)) if ran_m else 0
+        fail_m = re.search(r"failures=(\d+)", raw_out)
+        err_m = re.search(r"errors=(\d+)", raw_out)
+        n_fail = int(fail_m.group(1)) if fail_m else 0
+        n_err = int(err_m.group(1)) if err_m else 0
+
+        if total_tests > 0:
+            passed = max(0, total_tests - n_fail - n_err)
+        else:
+            ok_lines = len(re.findall(r"\.\.\.\s+ok\b", raw_out))
+            bad_lines = len(re.findall(r"\.\.\.\s+(?:FAIL|ERROR)\b", raw_out))
+            if ok_lines + bad_lines > 0:
+                total_tests = ok_lines + bad_lines
+                passed = ok_lines
+            elif res.get("ok"):
+                total_tests = 1
+                passed = 1
+            else:
+                total_tests = 1
+                passed = 0
+
+        pass_ratio = passed / float(max(1, total_tests))
+        fitness = (
+            100.0 * pass_ratio
+            - 30.0 * gate_errs
+            - 20.0 * syntax_errs
+            - (0.02 * min(200, diff_lines))
+        )
+        if res.get("ok"):
+            fitness = max(fitness, 100.0 - 0.01 * min(100, diff_lines))
+        return {
+            "fitness": round(fitness, 4),
+            "tests_passed": passed,
+            "tests_total": total_tests,
+            "pass_ratio": round(pass_ratio, 4),
+            "gate_errors_count": gate_errs,
+            "syntax_errors_count": syntax_errs,
+            "diff_lines": diff_lines,
+        }
+
+    @staticmethod
+    def _breed_crossover_candidates(
+        gen_results: list[dict[str, Any]],
+        gen_idx: int,
+    ) -> list[dict[str, Any]]:
+        """Deterministic multi-file & non-overlapping hunk crossover breeding from top-2 partial-pass parents."""
+        viable = [
+            r for r in gen_results
+            if (not r.get("gate_rejected")) and isinstance(r.get("_edits"), list) and len(r["_edits"]) > 0
+        ]
+        if len(viable) < 2:
+            return []
+        viable.sort(key=lambda r: (-float(r.get("fitness", -1e9)), float(r.get("ms", 1e9))))
+        p_a, p_b = viable[0], viable[1]
+        edits_a = list(p_a["_edits"])
+        edits_b = list(p_b["_edits"])
+
+        def _norm_path(ed: dict[str, Any]) -> str:
+            return str(ed.get("path") or "").replace("\\", "/").strip()
+
+        def _edits_conflict(ea: dict[str, Any], eb: dict[str, Any]) -> bool:
+            if _norm_path(ea) != _norm_path(eb):
+                return False
+            ta = str(ea.get("target") or "")
+            tb = str(eb.get("target") or "")
+            if not ta or not tb:
+                return True
+            return (ta == tb) or (ta in tb) or (tb in ta)
+
+        # Offspring 1: All edits from Parent A + every non-conflicting edit from Parent B
+        merged_ab = list(edits_a)
+        added_from_b = 0
+        for eb in edits_b:
+            if not any(_edits_conflict(ea, eb) for ea in merged_ab):
+                merged_ab.append(eb)
+                added_from_b += 1
+
+        # Offspring 2: All edits from Parent B + every non-conflicting edit from Parent A
+        merged_ba = list(edits_b)
+        added_from_a = 0
+        for ea in edits_a:
+            if not any(_edits_conflict(eb, ea) for eb in merged_ba):
+                merged_ba.append(ea)
+                added_from_a += 1
+
+        offspring: list[dict[str, Any]] = []
+        seen_sigs: set[str] = set()
+        for existing in gen_results:
+            seen_sigs.add(json.dumps(existing.get("_edits") or [], sort_keys=True, ensure_ascii=False))
+
+        for label, combined, parents in (
+            (f"g{gen_idx}_xover_{p_a['id'][:10]}_{p_b['id'][:10]}", merged_ab, [p_a["id"], p_b["id"]]),
+            (f"g{gen_idx}_xover_{p_b['id'][:10]}_{p_a['id'][:10]}", merged_ba, [p_b["id"], p_a["id"]]),
+        ):
+            sig = json.dumps(combined, sort_keys=True, ensure_ascii=False)
+            if sig not in seen_sigs and len(combined) > max(0, min(len(edits_a), len(edits_b))):
+                seen_sigs.add(sig)
+                offspring.append({"id": label, "edits": combined, "parents": parents})
+
+        # Offspring 3: File-level split crossover if parents touch multiple files
+        if len(viable) >= 3 and len(offspring) < 3:
+            p_c = viable[2]
+            merged_ac = list(edits_a)
+            for ec in p_c["_edits"]:
+                if not any(_edits_conflict(ea, ec) for ea in merged_ac):
+                    merged_ac.append(ec)
+            sig = json.dumps(merged_ac, sort_keys=True, ensure_ascii=False)
+            if sig not in seen_sigs:
+                seen_sigs.add(sig)
+                offspring.append(
+                    {
+                        "id": f"g{gen_idx}_xover_{p_a['id'][:10]}_{p_c['id'][:10]}",
+                        "edits": merged_ac,
+                        "parents": [p_a["id"], p_c["id"]],
+                    }
+                )
+        return offspring[: MirrorRaceEngine.MAX_CANDIDATES]
 
     @staticmethod
     def _resolve_shadow_base() -> Path | None:
@@ -1530,6 +1670,7 @@ class MirrorRaceEngine:
         offload_peer: bool = False,
         peer_host: str = "svhome",
         peer_repo: str | None = None,
+        generations: int = 1,
     ) -> dict[str, Any]:
         if offload_peer:
             # Only the guarded build worker may admit a guest on the peer.
@@ -1546,18 +1687,33 @@ class MirrorRaceEngine:
         if not isinstance(candidates, list) or len(candidates) < 1:
             return {"ok": False, "error": "candidates_required"}
 
+        max_gens = max(1, min(3, int(generations or 1)))
         clipped = candidates[: self.MAX_CANDIDATES]
         shadow_base = self._resolve_shadow_base()
-        results: list[dict[str, Any]] = []
+        all_results: list[dict[str, Any]] = []
+        breeding_lineage: list[dict[str, Any]] = []
+        crossover_gens_run = 0
+        crossover_offspring_tested = 0
 
-        def _eval_one(idx: int, cand: dict[str, Any]) -> dict[str, Any]:
+        def _eval_one(idx: int, cand: dict[str, Any], gen_num: int) -> dict[str, Any]:
             cid = str(cand.get("id") or f"cand_{idx}")
             edits = list(cand.get("edits") or [])
+            parents = list(cand.get("parents") or [])
             c0 = time.perf_counter()
             if not edits:
-                return {"id": cid, "ok": False, "error": "empty_edits", "ms": 0.0}
+                return {
+                    "id": cid,
+                    "generation": gen_num,
+                    "parents": parents,
+                    "ok": False,
+                    "fitness": -100.0,
+                    "tests_passed": 0,
+                    "tests_total": 1,
+                    "error": "empty_edits",
+                    "ms": 0.0,
+                }
             with tempfile.TemporaryDirectory(
-                prefix=f"chimera_race_{cid[:8]}_",
+                prefix=f"chimera_race_g{gen_num}_{cid[:8]}_",
                 dir=str(shadow_base) if shadow_base else None,
             ) as td:
                 shadow = Path(td) / "repo"
@@ -1565,16 +1721,23 @@ class MirrorRaceEngine:
                 res = self.surgeon.atomic_patch(
                     shadow,
                     edits,
-                    agent_id=f"{agent_id}:race:{cid}",
+                    agent_id=f"{agent_id}:race:g{gen_num}:{cid}",
                     run_tests=True,
                     explicit_tests=explicit_tests,
                     rollback_on_fail=False,
                     max_tests=max_tests,
                     timeout_s=timeout_s,
                 )
+                score = self._score_candidate_fitness(res, edits)
                 return {
                     "id": cid,
+                    "generation": gen_num,
+                    "parents": parents,
                     "ok": bool(res.get("ok")),
+                    "fitness": score["fitness"],
+                    "tests_passed": score["tests_passed"],
+                    "tests_total": score["tests_total"],
+                    "pass_ratio": score["pass_ratio"],
                     "gate_rejected": bool(res.get("gate_rejected")),
                     "gate_errors": res.get("gate_errors"),
                     "error": res.get("error"),
@@ -1584,13 +1747,55 @@ class MirrorRaceEngine:
                     "_edits": edits,
                 }
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=len(clipped)) as ex:
-            futs = [ex.submit(_eval_one, i, c if isinstance(c, dict) else {}) for i, c in enumerate(clipped)]
-            for f in concurrent.futures.as_completed(futs):
-                results.append(f.result())
+        def _run_generation(pool: list[dict[str, Any]], gen_num: int) -> list[dict[str, Any]]:
+            gen_out: list[dict[str, Any]] = []
+            with concurrent.futures.ThreadPoolExecutor(max_workers=max(1, len(pool))) as ex:
+                futs = [
+                    ex.submit(_eval_one, i, c if isinstance(c, dict) else {}, gen_num)
+                    for i, c in enumerate(pool)
+                ]
+                for f in concurrent.futures.as_completed(futs):
+                    gen_out.append(f.result())
+            gen_out.sort(key=lambda r: (not r["ok"], -float(r.get("fitness", -1e9)), float(r["ms"])))
+            return gen_out
 
-        results.sort(key=lambda r: (not r["ok"], r["ms"]))
-        winner = next((r for r in results if r["ok"]), None)
+        # Generation 1
+        gen_results = _run_generation(clipped, 1)
+        all_results.extend(gen_results)
+        winner = next((r for r in gen_results if r["ok"]), None)
+        generations_run = 1
+
+        # Mirror-Race 2.0 Evolutionary Breeding: if Gen 1 has partial-pass candidates and generations > 1,
+        # breed non-conflicting multi-file / hunk crossover offspring in isolated CoW shadows!
+        while winner is None and generations_run < max_gens:
+            next_gen = generations_run + 1
+            offspring = self._breed_crossover_candidates(all_results, next_gen)
+            if not offspring:
+                break
+            crossover_gens_run += 1
+            crossover_offspring_tested += len(offspring)
+            generations_run = next_gen
+            gen_results = _run_generation(offspring, next_gen)
+            all_results.extend(gen_results)
+            breeding_lineage.append(
+                {
+                    "generation": next_gen,
+                    "offspring": [
+                        {
+                            "id": r["id"],
+                            "parents": r.get("parents") or [],
+                            "ok": r["ok"],
+                            "fitness": r["fitness"],
+                            "tests_passed": r["tests_passed"],
+                            "tests_total": r["tests_total"],
+                        }
+                        for r in gen_results
+                    ],
+                }
+            )
+            winner = next((r for r in gen_results if r["ok"]), None)
+
+        all_results.sort(key=lambda r: (not r["ok"], -float(r.get("fitness", -1e9)), float(r["ms"])))
         committed = False
         commit_res: dict[str, Any] | None = None
 
@@ -1610,23 +1815,36 @@ class MirrorRaceEngine:
                     repo=str(repo),
                     files=list(winner.get("files_patched") or []),
                     kind="mirror_race",
-                    detail=f"winner={winner['id']} of {len(clipped)} via local in {winner['ms']}ms",
+                    detail=(
+                        f"winner={winner['id']} gen={winner.get('generation', 1)} "
+                        f"of {len(all_results)} via local in {winner['ms']}ms"
+                    ),
                 )
 
         with self._lock:
             self._stats["races_run"] += 1
-            self._stats["candidates_evaluated"] += len(clipped)
+            self._stats["candidates_evaluated"] += len(all_results)
+            self._stats["crossover_generations_run"] += crossover_gens_run
             if committed:
                 self._stats["winners_committed"] += 1
+                if int(winner.get("generation", 1)) > 1:
+                    self._stats["crossover_winners"] += 1
 
-        leaderboard = [{k: v for k, v in r.items() if k != "_edits"} for r in results]
+        leaderboard = [{k: v for k, v in r.items() if k != "_edits"} for r in all_results]
+        best_fitness = leaderboard[0]["fitness"] if leaderboard else -100.0
         return {
             "ok": winner is not None,
             "winner_id": winner["id"] if winner else None,
+            "winner_generation": int(winner.get("generation", 1)) if winner else None,
+            "winner_parents": list(winner.get("parents") or []) if winner else [],
             "committed": committed,
             "execution_node": "local",
             "win_cpu_offloaded": False,
-            "candidates_tested": len(clipped),
+            "generations_run": generations_run,
+            "crossover_offspring_tested": crossover_offspring_tested,
+            "best_fitness": best_fitness,
+            "candidates_tested": len(all_results),
+            "breeding_lineage": breeding_lineage,
             "leaderboard": leaderboard,
             "elapsed_ms": round((time.perf_counter() - t0) * 1000.0, 2),
         }
@@ -2536,6 +2754,42 @@ class ReleasePromoteEngine:
                         pass
         return restored
 
+    @staticmethod
+    def detect_supervisor_target_dir() -> str | None:
+        """Zero-spawn Supervisor-Truth Radar: detect true daemon boot WorkingDirectory (ScheduledTask XML / systemd unit)."""
+        try:
+            if os.name == "nt":
+                task_xml = Path(r"C:\Windows\System32\Tasks\ChimeraHyperDashboard")
+                if task_xml.is_file():
+                    raw = task_xml.read_bytes()
+                    txt = raw.decode("utf-16", errors="ignore") if raw.startswith((b"\xff\xfe", b"\xfe\xff")) or b"\x00" in raw[:64] else raw.decode("utf-8", errors="ignore")
+                    m = re.search(r"<WorkingDirectory>\s*([^<]+?)\s*</WorkingDirectory>", txt, re.IGNORECASE)
+                    if m:
+                        cand = m.group(1).strip()
+                        if cand and Path(cand).is_dir():
+                            return _norm_repo(cand)
+            else:
+                unit = Path.home() / ".config" / "systemd" / "user" / "chimera-hyper-daemon.service"
+                dropin_dir = Path.home() / ".config" / "systemd" / "user" / "chimera-hyper-daemon.service.d"
+                unit_files: list[Path] = []
+                if unit.is_file():
+                    unit_files.append(unit)
+                if dropin_dir.is_dir():
+                    unit_files.extend(sorted(dropin_dir.glob("*.conf")))
+                resolved_wd: str | None = None
+                for uf in unit_files:
+                    for ln in uf.read_text(encoding="utf-8", errors="replace").splitlines():
+                        s = ln.strip()
+                        if s.startswith("WorkingDirectory="):
+                            cand = s.split("=", 1)[1].strip().strip('"').strip("'")
+                            if cand and Path(cand).is_dir():
+                                resolved_wd = _norm_repo(cand)
+                if resolved_wd:
+                    return resolved_wd
+        except OSError:
+            pass
+        return None
+
     def promote(
         self,
         source_dir: str | Path,
@@ -2547,10 +2801,15 @@ class ReleasePromoteEngine:
         canary_imports: list[str] | None = None,
         verified_summary: str = "",
         dry_run: bool = False,
+        auto_target_supervisor: bool = False,
     ) -> dict[str, Any]:
         t0 = time.perf_counter()
         src_root = Path(source_dir).resolve()
-        dst_root = Path(target_dir).resolve()
+        sup_dir = self.detect_supervisor_target_dir()
+        if (str(target_dir).strip().lower() == "auto" or auto_target_supervisor) and sup_dir:
+            dst_root = Path(sup_dir).resolve()
+        else:
+            dst_root = Path(target_dir).resolve()
         if not src_root.is_dir():
             return {"ok": False, "error": "source_dir_not_found", "source_dir": str(src_root)}
         if not dst_root.is_dir():
@@ -2716,6 +2975,9 @@ class ReleasePromoteEngine:
         return {
             "ok": True,
             "epoch_id": epoch_id,
+            "target_dir": str(dst_root),
+            "supervisor_target_dir": sup_dir,
+            "supervisor_match": (sup_dir is None) or (_norm_repo(dst_root).lower() == sup_dir.lower()),
             "promoted_files": clean_files,
             "sha256_map": {k: v[:16] for k, v in sha_map.items()},
             "canary_ok": canary_ok,
@@ -2784,8 +3046,99 @@ class AgentSymbiontCore:
         self.worktree_epoch = WorktreeEpochEngine(self.hive)
         self.macro_dag = MacroDagEngine(bus, self.surgeon, self.direct_exec, self.worktree_epoch)
         self.release_promote = ReleasePromoteEngine(self.worktree_epoch, self.direct_exec, self.hive)
+        self._darwin: Any = None
+        self._darwin_lock = threading.Lock()
+        self._darwin_ephemeral = bool(ephemeral)
+        self._aeon: Any = None
+        self._aeon_lock = threading.Lock()
+        self._noosphere: Any = None
+        self._noosphere_lock = threading.Lock()
+        self._eidolon: Any = None
+        self._eidolon_lock = threading.Lock()
+        self._mnemosyne: Any = None
+        self._mnemosyne_lock = threading.Lock()
         self._git_cache_lock = threading.Lock()
         self._git_cache: dict[str, tuple[float, dict[str, Any]]] = {}
+
+    @property
+    def darwin(self) -> Any:
+        """100% lazy-loaded CHIMERA-DARWIN ES engine (0 bytes startup daemon RSS)."""
+        if self._darwin is None:
+            with self._darwin_lock:
+                if self._darwin is None:
+                    from .darwin_engine import DarwinEngine
+
+                    self._darwin = DarwinEngine(
+                        ephemeral=self._darwin_ephemeral,
+                        hive=self.hive,
+                        coroner=self.coroner,
+                    )
+        return self._darwin
+
+    @property
+    def aeon(self) -> Any:
+        """100% lazy-loaded CHIMERA-DYNAMO / AEON engine (0 bytes startup daemon RSS)."""
+        if self._aeon is None:
+            with self._aeon_lock:
+                if self._aeon is None:
+                    from .aeon_dynamo import AeonDynamoCore
+
+                    self._aeon = AeonDynamoCore(
+                        ephemeral=self._darwin_ephemeral,
+                        hive=self.hive,
+                        precog=self.precog,
+                        probe=self.bus.probe,
+                    )
+        return self._aeon
+
+    @property
+    def noosphere(self) -> Any:
+        """100% lazy-loaded CHIMERA-NOOSPHERE living cognitive organism (0 B boot RSS until started)."""
+        if self._noosphere is None:
+            with self._noosphere_lock:
+                if self._noosphere is None:
+                    from .noosphere_organism import NoosphereOrganismCore
+
+                    self._noosphere = NoosphereOrganismCore(
+                        ephemeral=self._darwin_ephemeral,
+                        aeon=self.aeon,
+                        darwin=self._darwin,
+                        hive=self.hive,
+                        release_promote=self.release_promote,
+                        probe=self.bus.probe,
+                    )
+        return self._noosphere
+
+    @property
+    def eidolon(self) -> Any:
+        """100% lazy-loaded CHIMERA-EIDOLON + IMMORTAL-RELAY + Moonshot #2-#5 core (0 B boot RSS)."""
+        if self._eidolon is None:
+            with self._eidolon_lock:
+                if self._eidolon is None:
+                    from .eidolon_exoskeleton import EidolonMoonshotCore
+
+                    noo = self.noosphere
+                    self._eidolon = EidolonMoonshotCore(
+                        ephemeral=self._darwin_ephemeral,
+                        aeon=self.aeon,
+                        hive=self.hive,
+                        workspace=noo.workspace,
+                        immune=noo.immune,
+                        peer_base_getter=noo._peer_base_getter,
+                        peer_auth_fn=noo._peer_auth_fn,
+                    )
+        return self._eidolon
+
+    @property
+    def mnemosyne(self) -> Any:
+        """100% lazy-loaded CHIMERA-MNEMOSYNE Zero-Loss Raw-Memory & Zero-Shell engine (0 B boot RSS)."""
+        if self._mnemosyne is None:
+            with self._mnemosyne_lock:
+                if self._mnemosyne is None:
+                    from .mnemosyne import MnemosyneCore
+
+                    self._mnemosyne = MnemosyneCore(ephemeral=self._darwin_ephemeral)
+        return self._mnemosyne
 
     def _cached_git_fast(self, repo: Path) -> dict[str, Any]:
         key = _norm_repo(repo)
@@ -2841,8 +3194,9 @@ class AgentSymbiontCore:
         ]
         latest_cap = self.capsules.list_capsules(repo=nrepo, limit=1).get("capsules", [])
 
-        # Release-Drift Radar: detect when daemon runs from a frozen release snapshot instead of workspace repo
+        # Release-Drift + Supervisor-Truth Radar: detect frozen release snapshot AND ScheduledTask/systemd mismatch
         runtime_dir = _norm_repo(Path(__file__).resolve().parents[2])
+        supervisor_dir = self.release_promote.detect_supervisor_target_dir()
         release_drift: dict[str, str] | None = None
         if (repo / "chimera_tp" / "platform" / "agent_symbiont.py").is_file() and runtime_dir.lower() != nrepo.lower():
             release_drift = {
@@ -2850,6 +3204,10 @@ class AgentSymbiontCore:
                 "workspace_dir": nrepo,
                 "note": "Daemon running from release snapshot; sync edits there before restarting :9780",
             }
+            if supervisor_dir and supervisor_dir.lower() != runtime_dir.lower():
+                release_drift["supervisor_dir"] = supervisor_dir
+                release_drift["supervisor_drift"] = "true"
+                release_drift["note"] = f"SUPERVISOR DRIFT: restart boots {supervisor_dir} != live {runtime_dir}; promote to supervisor_dir!"
 
         snap: dict[str, Any] = {
             "ok": True,
@@ -2925,3 +3283,23 @@ class AgentSymbiontCore:
 
     def close(self) -> None:
         self.precog.stop_watch()
+        if self._mnemosyne is not None:
+            try:
+                self._mnemosyne.close()
+            except Exception:
+                pass
+        if self._eidolon is not None:
+            try:
+                self._eidolon.close()
+            except Exception:
+                pass
+        if self._noosphere is not None:
+            try:
+                self._noosphere.close()
+            except Exception:
+                pass
+        if self._aeon is not None:
+            try:
+                self._aeon.close()
+            except Exception:
+                pass

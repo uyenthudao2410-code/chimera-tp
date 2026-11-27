@@ -1,0 +1,35 @@
+{
+  "schema": "chimera.svhome-allocator-rollout/1",
+  "start_utc": "20261127T095018Z",
+  "old_pid": 4158151,
+  "root": "/home/svhome/.local/share/chimera/releases/65bbee57e75f",
+  "source_fingerprint": "01d9f5c720eedad28611c12549b7f917d23c4d9a3edb5cb2998074f7202b5c31",
+  "policy": "glibc_raw",
+  "drop_in": "/home/svhome/.config/systemd/user/chimera-hyper-daemon.service.d/zzzz-svhome-allocator.conf",
+  "previous_drop_in_existed": false,
+  "old_env": {
+    "MALLOC_ARENA_MAX": "2",
+    "GLIBC_TUNABLES": null
+  },
+  "prior_memory": {
+    "VmHWM": 101650432,
+    "VmRSS": 77418496,
+    "VmSwap": 0
+  },
+  "backup": "/home/svhome/.local/state/chimera/workstation-rollbacks/rss-20261127T095018Z",
+  "new_pid": 10911,
+  "started_at": "2026-11-27T16:50:21+07:00",
+  "version": "18.0.0",
+  "env": {
+    "MALLOC_ARENA_MAX": "1",
+    "GLIBC_TUNABLES": "glibc.malloc.arena_max=1:glibc.malloc.mmap_threshold=32768:glibc.malloc.trim_threshold=32768"
+  },
+  "post_api_memory": {
+    "VmHWM": 52416512,
+    "VmRSS": 51666944,
+    "VmSwap": 0
+  },
+  "vsa_items": 1081,
+  "state": "serving",
+  "sha256": "beb42f7affb86fba648f01db3d507b8fa2dd4ff3ee63c88ed50144bbc23853f3"
+}

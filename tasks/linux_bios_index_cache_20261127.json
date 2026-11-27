@@ -1,0 +1,752 @@
+{
+  "schema": "chimera.linux-daemon-allocator/1",
+  "source_root": "/home/svhome/.local/share/chimera/releases/bios_13f684d79832",
+  "collector_sha256": "5ea3c58303ce5e80cda0ce1ca3cff0de9c4216267c541ac6cc42eaac3fabbd55",
+  "snapshot_sha256": "6917c91a5a998262b0c5fd89e279d80bdd4139aacb2621df0ebc91ae426b929f",
+  "export_sha256": "c757306a2a55e74a585a40a28805f836bd775efbe2875c959a84b00a6bf6610e",
+  "export_bytes": 710799,
+  "replay_requests": 18,
+  "python": "3.14.4 (main, Aug 20 2026, 10:41:58) [GCC 15.2.0]",
+  "policies": {
+    "glibc_raw": {
+      "GLIBC_TUNABLES": "glibc.malloc.arena_max=1:glibc.malloc.mmap_threshold=32768:glibc.malloc.trim_threshold=32768",
+      "MALLOC_ARENA_MAX": "1"
+    },
+    "glibc_index_cache": {
+      "GLIBC_TUNABLES": "glibc.malloc.arena_max=1:glibc.malloc.mmap_threshold=32768:glibc.malloc.trim_threshold=32768",
+      "MALLOC_ARENA_MAX": "1"
+    }
+  },
+  "serving_input": {
+    "index_sha256": "1dc82ebc484767535677b199ff76ab19e9d4a0142ca813087fe978b5b44541fb",
+    "log_tail_sha256": [
+      "6c21979c8440c4bbd3ee7041afdfc86c3921ebf0dce41d89fbc2b78b650a56a1",
+      "4825e7170f844c05c648c45d9442d51e5617cf2c35963a67993e1f2146cba75d",
+      "c6c0bf7a02b8d11cf3d42ecbb96fa4bb28f9bc0033ff9bc130fe6cab190e6485",
+      "04c40fab10cb0564fc5ba7e69a953259f735a51f7d1d7dec17e6c433a77f24dd",
+      "d047c02ee4f8854cafc2dbd551c66499563d05dd7a90ffddfbae5b6a152a297c",
+      "eca14588898bc0ca46e5fb27a6363fa0da4a5b1c306ce476a52ef311cf202392",
+      "0fbadd4b92211c29028032346d699873c9027b12263f6c804ce4cb2305dbed0b",
+      "63b7a8ad0588bffa7dc948dad7d7ff51e4156b4fec82398c39519d2b4d7f33bd",
+      "d1a9c94b920a8613ce799a626748738ea048a49663a49c5244f1b81b77880ce3",
+      "ad949601fe4b1d2bec5f33a704e80706fbda1e26eca95f5216be10b0b4511eed",
+      "8a537cbe29ff3900a6595167621407f6328dbe27cb03cd815edac6b8852b17a5",
+      "23469e9f3e1738db0e1d41fcf8fa226dcd13db243a3859e355c5af8cd55d0b03"
+    ],
+    "roots": [
+      "/home/svhome/DEV"
+    ],
+    "index_bytes": 44122112
+  },
+  "summary": {
+    "glibc_raw": {
+      "rss_bytes_median": 52051968,
+      "peak_bytes_max": 57565184,
+      "cpu_s_median": 0.9965,
+      "health_p95_ms_max": 2.965
+    },
+    "glibc_index_cache": {
+      "rss_bytes_median": 50388992,
+      "peak_bytes_max": 55910400,
+      "cpu_s_median": 0.9352,
+      "health_p95_ms_max": 2.25
+    }
+  },
+  "trials": [
+    {
+      "repeat": 1,
+      "pid": 37231,
+      "policy": "glibc_raw",
+      "checks": [
+        [
+          300,
+          0,
+          1087
+        ],
+        [
+          300,
+          0,
+          1087
+        ],
+        [
+          300,
+          0,
+          1087
+        ]
+      ],
+      "stages": {
+        "beacon": {
+          "VmHWM": 42577920,
+          "VmRSS": 41291776,
+          "RssAnon": 25202688,
+          "VmSwap": 0
+        },
+        "services_loaded": {
+          "VmHWM": 42975232,
+          "VmRSS": 42975232,
+          "RssAnon": 26853376,
+          "VmSwap": 0
+        },
+        "indexed": {
+          "VmHWM": 46170112,
+          "VmRSS": 46170112,
+          "RssAnon": 30048256,
+          "VmSwap": 0
+        },
+        "searched": {
+          "VmHWM": 46215168,
+          "VmRSS": 46215168,
+          "RssAnon": 30093312,
+          "VmSwap": 0
+        },
+        "sentinel": {
+          "VmHWM": 48103424,
+          "VmRSS": 48103424,
+          "RssAnon": 30973952,
+          "VmSwap": 0
+        },
+        "hook_and_pulse": {
+          "VmHWM": 49692672,
+          "VmRSS": 49692672,
+          "RssAnon": 32514048,
+          "VmSwap": 0
+        },
+        "ingest": {
+          "VmHWM": 57204736,
+          "VmRSS": 54624256,
+          "RssAnon": 37351424,
+          "VmSwap": 0
+        },
+        "quiet": {
+          "VmHWM": 57204736,
+          "VmRSS": 52035584,
+          "RssAnon": 34762752,
+          "VmSwap": 0
+        },
+        "after_health": {
+          "VmHWM": 57204736,
+          "VmRSS": 52051968,
+          "RssAnon": 34779136,
+          "VmSwap": 0
+        }
+      },
+      "serving_counts": {
+        "index_files": 2210,
+        "updated": 3,
+        "ranked_hits_sha256": "28af9ef4e0b623b52e3a7fdb9dc8a30acf5415431ad12c5706a0d86b73545558",
+        "log_lines": [
+          84,
+          82,
+          67,
+          159,
+          273,
+          262,
+          58,
+          92,
+          8489,
+          18624,
+          310,
+          45071
+        ]
+      },
+      "replay_timings_ms": {
+        "index_ms": 117.89,
+        "four_searches_ms": 18.89
+      },
+      "cpu_s": 0.964,
+      "health_p95_ms": 2.817,
+      "jemalloc_mapped": false,
+      "allocator_env": {
+        "GLIBC_TUNABLES": "glibc.malloc.arena_max=1:glibc.malloc.mmap_threshold=32768:glibc.malloc.trim_threshold=32768",
+        "MALLOC_ARENA_MAX": "1"
+      }
+    },
+    {
+      "repeat": 1,
+      "pid": 37357,
+      "policy": "glibc_index_cache",
+      "checks": [
+        [
+          300,
+          0,
+          1087
+        ],
+        [
+          300,
+          0,
+          1087
+        ],
+        [
+          300,
+          0,
+          1087
+        ]
+      ],
+      "stages": {
+        "beacon": {
+          "VmHWM": 42766336,
+          "VmRSS": 41336832,
+          "RssAnon": 25210880,
+          "VmSwap": 0
+        },
+        "services_loaded": {
+          "VmHWM": 43016192,
+          "VmRSS": 43016192,
+          "RssAnon": 26857472,
+          "VmSwap": 0
+        },
+        "indexed": {
+          "VmHWM": 44331008,
+          "VmRSS": 44331008,
+          "RssAnon": 28172288,
+          "VmSwap": 0
+        },
+        "searched": {
+          "VmHWM": 44367872,
+          "VmRSS": 44367872,
+          "RssAnon": 28209152,
+          "VmSwap": 0
+        },
+        "sentinel": {
+          "VmHWM": 46333952,
+          "VmRSS": 46333952,
+          "RssAnon": 29204480,
+          "VmSwap": 0
+        },
+        "hook_and_pulse": {
+          "VmHWM": 47910912,
+          "VmRSS": 47910912,
+          "RssAnon": 30736384,
+          "VmSwap": 0
+        },
+        "ingest": {
+          "VmHWM": 55799808,
+          "VmRSS": 52834304,
+          "RssAnon": 35565568,
+          "VmSwap": 0
+        },
+        "quiet": {
+          "VmHWM": 55799808,
+          "VmRSS": 50282496,
+          "RssAnon": 33013760,
+          "VmSwap": 0
+        },
+        "after_health": {
+          "VmHWM": 55799808,
+          "VmRSS": 50298880,
+          "RssAnon": 33030144,
+          "VmSwap": 0
+        }
+      },
+      "serving_counts": {
+        "index_files": 2210,
+        "updated": 3,
+        "ranked_hits_sha256": "28af9ef4e0b623b52e3a7fdb9dc8a30acf5415431ad12c5706a0d86b73545558",
+        "log_lines": [
+          84,
+          82,
+          67,
+          159,
+          273,
+          262,
+          58,
+          92,
+          8489,
+          18624,
+          310,
+          45071
+        ]
+      },
+      "replay_timings_ms": {
+        "index_ms": 112.98,
+        "four_searches_ms": 24.85
+      },
+      "cpu_s": 0.9455,
+      "health_p95_ms": 2.232,
+      "jemalloc_mapped": false,
+      "allocator_env": {
+        "GLIBC_TUNABLES": "glibc.malloc.arena_max=1:glibc.malloc.mmap_threshold=32768:glibc.malloc.trim_threshold=32768",
+        "MALLOC_ARENA_MAX": "1"
+      }
+    },
+    {
+      "repeat": 2,
+      "pid": 37488,
+      "policy": "glibc_index_cache",
+      "checks": [
+        [
+          300,
+          0,
+          1087
+        ],
+        [
+          300,
+          0,
+          1087
+        ],
+        [
+          300,
+          0,
+          1087
+        ]
+      ],
+      "stages": {
+        "beacon": {
+          "VmHWM": 42639360,
+          "VmRSS": 41398272,
+          "RssAnon": 25206784,
+          "VmSwap": 0
+        },
+        "services_loaded": {
+          "VmHWM": 43073536,
+          "VmRSS": 43073536,
+          "RssAnon": 26849280,
+          "VmSwap": 0
+        },
+        "indexed": {
+          "VmHWM": 44392448,
+          "VmRSS": 44392448,
+          "RssAnon": 28168192,
+          "VmSwap": 0
+        },
+        "searched": {
+          "VmHWM": 44429312,
+          "VmRSS": 44429312,
+          "RssAnon": 28205056,
+          "VmSwap": 0
+        },
+        "sentinel": {
+          "VmHWM": 46432256,
+          "VmRSS": 46432256,
+          "RssAnon": 29200384,
+          "VmSwap": 0
+        },
+        "hook_and_pulse": {
+          "VmHWM": 48001024,
+          "VmRSS": 48001024,
+          "RssAnon": 30732288,
+          "VmSwap": 0
+        },
+        "ingest": {
+          "VmHWM": 55361536,
+          "VmRSS": 52940800,
+          "RssAnon": 35577856,
+          "VmSwap": 0
+        },
+        "quiet": {
+          "VmHWM": 55361536,
+          "VmRSS": 50393088,
+          "RssAnon": 33030144,
+          "VmSwap": 0
+        },
+        "after_health": {
+          "VmHWM": 55361536,
+          "VmRSS": 50409472,
+          "RssAnon": 33046528,
+          "VmSwap": 0
+        }
+      },
+      "serving_counts": {
+        "index_files": 2210,
+        "updated": 3,
+        "ranked_hits_sha256": "28af9ef4e0b623b52e3a7fdb9dc8a30acf5415431ad12c5706a0d86b73545558",
+        "log_lines": [
+          84,
+          82,
+          67,
+          159,
+          273,
+          262,
+          58,
+          92,
+          8489,
+          18624,
+          310,
+          45071
+        ]
+      },
+      "replay_timings_ms": {
+        "index_ms": 114.07,
+        "four_searches_ms": 18.8
+      },
+      "cpu_s": 0.9307,
+      "health_p95_ms": 2.25,
+      "jemalloc_mapped": false,
+      "allocator_env": {
+        "GLIBC_TUNABLES": "glibc.malloc.arena_max=1:glibc.malloc.mmap_threshold=32768:glibc.malloc.trim_threshold=32768",
+        "MALLOC_ARENA_MAX": "1"
+      }
+    },
+    {
+      "repeat": 2,
+      "pid": 37616,
+      "policy": "glibc_raw",
+      "checks": [
+        [
+          300,
+          0,
+          1087
+        ],
+        [
+          300,
+          0,
+          1087
+        ],
+        [
+          300,
+          0,
+          1087
+        ]
+      ],
+      "stages": {
+        "beacon": {
+          "VmHWM": 42868736,
+          "VmRSS": 41308160,
+          "RssAnon": 25210880,
+          "VmSwap": 0
+        },
+        "services_loaded": {
+          "VmHWM": 42991616,
+          "VmRSS": 42991616,
+          "RssAnon": 26861568,
+          "VmSwap": 0
+        },
+        "indexed": {
+          "VmHWM": 46186496,
+          "VmRSS": 46186496,
+          "RssAnon": 30056448,
+          "VmSwap": 0
+        },
+        "searched": {
+          "VmHWM": 46231552,
+          "VmRSS": 46231552,
+          "RssAnon": 30101504,
+          "VmSwap": 0
+        },
+        "sentinel": {
+          "VmHWM": 48123904,
+          "VmRSS": 48123904,
+          "RssAnon": 30986240,
+          "VmSwap": 0
+        },
+        "hook_and_pulse": {
+          "VmHWM": 49688576,
+          "VmRSS": 49688576,
+          "RssAnon": 32522240,
+          "VmSwap": 0
+        },
+        "ingest": {
+          "VmHWM": 57458688,
+          "VmRSS": 54603776,
+          "RssAnon": 37343232,
+          "VmSwap": 0
+        },
+        "quiet": {
+          "VmHWM": 57458688,
+          "VmRSS": 52068352,
+          "RssAnon": 34807808,
+          "VmSwap": 0
+        },
+        "after_health": {
+          "VmHWM": 57458688,
+          "VmRSS": 52084736,
+          "RssAnon": 34824192,
+          "VmSwap": 0
+        }
+      },
+      "serving_counts": {
+        "index_files": 2210,
+        "updated": 3,
+        "ranked_hits_sha256": "28af9ef4e0b623b52e3a7fdb9dc8a30acf5415431ad12c5706a0d86b73545558",
+        "log_lines": [
+          84,
+          82,
+          67,
+          159,
+          273,
+          262,
+          58,
+          92,
+          8489,
+          18624,
+          310,
+          45071
+        ]
+      },
+      "replay_timings_ms": {
+        "index_ms": 124.09,
+        "four_searches_ms": 18.599999999999998
+      },
+      "cpu_s": 1.0269,
+      "health_p95_ms": 2.965,
+      "jemalloc_mapped": false,
+      "allocator_env": {
+        "GLIBC_TUNABLES": "glibc.malloc.arena_max=1:glibc.malloc.mmap_threshold=32768:glibc.malloc.trim_threshold=32768",
+        "MALLOC_ARENA_MAX": "1"
+      }
+    },
+    {
+      "repeat": 3,
+      "pid": 37753,
+      "policy": "glibc_raw",
+      "checks": [
+        [
+          300,
+          0,
+          1087
+        ],
+        [
+          300,
+          0,
+          1087
+        ],
+        [
+          300,
+          0,
+          1087
+        ]
+      ],
+      "stages": {
+        "beacon": {
+          "VmHWM": 42803200,
+          "VmRSS": 41357312,
+          "RssAnon": 25210880,
+          "VmSwap": 0
+        },
+        "services_loaded": {
+          "VmHWM": 43032576,
+          "VmRSS": 43032576,
+          "RssAnon": 26853376,
+          "VmSwap": 0
+        },
+        "indexed": {
+          "VmHWM": 46227456,
+          "VmRSS": 46227456,
+          "RssAnon": 30048256,
+          "VmSwap": 0
+        },
+        "searched": {
+          "VmHWM": 46272512,
+          "VmRSS": 46272512,
+          "RssAnon": 30093312,
+          "VmSwap": 0
+        },
+        "sentinel": {
+          "VmHWM": 48107520,
+          "VmRSS": 48107520,
+          "RssAnon": 30986240,
+          "VmSwap": 0
+        },
+        "hook_and_pulse": {
+          "VmHWM": 49664000,
+          "VmRSS": 49664000,
+          "RssAnon": 32514048,
+          "VmSwap": 0
+        },
+        "ingest": {
+          "VmHWM": 57565184,
+          "VmRSS": 54583296,
+          "RssAnon": 37339136,
+          "VmSwap": 0
+        },
+        "quiet": {
+          "VmHWM": 57565184,
+          "VmRSS": 52002816,
+          "RssAnon": 34758656,
+          "VmSwap": 0
+        },
+        "after_health": {
+          "VmHWM": 57565184,
+          "VmRSS": 52015104,
+          "RssAnon": 34770944,
+          "VmSwap": 0
+        }
+      },
+      "serving_counts": {
+        "index_files": 2210,
+        "updated": 3,
+        "ranked_hits_sha256": "28af9ef4e0b623b52e3a7fdb9dc8a30acf5415431ad12c5706a0d86b73545558",
+        "log_lines": [
+          84,
+          82,
+          67,
+          159,
+          273,
+          262,
+          58,
+          92,
+          8489,
+          18624,
+          310,
+          45071
+        ]
+      },
+      "replay_timings_ms": {
+        "index_ms": 114.41,
+        "four_searches_ms": 20.98
+      },
+      "cpu_s": 0.9965,
+      "health_p95_ms": 2.862,
+      "jemalloc_mapped": false,
+      "allocator_env": {
+        "GLIBC_TUNABLES": "glibc.malloc.arena_max=1:glibc.malloc.mmap_threshold=32768:glibc.malloc.trim_threshold=32768",
+        "MALLOC_ARENA_MAX": "1"
+      }
+    },
+    {
+      "repeat": 3,
+      "pid": 37880,
+      "policy": "glibc_index_cache",
+      "checks": [
+        [
+          300,
+          0,
+          1087
+        ],
+        [
+          300,
+          0,
+          1087
+        ],
+        [
+          300,
+          0,
+          1087
+        ]
+      ],
+      "stages": {
+        "beacon": {
+          "VmHWM": 42749952,
+          "VmRSS": 41320448,
+          "RssAnon": 25214976,
+          "VmSwap": 0
+        },
+        "services_loaded": {
+          "VmHWM": 42991616,
+          "VmRSS": 42991616,
+          "RssAnon": 26853376,
+          "VmSwap": 0
+        },
+        "indexed": {
+          "VmHWM": 44310528,
+          "VmRSS": 44310528,
+          "RssAnon": 28172288,
+          "VmSwap": 0
+        },
+        "searched": {
+          "VmHWM": 44347392,
+          "VmRSS": 44347392,
+          "RssAnon": 28209152,
+          "VmSwap": 0
+        },
+        "sentinel": {
+          "VmHWM": 46379008,
+          "VmRSS": 46379008,
+          "RssAnon": 29204480,
+          "VmSwap": 0
+        },
+        "hook_and_pulse": {
+          "VmHWM": 47939584,
+          "VmRSS": 47939584,
+          "RssAnon": 30736384,
+          "VmSwap": 0
+        },
+        "ingest": {
+          "VmHWM": 55910400,
+          "VmRSS": 52871168,
+          "RssAnon": 35573760,
+          "VmSwap": 0
+        },
+        "quiet": {
+          "VmHWM": 55910400,
+          "VmRSS": 50356224,
+          "RssAnon": 33058816,
+          "VmSwap": 0
+        },
+        "after_health": {
+          "VmHWM": 55910400,
+          "VmRSS": 50388992,
+          "RssAnon": 33091584,
+          "VmSwap": 0
+        }
+      },
+      "serving_counts": {
+        "index_files": 2210,
+        "updated": 3,
+        "ranked_hits_sha256": "28af9ef4e0b623b52e3a7fdb9dc8a30acf5415431ad12c5706a0d86b73545558",
+        "log_lines": [
+          84,
+          82,
+          67,
+          159,
+          273,
+          262,
+          58,
+          92,
+          8489,
+          18624,
+          310,
+          45071
+        ]
+      },
+      "replay_timings_ms": {
+        "index_ms": 113.1,
+        "four_searches_ms": 18.95
+      },
+      "cpu_s": 0.9352,
+      "health_p95_ms": 1.693,
+      "jemalloc_mapped": false,
+      "allocator_env": {
+        "GLIBC_TUNABLES": "glibc.malloc.arena_max=1:glibc.malloc.mmap_threshold=32768:glibc.malloc.trim_threshold=32768",
+        "MALLOC_ARENA_MAX": "1"
+      }
+    }
+  ],
+  "peer_guard": {
+    "limits_verified": true,
+    "policy": {
+      "ram_reserve_mib": 2560,
+      "job_memory_mib": 512,
+      "disk_reserve_mib": 14306,
+      "job_disk_mib": 128,
+      "cpu_quota_pct": 95,
+      "max_tasks": 128,
+      "runtime_seconds": 900,
+      "psi_cpu_pct": 25.0,
+      "psi_memory_pct": 1.0,
+      "psi_io_pct": 5.0,
+      "max_load1": 1.8,
+      "max_temp_c": 70.0,
+      "service_urls": [
+        "http://127.0.0.1:9780/.well-known/chimera.json",
+        "http://127.0.0.1:8787/api/health"
+      ],
+      "service_p95_ms": 150.0,
+      "service_samples": 5,
+      "service_timeout_s": 0.5,
+      "max_sample_age_s": 5.0,
+      "require_io_cap": true,
+      "io_write_bps": 8388608,
+      "disk_path": "/home/svhome"
+    },
+    "runtime": {
+      "completed_samples": 48,
+      "worst_service_p95_ms": {
+        "http://127.0.0.1:9780/.well-known/chimera.json": 10.725511703640223,
+        "http://127.0.0.1:8787/api/health": 16.940376721322536
+      }
+    },
+    "limits": {
+      "memory_high": 429494272,
+      "memory_max": 536870912,
+      "swap_max": 0,
+      "tasks_max": 128,
+      "cpu_quota_pct": 95.0,
+      "io_write_bps": 8388608,
+      "io_devices": [
+        "8:0",
+        "8:2"
+      ]
+    }
+  }
+}

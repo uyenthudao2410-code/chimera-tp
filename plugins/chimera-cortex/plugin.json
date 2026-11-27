@@ -1,0 +1,6 @@
+{
+  "name": "chimera-cortex",
+  "displayName": "Chimera Cortex",
+  "version": "1.0.0",
+  "description": "Omega-Spine Cognitive Hypervisor: Streamable HTTP MCP, sub-2ms Hooks, C# X-Ray, Iron Cage & Akashic Swarm Memory"
+}

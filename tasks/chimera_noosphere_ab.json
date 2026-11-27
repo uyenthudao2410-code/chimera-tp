@@ -1,0 +1,164 @@
+{
+  "schema": "chimera.noosphere.ab.v1",
+  "ts": 1795765008.897,
+  "ab1_side_query_storm_37s": {
+    "before_calls": 18,
+    "before_tokens": 55800,
+    "after_calls": 2,
+    "ram_hits": 16,
+    "after_tokens": 6200,
+    "saved_tokens": 49600,
+    "reduction_pct": 88.9,
+    "elapsed_ms": 2.375,
+    "subconscious_18_calls_ms": 2.51,
+    "subconscious_google_tokens": 0,
+    "subconscious_tokens_saved": 55800,
+    "subconscious_sample": "CHIMERA-NOOSPHERE gemini-prism.js organism living sync"
+  },
+  "ab2_source_zero_echo_5_reads": {
+    "before_bytes": 43405,
+    "after_bytes": 9093,
+    "bytes_saved": 34312,
+    "reduction_pct": 79.1
+  },
+  "ab3_immune_1349_cliff_reflex": {
+    "before_detection": "manual (~600,000 ms human inspection)",
+    "after_detection_ms": 8.214,
+    "pain_score": 1.0,
+    "rollback_proposal_auto_activated": false,
+    "antibodies_emitted": 2,
+    "gc_trims": 1,
+    "signals": [
+      "CRITICAL_PREFIX_EDIT_CLIFF:delta=2,total=2",
+      "CACHE_HIT_CLIFF:56.5%_vs_base_93.9%",
+      "LAW7_RSS_PRESSURE:75.20MiB"
+    ]
+  },
+  "ab4_autonomic_tick": {
+    "avg_tick_ms": 0.019,
+    "max_tick_ms": 0.05,
+    "subprocesses_spawned": 0
+  },
+  "live_deployment": {
+    "win_release_sha_drift": 0,
+    "svhome_sha_drift": {
+      "chimera": 0,
+      "tquota": 0
+    },
+    "live_2way_sync": {
+      "ok": true,
+      "direction": "bidirectional_2way",
+      "local_node": "DESKTOP-63643J4",
+      "peer_node": "svhome",
+      "peer_base": "http://127.0.0.1:9789",
+      "rtt_ms": 29.82,
+      "pushed_workspace_merged": 2,
+      "pushed_immune_merged": 0,
+      "pulled_workspace_merged": 1,
+      "pulled_immune_merged": 0,
+      "local_workspace_total": 4,
+      "peer_vitals": {
+        "node": "svhome",
+        "rss_mb": 55.66,
+        "pain_score": 0.0,
+        "ticks": 1,
+        "pulse_alive": true,
+        "dreams_completed": 0,
+        "last_dream_ts": 0.0
+      },
+      "win_received_sv_beacon": true,
+      "sv_received_win_beacon": true
+    },
+    "live_subconscious_gate": {
+      "title_safe_offload": true,
+      "title_text": "CHIMERA-NOOSPHERE gemini-prism.js bidirectional win-desktop symbiosis svhome",
+      "title_google_tokens": 0,
+      "title_ms": 2.137,
+      "complex_safe_offload": false,
+      "complex_recommendation": "upstream_or_idle_codex"
+    },
+    "win_desktop": {
+      "noosphere_ok": true,
+      "pulse_alive": true,
+      "rss_mb": 41.26,
+      "law7_rss_ok": true,
+      "bidirectional_sync": {
+        "enabled": true,
+        "sync_count": 2,
+        "sync_errors": 0,
+        "last_sync_ts": 1795765060.264,
+        "last_rtt_ms": 29.82,
+        "peer_vitals": {
+          "node": "svhome",
+          "rss_mb": 55.66,
+          "pain_score": 0.0,
+          "ticks": 1,
+          "pulse_alive": true,
+          "dreams_completed": 0,
+          "last_dream_ts": 0.0
+        }
+      },
+      "tick": {
+        "ok": true,
+        "elapsed_ms": 394.1,
+        "pain_score": 0.0,
+        "healthy": true
+      },
+      "dream_epiphany": {
+        "ok": true,
+        "elapsed_ms": 3452.35,
+        "mode": "shadow_only",
+        "auto_activated": false,
+        "crystal_tokens": 404,
+        "briefs_ingested": 300,
+        "dgm_winner": "mutant_fast_reject_precompile",
+        "dgm_speedup_pct": 96.68,
+        "dgm_oracles_passed": true
+      },
+      "prism": {
+        "ok": true,
+        "gatePass": true,
+        "sideQueryDedupeEnabled": true,
+        "subconsciousLocalEnabled": true,
+        "effortMutationAllowed": false
+      }
+    },
+    "svhome": {
+      "noosphere_status": {
+        "ok": true,
+        "rss_mb": 55.72,
+        "pulse_alive": true,
+        "bidirectional_sync": {
+          "enabled": true,
+          "sync_count": 4,
+          "sync_errors": 0,
+          "last_sync_ts": 1795765061.067,
+          "last_rtt_ms": 10.24,
+          "peer_vitals": {
+            "node": "DESKTOP-63643J4",
+            "rss_mb": 40.89,
+            "pain_score": 0.0,
+            "ticks": 2,
+            "pulse_alive": true,
+            "dreams_completed": 1,
+            "last_dream_ts": 1795765057.554
+          }
+        }
+      },
+      "tick": {
+        "ok": true,
+        "elapsed_ms": 24.63,
+        "pain_score": 0.0,
+        "rss_mb": 55.73
+      },
+      "received_win_beacon": true,
+      "workspace_total": 4,
+      "prism": {
+        "ok": true,
+        "gatePass": true,
+        "sideQueryDedupeEnabled": true,
+        "subconsciousLocalEnabled": true
+      }
+    }
+  }
+}

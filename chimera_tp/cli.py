@@ -99,6 +99,10 @@ def _run_daemon(args: argparse.Namespace) -> int:
     from .autopilot import OpsConfig, default_ops_dir
     from .dashboard import ChimeraDaemon
 
+    if os.name == "nt":
+        from .platform.nvcuda_ptx import isolate_daemon_cuda
+        isolate_daemon_cuda()
+
     ops_dir = Path(args.ops_dir) if args.ops_dir else default_ops_dir()
     cfg = OpsConfig.load(ops_dir)
     if args.bind:
@@ -507,6 +511,51 @@ def main(argv: list[str] | None = None) -> int:
     p_ome.add_argument("--service", default="cosmic-app", help="Service name for intent compiler")
     p_ome.add_argument("--p99-ms", type=float, default=25.0, help="Target p99 latency SLA in ms")
     p_ome.add_argument("--anchor", default="", help="Override CHIMERA anchor URL")
+
+    p_bios = sub.add_parser(
+        "bios",
+        help="CHIMERA-BIOS 10-organ living ecosystem hub (status, abi, hormones, pulse, predict, autophagy, parasite, ganglia, pheromone, umwelt, hgt, spore, soul, sync)",
+    )
+    p_bios.add_argument(
+        "action",
+        choices=(
+            "status",
+            "abi",
+            "hormones",
+            "pulse",
+            "predict",
+            "autophagy",
+            "parasite",
+            "ganglia",
+            "pheromone",
+            "umwelt",
+            "hgt",
+            "spore",
+            "soul",
+            "sync",
+        ),
+    )
+    p_bios.add_argument("--anchor", default="", help="Override CHIMERA anchor URL")
+    p_bios.add_argument("--local", action="store_true", help="Force local in-process fallback without querying daemon")
+    p_bios.add_argument("--sub-action", default="", help="Sub-action for autophagy/hgt/spore/ganglia/hormones/umwelt")
+    p_bios.add_argument("--context", default="general", help="Work context (cad, coding, research, idle, general)")
+    p_bios.add_argument("--obs", default="", help="Optional JSON object string for pulse/predict/umwelt")
+    p_bios.add_argument("--horizon", type=float, default=60.0, help="Prediction horizon in seconds")
+    p_bios.add_argument("--hormone", default="", help="Hormone name to secrete")
+    p_bios.add_argument("--delta", type=float, default=0.0, help="Hormone secretion delta")
+    p_bios.add_argument("--repo", default=".", help="Repository path for pheromone/autophagy")
+    p_bios.add_argument("--path", default="", help="Relative file path for pheromone smell-card")
+    p_bios.add_argument("--query", default="", help="Soul capsule recall query")
+    p_bios.add_argument("--model", default="any", help="Target LLM model label for soul capsule")
+    p_bios.add_argument("--max-tokens", type=int, default=500, help="Max tokens for soul capsule (<=500)")
+    p_bios.add_argument("--rounds", type=int, default=4, help="Red-Queen parasite arena rounds")
+    p_bios.add_argument("--spore-id", default="", help="Spore ID for autotomy/seed")
+    p_bios.add_argument("--device", default="cli-spore", help="Device name for spore attach")
+    p_bios.add_argument("--text", default="", help="Seed text for spore seed")
+    p_bios.add_argument("--payload", default="", help="Optional JSON object payload")
+    p_bios.add_argument("--html", action="store_true", help="Output raw Spore PWA HTML for `bios spore`")
+    p_bios.add_argument("--peer-url", default="", help="Optional peer CHIMERA base URL override for `bios sync`")
+    p_bios.add_argument("--blend", type=float, default=0.35, help="Hormone blend weight [0..1] for `bios sync`")
 
     # ---- Legacy Research Subcommands (v0.5.0 Multi-Realm Exotic Lanes) ----
     p_probe = sub.add_parser("probe", help="Probe hardware capabilities & Windows network realms")
@@ -1786,6 +1835,87 @@ def main(argv: list[str] | None = None) -> int:
             res = json.loads(resp.read().decode("utf-8"))
         print(json.dumps(res, indent=2, ensure_ascii=False))
         return 0 if res.get("ok") else 1
+
+    if args.command == "bios":
+        from .platform.client import connect
+
+        anchor_arg = "http://127.0.0.1:1" if args.local else (args.anchor or None)
+        client = connect(app="bios-cli", anchor_url=anchor_arg, auto_register=False)
+        obs_obj: dict | None = None
+        if args.obs:
+            obs_obj = json.loads(args.obs)
+        extra_payload: dict | None = None
+        if args.payload:
+            extra_payload = json.loads(args.payload)
+        act = args.action
+        sub_a = (args.sub_action or "").strip().lower()
+
+        if act == "status":
+            res = client.bios_status()
+        elif act == "abi":
+            res = client.bios_abi()
+        elif act == "hormones":
+            if args.hormone:
+                res = client.bios_hormones(
+                    secrete={"hormone": args.hormone, "delta": float(args.delta), "source": "cli"}
+                )
+            elif sub_a:
+                res = client.bios_hormones(action=sub_a, **(extra_payload or {}))
+            else:
+                res = client.bios_hormones()
+        elif act == "pulse":
+            res = client.bios_pulse(obs=obs_obj, context=(args.context or None))
+        elif act == "predict":
+            res = client.bios_predict(obs=obs_obj or {}, context=args.context, horizon_s=float(args.horizon))
+        elif act == "autophagy":
+            res = client.bios_autophagy(action=sub_a or "status", payload=extra_payload)
+        elif act == "parasite":
+            res = client.bios_parasite(rounds=int(args.rounds), action=sub_a or "run")
+        elif act == "ganglia":
+            res = client.bios_ganglia(action=sub_a or "status", payload=extra_payload)
+        elif act == "pheromone":
+            res = client.bios_pheromone(
+                args.repo,
+                args.path,
+                action=sub_a or None,
+                alarm=(extra_payload.get("alarm") if isinstance(extra_payload, dict) else None),
+                coedits=(extra_payload.get("coedits") if isinstance(extra_payload, dict) else None),
+            )
+        elif act == "umwelt":
+            res = client.bios_umwelt(signal=obs_obj, action=sub_a or "assess")
+        elif act == "hgt":
+            res = client.bios_hgt(action=sub_a or "list", payload=extra_payload)
+        elif act == "spore":
+            sp_act = "pwa" if args.html else (sub_a or "list")
+            sp_pay = dict(extra_payload or {})
+            if sp_act == "attach":
+                sp_pay.setdefault("device_name", args.device)
+            elif sp_act == "autotomy" and args.spore_id:
+                sp_pay.setdefault("spore_id", args.spore_id)
+            elif sp_act == "seed":
+                sp_pay.setdefault("spore_id", args.spore_id or "cli-spore")
+                if args.text:
+                    sp_pay.setdefault("text", args.text)
+            res = client.bios_spore(action=sp_act, payload=sp_pay or None)
+            if args.html and isinstance(res.get("html"), str):
+                print(res["html"])
+                return 0
+        elif act == "soul":
+            res = client.bios_soul(
+                query=args.query,
+                target_model=args.model,
+                max_tokens=int(args.max_tokens),
+                scar=(extra_payload if sub_a == "scar" else None),
+            )
+        elif act == "sync":
+            res = client.bios_sync(
+                peer_url=(args.peer_url or None),
+                blend=float(args.blend),
+            )
+        else:
+            res = {"ok": False, "error": f"unknown_bios_action:{act}"}
+        print(json.dumps(res, indent=2, ensure_ascii=False))
+        return 0 if res.get("ok", True) else 1
 
     if args.command == "run":
         import subprocess

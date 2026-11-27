@@ -1,0 +1,1302 @@
+{
+  "schema": "chimera.linux-daemon-allocator/1",
+  "source_root": "/home/svhome/.local/share/chimera/releases/65bbee57e75f",
+  "collector_sha256": "fc3afeac9366359370517025fdf7af07f81ccf2253d627935a98b6e1571d8d08",
+  "snapshot_sha256": "e5940629d4908909ae54d0278427e9fd2260d6c29440e6cd37bde2d365389327",
+  "export_sha256": "97f81feb43a268ff54c25701d9b3aeb20a17e07675e7e3b3f2d16dfaf7097dae",
+  "export_bytes": 710507,
+  "replay_requests": 36,
+  "python": "3.14.4 (main, Aug 20 2026, 10:41:58) [GCC 15.2.0]",
+  "policies": {
+    "current": {},
+    "glibc_raw": {
+      "GLIBC_TUNABLES": "glibc.malloc.arena_max=1:glibc.malloc.mmap_threshold=32768:glibc.malloc.trim_threshold=32768",
+      "MALLOC_ARENA_MAX": "1"
+    },
+    "jemalloc_raw": {
+      "LD_PRELOAD": "/usr/lib/x86_64-linux-gnu/libjemalloc.so.2",
+      "MALLOC_CONF": "narenas:1,dirty_decay_ms:0,muzzy_decay_ms:0"
+    },
+    "mimalloc": {
+      "PYTHONMALLOC": "mimalloc",
+      "MIMALLOC_PURGE_DELAY": "0"
+    },
+    "glibc": {
+      "PYTHONMALLOC": "malloc",
+      "GLIBC_TUNABLES": "glibc.malloc.tcache_count=0:glibc.malloc.trim_threshold=65536"
+    },
+    "jemalloc": {
+      "PYTHONMALLOC": "malloc",
+      "LD_PRELOAD": "/usr/lib/x86_64-linux-gnu/libjemalloc.so.2",
+      "MALLOC_CONF": "narenas:1,tcache:false,dirty_decay_ms:0,muzzy_decay_ms:0"
+    }
+  },
+  "serving_input": {
+    "index_sha256": "347dd1094950ae49ddccc49d8d12118106cc6aa1dfcf26ebe7d21971c9c41c8e",
+    "log_tail_sha256": [
+      "5def2664e0bf059130dfdaa952caf42784f8a49818594399d2b5d01b36b64024",
+      "bf7e0e65e41945296e3f23ee466978289083f94caa062e5367d30f4c98b17d31",
+      "74833b9b77370b8b6daa8b2c048644aea0a3c8a26e48cc7d8a5517eb5308b8ee",
+      "d25615ac03c69066a74165e0622487258c2d75d311891e64ed7b0543acd5b5ae",
+      "d047c02ee4f8854cafc2dbd551c66499563d05dd7a90ffddfbae5b6a152a297c",
+      "eca14588898bc0ca46e5fb27a6363fa0da4a5b1c306ce476a52ef311cf202392",
+      "0fbadd4b92211c29028032346d699873c9027b12263f6c804ce4cb2305dbed0b",
+      "63b7a8ad0588bffa7dc948dad7d7ff51e4156b4fec82398c39519d2b4d7f33bd",
+      "d1a9c94b920a8613ce799a626748738ea048a49663a49c5244f1b81b77880ce3",
+      "ad949601fe4b1d2bec5f33a704e80706fbda1e26eca95f5216be10b0b4511eed",
+      "8a537cbe29ff3900a6595167621407f6328dbe27cb03cd815edac6b8852b17a5",
+      "23469e9f3e1738db0e1d41fcf8fa226dcd13db243a3859e355c5af8cd55d0b03"
+    ],
+    "roots": [
+      "/home/svhome/DEV"
+    ],
+    "index_bytes": 43651072
+  },
+  "summary": {
+    "current": {
+      "rss_bytes_median": 56279040.0,
+      "peak_bytes_max": 64032768,
+      "cpu_s_median": 0.9847000000000001,
+      "health_p95_ms_max": 2.286
+    },
+    "glibc_raw": {
+      "rss_bytes_median": 51654656.0,
+      "peak_bytes_max": 57049088,
+      "cpu_s_median": 0.93955,
+      "health_p95_ms_max": 2.811
+    },
+    "jemalloc_raw": {
+      "rss_bytes_median": 56096768.0,
+      "peak_bytes_max": 59604992,
+      "cpu_s_median": 0.9355,
+      "health_p95_ms_max": 2.482
+    },
+    "mimalloc": {
+      "rss_bytes_median": 57329664.0,
+      "peak_bytes_max": 61276160,
+      "cpu_s_median": 0.9431,
+      "health_p95_ms_max": 2.764
+    },
+    "glibc": {
+      "rss_bytes_median": 53045248.0,
+      "peak_bytes_max": 60387328,
+      "cpu_s_median": 1.1111499999999999,
+      "health_p95_ms_max": 2.894
+    },
+    "jemalloc": {
+      "rss_bytes_median": 55476224.0,
+      "peak_bytes_max": 59031552,
+      "cpu_s_median": 1.3634,
+      "health_p95_ms_max": 3.479
+    }
+  },
+  "trials": [
+    {
+      "repeat": 1,
+      "pid": 9144,
+      "policy": "current",
+      "checks": [
+        [
+          300,
+          0,
+          1081
+        ],
+        [
+          300,
+          0,
+          1081
+        ],
+        [
+          300,
+          0,
+          1081
+        ]
+      ],
+      "stages": {
+        "beacon": {
+          "VmHWM": 42881024,
+          "VmRSS": 41459712,
+          "RssAnon": 25341952,
+          "VmSwap": 0
+        },
+        "services_loaded": {
+          "VmHWM": 43077632,
+          "VmRSS": 43077632,
+          "RssAnon": 26927104,
+          "VmSwap": 0
+        },
+        "indexed": {
+          "VmHWM": 46772224,
+          "VmRSS": 46772224,
+          "RssAnon": 30621696,
+          "VmSwap": 0
+        },
+        "sentinel": {
+          "VmHWM": 51916800,
+          "VmRSS": 51916800,
+          "RssAnon": 34791424,
+          "VmSwap": 0
+        },
+        "hook_and_pulse": {
+          "VmHWM": 52420608,
+          "VmRSS": 52420608,
+          "RssAnon": 35241984,
+          "VmSwap": 0
+        },
+        "ingest": {
+          "VmHWM": 64319488,
+          "VmRSS": 64319488,
+          "RssAnon": 47046656,
+          "VmSwap": 0
+        },
+        "quiet": {
+          "VmHWM": 63782912,
+          "VmRSS": 56152064,
+          "RssAnon": 38879232,
+          "VmSwap": 0
+        },
+        "after_health": {
+          "VmHWM": 63782912,
+          "VmRSS": 56176640,
+          "RssAnon": 38903808,
+          "VmSwap": 0
+        }
+      },
+      "serving_counts": {
+        "index_files": 2210,
+        "updated": 37,
+        "log_lines": [
+          84,
+          82,
+          67,
+          159,
+          273,
+          262,
+          58,
+          92,
+          8486,
+          18616,
+          307,
+          45071
+        ]
+      },
+      "cpu_s": 1.0213,
+      "health_p95_ms": 2.167,
+      "jemalloc_mapped": false,
+      "allocator_env": {}
+    },
+    {
+      "repeat": 1,
+      "pid": 9273,
+      "policy": "glibc_raw",
+      "checks": [
+        [
+          300,
+          0,
+          1081
+        ],
+        [
+          300,
+          0,
+          1081
+        ],
+        [
+          300,
+          0,
+          1081
+        ]
+      ],
+      "stages": {
+        "beacon": {
+          "VmHWM": 42913792,
+          "VmRSS": 41418752,
+          "RssAnon": 25153536,
+          "VmSwap": 0
+        },
+        "services_loaded": {
+          "VmHWM": 43102208,
+          "VmRSS": 43102208,
+          "RssAnon": 26804224,
+          "VmSwap": 0
+        },
+        "indexed": {
+          "VmHWM": 46632960,
+          "VmRSS": 46632960,
+          "RssAnon": 30334976,
+          "VmSwap": 0
+        },
+        "sentinel": {
+          "VmHWM": 50806784,
+          "VmRSS": 48054272,
+          "RssAnon": 30806016,
+          "VmSwap": 0
+        },
+        "hook_and_pulse": {
+          "VmHWM": 50806784,
+          "VmRSS": 49156096,
+          "RssAnon": 31879168,
+          "VmSwap": 0
+        },
+        "ingest": {
+          "VmHWM": 57012224,
+          "VmRSS": 54149120,
+          "RssAnon": 36777984,
+          "VmSwap": 0
+        },
+        "quiet": {
+          "VmHWM": 57012224,
+          "VmRSS": 51605504,
+          "RssAnon": 34234368,
+          "VmSwap": 0
+        },
+        "after_health": {
+          "VmHWM": 57012224,
+          "VmRSS": 51613696,
+          "RssAnon": 34242560,
+          "VmSwap": 0
+        }
+      },
+      "serving_counts": {
+        "index_files": 2210,
+        "updated": 37,
+        "log_lines": [
+          84,
+          82,
+          67,
+          159,
+          273,
+          262,
+          58,
+          92,
+          8486,
+          18616,
+          307,
+          45071
+        ]
+      },
+      "cpu_s": 0.9454,
+      "health_p95_ms": 2.811,
+      "jemalloc_mapped": false,
+      "allocator_env": {
+        "GLIBC_TUNABLES": "glibc.malloc.arena_max=1:glibc.malloc.mmap_threshold=32768:glibc.malloc.trim_threshold=32768",
+        "MALLOC_ARENA_MAX": "1"
+      }
+    },
+    {
+      "repeat": 1,
+      "pid": 9402,
+      "policy": "jemalloc_raw",
+      "checks": [
+        [
+          300,
+          0,
+          1081
+        ],
+        [
+          300,
+          0,
+          1081
+        ],
+        [
+          300,
+          0,
+          1081
+        ]
+      ],
+      "stages": {
+        "beacon": {
+          "VmHWM": 45416448,
+          "VmRSS": 45084672,
+          "RssAnon": 26714112,
+          "VmSwap": 0
+        },
+        "services_loaded": {
+          "VmHWM": 46845952,
+          "VmRSS": 46845952,
+          "RssAnon": 28442624,
+          "VmSwap": 0
+        },
+        "indexed": {
+          "VmHWM": 50868224,
+          "VmRSS": 50810880,
+          "RssAnon": 32407552,
+          "VmSwap": 0
+        },
+        "sentinel": {
+          "VmHWM": 54321152,
+          "VmRSS": 52043776,
+          "RssAnon": 32690176,
+          "VmSwap": 0
+        },
+        "hook_and_pulse": {
+          "VmHWM": 54321152,
+          "VmRSS": 53198848,
+          "RssAnon": 33787904,
+          "VmSwap": 0
+        },
+        "ingest": {
+          "VmHWM": 59461632,
+          "VmRSS": 56033280,
+          "RssAnon": 36528128,
+          "VmSwap": 0
+        },
+        "quiet": {
+          "VmHWM": 59461632,
+          "VmRSS": 56000512,
+          "RssAnon": 36495360,
+          "VmSwap": 0
+        },
+        "after_health": {
+          "VmHWM": 59461632,
+          "VmRSS": 56020992,
+          "RssAnon": 36515840,
+          "VmSwap": 0
+        }
+      },
+      "serving_counts": {
+        "index_files": 2210,
+        "updated": 37,
+        "log_lines": [
+          84,
+          82,
+          67,
+          159,
+          273,
+          262,
+          58,
+          92,
+          8486,
+          18616,
+          307,
+          45071
+        ]
+      },
+      "cpu_s": 0.9279,
+      "health_p95_ms": 2.482,
+      "jemalloc_mapped": true,
+      "allocator_env": {
+        "LD_PRELOAD": "/usr/lib/x86_64-linux-gnu/libjemalloc.so.2",
+        "MALLOC_CONF": "narenas:1,dirty_decay_ms:0,muzzy_decay_ms:0"
+      }
+    },
+    {
+      "repeat": 1,
+      "pid": 9540,
+      "policy": "mimalloc",
+      "checks": [
+        [
+          300,
+          0,
+          1081
+        ],
+        [
+          300,
+          0,
+          1081
+        ],
+        [
+          300,
+          0,
+          1081
+        ]
+      ],
+      "stages": {
+        "beacon": {
+          "VmHWM": 44318720,
+          "VmRSS": 44318720,
+          "RssAnon": 28217344,
+          "VmSwap": 0
+        },
+        "services_loaded": {
+          "VmHWM": 46018560,
+          "VmRSS": 46018560,
+          "RssAnon": 29884416,
+          "VmSwap": 0
+        },
+        "indexed": {
+          "VmHWM": 50266112,
+          "VmRSS": 50204672,
+          "RssAnon": 34070528,
+          "VmSwap": 0
+        },
+        "sentinel": {
+          "VmHWM": 54665216,
+          "VmRSS": 51990528,
+          "RssAnon": 34906112,
+          "VmSwap": 0
+        },
+        "hook_and_pulse": {
+          "VmHWM": 54665216,
+          "VmRSS": 53727232,
+          "RssAnon": 36614144,
+          "VmSwap": 0
+        },
+        "ingest": {
+          "VmHWM": 61276160,
+          "VmRSS": 57507840,
+          "RssAnon": 40300544,
+          "VmSwap": 0
+        },
+        "quiet": {
+          "VmHWM": 61276160,
+          "VmRSS": 57454592,
+          "RssAnon": 40247296,
+          "VmSwap": 0
+        },
+        "after_health": {
+          "VmHWM": 61276160,
+          "VmRSS": 57188352,
+          "RssAnon": 39981056,
+          "VmSwap": 0
+        }
+      },
+      "serving_counts": {
+        "index_files": 2210,
+        "updated": 37,
+        "log_lines": [
+          84,
+          82,
+          67,
+          159,
+          273,
+          262,
+          58,
+          92,
+          8486,
+          18616,
+          307,
+          45071
+        ]
+      },
+      "cpu_s": 0.9466,
+      "health_p95_ms": 1.666,
+      "jemalloc_mapped": false,
+      "allocator_env": {
+        "PYTHONMALLOC": "mimalloc",
+        "MIMALLOC_PURGE_DELAY": "0"
+      }
+    },
+    {
+      "repeat": 1,
+      "pid": 9670,
+      "policy": "glibc",
+      "checks": [
+        [
+          300,
+          0,
+          1081
+        ],
+        [
+          300,
+          0,
+          1081
+        ],
+        [
+          300,
+          0,
+          1081
+        ]
+      ],
+      "stages": {
+        "beacon": {
+          "VmHWM": 43360256,
+          "VmRSS": 42156032,
+          "RssAnon": 25882624,
+          "VmSwap": 0
+        },
+        "services_loaded": {
+          "VmHWM": 43905024,
+          "VmRSS": 43905024,
+          "RssAnon": 27598848,
+          "VmSwap": 0
+        },
+        "indexed": {
+          "VmHWM": 47464448,
+          "VmRSS": 47333376,
+          "RssAnon": 31027200,
+          "VmSwap": 0
+        },
+        "sentinel": {
+          "VmHWM": 51634176,
+          "VmRSS": 48443392,
+          "RssAnon": 31186944,
+          "VmSwap": 0
+        },
+        "hook_and_pulse": {
+          "VmHWM": 51634176,
+          "VmRSS": 49885184,
+          "RssAnon": 32600064,
+          "VmSwap": 0
+        },
+        "ingest": {
+          "VmHWM": 60387328,
+          "VmRSS": 58064896,
+          "RssAnon": 40685568,
+          "VmSwap": 0
+        },
+        "quiet": {
+          "VmHWM": 60387328,
+          "VmRSS": 53039104,
+          "RssAnon": 35659776,
+          "VmSwap": 0
+        },
+        "after_health": {
+          "VmHWM": 60387328,
+          "VmRSS": 53055488,
+          "RssAnon": 35676160,
+          "VmSwap": 0
+        }
+      },
+      "serving_counts": {
+        "index_files": 2210,
+        "updated": 37,
+        "log_lines": [
+          84,
+          82,
+          67,
+          159,
+          273,
+          262,
+          58,
+          92,
+          8486,
+          18616,
+          307,
+          45071
+        ]
+      },
+      "cpu_s": 1.0933,
+      "health_p95_ms": 2.088,
+      "jemalloc_mapped": false,
+      "allocator_env": {
+        "PYTHONMALLOC": "malloc",
+        "GLIBC_TUNABLES": "glibc.malloc.tcache_count=0:glibc.malloc.trim_threshold=65536"
+      }
+    },
+    {
+      "repeat": 1,
+      "pid": 9798,
+      "policy": "jemalloc",
+      "checks": [
+        [
+          300,
+          0,
+          1081
+        ],
+        [
+          300,
+          0,
+          1081
+        ],
+        [
+          300,
+          0,
+          1081
+        ]
+      ],
+      "stages": {
+        "beacon": {
+          "VmHWM": 45248512,
+          "VmRSS": 44728320,
+          "RssAnon": 26456064,
+          "VmSwap": 0
+        },
+        "services_loaded": {
+          "VmHWM": 46641152,
+          "VmRSS": 46641152,
+          "RssAnon": 28336128,
+          "VmSwap": 0
+        },
+        "indexed": {
+          "VmHWM": 50532352,
+          "VmRSS": 49713152,
+          "RssAnon": 31408128,
+          "VmSwap": 0
+        },
+        "sentinel": {
+          "VmHWM": 54030336,
+          "VmRSS": 51658752,
+          "RssAnon": 32342016,
+          "VmSwap": 0
+        },
+        "hook_and_pulse": {
+          "VmHWM": 54030336,
+          "VmRSS": 53075968,
+          "RssAnon": 33730560,
+          "VmSwap": 0
+        },
+        "ingest": {
+          "VmHWM": 59031552,
+          "VmRSS": 55541760,
+          "RssAnon": 36102144,
+          "VmSwap": 0
+        },
+        "quiet": {
+          "VmHWM": 59031552,
+          "VmRSS": 55410688,
+          "RssAnon": 35971072,
+          "VmSwap": 0
+        },
+        "after_health": {
+          "VmHWM": 59031552,
+          "VmRSS": 55414784,
+          "RssAnon": 35975168,
+          "VmSwap": 0
+        }
+      },
+      "serving_counts": {
+        "index_files": 2210,
+        "updated": 37,
+        "log_lines": [
+          84,
+          82,
+          67,
+          159,
+          273,
+          262,
+          58,
+          92,
+          8486,
+          18616,
+          307,
+          45071
+        ]
+      },
+      "cpu_s": 1.3954,
+      "health_p95_ms": 3.479,
+      "jemalloc_mapped": true,
+      "allocator_env": {
+        "PYTHONMALLOC": "malloc",
+        "LD_PRELOAD": "/usr/lib/x86_64-linux-gnu/libjemalloc.so.2",
+        "MALLOC_CONF": "narenas:1,tcache:false,dirty_decay_ms:0,muzzy_decay_ms:0"
+      }
+    },
+    {
+      "repeat": 2,
+      "pid": 9934,
+      "policy": "jemalloc",
+      "checks": [
+        [
+          300,
+          0,
+          1081
+        ],
+        [
+          300,
+          0,
+          1081
+        ],
+        [
+          300,
+          0,
+          1081
+        ]
+      ],
+      "stages": {
+        "beacon": {
+          "VmHWM": 45318144,
+          "VmRSS": 44867584,
+          "RssAnon": 26472448,
+          "VmSwap": 0
+        },
+        "services_loaded": {
+          "VmHWM": 46772224,
+          "VmRSS": 46772224,
+          "RssAnon": 28344320,
+          "VmSwap": 0
+        },
+        "indexed": {
+          "VmHWM": 50593792,
+          "VmRSS": 49844224,
+          "RssAnon": 31416320,
+          "VmSwap": 0
+        },
+        "sentinel": {
+          "VmHWM": 54091776,
+          "VmRSS": 51789824,
+          "RssAnon": 32350208,
+          "VmSwap": 0
+        },
+        "hook_and_pulse": {
+          "VmHWM": 54091776,
+          "VmRSS": 53215232,
+          "RssAnon": 33746944,
+          "VmSwap": 0
+        },
+        "ingest": {
+          "VmHWM": 59015168,
+          "VmRSS": 55701504,
+          "RssAnon": 36139008,
+          "VmSwap": 0
+        },
+        "quiet": {
+          "VmHWM": 59015168,
+          "VmRSS": 55533568,
+          "RssAnon": 35971072,
+          "VmSwap": 0
+        },
+        "after_health": {
+          "VmHWM": 59015168,
+          "VmRSS": 55537664,
+          "RssAnon": 35975168,
+          "VmSwap": 0
+        }
+      },
+      "serving_counts": {
+        "index_files": 2210,
+        "updated": 37,
+        "log_lines": [
+          84,
+          82,
+          67,
+          159,
+          273,
+          262,
+          58,
+          92,
+          8486,
+          18616,
+          307,
+          45071
+        ]
+      },
+      "cpu_s": 1.3314,
+      "health_p95_ms": 2.618,
+      "jemalloc_mapped": true,
+      "allocator_env": {
+        "PYTHONMALLOC": "malloc",
+        "LD_PRELOAD": "/usr/lib/x86_64-linux-gnu/libjemalloc.so.2",
+        "MALLOC_CONF": "narenas:1,tcache:false,dirty_decay_ms:0,muzzy_decay_ms:0"
+      }
+    },
+    {
+      "repeat": 2,
+      "pid": 10083,
+      "policy": "glibc",
+      "checks": [
+        [
+          300,
+          0,
+          1081
+        ],
+        [
+          300,
+          0,
+          1081
+        ],
+        [
+          300,
+          0,
+          1081
+        ]
+      ],
+      "stages": {
+        "beacon": {
+          "VmHWM": 43364352,
+          "VmRSS": 42184704,
+          "RssAnon": 25882624,
+          "VmSwap": 0
+        },
+        "services_loaded": {
+          "VmHWM": 43941888,
+          "VmRSS": 43941888,
+          "RssAnon": 27607040,
+          "VmSwap": 0
+        },
+        "indexed": {
+          "VmHWM": 47362048,
+          "VmRSS": 47357952,
+          "RssAnon": 31023104,
+          "VmSwap": 0
+        },
+        "sentinel": {
+          "VmHWM": 51376128,
+          "VmRSS": 48467968,
+          "RssAnon": 31182848,
+          "VmSwap": 0
+        },
+        "hook_and_pulse": {
+          "VmHWM": 51376128,
+          "VmRSS": 49909760,
+          "RssAnon": 32595968,
+          "VmSwap": 0
+        },
+        "ingest": {
+          "VmHWM": 60268544,
+          "VmRSS": 58048512,
+          "RssAnon": 40640512,
+          "VmSwap": 0
+        },
+        "quiet": {
+          "VmHWM": 60268544,
+          "VmRSS": 52994048,
+          "RssAnon": 35586048,
+          "VmSwap": 0
+        },
+        "after_health": {
+          "VmHWM": 60268544,
+          "VmRSS": 53035008,
+          "RssAnon": 35627008,
+          "VmSwap": 0
+        }
+      },
+      "serving_counts": {
+        "index_files": 2210,
+        "updated": 37,
+        "log_lines": [
+          84,
+          82,
+          67,
+          159,
+          273,
+          262,
+          58,
+          92,
+          8486,
+          18616,
+          307,
+          45071
+        ]
+      },
+      "cpu_s": 1.129,
+      "health_p95_ms": 2.894,
+      "jemalloc_mapped": false,
+      "allocator_env": {
+        "PYTHONMALLOC": "malloc",
+        "GLIBC_TUNABLES": "glibc.malloc.tcache_count=0:glibc.malloc.trim_threshold=65536"
+      }
+    },
+    {
+      "repeat": 2,
+      "pid": 10210,
+      "policy": "mimalloc",
+      "checks": [
+        [
+          300,
+          0,
+          1081
+        ],
+        [
+          300,
+          0,
+          1081
+        ],
+        [
+          300,
+          0,
+          1081
+        ]
+      ],
+      "stages": {
+        "beacon": {
+          "VmHWM": 44494848,
+          "VmRSS": 44494848,
+          "RssAnon": 28221440,
+          "VmSwap": 0
+        },
+        "services_loaded": {
+          "VmHWM": 46194688,
+          "VmRSS": 46194688,
+          "RssAnon": 29888512,
+          "VmSwap": 0
+        },
+        "indexed": {
+          "VmHWM": 50466816,
+          "VmRSS": 50380800,
+          "RssAnon": 34074624,
+          "VmSwap": 0
+        },
+        "sentinel": {
+          "VmHWM": 54673408,
+          "VmRSS": 52232192,
+          "RssAnon": 34914304,
+          "VmSwap": 0
+        },
+        "hook_and_pulse": {
+          "VmHWM": 54673408,
+          "VmRSS": 53972992,
+          "RssAnon": 36626432,
+          "VmSwap": 0
+        },
+        "ingest": {
+          "VmHWM": 61276160,
+          "VmRSS": 57708544,
+          "RssAnon": 40267776,
+          "VmSwap": 0
+        },
+        "quiet": {
+          "VmHWM": 61276160,
+          "VmRSS": 57696256,
+          "RssAnon": 40255488,
+          "VmSwap": 0
+        },
+        "after_health": {
+          "VmHWM": 61276160,
+          "VmRSS": 57470976,
+          "RssAnon": 40030208,
+          "VmSwap": 0
+        }
+      },
+      "serving_counts": {
+        "index_files": 2210,
+        "updated": 37,
+        "log_lines": [
+          84,
+          82,
+          67,
+          159,
+          273,
+          262,
+          58,
+          92,
+          8486,
+          18616,
+          307,
+          45071
+        ]
+      },
+      "cpu_s": 0.9396,
+      "health_p95_ms": 2.764,
+      "jemalloc_mapped": false,
+      "allocator_env": {
+        "PYTHONMALLOC": "mimalloc",
+        "MIMALLOC_PURGE_DELAY": "0"
+      }
+    },
+    {
+      "repeat": 2,
+      "pid": 10336,
+      "policy": "jemalloc_raw",
+      "checks": [
+        [
+          300,
+          0,
+          1081
+        ],
+        [
+          300,
+          0,
+          1081
+        ],
+        [
+          300,
+          0,
+          1081
+        ]
+      ],
+      "stages": {
+        "beacon": {
+          "VmHWM": 45764608,
+          "VmRSS": 45215744,
+          "RssAnon": 26750976,
+          "VmSwap": 0
+        },
+        "services_loaded": {
+          "VmHWM": 46977024,
+          "VmRSS": 46977024,
+          "RssAnon": 28479488,
+          "VmSwap": 0
+        },
+        "indexed": {
+          "VmHWM": 51138560,
+          "VmRSS": 50941952,
+          "RssAnon": 32444416,
+          "VmSwap": 0
+        },
+        "sentinel": {
+          "VmHWM": 54390784,
+          "VmRSS": 52232192,
+          "RssAnon": 32722944,
+          "VmSwap": 0
+        },
+        "hook_and_pulse": {
+          "VmHWM": 54390784,
+          "VmRSS": 53383168,
+          "RssAnon": 33845248,
+          "VmSwap": 0
+        },
+        "ingest": {
+          "VmHWM": 59604992,
+          "VmRSS": 56184832,
+          "RssAnon": 36552704,
+          "VmSwap": 0
+        },
+        "quiet": {
+          "VmHWM": 59604992,
+          "VmRSS": 56152064,
+          "RssAnon": 36519936,
+          "VmSwap": 0
+        },
+        "after_health": {
+          "VmHWM": 59604992,
+          "VmRSS": 56172544,
+          "RssAnon": 36540416,
+          "VmSwap": 0
+        }
+      },
+      "serving_counts": {
+        "index_files": 2210,
+        "updated": 37,
+        "log_lines": [
+          84,
+          82,
+          67,
+          159,
+          273,
+          262,
+          58,
+          92,
+          8486,
+          18616,
+          307,
+          45071
+        ]
+      },
+      "cpu_s": 0.9431,
+      "health_p95_ms": 2.007,
+      "jemalloc_mapped": true,
+      "allocator_env": {
+        "LD_PRELOAD": "/usr/lib/x86_64-linux-gnu/libjemalloc.so.2",
+        "MALLOC_CONF": "narenas:1,dirty_decay_ms:0,muzzy_decay_ms:0"
+      }
+    },
+    {
+      "repeat": 2,
+      "pid": 10480,
+      "policy": "glibc_raw",
+      "checks": [
+        [
+          300,
+          0,
+          1081
+        ],
+        [
+          300,
+          0,
+          1081
+        ],
+        [
+          300,
+          0,
+          1081
+        ]
+      ],
+      "stages": {
+        "beacon": {
+          "VmHWM": 42610688,
+          "VmRSS": 41328640,
+          "RssAnon": 25157632,
+          "VmSwap": 0
+        },
+        "services_loaded": {
+          "VmHWM": 42987520,
+          "VmRSS": 42987520,
+          "RssAnon": 26783744,
+          "VmSwap": 0
+        },
+        "indexed": {
+          "VmHWM": 46538752,
+          "VmRSS": 46538752,
+          "RssAnon": 30334976,
+          "VmSwap": 0
+        },
+        "sentinel": {
+          "VmHWM": 50700288,
+          "VmRSS": 48021504,
+          "RssAnon": 30806016,
+          "VmSwap": 0
+        },
+        "hook_and_pulse": {
+          "VmHWM": 50700288,
+          "VmRSS": 49115136,
+          "RssAnon": 31854592,
+          "VmSwap": 0
+        },
+        "ingest": {
+          "VmHWM": 57049088,
+          "VmRSS": 54173696,
+          "RssAnon": 36818944,
+          "VmSwap": 0
+        },
+        "quiet": {
+          "VmHWM": 57049088,
+          "VmRSS": 51683328,
+          "RssAnon": 34328576,
+          "VmSwap": 0
+        },
+        "after_health": {
+          "VmHWM": 57049088,
+          "VmRSS": 51695616,
+          "RssAnon": 34340864,
+          "VmSwap": 0
+        }
+      },
+      "serving_counts": {
+        "index_files": 2210,
+        "updated": 37,
+        "log_lines": [
+          84,
+          82,
+          67,
+          159,
+          273,
+          262,
+          58,
+          92,
+          8486,
+          18616,
+          307,
+          45071
+        ]
+      },
+      "cpu_s": 0.9337,
+      "health_p95_ms": 1.835,
+      "jemalloc_mapped": false,
+      "allocator_env": {
+        "GLIBC_TUNABLES": "glibc.malloc.arena_max=1:glibc.malloc.mmap_threshold=32768:glibc.malloc.trim_threshold=32768",
+        "MALLOC_ARENA_MAX": "1"
+      }
+    },
+    {
+      "repeat": 2,
+      "pid": 10597,
+      "policy": "current",
+      "checks": [
+        [
+          300,
+          0,
+          1081
+        ],
+        [
+          300,
+          0,
+          1081
+        ],
+        [
+          300,
+          0,
+          1081
+        ]
+      ],
+      "stages": {
+        "beacon": {
+          "VmHWM": 42590208,
+          "VmRSS": 41439232,
+          "RssAnon": 25337856,
+          "VmSwap": 0
+        },
+        "services_loaded": {
+          "VmHWM": 43069440,
+          "VmRSS": 43069440,
+          "RssAnon": 26935296,
+          "VmSwap": 0
+        },
+        "indexed": {
+          "VmHWM": 46755840,
+          "VmRSS": 46755840,
+          "RssAnon": 30621696,
+          "VmSwap": 0
+        },
+        "sentinel": {
+          "VmHWM": 51937280,
+          "VmRSS": 51937280,
+          "RssAnon": 34791424,
+          "VmSwap": 0
+        },
+        "hook_and_pulse": {
+          "VmHWM": 52432896,
+          "VmRSS": 52432896,
+          "RssAnon": 35258368,
+          "VmSwap": 0
+        },
+        "ingest": {
+          "VmHWM": 64323584,
+          "VmRSS": 64323584,
+          "RssAnon": 47054848,
+          "VmSwap": 0
+        },
+        "quiet": {
+          "VmHWM": 64032768,
+          "VmRSS": 56360960,
+          "RssAnon": 39092224,
+          "VmSwap": 0
+        },
+        "after_health": {
+          "VmHWM": 64032768,
+          "VmRSS": 56381440,
+          "RssAnon": 39112704,
+          "VmSwap": 0
+        }
+      },
+      "serving_counts": {
+        "index_files": 2210,
+        "updated": 37,
+        "log_lines": [
+          84,
+          82,
+          67,
+          159,
+          273,
+          262,
+          58,
+          92,
+          8486,
+          18616,
+          307,
+          45071
+        ]
+      },
+      "cpu_s": 0.9481,
+      "health_p95_ms": 2.286,
+      "jemalloc_mapped": false,
+      "allocator_env": {}
+    }
+  ],
+  "peer_guard": {
+    "limits_verified": true,
+    "policy": {
+      "ram_reserve_mib": 2560,
+      "job_memory_mib": 512,
+      "disk_reserve_mib": 14306,
+      "job_disk_mib": 128,
+      "cpu_quota_pct": 95,
+      "max_tasks": 128,
+      "runtime_seconds": 900,
+      "psi_cpu_pct": 25.0,
+      "psi_memory_pct": 1.0,
+      "psi_io_pct": 5.0,
+      "max_load1": 1.8,
+      "max_temp_c": 70.0,
+      "service_urls": [
+        "http://127.0.0.1:9780/.well-known/chimera.json",
+        "http://127.0.0.1:8787/api/health"
+      ],
+      "service_p95_ms": 150.0,
+      "service_samples": 5,
+      "service_timeout_s": 0.5,
+      "max_sample_age_s": 5.0,
+      "require_io_cap": true,
+      "io_write_bps": 8388608,
+      "disk_path": "/home/svhome"
+    },
+    "runtime": {
+      "completed_samples": 101,
+      "worst_service_p95_ms": {
+        "http://127.0.0.1:9780/.well-known/chimera.json": 26.89312305301428,
+        "http://127.0.0.1:8787/api/health": 21.053725853562355
+      }
+    },
+    "limits": {
+      "memory_high": 429494272,
+      "memory_max": 536870912,
+      "swap_max": 0,
+      "tasks_max": 128,
+      "cpu_quota_pct": 95.0,
+      "io_write_bps": 8388608,
+      "io_devices": [
+        "8:0",
+        "8:2"
+      ]
+    }
+  }
+}

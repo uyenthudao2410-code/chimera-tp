@@ -1,0 +1,295 @@
+{
+  "started_at": "2026-11-27T12:00:10+0700",
+  "before": {
+    "baseline_win_chimera_ram_mb": 45.2,
+    "baseline_sv_chimera_ram_mb": 53.52,
+    "pre_run_win_chimera_pid": 31176,
+    "pre_run_win_chimera_ram_mb": 39.77,
+    "pre_run_sv_chimera_pid": 4096153,
+    "pre_run_sv_chimera_ram_mb": 64.25,
+    "win_overmind_cacheAffinityRoutes": 5,
+    "win_overmind_thoughtBriefsEntries": 275,
+    "win_overmind_thoughtBriefHits": 0,
+    "win_mcp_tools": 40,
+    "sv_dirs": {
+      "chimera_rel": "/home/svhome/.local/share/chimera/releases/e13c4da7d80b",
+      "chimera_repo": "/home/svhome/DEV/chimera-tp",
+      "tquota_dir": "/home/svhome/DEV/Tqouta/local-relay",
+      "tquota_svc": "tquota.service"
+    }
+  },
+  "win_release_promote": {
+    "ok": true,
+    "epoch_id": "rel_1795755614_2f60934b",
+    "files_promoted": 8,
+    "target_release_dir": "C:\\Users\\Admin\\AppData\\Local\\chimera\\releases\\e13c4da7d80b"
+  },
+  "svhome_python_tests": {
+    "returncode": 0,
+    "summary_tail": [
+      "test_defer_retry_uses_original_snapshot_and_removes_completed_ticket (tests.test_guarded_build.QueueTests.test_defer_retry_uses_original_snapshot_and_removes_completed_ticket) ... ok",
+      "test_manifest_tampering_and_path_errors (tests.test_guarded_build.SnapshotTests.test_manifest_tampering_and_path_errors) ... ok",
+      "test_worktree_changes_modes_and_exact_verification (tests.test_guarded_build.SnapshotTests.test_worktree_changes_modes_and_exact_verification) ... ok",
+      "",
+      "----------------------------------------------------------------------",
+      "Ran 32 tests in 13.787s",
+      "",
+      "OK (skipped=1)"
+    ]
+  },
+  "svhome_node_tests": {
+    "returncode": 0,
+    "summary_tail": [
+      "✔ M8. v21.1 auditPrefixItems hash parity eliminates false breakIndex:0 when alternating precomputedDigests and fallback (1.694426ms)",
+      "✔ M9. v21.1 Thermal Stall Hedge rescues BOTH empty reasoning_summary_part shells AND post-progress mid-stream silent freezes (3223.001092ms)",
+      "ℹ tests 48",
+      "ℹ suites 0",
+      "ℹ pass 48",
+      "ℹ fail 0",
+      "ℹ cancelled 0",
+      "ℹ skipped 0",
+      "ℹ todo 0",
+      "ℹ duration_ms 7749.716078"
+    ]
+  },
+  "after_cold_boot": {
+    "win_chimera_pid": 25500,
+    "win_chimera_ram_mb": 59.0,
+    "sv_chimera_pid": 4098224,
+    "sv_chimera_ram_mb": 42.61,
+    "win_tquota_has_dynamo_fields": true,
+    "sv_tquota_has_dynamo_fields": true
+  },
+  "parity": {
+    "chimera_files_checked": 8,
+    "chimera_4loc_drift": 0,
+    "tquota_files_checked": 6,
+    "tquota_2loc_drift": 0,
+    "zero_drift_ok": true
+  },
+  "ab_results": {
+    "green_ptx_gtx1650": {
+      "vsa_16k_bench": {
+        "ok": true,
+        "rows": 16384,
+        "bits_per_vector": 10016,
+        "cpu_numpy_ms": 77.346,
+        "cpu_pure_py_est_ms": 35.421,
+        "green_ptx_gpu": {
+          "available": true,
+          "device": "NVIDIA GeForce GTX 1650",
+          "sm": "7.5",
+          "kernel_ms": 4.141,
+          "total_with_ctx_ms": 134.242,
+          "vram_retained_mb": 0.0,
+          "bit_exact_match_vs_cpu": true,
+          "kernel_speedup_vs_numpy": 18.68,
+          "kernel_speedup_vs_pure_py": 8.55
+        }
+      },
+      "es_axpy_64k": {
+        "n": 65536,
+        "cpu_python_ms": 17.881,
+        "gpu_kernel_ms": 0.864,
+        "gpu_total_with_ctx_ms": 123.825,
+        "kernel_speedup_vs_py": 20.7,
+        "max_abs_err": 0.0,
+        "vram_retained_mb": 0.0
+      }
+    },
+    "chrono_synapse_and_briefs": {
+      "before_thought_brief_hits": 0,
+      "ingested": {
+        "ok": true,
+        "source": "C:\\Users\\Admin\\AppData\\Local\\Tquota\\runtime-data\\thought-briefs.sqlite",
+        "ingested": 275,
+        "elapsed_ms": 12535.68
+      },
+      "recall_cpu": {
+        "backend": "cpu_numpy_lut",
+        "memories_scanned": 275,
+        "elapsed_ms": 1466.225,
+        "top_hit": {
+          "mem_id": "tb_tb_31879a879e2649dfbae5",
+          "source": "tquota_thought_brief",
+          "topic": "1fe6480fed2d362baeffa7e619432c987e9f6a5465da1e6722a154a763f201de",
+          "summary": "[prior-verified gpt-6.2-astra/max 96667ms r=111970B] Goal: You are Codex Astra (Command Strategist). Synthesize concise Vietnamese `overall_assessment`, `blind_spots` (<=3), and `next_cycle_focus` (<=3) from these evaluated leads & KPI boar",
+          "hamming_bits": 4473,
+          "vsa_sim": 0.1068,
+          "lex_overlap": 0.2,
+          "score": 0.3294
+        }
+      },
+      "recall_gpu": {
+        "backend": "green_ptx_sm7.5",
+        "gpu_kernel_ms": 0.513,
+        "vram_retained_mb": 0.0,
+        "elapsed_ms": 126.116,
+        "top_hit_id": "tb_tb_31879a879e2649dfbae5",
+        "top_hit_matches_cpu": true
+      },
+      "synapse_record": {
+        "ok": true,
+        "fact_id": "syn_86b61c8d5990",
+        "file_path": "chimera_tp/platform/aeon_dynamo.py",
+        "file_sha256": "af83f8367a7c64c2",
+        "bytes": 100
+      },
+      "turn0_cheatsheet": {
+        "ok": true,
+        "cheatsheet": "- chimera_tp/platform/aeon_dynamo.py: 100% lazy-loaded unified AEON/Dynamo core with effort_mutation_allowed=false and 0 MB retained VRAM.",
+        "bytes": 138,
+        "facts_included": 1,
+        "stale_invalidated": 0
+      }
+    },
+    "titans_surprise_compactor": {
+      "before_raw_bytes": 61005,
+      "before_exceeds_8600b_spill_limit": true,
+      "after_compacted_bytes": 2402,
+      "after_exceeds_8600b_spill_limit": false,
+      "bytes_saved_pct": 96.06,
+      "lines_in": 1000,
+      "lines_kept": 36,
+      "lines_folded": 964,
+      "preserved_assertion_error": true,
+      "preserved_http_409": true
+    },
+    "eagle_action_sptc": {
+      "ok": true,
+      "tool_name": "read_file",
+      "paths_detected": 1,
+      "precomputed": [
+        {
+          "cache_key": "sptc:e:/dev/chimera-tp/chimera_tp/platform/aeon_dynamo.py:af83f8367a7c64c2",
+          "path": "E:\\DEV\\chimera-tp\\chimera_tp\\platform\\aeon_dynamo.py",
+          "sha256_short": "af83f8367a7c64c2",
+          "bytes": 57522,
+          "syntax_ok": true,
+          "syntax_err": null,
+          "tool_trigger": "read_file"
+        }
+      ],
+      "elapsed_ms": 15.17
+    },
+    "dynamo_kv_prefill_router": {
+      "totalTurns": 12,
+      "agents": 4,
+      "before": {
+        "cacheAffinityRoutes": 0,
+        "warmKvHits": 8,
+        "turn1ParallelSubagentKvHits": 0,
+        "estimatedColdHeadTokens": 192000
+      },
+      "after": {
+        "cacheAffinityRoutes": 11,
+        "dynamoKvLocalHits": 8,
+        "dynamoKvPrefixHeadHits": 3,
+        "warmKvHits": 11,
+        "turn1ParallelSubagentKvHits": 3,
+        "turn1SharedHeadRoutes": 3,
+        "estimatedColdHeadTokens": 48000,
+        "coldHeadPrefillReductionPct": 75,
+        "crossEffortContaminationBlocked": true,
+        "invariantGatePass": true,
+        "effortFlipsObserved": 0,
+        "trueMidPrefixBreaks": 0
+      }
+    },
+    "homeostasis_and_dgm": {
+      "homeostasis_win": {
+        "ok": true,
+        "vector_8d": {
+          "host_focus_vip": 0.067,
+          "gpu_headroom": 0.95,
+          "svhome_headroom": 0.85,
+          "kv_cache_health": 1.0,
+          "effort_invariant_ok": 1.0,
+          "quota_runway": 1.0,
+          "agent_concurrency": 0.0,
+          "daemon_ram_headroom": 0.438
+        },
+        "daemon_rss_mb": 45.0,
+        "law7_rss_ok": true,
+        "tquota_gate_reachable": true,
+        "tquota_gate_pass": true,
+        "controls": {
+          "effort_mutation_allowed": false,
+          "allow_green_ptx": true,
+          "titans_max_chars": 2400,
+          "speculation_depth": 3,
+          "allow_sleep_dream": true
+        },
+        "elapsed_ms": 94.36
+      },
+      "dgm_4oracle_win": {
+        "ok": true,
+        "mode": "shadow_only",
+        "auto_activated": false,
+        "parent_id": "dgm_parent_aa3971",
+        "baseline_p95_ms": 3.737,
+        "evaluated": [
+          {
+            "node_id": "dgm_680a430f",
+            "variant": "mutant_broken_shortcut",
+            "p95_ms": 0.039,
+            "speedup_pct": 98.96,
+            "oracles": {
+              "o1_tests_100pct": false,
+              "o2_quota_invariant": true,
+              "o3_law7_rss_lt80mb": true,
+              "o4_speedup_ge_10pct": true
+            },
+            "all_4_oracles_passed": false,
+            "shadow_candidate_emitted": false
+          },
+          {
+            "node_id": "dgm_108549d3",
+            "variant": "mutant_fast_reject_precompile",
+            "p95_ms": 0.1549,
+            "speedup_pct": 95.85,
+            "oracles": {
+              "o1_tests_100pct": true,
+              "o2_quota_invariant": true,
+              "o3_law7_rss_lt80mb": true,
+              "o4_speedup_ge_10pct": true
+            },
+            "all_4_oracles_passed": true,
+            "shadow_candidate_emitted": true
+          }
+        ],
+        "shadow_winner": {
+          "node_id": "dgm_108549d3",
+          "variant": "mutant_fast_reject_precompile",
+          "p95_ms": 0.1549,
+          "speedup_pct": 95.85,
+          "oracles": {
+            "o1_tests_100pct": true,
+            "o2_quota_invariant": true,
+            "o3_law7_rss_lt80mb": true,
+            "o4_speedup_ge_10pct": true
+          },
+          "all_4_oracles_passed": true,
+          "shadow_candidate_emitted": true
+        },
+        "rejected_count": 1,
+        "elapsed_ms": 165.57
+      },
+      "svhome_aeon_status_ok": true,
+      "win_invariant_gate_pass": true,
+      "sv_invariant_gate_pass": true
+    },
+    "after_full_load_daemons": {
+      "win_chimera_pid": 25500,
+      "win_chimera_ram_mb": 71.71,
+      "win_law7_ok": true,
+      "sv_chimera_pid": 4098224,
+      "sv_chimera_ram_mb": 56.66,
+      "sv_law7_ok": true,
+      "mcp_tools_count": 41,
+      "win_gate_pass": true,
+      "sv_gate_pass": true
+    }
+  },
+  "finished_at": "2026-11-27T12:01:20+0700"
+}

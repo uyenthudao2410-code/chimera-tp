@@ -1,4 +1,5 @@
 import { createReadStream } from "node:fs";
+import { open } from "node:fs/promises";
 import { comparePeerPair, peerLimits } from "./cad_peer_metrics.mjs";
 import { createInterface } from "node:readline";
 
@@ -49,7 +50,17 @@ export async function inspectFrames(csvPath, pid, fromMs, untilMs, requestedChai
   if (!Number.isSafeInteger(pid) || pid <= 0 || !(untilMs > fromMs)) {
     throw new Error("A process ID and a positive QPC interval are required");
   }
-  const reader = createInterface({ input: createReadStream(csvPath, { encoding: "utf8" }), crlfDelay: Infinity });
+  // PresentMon 2.6 writes UTF-16LE with a BOM to redirected stdout on Windows.
+  // Its --output_file mode and previously recorded traces use UTF-8.
+  const file = await open(csvPath, "r");
+  const bom = Buffer.alloc(2);
+  try {
+    await file.read(bom, 0, bom.length, 0);
+  } finally {
+    await file.close();
+  }
+  const encoding = bom.readUInt16LE() === 0xfeff ? "utf16le" : "utf8";
+  const reader = createInterface({ input: createReadStream(csvPath, { encoding }), crlfDelay: Infinity });
   const samples = new Map();
   let columns;
   let dropped = 0;
@@ -103,7 +114,7 @@ export async function inspectFrames(csvPath, pid, fromMs, untilMs, requestedChai
   };
 }
 
-export function comparePairs(rows, serviceBudgetMs) {
+export function comparePairs(rows, serviceBudgetMs, deferrals = []) {
   const pairs = new Map();
   for (const run of rows) {
     if (!pairs.has(run.pair)) pairs.set(run.pair, {});
@@ -113,7 +124,7 @@ export function comparePairs(rows, serviceBudgetMs) {
   }
   const p99Reduction = [], jobIncrease = [];
   const issues = [];
-  const peerBreaches = [];
+  const peerBreaches = deferrals.map(d => `pair ${d.pair}, attempt arm ${d.arm_index}: receiver deferred ${d.reason}`);
   if (rows.some((r, i) => {
     const pair = Math.floor(i / 2) + 1;
     const localFirst = (pair % 2) === 1;

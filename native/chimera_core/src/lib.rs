@@ -2944,3 +2944,151 @@ pub unsafe extern "C" fn chimera_focus_state(
         if !out_auto_wakes.is_null() { *out_auto_wakes = 0; }
     }
 }
+
+// ---------------------------------------------------------------------------
+// CHIMERA-DYNAMO / AEON: Zero-NumPy Hardware POPCNT Batch VSA & 10K Encoder
+// Bit-exact with native/chimera_core/src/vsa_simd.c and Python fallback.
+// ---------------------------------------------------------------------------
+
+#[inline(always)]
+fn is_vsa_tok_byte(b: u8) -> bool {
+    b.is_ascii_alphanumeric() || matches!(b, b'_' | b'/' | b'.' | b':' | b'-')
+}
+
+#[inline(always)]
+fn vsa_splitmix64(state: &mut u64) -> u64 {
+    *state = state.wrapping_add(0x9E37_79B9_7F4A_7C15);
+    let mut z = *state;
+    z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
+    z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
+    z ^ (z >> 31)
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn chimera_vsa_hamming_batch(
+    query: *const u8,
+    matrix: *const u8,
+    rows: usize,
+    bytes_per_row: usize,
+    out_dist: *mut u32,
+) -> i32 {
+    if query.is_null() || matrix.is_null() || out_dist.is_null() || bytes_per_row == 0 {
+        return -1;
+    }
+    if rows == 0 {
+        return 0;
+    }
+    let q_chunks = bytes_per_row / 8;
+    let rem_off = q_chunks * 8;
+    let rem_len = bytes_per_row - rem_off;
+    for r in 0..rows {
+        let row_ptr = matrix.add(r * bytes_per_row);
+        let mut acc: u32 = 0;
+        let mut c = 0usize;
+        while c + 4 <= q_chunks {
+            let off0 = c * 8;
+            let a0 = ptr::read_unaligned(query.add(off0) as *const u64);
+            let b0 = ptr::read_unaligned(row_ptr.add(off0) as *const u64);
+            let a1 = ptr::read_unaligned(query.add(off0 + 8) as *const u64);
+            let b1 = ptr::read_unaligned(row_ptr.add(off0 + 8) as *const u64);
+            let a2 = ptr::read_unaligned(query.add(off0 + 16) as *const u64);
+            let b2 = ptr::read_unaligned(row_ptr.add(off0 + 16) as *const u64);
+            let a3 = ptr::read_unaligned(query.add(off0 + 24) as *const u64);
+            let b3 = ptr::read_unaligned(row_ptr.add(off0 + 24) as *const u64);
+            acc = acc
+                .wrapping_add((a0 ^ b0).count_ones())
+                .wrapping_add((a1 ^ b1).count_ones())
+                .wrapping_add((a2 ^ b2).count_ones())
+                .wrapping_add((a3 ^ b3).count_ones());
+            c += 4;
+        }
+        while c < q_chunks {
+            let off = c * 8;
+            let a = ptr::read_unaligned(query.add(off) as *const u64);
+            let b = ptr::read_unaligned(row_ptr.add(off) as *const u64);
+            acc = acc.wrapping_add((a ^ b).count_ones());
+            c += 1;
+        }
+        for i in 0..rem_len {
+            let x = *query.add(rem_off + i) ^ *row_ptr.add(rem_off + i);
+            acc = acc.wrapping_add(x.count_ones());
+        }
+        *out_dist.add(r) = acc;
+    }
+    0
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn chimera_vsa_encode_10k(
+    text: *const u8,
+    text_len: usize,
+    out_buf: *mut u8,
+    out_bytes: usize,
+) -> i32 {
+    if out_buf.is_null() || out_bytes == 0 || out_bytes > 2048 {
+        return -1;
+    }
+    let n_bits = out_bytes * 8;
+    let mut acc = [0i16; 16384];
+    let bytes: &[u8] = if text.is_null() || text_len == 0 {
+        &[]
+    } else {
+        std::slice::from_raw_parts(text, text_len)
+    };
+
+    let mut tok_hashes = [0u64; 128];
+    let mut tok_count = 0usize;
+    let mut i = 0usize;
+    while i < bytes.len() && tok_count < 128 {
+        while i < bytes.len() && !is_vsa_tok_byte(bytes[i]) {
+            i += 1;
+        }
+        if i >= bytes.len() {
+            break;
+        }
+        let mut h: u64 = 0xcbf2_9ce4_8422_2325;
+        while i < bytes.len() && is_vsa_tok_byte(bytes[i]) {
+            let lc = bytes[i].to_ascii_lowercase();
+            h ^= lc as u64;
+            h = h.wrapping_mul(0x0000_0100_0000_01B3);
+            i += 1;
+        }
+        tok_hashes[tok_count] = h;
+        tok_count += 1;
+    }
+    if tok_count == 0 {
+        let mut h: u64 = 0xcbf2_9ce4_8422_2325;
+        for &ch in b"empty" {
+            h ^= ch as u64;
+            h = h.wrapping_mul(0x0000_0100_0000_01B3);
+        }
+        tok_hashes[0] = h;
+        tok_count = 1;
+    }
+
+    let n_u64 = (n_bits + 63) / 64;
+    for t in 0..tok_count {
+        let mut st = tok_hashes[t];
+        for w_idx in 0..n_u64 {
+            let word = vsa_splitmix64(&mut st);
+            let base = w_idx * 64;
+            let limit = (n_bits - base).min(64);
+            for bit in 0..limit {
+                acc[base + bit] += if ((word >> bit) & 1) != 0 { 1 } else { -1 };
+            }
+        }
+    }
+
+    let out_slice = std::slice::from_raw_parts_mut(out_buf, out_bytes);
+    for b_idx in 0..out_bytes {
+        let base = b_idx * 8;
+        let mut byte_val = 0u8;
+        for bit in 0..8 {
+            if acc[base + bit] >= 0 {
+                byte_val |= 1u8 << bit;
+            }
+        }
+        out_slice[b_idx] = byte_val;
+    }
+    0
+}

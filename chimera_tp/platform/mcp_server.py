@@ -493,6 +493,7 @@ _TOOLS = [
                 "offload_peer": {"type": "boolean", "default": False},
                 "peer_host": {"type": "string", "default": "svhome"},
                 "peer_repo": {"type": "string"},
+                "generations": {"type": "integer", "default": 1, "description": "Mirror-Race 2.0 evolutionary breeding rounds (1=classic, 2-3=multi-generation AST/hunk crossover breeding)."},
             },
             "required": ["repo", "candidates"],
         },
@@ -603,6 +604,318 @@ _TOOLS = [
                 "dry_run": {"type": "boolean", "default": False},
                 "epoch_id": {"type": "string"},
                 "rollback_dir": {"type": "string"},
+            },
+            "required": ["action"],
+        },
+    },
+    {
+        "name": "chimera_darwin",
+        "description": "CHIMERA-DARWIN (Zero-Backprop Evolution Strategies Engine): Run Law-6 Shadow ES policy optimization (es_param), Zero-Backprop forward-only neural seed-ES (neural_evolve), Prompt-ES harness evolution (prompt_evolve), 128-byte weightless .genome.json export/import/replay, or idle-gated sleep_cycle.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string",
+                    "enum": ["status", "es_param", "neural_evolve", "prompt_evolve", "genome_export", "genome_import", "genome_replay", "genome_list", "sleep_cycle"],
+                    "default": "status",
+                },
+                "repo": {"type": "string"},
+                "generations": {"type": "integer"},
+                "pop_size": {"type": "integer"},
+                "sigma": {"type": "number"},
+                "alpha": {"type": "number"},
+                "base_seed": {"type": "integer"},
+                "genome_id": {"type": "string"},
+                "genome": {"type": "object"},
+                "apply_immune": {"type": "boolean", "default": False},
+                "force": {"type": "boolean", "default": False},
+                "receipt_path": {"type": "string"},
+            },
+            "required": ["action"],
+        },
+    },
+    {
+        "name": "chimera_aeon",
+        "description": "CHIMERA-DYNAMO / AEON Unified Evolution Engine: Chrono-Synapse SHA-256-TTL shared memory, 10K-bit Fractal VSA Recall (CPU or GTX 1650 Green-PTX popc.b32), Titans Surprise Log Compactor, EAGLE-Action PASTE/sPTC partial-JSON pre-executor, 8D Homeostasis Governor (effort_mutation_allowed=false), and 4-Oracle Mini-DGM Archive.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string",
+                    "enum": [
+                        "status",
+                        "synapse_record",
+                        "synapse_query",
+                        "ingest_briefs",
+                        "fractal_recall",
+                        "cheatsheet",
+                        "titans_compact",
+                        "sptc_speculate",
+                        "paste_predict",
+                        "nixl_publish",
+                        "nixl_drain",
+                        "ptx_lease_status",
+                        "ptx_release_lease",
+                        "homeostasis",
+                        "prism_status",
+                        "prism_quota_oracle",
+                        "nexus_status",
+                        "hippo_ppr_recall",
+                        "turn0_crystal",
+                        "chrono_fork",
+                        "reality_twin_check",
+                        "dgm_step",
+                        "dgm_archive",
+                        "green_ptx_bench",
+                    ],
+                    "default": "status",
+                },
+                "repo": {"type": "string"},
+                "file_path": {"type": "string"},
+                "file_paths": {"type": "array", "items": {"type": "string"}},
+                "fact_text": {"type": "string"},
+                "symbol": {"type": "string"},
+                "agent_id": {"type": "string"},
+                "query": {"type": "string"},
+                "top_k": {"type": "integer"},
+                "use_gpu": {"type": "boolean", "default": False},
+                "max_bytes": {"type": "integer"},
+                "max_rows": {"type": "integer"},
+                "text": {"type": "string"},
+                "max_chars": {"type": "integer"},
+                "max_lines": {"type": "integer"},
+                "tool_name": {"type": "string"},
+                "partial_args": {"type": "string"},
+                "tool": {"type": "string"},
+                "rows": {"type": "integer"},
+                "min_speedup_pct": {"type": "number"},
+                "limit": {"type": "integer"},
+            },
+            "required": ["action"],
+        },
+    },
+    {
+        "name": "chimera_noosphere",
+        "description": "CHIMERA-NOOSPHERE Living Self-Evolving Organism (5 Organs): AutonomicLivingPulse heartbeat, ImmuneSelfHealingReflex (pain score, Law 7 RSS self-trim, Hive antibodies, <3ms rollback proposals), GlobalWorkspaceCortex + MetacognitiveObserver (anti-tunnel-vision & single-account KV saturation), NocturnalDreamConsolidator (NREM+REM -> Morning Epiphany Brief, Law 6 shadow-only), and SubconsciousSideQueryEngine (<3ms, 0 Google tokens).",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string",
+                    "enum": [
+                        "status",
+                        "tick",
+                        "workspace",
+                        "publish_fact",
+                        "merge_workspace",
+                        "dream",
+                        "epiphany",
+                        "metacognition",
+                        "subconscious",
+                        "sync_peer",
+                    ],
+                    "default": "status",
+                },
+                "repo": {"type": "string"},
+                "peer_base": {"type": "string"},
+                "kind": {"type": "string"},
+                "summary": {"type": "string"},
+                "text": {"type": "string"},
+                "source": {"type": "string"},
+                "salience": {"type": "number"},
+                "file_path": {"type": "string"},
+                "file_sha256": {"type": "string"},
+                "ttl_s": {"type": "number"},
+                "limit": {"type": "integer"},
+                "reason": {"type": "string"},
+                "prompt": {"type": "string"},
+                "category": {"type": "string"},
+                "system_instruction": {"type": "string"},
+                "max_words": {"type": "integer"},
+                "event_kind": {"type": "string"},
+                "target": {"type": "string"},
+                "tokens": {"type": "integer"},
+                "session_id": {"type": "string"},
+                "detail": {"type": "string"},
+                "run_darwin_shadow": {"type": "boolean", "default": False},
+                "sample_network": {"type": "boolean", "default": True},
+                "tquota_base": {"type": "string"},
+            },
+            "required": ["action"],
+        },
+    },
+    {
+        "name": "chimera_eidolon",
+        "description": "CHIMERA-EIDOLON + IMMORTAL-RELAY + Moonshot #2-#5 Exoskeleton: SHA-256 Verified Out-of-Band Scout, Silent Adversarial Fuzzer (0 tok on PASS), Counterfactual A/B Reality Simulator, Precog Shadow Twin (off-Windows delta verify), Zero-Cliff Pre-Compaction Crystal Bridge, Autopoiesis Shadow Healer (Law 6), Ecosystem Synesthesia Cross-Project Memory, Cross-Thread Panopticon, and Zero-Friendly-Fire Deploy Gate.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string",
+                    "enum": [
+                        "status",
+                        "scout",
+                        "fuzz",
+                        "counterfactual",
+                        "precog_verify",
+                        "zero_cliff",
+                        "autopoiesis",
+                        "synesthesia_index",
+                        "synesthesia_recall",
+                        "panopticon",
+                        "deploy_gate",
+                    ],
+                    "default": "status",
+                },
+                "repo": {"type": "string"},
+                "pattern": {"type": "string"},
+                "query": {"type": "string"},
+                "file_paths": {"type": "array", "items": {"type": "string"}},
+                "rel_path": {"type": "string"},
+                "content": {"type": "string"},
+                "sha256": {"type": "string"},
+                "offload_to_peer": {"type": "boolean", "default": False},
+                "session_id": {"type": "string"},
+                "prompt_tokens": {"type": "integer"},
+                "service": {"type": "string"},
+                "top_k": {"type": "integer"},
+                "max_tokens": {"type": "integer"},
+            },
+            "required": ["action"],
+        },
+    },
+    {
+        "name": "chimera_mnemosyne",
+        "description": "CHIMERA-MNEMOSYNE Unified Zero-Loss Raw-Memory & Zero-Shell Execution: 950MB Cross-Brain AKASHIC-RAW (Codex+Antigravity+T3) with CAUSAL-RAW-RAG threading & Live Reality Stamp, Lossless PDF/DOCX page reader, SessionStart BirthPrimer, PreToolUse Shell Short-Circuit, Warm Python REPL + Singleflight, 0-token Swarm Watchdog, Commit RAM Entropy Audit, and Nocturnal Raw-Arena A/B.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string",
+                    "enum": [
+                        "status",
+                        "prime",
+                        "raw_recall",
+                        "raw_ingest",
+                        "raw_slice",
+                        "doc_digest",
+                        "doc_page",
+                        "shell_guard",
+                        "warm_repl",
+                        "entropy_audit",
+                        "swarm_watchdog",
+                        "raw_arena",
+                    ],
+                    "default": "status",
+                },
+                "repo": {"type": "string"},
+                "query": {"type": "string"},
+                "top_k": {"type": "integer", "default": 8},
+                "causal_hops": {"type": "integer", "default": 1},
+                "use_codex_rerank": {"type": "boolean", "default": False},
+                "raw_ref_id": {"type": "string"},
+                "rel_path": {"type": "string"},
+                "page": {"type": "integer", "default": 1},
+                "cmd": {"type": "string"},
+                "output_text": {"type": "string"},
+                "code": {"type": "string"},
+                "cid": {"type": "string"},
+                "sample_n": {"type": "integer", "default": 12},
+            },
+            "required": ["action"],
+        },
+    },
+    {
+        "name": "chimera_bios_status",
+        "description": "CHIMERA-BIOS Open Ecosystem Soul: Inspect full 10-organ living organism status, Law 1-7 compliance, RSS telemetry, and optional machine-readable Open ABI manifest (0 B boot RSS until accessed).",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "include_abi": {"type": "boolean", "default": False},
+            },
+            "required": [],
+        },
+    },
+    {
+        "name": "chimera_bios_hormones",
+        "description": "CHIMERA-ENDOCRINE (BIOS #1): Read live 6-hormone soup (adrenaline, cortisol, dopamine, melatonin, cytokine, oxytocin) synced to 24-byte NIXL mmap bytes 32..63, or secrete / adjust Oxytocin trust / inflame Cytokine locus.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "action": {"type": "string", "enum": ["get", "secrete", "trust", "inflame", "clear_inflammation", "decay"], "default": "get"},
+                "hormone": {"type": "string", "enum": ["adrenaline", "cortisol", "dopamine", "melatonin", "cytokine", "oxytocin"]},
+                "delta": {"type": "number"},
+                "source": {"type": "string", "default": "mcp"},
+                "target": {"type": "string"},
+                "app_id": {"type": "string"},
+                "locus": {"type": "string"},
+                "intensity": {"type": "number"},
+                "reason": {"type": "string"},
+                "dt_s": {"type": "number"},
+            },
+            "required": [],
+        },
+    },
+    {
+        "name": "chimera_bios_pheromone",
+        "description": "CHIMERA-STIGMERGY (BIOS #6): Query <40-token pheromone smell-card & co-edit prefetch trails for a file, deposit alarm pheromones, record co-edit trails, apply epigenetic methylation, or evaporate old signals (0 repo file mutations).",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "repo": {"type": "string", "default": "."},
+                "rel_path": {"type": "string", "default": ""},
+                "action": {"type": "string", "enum": ["smell", "alarm", "coedit", "methylate", "evaporate", "status"]},
+                "alarm": {"type": "object"},
+                "coedits": {"type": "array", "items": {"type": "string"}},
+                "methylation": {"type": "object"},
+                "signal_kind": {"type": "string"},
+                "severity": {"type": "number"},
+                "reason": {"type": "string"},
+                "gene_policy": {"type": "string"},
+                "strength": {"type": "number"},
+                "max_tokens": {"type": "integer", "default": 40},
+            },
+            "required": [],
+        },
+    },
+    {
+        "name": "chimera_bios_soul",
+        "description": "CHIMERA-SOUL (BIOS #10): Export <=500-token SHA-256-verified, model-agnostic Autobiographical Soul Capsule (Gemini/Codex/Claude/local) or record an immutable evolutionary scar / preference.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "action": {"type": "string", "enum": ["capsule", "scar"], "default": "capsule"},
+                "query": {"type": "string", "default": ""},
+                "target_model": {"type": "string", "default": "any"},
+                "max_tokens": {"type": "integer", "default": 500},
+                "title": {"type": "string"},
+                "event_date": {"type": "string"},
+                "root_cause": {"type": "string"},
+                "lesson_law": {"type": "string"},
+                "hardware_context": {"type": "string"},
+                "tags": {"type": "array", "items": {"type": "string"}},
+                "severity": {"type": "string", "default": "high"},
+            },
+            "required": [],
+        },
+    },
+    {
+        "name": "chimera_bios_evolve",
+        "description": "CHIMERA-BIOS Unified Evolution & Active-Inference Dispatcher: Execute closed-loop pulse, Friston Active Inference predict/plan, Autophagy metabolic scan/Apoptosis proposal, Red-Queen Parasite arena, HGT Plasmid scan/graft, Octopus ganglia reconcile, Umwelt seismograph, or Mycelium spore ops (strictly Law-6 auto_activated=False).",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "type": "string",
+                    "enum": ["pulse", "predict", "autophagy", "parasite", "hgt", "ganglia", "umwelt", "spore"],
+                    "default": "pulse",
+                },
+                "sub_action": {"type": "string"},
+                "obs": {"type": "object"},
+                "context": {"type": "string", "default": "general"},
+                "horizon_s": {"type": "number", "default": 60.0},
+                "rounds": {"type": "integer", "default": 4},
+                "payload": {"type": "object"},
             },
             "required": ["action"],
         },
@@ -961,6 +1274,7 @@ def handle_mcp_request(msg: dict[str, Any], anchor_url: str | None = None) -> di
                     offload_peer=bool(args.get("offload_peer", False)),
                     peer_host=str(args.get("peer_host") or "svhome"),
                     peer_repo=(str(args["peer_repo"]) if args.get("peer_repo") else None),
+                    generations=int(args.get("generations") or 1),
                 )
             elif tname == "chimera_coroner":
                 out = client.agent_coroner(
@@ -1002,6 +1316,131 @@ def handle_mcp_request(msg: dict[str, Any], anchor_url: str | None = None) -> di
                     str(args.get("action") or "status"),
                     **{k: v for k, v in args.items() if k != "action"},
                 )
+            elif tname == "chimera_darwin":
+                out = client.agent_darwin(
+                    str(args.get("action") or "status"),
+                    **{k: v for k, v in args.items() if k != "action"},
+                )
+            elif tname == "chimera_aeon":
+                out = client.agent_aeon(
+                    str(args.get("action") or "status"),
+                    **{k: v for k, v in args.items() if k != "action"},
+                )
+            elif tname == "chimera_noosphere":
+                out = client.agent_noosphere(
+                    str(args.get("action") or "status"),
+                    **{k: v for k, v in args.items() if k != "action"},
+                )
+            elif tname == "chimera_eidolon":
+                out = client.agent_eidolon(
+                    str(args.get("action") or "status"),
+                    **{k: v for k, v in args.items() if k != "action"},
+                )
+            elif tname == "chimera_mnemosyne":
+                out = client.agent_mnemosyne(
+                    str(args.get("action") or "status"),
+                    **{k: v for k, v in args.items() if k != "action"},
+                )
+            elif tname == "chimera_bios_status":
+                st_b = client.bios_status()
+                if bool(args.get("include_abi", False)):
+                    abi_b = client.bios_abi()
+                    compact_st = {k: v for k, v in st_b.items() if k != "organs"}
+                    compact_st["organ_names"] = sorted((st_b.get("organs") or {}).keys())
+                    out = {**compact_st, "abi": abi_b}
+                else:
+                    out = st_b
+            elif tname == "chimera_bios_hormones":
+                act_h = str(args.get("action") or ("secrete" if args.get("hormone") else "get")).strip().lower()
+                if act_h == "get":
+                    out = client.bios_hormones()
+                elif act_h == "secrete":
+                    out = client.bios_hormones(
+                        secrete={
+                            "hormone": str(args.get("hormone") or "dopamine"),
+                            "delta": float(args.get("delta") or 0.0),
+                            "source": str(args.get("source") or "mcp"),
+                            "target": args.get("target"),
+                        }
+                    )
+                else:
+                    out = client.bios_hormones(
+                        action=act_h,
+                        **{k: v for k, v in args.items() if k != "action"},
+                    )
+            elif tname == "chimera_bios_pheromone":
+                act_p = str(args.get("action") or "").strip().lower() or None
+                alarm_arg = args.get("alarm") if isinstance(args.get("alarm"), dict) else None
+                if alarm_arg is None and (act_p == "alarm" or args.get("signal_kind")):
+                    alarm_arg = {
+                        "rel_path": str(args.get("rel_path") or "."),
+                        "signal_kind": str(args.get("signal_kind") or "regression"),
+                        "severity": float(args.get("severity") if args.get("severity") is not None else 0.6),
+                        "reason": str(args.get("reason") or ""),
+                    }
+                meth_arg = args.get("methylation") if isinstance(args.get("methylation"), dict) else None
+                if meth_arg is None and (act_p == "methylate" or args.get("gene_policy")):
+                    meth_arg = {
+                        "locus": str(args.get("rel_path") or "."),
+                        "gene_policy": str(args.get("gene_policy") or "extra_verify"),
+                        "strength": float(args.get("strength") if args.get("strength") is not None else 0.8),
+                        "reason": str(args.get("reason") or ""),
+                    }
+                out = client.bios_pheromone(
+                    str(args.get("repo") or "."),
+                    str(args.get("rel_path") or ""),
+                    alarm=alarm_arg,
+                    coedits=(list(args["coedits"]) if isinstance(args.get("coedits"), list) else None),
+                    action=act_p,
+                    methylation=meth_arg,
+                    max_tokens=int(args.get("max_tokens") or 40),
+                )
+            elif tname == "chimera_bios_soul":
+                act_s = str(args.get("action") or "capsule").strip().lower()
+                if act_s == "scar":
+                    out = client.bios_soul(
+                        scar={k: v for k, v in args.items() if k != "action"},
+                    )
+                else:
+                    out = client.bios_soul(
+                        query=str(args.get("query") or ""),
+                        target_model=str(args.get("target_model") or "any"),
+                        max_tokens=int(args.get("max_tokens") or 500),
+                    )
+            elif tname == "chimera_bios_evolve":
+                act_e = str(args.get("action") or "pulse").strip().lower()
+                sub_a = str(args.get("sub_action") or "").strip().lower()
+                pay = dict(args.get("payload") or {}) if isinstance(args.get("payload"), dict) else {}
+                if act_e == "pulse":
+                    out = client.bios_pulse(
+                        obs=(dict(args["obs"]) if isinstance(args.get("obs"), dict) else None),
+                        context=args.get("context"),
+                    )
+                elif act_e == "predict":
+                    out = client.bios_predict(
+                        obs=(dict(args["obs"]) if isinstance(args.get("obs"), dict) else {}),
+                        context=str(args.get("context") or "general"),
+                        horizon_s=float(args.get("horizon_s") or 60.0),
+                    )
+                elif act_e == "autophagy":
+                    out = client.bios_autophagy(action=sub_a or "status", payload=pay or None)
+                elif act_e == "parasite":
+                    out = client.bios_parasite(
+                        rounds=int(args.get("rounds") or 4),
+                        action=sub_a or "run",
+                        seed=pay.get("seed"),
+                    )
+                elif act_e == "hgt":
+                    out = client.bios_hgt(action=sub_a or "list", payload=pay or None)
+                elif act_e == "ganglia":
+                    out = client.bios_ganglia(action=sub_a or "status", payload=pay or None)
+                elif act_e == "umwelt":
+                    sig = pay if pay.get("event_kind") else (args.get("obs") if isinstance(args.get("obs"), dict) and args["obs"].get("event_kind") else None)
+                    out = client.bios_umwelt(signal=sig, action=sub_a or "assess")
+                elif act_e == "spore":
+                    out = client.bios_spore(action=sub_a or "list", payload=pay or None)
+                else:
+                    out = {"ok": False, "error": f"unknown_bios_evolve_action:{act_e}"}
             else:
                 return {
                     "jsonrpc": "2.0",
@@ -1024,6 +1463,16 @@ def handle_mcp_request(msg: dict[str, Any], anchor_url: str | None = None) -> di
                 "chimera_run_dag",
                 "chimera_worktree_epoch",
                 "chimera_release_promote",
+                "chimera_darwin",
+                "chimera_aeon",
+                "chimera_noosphere",
+                "chimera_eidolon",
+                "chimera_mnemosyne",
+                "chimera_bios_status",
+                "chimera_bios_hormones",
+                "chimera_bios_pheromone",
+                "chimera_bios_soul",
+                "chimera_bios_evolve",
             )
             payload_text = (
                 json.dumps(out, separators=(",", ":"), ensure_ascii=False)
@@ -1058,7 +1507,13 @@ def handle_mcp_request(msg: dict[str, Any], anchor_url: str | None = None) -> di
                     trimmed["spill_shield"] = {"capped": True, "raw_bytes": len(raw_b), "ref_id": ref_id}
                     payload_text = json.dumps(trimmed, separators=(",", ":"), ensure_ascii=False)
                     if len(payload_text.encode("utf-8", errors="replace")) > 8600:
-                        payload_text = payload_text[:8350] + f'...","spill_shield_ref":"{ref_id}"}}'
+                        slim_env = {
+                            "ok": bool(trimmed.get("ok", True)),
+                            "spill_shield": {"capped": True, "raw_bytes": len(raw_b), "ref_id": ref_id},
+                            "keys": sorted(trimmed.keys())[:24],
+                            "preview": payload_text[:7000],
+                        }
+                        payload_text = json.dumps(slim_env, separators=(",", ":"), ensure_ascii=False)
             return {
                 "jsonrpc": "2.0",
                 "id": req_id,

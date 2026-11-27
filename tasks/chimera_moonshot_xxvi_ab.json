@@ -1,0 +1,207 @@
+{
+  "schema": "chimera.moonshot.xxvi.ab.v1",
+  "ts": 1795766972.115,
+  "ab1_steer_preempt_1416": {
+    "before_wait_ms": 12200,
+    "before_503_count": 11,
+    "after_preempt_ms": 0.213,
+    "after_503_count": 0,
+    "preempted": true
+  },
+  "ab2_eidolon_sha256_scout": {
+    "files_scanned": 23,
+    "raw_bytes_scanned": 778997,
+    "capsule_bytes": 1613,
+    "estimated_capsule_tokens": 403,
+    "bloat_reduction_pct": 99.79,
+    "elapsed_ms": 28.88,
+    "google_tokens_used": 0
+  },
+  "ab3_silent_fuzzer": {
+    "ok": true,
+    "passed": true,
+    "silent": true,
+    "emitted_to_google_tokens": 0,
+    "files_checked": 3,
+    "elapsed_ms": 24.48,
+    "alert_card": null
+  },
+  "ab4_counterfactual_simulator": {
+    "ok": true,
+    "engine": "eidolon-counterfactual-simulator",
+    "google_tokens_used": 0,
+    "winner": "B_closed_form",
+    "summary_tokens": 15,
+    "comparison_table": "A_quadratic_slow:PASS(172.62ms) | B_closed_form:PASS(163.33ms)",
+    "variants": [
+      {
+        "name": "A_quadratic_slow",
+        "passed": true,
+        "elapsed_ms": 172.62,
+        "note": "PASS"
+      },
+      {
+        "name": "B_closed_form",
+        "passed": true,
+        "elapsed_ms": 163.33,
+        "note": "PASS"
+      }
+    ],
+    "wall_ms": 173.94
+  },
+  "ab5_ecosystem_synesthesia": {
+    "projects_indexed": [
+      ".ch-relay",
+      "Autocad",
+      "chimera-tp",
+      "makefun_entries"
+    ],
+    "memories_indexed": 160,
+    "index_ms": 7.45,
+    "recall_ms": 0.074,
+    "top_hit": {
+      "project": ".ch-relay",
+      "source": "tasks/lessons.md",
+      "text": "- **Prefix immutability:** Tuyệt đối không sửa `tool_result` lịch sử đã gửi ở lượt trước (phá Prompt Cache & chữ ký `thinking` của Anthropic); giữ nguyên `cache_control` / `ttl` của caller; không nâng ngầm `max_tokens` v",
+      "score": 0.0685
+    }
+  },
+  "ab6_live_panopticon_10h": {
+    "ok": true,
+    "window_s": 36000.0,
+    "elapsed_ms": 76.1,
+    "usage_rows_scanned": 400,
+    "steer_503_blocks": 1,
+    "http_499_aborts": 0,
+    "distinct_tquota_pids": 1,
+    "pid_churn": 0,
+    "codex_retries": 5,
+    "codex_connect_drops": 0,
+    "alerts": [],
+    "blue_green_recommended": false
+  },
+  "ab7_zero_cliff_crystal": {
+    "staged": true,
+    "trigger_prompt_tokens": 260000,
+    "crystal_tokens": 18,
+    "crystal_sha256": "e199e1423543704f"
+  },
+  "live_proof": {
+    "synced_win_dirs": [
+      "C:\\Users\\Admin\\AppData\\Local\\chimera\\releases\\65bbee57e75f",
+      "C:\\Users\\Admin\\AppData\\Local\\chimera\\releases\\962efbbc09a1"
+    ],
+    "synced_sv_dirs": [
+      "/home/svhome/.local/share/chimera/releases/65bbee57e75f",
+      "~/DEV/chimera-tp"
+    ],
+    "sha_drift": {
+      "win": 0,
+      "svhome_chimera": 0,
+      "svhome_tquota": 0
+    },
+    "windows_tquota_maintenance_gate": {
+      "ok": true,
+      "idle_reached": true,
+      "waited_ms": 0.0,
+      "probe": {
+        "reachable": true,
+        "pid": 31264,
+        "active_streams": 0,
+        "active_detached": 0,
+        "busy": false
+      }
+    },
+    "windows_tquota_restarted": true,
+    "live_precog_offload_to_svhome": {
+      "ok": true,
+      "rel_path": "live_probe.py",
+      "sha256": "146aab573b9f3c2a",
+      "passed": true,
+      "error": "",
+      "executed_on": "peer_svhome",
+      "cache_hit": false,
+      "elapsed_ms": 0.12,
+      "rtt_ms": 25.65
+    },
+    "live_autopoiesis": {
+      "ok": true,
+      "mode": "shadow_only",
+      "auto_activated": false,
+      "top_finding": {
+        "defect": "FRIENDLY_FIRE_PID_CHURN",
+        "target": "chimera_tp/platform/immortal_relay.py",
+        "proposal": "Route all Tquota upgrades through SwarmMaintenanceLock + Blue-Green ImmortalSocketShield.",
+        "priority": "P0"
+      }
+    },
+    "live_synesthesia": {
+      "ok": true,
+      "engine": "chimera-synesthesia-v1",
+      "projects_indexed": [
+        ".ch-relay",
+        "Autocad",
+        "chimera-tp",
+        "makefun_entries"
+      ],
+      "memories_indexed": 160,
+      "elapsed_ms": 6.18
+    },
+    "live_deploy_gate": {
+      "ok": true,
+      "service": "tquota",
+      "force_kill_allowed": true,
+      "recommended_strategy": "allow_idle_restart",
+      "blue_green_required": false,
+      "probe": {
+        "reachable": true,
+        "pid": 7680,
+        "active_streams": 0,
+        "active_detached": 0,
+        "busy": false
+      },
+      "active_maintenance_locks": 0,
+      "blocked_restarts_total": 0,
+      "safe_grants_total": 1
+    },
+    "live_2way_sync": {
+      "ok": true,
+      "peer_base": "http://127.0.0.1:9789",
+      "rtt_ms": 25.73,
+      "pushed_ws": 1,
+      "pulled_ws": 0,
+      "local_ws_total": 5
+    },
+    "win_desktop": {
+      "rss_mb": 29.29,
+      "law7_rss_ok": true,
+      "pulse_alive": true,
+      "eidolon_ok": true,
+      "prism_ok": true,
+      "prism_gate": true
+    },
+    "svhome": {
+      "noosphere_rss_mb": 59.16,
+      "pulse_alive": true,
+      "bidirectional_sync": {
+        "enabled": true,
+        "sync_count": 4,
+        "sync_errors": 0,
+        "last_sync_ts": 1795767137.436,
+        "last_rtt_ms": 10.12,
+        "peer_vitals": {
+          "node": "DESKTOP-63643J4",
+          "rss_mb": 29.2,
+          "pain_score": 0.0,
+          "ticks": 1,
+          "pulse_alive": true,
+          "dreams_completed": 0,
+          "last_dream_ts": 0.0
+        }
+      },
+      "eidolon_ok": true,
+      "prism_ok": true,
+      "prism_gate": true
+    }
+  }
+}

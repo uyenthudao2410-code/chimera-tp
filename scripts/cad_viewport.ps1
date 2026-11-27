@@ -3,7 +3,8 @@ param(
     [Parameter(Mandatory)][string]$ProgId,
     [Parameter(Mandatory)][int]$OwnerPid,
     [Parameter(Mandatory)][int]$Arms,
-    [Parameter(Mandatory)][double]$Seconds
+    [Parameter(Mandatory)][double]$Seconds,
+    [string]$SecondaryDisplay
 )
 $ErrorActionPreference = 'Stop'
 $runRoot = (Resolve-Path -LiteralPath $RunDirectory).Path
@@ -24,6 +25,12 @@ public static class CadProbeWindow {
 }
 '@
 
+$script:secondary = $null
+if ($SecondaryDisplay) {
+    Add-Type -Path (Join-Path $PSScriptRoot 'CadSecondaryDisplay.cs') -ReferencedAssemblies System.Drawing,System.Windows.Forms
+    $script:secondary = New-Object CadSecondaryDisplay($SecondaryDisplay)
+}
+
 function Write-Marker([string]$Name, $Object) {
     $destination = Join-Path $runRoot $Name
     $tmp = $destination + '.tmp'
@@ -38,13 +45,27 @@ function Assert-Owner {
     }
 }
 
+function Invoke-CadWhenReady([scriptblock]$Call) {
+    $clock = [Diagnostics.Stopwatch]::StartNew()
+    while ($true) {
+        try { return (& $Call) } catch {
+            $hr = $_.Exception.GetBaseException().HResult
+            if ($hr -notin @(-2147418111, -2147417846) -or $clock.Elapsed.TotalSeconds -ge 35) { throw }
+            Assert-Owner
+            Start-Sleep -Milliseconds 160
+        }
+    }
+}
+
 function Wait-Signal([string]$Name) {
     $timer = [Diagnostics.Stopwatch]::StartNew()
     while (!(Test-Path -LiteralPath (Join-Path $runRoot $Name))) {
         Assert-Owner
+        if ($Name -like 'arm-*.go' -and (Test-Path -LiteralPath (Join-Path $runRoot 'finish'))) { return $false }
         if ($timer.Elapsed.TotalSeconds -gt 160) { throw "Timed out awaiting $Name" }
         Start-Sleep -Milliseconds 25
     }
+    return $true
 }
 
 function Qpc-Ms {
@@ -60,21 +81,30 @@ function Invoke-Camera([double]$Phase) {
     $dy = $script:height * $scale / 2
     [double[]]$lo = @(($cx - $dx), ($cy - $dy), $script:viewZ)
     [double[]]$hi = @(($cx + $dx), ($cy + $dy), $script:viewZ)
-    $script:acad.ZoomWindow($lo, $hi)
+    Invoke-CadWhenReady { $script:acad.ZoomWindow($lo, $hi) }
 }
 
 function Invoke-Sweep([double]$Duration) {
     $clock = [Diagnostics.Stopwatch]::StartNew()
     $changes = 0
     $foregroundMisses = 0
+    $exposureMisses = 0
     $missStart = $null
     $elapsedObscured = 0.0
     $started = Qpc-Ms
     while ($clock.Elapsed.TotalSeconds -lt $Duration) {
         $t = $clock.Elapsed.TotalSeconds
         $foreground = [CadProbeWindow]::GetForegroundWindow()
-        if ($foreground -ne $script:window -or [CadProbeWindow]::IsIconic($script:window)) {
-            $foregroundMisses++
+        $front = $foreground -eq $script:window
+        if (-not $front) { $foregroundMisses++ }
+        if ($null -ne $script:secondary) {
+            if (-not $script:secondary.Contained($script:window)) { throw 'AutoCAD left the secondary display' }
+            $exposed = $script:secondary.Exposed($script:window)
+        } else {
+            $exposed = $front -and -not [CadProbeWindow]::IsIconic($script:window)
+        }
+        if (-not $exposed) {
+            $exposureMisses++
             if ($null -eq $missStart) { $missStart = $t }
         } elseif ($null -ne $missStart) {
             $elapsedObscured += $t - $missStart
@@ -89,7 +119,7 @@ function Invoke-Sweep([double]$Duration) {
     }
     if ($null -ne $missStart) { $elapsedObscured += $clock.Elapsed.TotalSeconds - $missStart }
     return @{from_qpc_ms=$started; until_qpc_ms=(Qpc-Ms); zoom_calls=$changes;
-             foreground_misses=$foregroundMisses; obscured_s=$elapsedObscured}
+             foreground_misses=$foregroundMisses; exposure_misses=$exposureMisses; obscured_s=$elapsedObscured}
 }
 
 $before = @(Get-Process -Name acad -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Id)
@@ -98,24 +128,57 @@ $doc = $null
 $exitCode = 0
 try {
     $script:acad = New-Object -ComObject $ProgId
-    $script:window = [IntPtr]([long]$script:acad.HWND)
-    [uint32]$cadProcess = 0
-    [void][CadProbeWindow]::GetWindowThreadProcessId($script:window, [ref]$cadProcess)
-    $process = Get-Process -Id $cadProcess -ErrorAction Stop
-    if ($script:window -eq [IntPtr]::Zero -or $before -contains $cadProcess -or $process.ProcessName -ne 'acad') {
-        throw 'AutoCAD did not return a new, isolated instance'
+    # COM can return before the main window exists. PID 0 at this point is Idle.
+    $waitForWindow = [Diagnostics.Stopwatch]::StartNew()
+    do {
+        Assert-Owner
+        $script:window = [IntPtr]([long](Invoke-CadWhenReady { $script:acad.HWND }))
+        [uint32]$cadProcess = 0
+        if ($script:window -ne [IntPtr]::Zero) {
+            [void][CadProbeWindow]::GetWindowThreadProcessId($script:window, [ref]$cadProcess)
+        }
+        if ($cadProcess) {
+            $process = Get-Process -Id $cadProcess -ErrorAction SilentlyContinue
+            if ($null -ne $process -and $process.ProcessName -eq 'acad') { break }
+        }
+        Start-Sleep -Milliseconds 150
+    } while ($waitForWindow.Elapsed.TotalSeconds -lt 45)
+    if ($cadProcess -eq 0 -or $before -contains $cadProcess -or $null -eq $process -or $process.ProcessName -ne 'acad') {
+        throw "Expected a new isolated acad.exe, got PID $cadProcess, HWND $($script:window), previous PIDs [$($before -join ',')]"
     }
     $owned = $true
-    $script:acad.Visible = $true
-    $doc = $script:acad.Documents.Open($drawing, $true)
-    if ([IO.Path]::GetFullPath($doc.FullName) -ne $drawing) { throw 'Unexpected active drawing' }
-    $doc.Activate()
-    [void][CadProbeWindow]::ShowWindow($script:window, 3)
-    [void][CadProbeWindow]::SetForegroundWindow($script:window)
-    $doc.ActiveSpace = 1
-    $script:acad.ZoomExtents()
-    $min = $doc.GetVariable('EXTMIN')
-    $max = $doc.GetVariable('EXTMAX')
+    $startup = @(Invoke-CadWhenReady { $script:acad.Documents | Where-Object { $_.Saved -and [int]$_.GetVariable('DBMOD') -eq 0 } | ForEach-Object { $_.FullName } })
+    if ($null -ne $script:secondary) {
+        $script:secondary.Place($script:window, $true)
+    } else {
+        $script:acad.Visible = $true
+    }
+    # Document.Open may return before the COM document has a FullName. Open once,
+    # then bind only to the requested read-only member of this new instance.
+    Invoke-CadWhenReady { [void]$script:acad.Documents.Open($drawing, $true) }
+    $loading = [Diagnostics.Stopwatch]::StartNew()
+    do {
+        Assert-Owner
+        $active = Invoke-CadWhenReady { $script:acad.ActiveDocument }
+        $full = Invoke-CadWhenReady { $active.FullName }
+        if ($full -and [IO.Path]::GetFullPath($full) -eq $drawing -and (Invoke-CadWhenReady { $active.ReadOnly })) {
+            $doc = $active
+            break
+        }
+        Start-Sleep -Milliseconds 200
+    } while ($loading.Elapsed.TotalSeconds -lt 40)
+    if ($null -eq $doc) { throw "Dedicated CAD did not finish loading the requested read-only drawing (active: $full)" }
+    if ($null -ne $script:secondary) {
+        $script:secondary.Place($script:window, $true)
+    } else {
+        $doc.Activate()
+        [void][CadProbeWindow]::ShowWindow($script:window, 3)
+        [void][CadProbeWindow]::SetForegroundWindow($script:window)
+    }
+    Invoke-CadWhenReady { $doc.ActiveSpace = 1 }
+    Invoke-CadWhenReady { $script:acad.ZoomExtents() }
+    $min = Invoke-CadWhenReady { ,$doc.GetVariable('EXTMIN') }
+    $max = Invoke-CadWhenReady { ,$doc.GetVariable('EXTMAX') }
     $script:width = [double]$max[0] - [double]$min[0]
     $script:height = [double]$max[1] - [double]$min[1]
     if ($script:width -le 0 -or $script:height -le 0 -or
@@ -123,26 +186,31 @@ try {
     $script:middleX = [double]$min[0] + $script:width / 2
     $script:middleY = [double]$min[1] + $script:height / 2
     $script:viewZ = [double]$min[2]
+    $bounds = $null
+    if ($null -ne $script:secondary) {
+        $bounds = $script:secondary.Bounds
+        if (-not $script:secondary.Exposed($script:window)) { throw 'Secondary viewport is not exposed' }
+    }
     $warm = Invoke-Sweep 2.0
     Write-Marker 'ready.json' @{pid=$cadProcess; drawing=$doc.FullName; version=$script:acad.Version;
-                                width=$script:width; height=$script:height; warmup=$warm}
+                                width=$script:width; height=$script:height; warmup=$warm; display=$SecondaryDisplay; bounds=$bounds}
     for ($i=0; $i -lt $Arms; $i++) {
-        Wait-Signal "arm-$i.go"
-        if ($script:acad.ActiveDocument.FullName -ne $drawing) { throw 'The active document changed' }
+        if (!(Wait-Signal "arm-$i.go")) { break }
+        if ((Invoke-CadWhenReady { $script:acad.ActiveDocument.FullName }) -ne $drawing) { throw 'The active document changed' }
         $run = Invoke-Sweep $Seconds
         Write-Marker "arm-$i.done.json" $run
     }
-    Wait-Signal 'finish'
+    [void](Wait-Signal 'finish')
 } catch {
     Write-Marker 'error.json' @{message=$_.Exception.Message; line=$_.InvocationInfo.ScriptLineNumber}
     $exitCode = 1
 } finally {
     if ($owned) {
-        if ($null -ne $doc) { try { $doc.Close($false) } catch { } }
+        if ($null -ne $doc) { try { $doc.Close($false); Start-Sleep -Milliseconds 350 } catch { } }
         # Quit our instance only while it contains exclusively unmodified, untitled startup drawings.
         try {
             $other = @($script:acad.Documents | Where-Object {
-                -not [string]::IsNullOrEmpty($_.Path) -or [int]$_.GetVariable('DBMOD') -ne 0
+                $startup -notcontains $_.FullName -or -not $_.Saved -or [int]$_.GetVariable('DBMOD') -ne 0
             })
             if ($other.Count -eq 0) { $script:acad.Quit() }
         } catch { }

@@ -1,0 +1,90 @@
+{
+  "schema": "chimera.development-sync/1",
+  "scope": "Sentinel and legacy packaging changes from the integration branch into the Linux development checkout",
+  "source_commit": "3c3c8e0",
+  "development_root": "/home/svhome/DEV/chimera-tp",
+  "matched_paths": 22,
+  "matched_files": 14,
+  "moved_from_old_paths": 8,
+  "serving_pid_at_sync": 4148213,
+  "backup": {
+    "rollback": "/home/svhome/.local/state/chimera/workstation-rollbacks/3c3c8e0/development-before.zip",
+    "sha256": "26fb8b3b4d11568e92ebaca47f0b3b33ae1bba7fa1e6d727072264efc9a2592d",
+    "paths": 22,
+    "saved_files": 12,
+    "serving_pid": 4148213
+  },
+  "scoped_paths": [
+    "chimera_tp/active_pipe.py",
+    "chimera_tp/sentinel.py",
+    "chimera_tp/legacy/__init__.py",
+    "tests/test_legacy_layout.py",
+    "tests/test_sentinel_tail_cache.py",
+    "scripts/measure_sentinel_replay.py",
+    "chimera_tp/omega_compute.py",
+    "chimera_tp/legacy/omega_compute.py",
+    "chimera_tp/omega_storage.py",
+    "chimera_tp/legacy/omega_storage.py",
+    "chimera_tp/omega_transport.py",
+    "chimera_tp/legacy/omega_transport.py",
+    "chimera_tp/singularity_time_crdt.py",
+    "chimera_tp/legacy/singularity_time_crdt.py",
+    "chimera_tp/singularity_airgap_crypto.py",
+    "chimera_tp/legacy/singularity_airgap_crypto.py",
+    "chimera_tp/singularity_kolmogorov_swarm.py",
+    "chimera_tp/legacy/singularity_kolmogorov_swarm.py",
+    "chimera_tp/omega_bench.py",
+    "chimera_tp/legacy/omega_bench.py",
+    "chimera_tp/singularity_bench.py",
+    "chimera_tp/legacy/singularity_bench.py"
+  ],
+  "linux_validation": {
+    "root": "/home/svhome/DEV/chimera-tp",
+    "result": [
+      "Ran 10 tests in 1.305s",
+      "",
+      "OK"
+    ],
+    "limits": {
+      "memory_high": 214745088,
+      "memory_max": 268435456,
+      "swap_max": 0,
+      "tasks_max": 128,
+      "cpu_quota_pct": 95,
+      "io_write_bps": 8388608,
+      "io_devices": [
+        "8:0",
+        "8:2"
+      ]
+    }
+  },
+  "development_python_parity": {
+    "windows": 140,
+    "linux": 130,
+    "matched": 127,
+    "different": [
+      "chimera_tp/dashboard.py",
+      "chimera_tp/platform/bios/autophagy.py",
+      "chimera_tp/platform/bios/endocrine.py",
+      "chimera_tp/platform/bios/friston.py",
+      "chimera_tp/platform/bios/hgt.py",
+      "chimera_tp/platform/bios/mycelium.py",
+      "chimera_tp/platform/bios/octopus.py",
+      "chimera_tp/platform/bios/parasite.py",
+      "chimera_tp/platform/bios/soul.py",
+      "chimera_tp/platform/bios/stigmergy.py",
+      "chimera_tp/platform/bios/umwelt.py",
+      "chimera_tp/platform/discovery.py",
+      "chimera_tp/platform/noosphere_organism.py"
+    ]
+  },
+  "live_observation": {
+    "report": "live_daemon_soak_04695988c8e8_win7688.json",
+    "last_sample_verified": "2026-11-27T08:33:17.274565+00:00",
+    "release": "sha256:04695988c8e85e4f936eb61ff0934895e0a960abeab64e84219759babf34a84b",
+    "expected_pids": {
+      "win-desktop": 7688,
+      "svhome": 4148213
+    }
+  }
+}

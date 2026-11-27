@@ -228,8 +228,38 @@ def _bind_signatures(lib: ctypes.CDLL) -> None:
         lib.chimera_focus_state.argtypes = [c_u32_p, c_u64_p, c_u64_p]
         lib.chimera_focus_state.restype = None
 
+    if hasattr(lib, "chimera_vsa_hamming_batch"):
+        lib.chimera_vsa_hamming_batch.argtypes = [c_void_p, c_void_p, c_size_t, c_size_t, c_u32_p]
+        lib.chimera_vsa_hamming_batch.restype = c_i32
+
+    if hasattr(lib, "chimera_vsa_encode_10k"):
+        lib.chimera_vsa_encode_10k.argtypes = [c_void_p, c_size_t, c_void_p, c_size_t]
+        lib.chimera_vsa_encode_10k.restype = c_i32
+
+
+def _discover_vsa_lib(primary: ctypes.CDLL | None) -> ctypes.CDLL | None:
+    if primary is not None and hasattr(primary, "chimera_vsa_hamming_batch") and hasattr(primary, "chimera_vsa_encode_10k"):
+        return primary
+    lib_dir = Path(__file__).resolve().parent
+    cands = [lib_dir / "_chimera_vsa.dll"] if os.name == "nt" else [lib_dir / "_chimera_vsa.so"]
+    for path in cands:
+        if path.exists():
+            try:
+                lib = ctypes.CDLL(str(path))
+                c_void_p, c_size_t, c_i32 = ctypes.c_void_p, ctypes.c_size_t, ctypes.c_int32
+                c_u32_p = ctypes.POINTER(ctypes.c_uint32)
+                lib.chimera_vsa_hamming_batch.argtypes = [c_void_p, c_void_p, c_size_t, c_size_t, c_u32_p]
+                lib.chimera_vsa_hamming_batch.restype = c_i32
+                lib.chimera_vsa_encode_10k.argtypes = [c_void_p, c_size_t, c_void_p, c_size_t]
+                lib.chimera_vsa_encode_10k.restype = c_i32
+                return lib
+            except OSError:
+                continue
+    return None
+
 
 _DLL: ctypes.CDLL | None = _discover_and_load_dll()
+_VSA_LIB: ctypes.CDLL | None = _discover_vsa_lib(_DLL)
 
 
 def _ro_ptr(buf: bytes | bytearray | memoryview) -> tuple[ctypes.c_void_p, Any]:
@@ -241,12 +271,10 @@ def _ro_ptr(buf: bytes | bytearray | memoryview) -> tuple[ctypes.c_void_p, Any]:
         cp = ctypes.c_char_p(buf)
         return ctypes.cast(cp, ctypes.c_void_p), (buf, cp)
     if isinstance(buf, bytearray):
-        arr = (ctypes.c_ubyte * n).from_buffer(buf)
-        return ctypes.cast(arr, ctypes.c_void_p), (buf, arr)
+        return _rw_ptr(buf)
     if isinstance(buf, memoryview):
         if not buf.readonly and buf.c_contiguous:
-            arr = (ctypes.c_ubyte * n).from_buffer(buf)
-            return ctypes.cast(arr, ctypes.c_void_p), (buf, arr)
+            return _rw_ptr(buf)
         raw = buf.tobytes()
         cp = ctypes.c_char_p(raw)
         return ctypes.cast(cp, ctypes.c_void_p), (raw, cp)
@@ -259,8 +287,13 @@ def _rw_ptr(buf: bytearray | memoryview) -> tuple[ctypes.c_void_p, Any]:
     n = len(buf)
     if n == 0:
         return ctypes.c_void_p(0), buf
-    arr = (ctypes.c_ubyte * n).from_buffer(buf)
-    return ctypes.cast(arr, ctypes.c_void_p), (buf, arr)
+    # One exported byte pins the entire backing buffer, including slice offsets.
+    # Casting a length-specific ctypes array adds a self-reference to _objects
+    # and keeps every packet buffer alive until the cyclic collector runs.
+    anchor = ctypes.c_ubyte.from_buffer(buf)
+    pointer = ctypes.c_void_p(ctypes.addressof(anchor))
+    pointer._buffer_owner = anchor
+    return pointer, (buf, anchor)
 
 
 def has_native() -> bool:
@@ -1629,3 +1662,117 @@ def native_focus_state() -> dict[str, Any]:
     wakes = ctypes.c_uint64(0)
     _DLL.chimera_focus_state(ctypes.byref(fg), ctypes.byref(seq), ctypes.byref(wakes))
     return {"native": True, "fg_pid": int(fg.value), "seq": int(seq.value), "auto_wakes": int(wakes.value)}
+
+
+# ---------------------------------------------------------------------------
+# CHIMERA-DYNAMO / AEON: Zero-NumPy Hardware POPCNT Batch VSA & 10K Encoder
+# ---------------------------------------------------------------------------
+
+def has_native_vsa_batch() -> bool:
+    return bool(
+        _VSA_LIB is not None
+        and hasattr(_VSA_LIB, "chimera_vsa_hamming_batch")
+        and hasattr(_VSA_LIB, "chimera_vsa_encode_10k")
+    )
+
+
+def _vsa_encode_10k_py(text: str, out_bytes: int = 1252) -> bytes:
+    """Bit-exact pure-Python fallback matching Rust/C chimera_vsa_encode_10k."""
+    raw = (text or "").encode("utf-8", errors="ignore")
+    n_bits = out_bytes * 8
+    acc = [0] * n_bits
+    mask64 = 0xFFFFFFFFFFFFFFFF
+    tok_hashes: list[int] = []
+    i = 0
+    n = len(raw)
+    while i < n and len(tok_hashes) < 128:
+        while i < n and not (
+            (48 <= raw[i] <= 57)
+            or (65 <= raw[i] <= 90)
+            or (97 <= raw[i] <= 122)
+            or raw[i] in (95, 47, 46, 58, 45)
+        ):
+            i += 1
+        if i >= n:
+            break
+        h = 0xCBF29CE484222325
+        while i < n and (
+            (48 <= raw[i] <= 57)
+            or (65 <= raw[i] <= 90)
+            or (97 <= raw[i] <= 122)
+            or raw[i] in (95, 47, 46, 58, 45)
+        ):
+            ch = raw[i] + 32 if 65 <= raw[i] <= 90 else raw[i]
+            h = ((h ^ ch) * 0x00000100000001B3) & mask64
+            i += 1
+        tok_hashes.append(h)
+    if not tok_hashes:
+        h = 0xCBF29CE484222325
+        for ch in b"empty":
+            h = ((h ^ ch) * 0x00000100000001B3) & mask64
+        tok_hashes.append(h)
+
+    n_u64 = (n_bits + 63) // 64
+    for th in tok_hashes:
+        st = th
+        for w in range(n_u64):
+            st = (st + 0x9E3779B97F4A7C15) & mask64
+            z = st
+            z = ((z ^ (z >> 30)) * 0xBF58476D1CE4E5B9) & mask64
+            z = ((z ^ (z >> 27)) * 0x94D049BB133111EB) & mask64
+            word = z ^ (z >> 31)
+            base = w * 64
+            lim = min(64, n_bits - base)
+            for bit in range(lim):
+                acc[base + bit] += 1 if ((word >> bit) & 1) else -1
+
+    out = bytearray(out_bytes)
+    for b_idx in range(out_bytes):
+        base = b_idx * 8
+        v = 0
+        for bit in range(8):
+            if acc[base + bit] >= 0:
+                v |= 1 << bit
+        out[b_idx] = v
+    return bytes(out)
+
+
+def vsa_encode_10k_fast(text: str, out_bytes: int = 1252) -> bytes:
+    """Zero-NumPy bit-exact 10,016-bit Kanerva VSA encoder (Rust/C native or Python fallback)."""
+    if out_bytes <= 0 or out_bytes > 2048:
+        raise ValueError("out_bytes must be in 1..2048")
+    if _VSA_LIB is not None and hasattr(_VSA_LIB, "chimera_vsa_encode_10k"):
+        raw = (text or "").encode("utf-8", errors="ignore")
+        out = bytearray(out_bytes)
+        tp, kt = _ro_ptr(raw)
+        op, ko = _rw_ptr(out)
+        rc = int(_VSA_LIB.chimera_vsa_encode_10k(tp, len(raw), op, out_bytes))
+        _ = (kt, ko)
+        if rc == 0:
+            return bytes(out)
+    return _vsa_encode_10k_py(text, out_bytes=out_bytes)
+
+
+def vsa_hamming_batch_fast(
+    query: bytes | bytearray,
+    matrix: bytes | bytearray,
+    rows: int,
+    bytes_per_row: int = 1252,
+) -> list[int]:
+    """Zero-NumPy hardware POPCNT batch Hamming search (Rust/C native or Python fallback)."""
+    n_rows = max(0, int(rows))
+    if n_rows == 0 or bytes_per_row <= 0:
+        return []
+    if _VSA_LIB is not None and hasattr(_VSA_LIB, "chimera_vsa_hamming_batch"):
+        qp, kq = _ro_ptr(query)
+        mp, km = _ro_ptr(matrix)
+        out_arr = (ctypes.c_uint32 * n_rows)()
+        rc = int(_VSA_LIB.chimera_vsa_hamming_batch(qp, mp, n_rows, bytes_per_row, out_arr))
+        _ = (kq, km)
+        if rc == 0:
+            return [int(out_arr[i]) for i in range(n_rows)]
+    q_int = int.from_bytes(query[:bytes_per_row], "little")
+    return [
+        (q_int ^ int.from_bytes(matrix[r * bytes_per_row : (r + 1) * bytes_per_row], "little")).bit_count()
+        for r in range(n_rows)
+    ]

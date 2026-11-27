@@ -905,6 +905,7 @@ class ChimeraClient:
         offload_peer: bool = False,
         peer_host: str = "svhome",
         peer_repo: str | None = None,
+        generations: int = 1,
     ) -> dict[str, Any]:
         if offload_peer:
             # A peer on the preceding release still accepts unguarded mirror races.
@@ -922,6 +923,7 @@ class ChimeraClient:
             "offload_peer": offload_peer,
             "peer_host": peer_host,
             "peer_repo": peer_repo,
+            "generations": int(generations or 1),
         }
         if self.available:
             try:
@@ -941,6 +943,7 @@ class ChimeraClient:
             offload_peer=offload_peer,
             peer_host=peer_host,
             peer_repo=peer_repo,
+            generations=int(generations or 1),
         )
         res["via"] = "in_process_fallback"
         return res
@@ -1121,6 +1124,476 @@ class ChimeraClient:
             res = rp.status()
         res["via"] = "in_process_fallback"
         return res
+
+    def agent_darwin(self, action: str = "status", **kwargs: Any) -> dict[str, Any]:
+        payload = {"action": action, **kwargs}
+        if self.available:
+            try:
+                if str(action or "status").strip().lower() == "status" and not kwargs:
+                    return self._get_json("/v1/darwin/status", timeout=10.0)
+                return self._post_json("/v1/darwin/evolve", payload, timeout=90.0)
+            except Exception:
+                pass
+        from .agent_probe import get_default_agent_bus
+
+        res = get_default_agent_bus().symbiont.darwin.dispatch(action, **kwargs)
+        res["via"] = "in_process_fallback"
+        return res
+
+    def agent_aeon(self, action: str = "status", **kwargs: Any) -> dict[str, Any]:
+        payload = {"action": action, **kwargs}
+        if self.available:
+            try:
+                if str(action or "status").strip().lower() == "status" and not kwargs:
+                    return self._get_json("/v1/aeon/status", timeout=10.0)
+                return self._post_json("/v1/aeon/evolve", payload, timeout=60.0)
+            except Exception:
+                pass
+        from .agent_probe import get_default_agent_bus
+
+        res = get_default_agent_bus().symbiont.aeon.dispatch(action, **kwargs)
+        res["via"] = "in_process_fallback"
+        return res
+
+    def agent_noosphere(self, action: str = "status", **kwargs: Any) -> dict[str, Any]:
+        payload = {"action": action, **kwargs}
+        if self.available:
+            try:
+                act_low = str(action or "status").strip().lower()
+                if act_low == "status" and not kwargs:
+                    return self._get_json("/v1/noosphere/status", timeout=10.0)
+                if act_low == "epiphany" and not kwargs:
+                    return self._get_json("/v1/noosphere/epiphany", timeout=10.0)
+                return self._post_json("/v1/noosphere/dispatch", payload, timeout=60.0)
+            except Exception:
+                pass
+        from .agent_probe import get_default_agent_bus
+
+        res = get_default_agent_bus().symbiont.noosphere.dispatch(action, **kwargs)
+        res["via"] = "in_process_fallback"
+        return res
+
+    def agent_eidolon(self, action: str = "status", **kwargs: Any) -> dict[str, Any]:
+        payload = {"action": action, **kwargs}
+        if self.available:
+            try:
+                act_low = str(action or "status").strip().lower()
+                if act_low == "status" and not kwargs:
+                    return self._get_json("/v1/eidolon/status", timeout=10.0)
+                return self._post_json("/v1/eidolon/dispatch", payload, timeout=60.0)
+            except Exception:
+                pass
+        from .agent_probe import get_default_agent_bus
+
+        res = get_default_agent_bus().symbiont.eidolon.dispatch(action, **kwargs)
+        res["via"] = "in_process_fallback"
+        return res
+
+    def agent_mnemosyne(self, action: str = "status", **kwargs: Any) -> dict[str, Any]:
+        payload = {"action": action, **kwargs}
+        if self.available:
+            try:
+                act_low = str(action or "status").strip().lower()
+                if act_low == "status" and not kwargs:
+                    return self._get_json("/v1/mnemosyne/status", timeout=10.0)
+                if act_low == "entropy_audit" and not kwargs:
+                    return self._get_json("/v1/mnemosyne/entropy-audit", timeout=10.0)
+                if act_low == "swarm_watchdog" and not kwargs:
+                    return self._get_json("/v1/mnemosyne/watchdog", timeout=10.0)
+                return self._post_json("/v1/mnemosyne/dispatch", payload, timeout=60.0)
+            except Exception:
+                pass
+        from .agent_probe import get_default_agent_bus
+
+        res = get_default_agent_bus().symbiont.mnemosyne.dispatch(action, **kwargs)
+        res["via"] = "in_process_fallback"
+        return res
+
+    # --- CHIMERA-BIOS Open Ecosystem Soul SDK (100% graceful offline fallback) ---
+    @staticmethod
+    def _bios_fallback_call(fn_name: str, *args: Any, **kwargs: Any) -> dict[str, Any]:
+        try:
+            from .bios.organism import get_default_bios
+
+            bios = get_default_bios()
+            out = getattr(bios, fn_name)(*args, **kwargs)
+            if isinstance(out, dict):
+                res = dict(out)
+                res.setdefault("ok", True)
+                res["via"] = "in_process_fallback"
+                res["offline_fallback"] = True
+                return res
+            return {"ok": True, "result": out, "via": "in_process_fallback", "offline_fallback": True}
+        except Exception as exc:
+            return {"ok": False, "via": "local_fallback", "offline_fallback": True, "error": str(exc)}
+
+    def bios_status(self) -> dict[str, Any]:
+        if self.available:
+            try:
+                return self._get_json("/v1/bios/status", timeout=10.0)
+            except Exception:
+                pass
+        return self._bios_fallback_call("status")
+
+    def bios_abi(self) -> dict[str, Any]:
+        if self.available:
+            try:
+                return self._get_json("/v1/bios/abi", timeout=5.0)
+            except Exception:
+                pass
+        return self._bios_fallback_call("open_abi_manifest", anchor_url=self.anchor_url)
+
+    def bios_hormones(
+        self,
+        secrete: dict[str, Any] | None = None,
+        *,
+        action: str | None = None,
+        **kwargs: Any,
+    ) -> dict[str, Any]:
+        payload: dict[str, Any] = dict(kwargs)
+        if isinstance(secrete, dict) and secrete:
+            payload["secrete"] = dict(secrete)
+        if action:
+            payload["action"] = str(action)
+        if self.available:
+            try:
+                if not payload:
+                    return self._get_json("/v1/bios/hormones", timeout=5.0)
+                return self._post_json("/v1/bios/hormones", payload, timeout=5.0)
+            except Exception:
+                pass
+        return self._bios_fallback_call(
+            "hormones",
+            secrete=secrete,
+            action=action,
+            payload=payload or None,
+        )
+
+    def bios_pulse(
+        self,
+        obs: dict[str, Any] | None = None,
+        context: str | None = None,
+    ) -> dict[str, Any]:
+        body: dict[str, Any] = {}
+        if obs is not None:
+            body["obs"] = dict(obs)
+        if context is not None:
+            body["context"] = str(context)
+        if self.available:
+            try:
+                return self._post_json("/v1/bios/pulse", body, timeout=10.0)
+            except Exception:
+                pass
+        return self._bios_fallback_call("pulse", obs=obs, context=context)
+
+    def bios_predict(
+        self,
+        obs: dict[str, Any] | None,
+        context: str = "general",
+        horizon_s: float = 60.0,
+        *,
+        action: str = "all",
+    ) -> dict[str, Any]:
+        body: dict[str, Any] = {
+            "obs": dict(obs) if isinstance(obs, dict) else {},
+            "context": str(context or "general"),
+            "horizon_s": float(horizon_s or 60.0),
+            "action": str(action or "all"),
+        }
+        if self.available:
+            try:
+                return self._post_json("/v1/bios/predict", body, timeout=10.0)
+            except Exception:
+                pass
+        return self._bios_fallback_call(
+            "predict",
+            obs=body["obs"],
+            context=body["context"],
+            horizon_s=body["horizon_s"],
+            action=body["action"],
+        )
+
+    def bios_pheromone(
+        self,
+        repo: str,
+        rel_path: str,
+        alarm: dict[str, Any] | None = None,
+        coedits: list[str] | None = None,
+        *,
+        action: str | None = None,
+        methylation: dict[str, Any] | None = None,
+        max_tokens: int = 40,
+    ) -> dict[str, Any]:
+        has_mut = bool(alarm or coedits or methylation or (action and action not in ("smell", "status")))
+        if self.available:
+            try:
+                if not has_mut and not action:
+                    qs = urllib.parse.urlencode(
+                        {"repo": str(repo or "."), "rel_path": str(rel_path or ""), "max_tokens": int(max_tokens or 40)}
+                    )
+                    return self._get_json(f"/v1/bios/pheromone?{qs}", timeout=5.0)
+                body: dict[str, Any] = {
+                    "repo": str(repo or "."),
+                    "rel_path": str(rel_path or ""),
+                    "max_tokens": int(max_tokens or 40),
+                }
+                if action:
+                    body["action"] = str(action)
+                if alarm is not None:
+                    body["alarm"] = dict(alarm)
+                if coedits is not None:
+                    body["coedits"] = list(coedits)
+                if methylation is not None:
+                    body["methylation"] = dict(methylation)
+                return self._post_json("/v1/bios/pheromone", body, timeout=8.0)
+            except Exception:
+                pass
+        return self._bios_fallback_call(
+            "pheromone",
+            repo=str(repo or "."),
+            rel_path=str(rel_path or ""),
+            action=action,
+            alarm=alarm,
+            coedits=coedits,
+            methylation=methylation,
+            max_tokens=int(max_tokens or 40),
+        )
+
+    def bios_umwelt(
+        self,
+        signal: dict[str, Any] | None = None,
+        *,
+        action: str = "assess",
+        lead_minutes: float = 5.0,
+    ) -> dict[str, Any]:
+        if self.available:
+            try:
+                if signal is None and action in ("status", "assess"):
+                    return self._get_json("/v1/bios/umwelt", timeout=5.0)
+                body: dict[str, Any] = {"action": str(action or "assess"), "lead_minutes": float(lead_minutes or 5.0)}
+                if isinstance(signal, dict):
+                    body["signal"] = dict(signal)
+                return self._post_json("/v1/bios/umwelt", body, timeout=8.0)
+            except Exception:
+                pass
+        return self._bios_fallback_call(
+            "umwelt_dispatch",
+            signal=signal,
+            action=action,
+            lead_minutes=lead_minutes,
+        )
+
+    def bios_soul(
+        self,
+        query: str = "",
+        target_model: str = "any",
+        max_tokens: int = 500,
+        *,
+        scar: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        if self.available:
+            try:
+                if isinstance(scar, dict) and scar:
+                    return self._post_json("/v1/bios/soul/scar", dict(scar), timeout=8.0)
+                qs = urllib.parse.urlencode(
+                    {
+                        "query": str(query or ""),
+                        "target_model": str(target_model or "any"),
+                        "max_tokens": int(max_tokens or 500),
+                    }
+                )
+                return self._get_json(f"/v1/bios/soul?{qs}", timeout=8.0)
+            except Exception:
+                pass
+        if isinstance(scar, dict) and scar:
+            return self._bios_fallback_call("soul_record_scar", scar)
+        return self._bios_fallback_call(
+            "soul_capsule",
+            query=str(query or ""),
+            target_model=str(target_model or "any"),
+            max_tokens=int(max_tokens or 500),
+        )
+
+    def bios_autophagy(
+        self,
+        action: str = "status",
+        payload: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        act = str(action or "status").strip().lower()
+        body = {"action": act, **(dict(payload or {}))}
+        if self.available:
+            try:
+                if act == "status" and not payload:
+                    return self._get_json("/v1/bios/autophagy", timeout=10.0)
+                return self._post_json("/v1/bios/autophagy", body, timeout=30.0)
+            except Exception:
+                pass
+        return self._bios_fallback_call("autophagy_dispatch", action=act, payload=body)
+
+    def bios_parasite(
+        self,
+        rounds: int = 4,
+        *,
+        action: str = "run",
+        seed: int | None = None,
+        scenarios: list[str] | None = None,
+    ) -> dict[str, Any]:
+        act = str(action or "run").strip().lower()
+        if self.available:
+            try:
+                if act == "status":
+                    return self._get_json("/v1/bios/parasite/status", timeout=10.0)
+                body: dict[str, Any] = {"rounds": int(rounds or 4)}
+                if seed is not None:
+                    body["seed"] = int(seed)
+                if scenarios is not None:
+                    body["scenarios"] = list(scenarios)
+                return self._post_json("/v1/bios/parasite/run", body, timeout=20.0)
+            except Exception:
+                pass
+        if act == "status":
+            return self._bios_fallback_call("parasite_status")
+        return self._bios_fallback_call("parasite_run", rounds=int(rounds or 4), seed=seed, scenarios=scenarios)
+
+    def bios_hgt(
+        self,
+        action: str = "list",
+        payload: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        act = str(action or "list").strip().lower()
+        body = {"action": act, **(dict(payload or {}))}
+        if self.available:
+            try:
+                if act == "list" and not payload:
+                    return self._get_json("/v1/bios/hgt", timeout=10.0)
+                return self._post_json("/v1/bios/hgt", body, timeout=20.0)
+            except Exception:
+                pass
+        return self._bios_fallback_call("hgt_dispatch", action=act, payload=body)
+
+    def bios_spore(
+        self,
+        action: str = "list",
+        payload: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        act = str(action or "list").strip().lower()
+        p = dict(payload or {})
+        if self.available:
+            try:
+                if act in ("list", "status"):
+                    return self._get_json("/v1/bios/spores", timeout=8.0)
+                if act == "pwa":
+                    req = urllib.request.Request(f"{self.anchor_url}/v1/bios/spore", headers=self._headers())
+                    with urllib.request.urlopen(req, timeout=self.timeout_s) as r:
+                        html = r.read().decode("utf-8", errors="replace")
+                    return {"ok": True, "html": html, "bytes": len(html.encode("utf-8"))}
+                if act == "attach":
+                    return self._post_json("/v1/bios/spore/attach", p, timeout=8.0)
+                if act == "autotomy":
+                    return self._post_json("/v1/bios/spore/autotomy", p, timeout=8.0)
+                if act == "seed":
+                    return self._post_json("/v1/bios/spore/seed", p, timeout=8.0)
+            except Exception:
+                pass
+        if act == "attach":
+            return self._bios_fallback_call("spore_attach", p)
+        if act == "autotomy":
+            return self._bios_fallback_call(
+                "spore_autotomy",
+                str(p.get("spore_id") or ""),
+                reason=str(p.get("reason") or "detach"),
+            )
+        if act == "seed":
+            return self._bios_fallback_call("spore_seed", p)
+        if act == "pwa":
+            res = self._bios_fallback_call("spore_pwa_html", anchor_url="")
+            if isinstance(res.get("result"), str):
+                html = res["result"]
+                return {
+                    "ok": True,
+                    "html": html,
+                    "bytes": len(html.encode("utf-8")),
+                    "via": "in_process_fallback",
+                    "offline_fallback": True,
+                }
+            return res
+        return self._bios_fallback_call("spores_list")
+
+    def bios_ganglia(
+        self,
+        action: str = "status",
+        payload: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        act = str(action or "status").strip().lower()
+        p = dict(payload or {})
+        if self.available:
+            try:
+                if act == "reconcile":
+                    return self._post_json("/v1/bios/ganglia/reconcile", p, timeout=10.0)
+                return self._get_json("/v1/bios/ganglia", timeout=8.0)
+            except Exception:
+                pass
+        if act == "reconcile":
+            return self._bios_fallback_call(
+                "ganglia_reconcile",
+                local_events=p.get("local_events"),
+                peer_events=p.get("peer_events"),
+            )
+        return self._bios_fallback_call("ganglia_status")
+
+    def bios_sync(
+        self,
+        peer_url: str | None = None,
+        blend: float = 0.35,
+        *,
+        timeout_s: float = 4.0,
+    ) -> dict[str, Any]:
+        """Trigger 2-way bidirectional CHIMERA-BIOS cross-host sync with clean offline fallback."""
+        body: dict[str, Any] = {
+            "blend": float(blend),
+            "direction": "bidirectional",
+            "timeout_s": float(timeout_s),
+        }
+        if peer_url:
+            body["peer_url"] = str(peer_url).strip()
+        if self.available:
+            try:
+                return self._post_json(
+                    "/v1/bios/sync",
+                    body,
+                    timeout=max(self.timeout_s, float(timeout_s) + 4.0),
+                )
+            except urllib.error.HTTPError as exc:
+                with exc:
+                    try:
+                        parsed = json.load(exc)
+                        if isinstance(parsed, dict):
+                            return parsed
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+        if peer_url:
+            return self._bios_fallback_call(
+                "sync_with_peer",
+                str(peer_url).strip(),
+                blend=float(blend),
+                timeout_s=float(timeout_s),
+            )
+        bundle = self._bios_fallback_call("export_sync_bundle")
+        return {
+            "ok": bool(bundle.get("ok", True)),
+            "via": "in_process_fallback",
+            "offline_fallback": True,
+            "direction": "local_bundle_only",
+            "node_name": bundle.get("node_name"),
+            "local_merkle_root": bundle.get("merkle_root"),
+            "peer_merkle_root": None,
+            "merkle_converged": False,
+            "endocrine_wire_bytes": 12,
+            "bundle": bundle,
+            "auto_activated": False,
+        }
 
 
 def connect(

@@ -282,6 +282,21 @@ class ChimeraDaemon:
         self._threads: list[threading.Thread] = []
         self.http_addr: tuple[str, int] = ("127.0.0.1", 0)
         self.platform = PlatformSubstrate(self)
+        self._omega_spine_lock = threading.Lock()
+        self._omega_spine: Any = None
+
+    @property
+    def omega_spine(self) -> Any:
+        if self._omega_spine is None:
+            with self._omega_spine_lock:
+                if self._omega_spine is None:
+                    from .omega_spine.hook_router import OmegaSpineRuntime
+
+                    self._omega_spine = OmegaSpineRuntime(
+                        ops_dir=self.ops_dir,
+                        ephemeral=self._ephemeral_mode,
+                    )
+        return self._omega_spine
 
     @property
     def synergy(self) -> Any:
@@ -728,6 +743,59 @@ class ChimeraDaemon:
                     self._send_bytes(host_prox[0], host_prox[1], host_prox[2])
                     return
                 parsed = urllib.parse.urlparse(self.path)
+                if parsed.path == "/mcp":
+                    code, obj, hdrs = daemon_ref.omega_spine.mcp.handle_get(self.headers)
+                    self._send_json(code, obj, extra_headers=hdrs)
+                    return
+                if parsed.path == "/v1/hook/status":
+                    self._send_json(200, daemon_ref.omega_spine.hooks.status())
+                    return
+                if parsed.path == "/v1/omega/cage":
+                    self._send_json(200, daemon_ref.omega_spine.iron_cage.status())
+                    return
+                if parsed.path == "/v1/omega/tournament":
+                    self._send_json(200, daemon_ref.omega_spine.tournament.status())
+                    return
+                if parsed.path == "/v1/omega/release/status":
+                    self._send_json(200, daemon_ref.omega_spine.release_conductor.status())
+                    return
+                if parsed.path == "/v1/omega/release/units":
+                    self._send_json(200, daemon_ref.omega_spine.release_conductor.render_os_watcher_units())
+                    return
+                if parsed.path == "/v1/omega/blockers":
+                    qs = urllib.parse.parse_qs(parsed.query)
+                    repo_q = (qs.get("repo") or [""])[0].strip() or None
+                    alerts = daemon_ref.omega_spine.hooks.list_blocker_alerts(repo=repo_q)
+                    self._send_json(200, {"ok": True, "count": len(alerts), "alerts": alerts})
+                    return
+                if parsed.path == "/v1/omega/hygiene":
+                    from .omega_spine.release_conductor import context_hygiene_audit
+
+                    qs = urllib.parse.parse_qs(parsed.query)
+                    repo_q = (qs.get("repo") or [""])[0].strip()
+                    self._send_json(200, context_hygiene_audit([repo_q] if repo_q else []))
+                    return
+                if parsed.path == "/v1/omega/precog":
+                    qs = urllib.parse.parse_qs(parsed.query)
+                    cid = (qs.get("conversation_id") or [""])[0].strip()
+                    repo_q = (qs.get("repo") or [""])[0].strip() or None
+                    st_p = daemon_ref.omega_spine.precog.status()
+                    if cid:
+                        st_p["conversation_id"] = cid
+                        st_p["has_blocking_errors"] = daemon_ref.omega_spine.precog.has_blocking_errors(cid, repo_q)
+                        st_p["blocking_errors"] = daemon_ref.omega_spine.precog.get_blocking_errors(cid, repo_q)
+                    self._send_json(200, st_p)
+                    return
+                if parsed.path == "/v1/omega/status":
+                    plat_res = daemon_ref.platform.handle_get(parsed, self.headers)
+                    base_obj = dict(plat_res[1]) if (plat_res is not None and isinstance(plat_res[1], dict)) else {"ok": True}
+                    base_obj["omega_spine"] = daemon_ref.omega_spine.status()
+                    self._send_json(plat_res[0] if plat_res is not None else 200, base_obj)
+                    return
+                if parsed.path in ("/v1/bios/spore", "/v1/bios/stream"):
+                    raw_fn = getattr(daemon_ref.platform, "handle_bios_get_stream", None)
+                    if callable(raw_fn) and raw_fn(self, parsed, self.headers):
+                        return
                 if parsed.path == "/.well-known/chimera.json" or parsed.path.startswith("/v1/"):
                     plat_res = daemon_ref.platform.handle_get(parsed, self.headers)
                     if plat_res is not None:
@@ -1331,6 +1399,160 @@ class ChimeraDaemon:
                         self._send_bytes(host_prox[0], host_prox[1], host_prox[2])
                         return
                 parsed = urllib.parse.urlparse(self.path)
+                if parsed.path == "/mcp":
+                    code, resp_obj, hdrs = daemon_ref.omega_spine.mcp.handle_post(self._read_body(), self.headers)
+                    if resp_obj is None:
+                        self.send_response(code)
+                        for hk, hv in hdrs.items():
+                            self.send_header(hk, hv)
+                        self.send_header("Content-Length", "0")
+                        self.end_headers()
+                        return
+                    self._send_json(code, resp_obj, extra_headers=hdrs)
+                    return
+                if parsed.path.startswith("/v1/hook/"):
+                    event_name = parsed.path[len("/v1/hook/"):].strip("/")
+                    try:
+                        raw_hk = self._read_body()
+                        hk_body = json.loads(raw_hk.decode("utf-8")) if raw_hk.strip() else {}
+                        if not isinstance(hk_body, dict):
+                            hk_body = {}
+                    except Exception:
+                        hk_body = {}
+                    hk_res = daemon_ref.omega_spine.hooks.handle_event(event_name, hk_body)
+                    code = 404 if (isinstance(hk_res, dict) and str(hk_res.get("error", "")).startswith("unknown_hook_event:")) else 200
+                    self._send_json(code, hk_res)
+                    return
+                if parsed.path == "/v1/omega/cage":
+                    try:
+                        raw_b = self._read_body()
+                        body = json.loads(raw_b.decode("utf-8") or "{}") if raw_b.strip() else {}
+                        act = str(body.get("action") or "status").strip().lower()
+                        cage = daemon_ref.omega_spine.iron_cage
+                        if act == "sweep":
+                            res = cage.cage_sweep_agent_children(
+                                target_names=body.get("target_names"),
+                                cpu_rate_pct=int(body.get("cpu_rate_pct") or 75),
+                            )
+                        elif act == "cage_pid":
+                            res = cage.cage_worker_pid(
+                                int(body.get("pid") or 0),
+                                max_cores_mask=body.get("max_cores_mask"),
+                                cpu_rate_pct=int(body.get("cpu_rate_pct") or 75),
+                            )
+                        elif act == "royal_ui":
+                            res = cage.apply_royal_ui_tier(body.get("pids") or [])
+                        elif act == "spawn":
+                            res = cage.spawn_caged(
+                                body.get("cmd") or "",
+                                cwd=body.get("cwd") or None,
+                                timeout_s=float(body.get("timeout_s") or 30.0),
+                                cpu_rate_pct=int(body.get("cpu_rate_pct") or 75),
+                                use_singleflight=bool(body.get("use_singleflight", False)),
+                            )
+                        else:
+                            res = cage.status()
+                        self._send_json(200, res)
+                    except Exception as exc:
+                        self._send_json(400, {"ok": False, "error": str(exc)})
+                    return
+                if parsed.path == "/v1/omega/tournament":
+                    try:
+                        raw_b = self._read_body()
+                        body = json.loads(raw_b.decode("utf-8") or "{}") if raw_b.strip() else {}
+                        act = str(body.get("action") or "run").strip().lower()
+                        trn = daemon_ref.omega_spine.tournament
+                        if act == "promote" or (body.get("promote") and body.get("tournament_id")):
+                            res = trn.promote_winner(str(body.get("tournament_id") or ""), force=bool(body.get("force", False)))
+                        elif act == "status":
+                            res = trn.status()
+                        else:
+                            res = trn.run(
+                                repo=str(body.get("repo") or ""),
+                                candidates=list(body.get("candidates") or []),
+                                oracle_cmd=body.get("oracle_cmd"),
+                                timeout_s=float(body.get("timeout_s") or 30.0),
+                                isolation=str(body.get("isolation") or "auto"),
+                            )
+                        self._send_json(200 if res.get("ok") else 400, res)
+                    except Exception as exc:
+                        self._send_json(400, {"ok": False, "error": str(exc)})
+                    return
+                if parsed.path in (
+                    "/v1/omega/release/stage",
+                    "/v1/omega/release/verify",
+                    "/v1/omega/release/receive",
+                    "/v1/omega/release/replicate",
+                    "/v1/omega/release/desired",
+                ):
+                    try:
+                        raw_b = self._read_body()
+                        body = json.loads(raw_b.decode("utf-8") or "{}") if raw_b.strip() else {}
+                        rc = daemon_ref.omega_spine.release_conductor
+                        if parsed.path.endswith("/stage"):
+                            res = rc.stage_release(
+                                str(body.get("source_dir") or body.get("repo") or ""),
+                                epoch=body.get("epoch") or None,
+                                verify=bool(body.get("verify", True)),
+                                write_desired=bool(body.get("write_desired", False)),
+                            )
+                        elif parsed.path.endswith("/verify"):
+                            res = rc.verify_standby(str(body.get("epoch") or ""))
+                        elif parsed.path.endswith("/receive"):
+                            res = rc.receive_release(body)
+                        elif parsed.path.endswith("/replicate"):
+                            res = rc.replicate_to_peer(
+                                str(body.get("epoch") or ""),
+                                str(body.get("peer_url") or ""),
+                                write_desired=bool(body.get("write_desired", True)),
+                            )
+                        else:
+                            res = rc.write_desired_manifest(
+                                str(body.get("epoch") or ""),
+                                rollback_epoch=body.get("rollback_epoch") or None,
+                                verify_first=bool(body.get("verify_first", True)),
+                            )
+                        self._send_json(200 if res.get("ok") else 400, res)
+                    except Exception as exc:
+                        self._send_json(400, {"ok": False, "error": str(exc)})
+                    return
+                if parsed.path == "/v1/omega/precog":
+                    try:
+                        raw_b = self._read_body()
+                        body = json.loads(raw_b.decode("utf-8") or "{}") if raw_b.strip() else {}
+                        act = str(body.get("action") or "status").strip().lower()
+                        pc = daemon_ref.omega_spine.precog
+                        cid = str(body.get("conversation_id") or "default")
+                        repo_arg = str(body.get("repo") or "")
+                        fpath = str(body.get("file_path") or body.get("path") or "")
+                        if act == "schedule":
+                            res = pc.schedule(
+                                cid,
+                                repo_arg,
+                                fpath,
+                                enable_dotnet_build=body.get("enable_dotnet_build"),
+                                enable_pytest=body.get("enable_pytest"),
+                            )
+                        elif act == "verify":
+                            res = pc.verify_file_now(
+                                cid,
+                                repo_arg,
+                                fpath,
+                                enable_dotnet_build=body.get("enable_dotnet_build"),
+                                enable_pytest=body.get("enable_pytest"),
+                            )
+                        elif act == "consume":
+                            diags = pc.consume_diagnostics(cid, repo_arg or None)
+                            res = {"ok": True, "conversation_id": cid, "count": len(diags), "diagnostics": diags}
+                        elif act == "blocking":
+                            errs = pc.get_blocking_errors(cid, repo_arg or None)
+                            res = {"ok": True, "conversation_id": cid, "has_blocking_errors": bool(errs), "errors": errs}
+                        else:
+                            res = pc.status()
+                        self._send_json(200, res)
+                    except Exception as exc:
+                        self._send_json(400, {"ok": False, "error": str(exc)})
+                    return
                 if parsed.path in (
                     "/v1/openai/v1/chat/completions",
                     "/v1/openai/v1/responses",
@@ -3096,6 +3318,16 @@ class ChimeraDaemon:
 
                 self._send_json(404, {"error": "Not found"})
 
+            def do_DELETE(self) -> None:
+                if not self._allow_management_request():
+                    return
+                parsed = urllib.parse.urlparse(self.path)
+                if parsed.path == "/mcp":
+                    code, obj, hdrs = daemon_ref.omega_spine.mcp.handle_delete(self.headers)
+                    self._send_json(code, obj, extra_headers=hdrs)
+                    return
+                self._send_json(404, {"error": "Not found"})
+
             def log_message(self, *_args: object) -> None:
                 pass
 
@@ -3342,6 +3574,18 @@ class ChimeraDaemon:
                             except Exception:
                                 pass
                         gc.collect()
+                        if os.name == "posix":
+                            # After this ten-minute batch, let glibc return free
+                            # allocator pages to the OS. Other allocators can skip it.
+                            import ctypes
+                            try:
+                                trim = ctypes.CDLL(None).malloc_trim
+                            except (AttributeError, OSError):
+                                pass
+                            else:
+                                trim.argtypes = [ctypes.c_size_t]
+                                trim.restype = ctypes.c_int
+                                trim(0)
                 if is_persistent and self.config.role == "server":
                     if (now_m - last_sentinel) >= sent_iv:
                         self.sentinel.scan(self.config, on_spike_callback=self._handle_sentinel_spike)
@@ -3352,6 +3596,8 @@ class ChimeraDaemon:
 
     def close(self) -> None:
         self._stop.set()
+        if self._omega_spine is not None:
+            self._omega_spine.close()
         self.platform.close()
         if self._phantom_client is not None:
             self._phantom_client.close()

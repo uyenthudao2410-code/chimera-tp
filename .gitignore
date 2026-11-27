@@ -31,3 +31,6 @@ chimera_v7_live_summary.html
 chimera_v8_live_summary.html
 GEMINI.md
 chimera.manifest.json
+/bin/
+tasks/live_daemon_soak_*.jsonl
+tasks/live_daemon_soak_*.json

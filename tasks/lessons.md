@@ -37,3 +37,12 @@
 - **Permanent Rule:**
   1. Always pass a callable (`pat.sub(lambda _m: wrapped, existing, count=1)`) whenever replacing arbitrary text blocks containing paths or TOML/JSON content.
   2. Always test idempotent re-execution (`unify_install()` twice with Windows backslash paths) and validate written TOML via `tomllib.loads()`.
+
+
+## 2026-11-27 — Production Regression Incident: Unaliased `contents[]` Injection Broke Live Gemini Implicit Prefix Cache (`93.91% -> 56.45%`)
+- **What Happened:** `canonicalizeUniversalPrefixAnchor` moved volatile lines from `systemInstruction` into `contents[contents.length - 1]` (`<chimera_dynamic_meta>`) on every turn WITHOUT recording a Turn Alias, and `reconcilePhantomPrefix` tried to heal the resulting mismatch by appending `<chimera_state_delta>` at the tail. On Turn `k+1`, the client sent its raw unmodified history -> `firstDiffIndex = prevEntries - 1` every turn -> by Turn `k+4` divergent indices exceeded `maxDivergentTurns = 3` -> `isWarm` collapsed to `false` -> `15` `prefix-edit` cache cliffs dropped live `cacheHitPct` from **`93.91%`** down to **`56.45%`**.
+- **Secondary Finding (`70,866`-token `side-query` bypass):** Antigravity Desktop sends stateless Flash side-queries with `purpose: "side-query"`, `toolCount: 0`, and **`contents.length === 1`** (entire 206 KB transcript packed into one `contents[0].parts[0].text` blob). Both `shieldColdSideQuery` (`contents.length < 3`) and `applyFlashLiposuctionVsa` (`contents.length < 6`) skipped it!
+- **Iron Rule Going Forward:**
+  1. **NEVER inject unaliased tags/wrappers/deltas into `contents[]` by default on live multi-turn Antigravity sessions.** Any optimization touching multi-turn `contents[]` MUST stay strictly opt-in until verified with `prefixEditsObserved === 0` on live multi-turn traffic.
+  2. **Only transform stateless 1-entry `baseline` blobs (`contents.length === 1`, `toolCount === 0`, `cached === 0` ALWAYS)** by default — zero risk to any warm KV cache, massive instant savings (`-95%` on `70K–155K` Flash side-queries).
+  3. **Always audit live `:12500/api/gemini/prism` & `local-usage.sqlite` 3–5 minutes after any gateway change** to confirm `cacheHitPct >= 90%` and `prefixEditsObserved == 0`!

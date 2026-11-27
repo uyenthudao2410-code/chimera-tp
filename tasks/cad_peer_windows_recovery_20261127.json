@@ -1,0 +1,27 @@
+{
+  "task": "ChimeraHyperDashboard",
+  "observed_previous_result": 4294967295,
+  "private_test": {
+    "private": true,
+    "pid": 40948,
+    "root": "C:\\Users\\Admin\\AppData\\Local\\chimera\\releases\\bios_13f684d79832",
+    "port": 39039,
+    "routes": {
+      "/api/health": 200,
+      "/.well-known/chimera.json": 200,
+      "/api/vsa/stats": 200,
+      "/v1/hook/status": 200
+    },
+    "rss": 61767680,
+    "peak": 61792256
+  },
+  "serving": {
+    "pid": 39940,
+    "runtime_source_dir": "C:/Users/Admin/AppData/Local/chimera/releases/bios_13f684d79832",
+    "started_at": "2026-11-27T16:56:15+07:00",
+    "version": "18.0.0"
+  },
+  "working_set_bytes": 43970560,
+  "peak_working_set_bytes": 44007424,
+  "utc": "2026-11-27T09:56:17.0647771Z"
+}

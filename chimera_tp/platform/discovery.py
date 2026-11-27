@@ -124,6 +124,21 @@ res  = brain.compute("matmul", {{"n": 2048}})              # Single autonomous e
 brain.pulse_publish("events.ready", {{"ok": True}})        # Cross-host Pub/Sub
 hits = brain.search("query text", namespace="my-app")      # Hybrid BM25 + AVX2 VSA
 ```
+
+## CHIMERA-BIOS Living Ecosystem Soul (Open ABI — Lazy-Loaded, 0 B Boot RSS)
+- **Open ABI Manifest:** `GET {anchor}/v1/bios/abi` (endpoints, NIXL mmap offsets, SDK bindings, Law 1–7 guarantees)
+- **Live Hormones & Directives:** `GET/POST {anchor}/v1/bios/hormones` · **Zero-Copy NIXL mmap:** `bytes 32..63` of `chimera_nixl_ring.bin` (`ENDO` + `seq`/`crc16` + `6 × float32` at offsets `40..63`)
+- **Stigmergy Smell-Card (`< 40` tok):** `GET/POST {anchor}/v1/bios/pheromone` (alarms, co-edit prefetch trails, methylation)
+- **Autobiographical Soul (`<= 500` tok):** `GET {anchor}/v1/bios/soul` · `POST {anchor}/v1/bios/soul/scar`
+- **Living Spore PWA (`< 50 KB`, Zero-CDN):** `GET {anchor}/v1/bios/spore` · **Live SSE Stream:** `GET {anchor}/v1/bios/stream`
+- **1-Line Python BIOS SDK (Auto-Fallback Offline):**
+```python
+brain.bios_status()                                        # Full 10-organ living status
+brain.bios_hormones()                                      # 6-hormone soup + advisory directives
+brain.bios_pulse(obs={{"cpu_pct": 35.0}}, context="coding")  # Closed-loop physiology tick
+brain.bios_pheromone(".", "chimera_tp/cli.py")             # <40-tok smell-card & trail prefetch
+brain.bios_soul(query="law 7 rss", target_model="any")     # <=500-tok model-agnostic soul capsule
+```
 """
     _atomic_write_text(target, doc)
     return target

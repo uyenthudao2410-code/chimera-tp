@@ -10,6 +10,7 @@ import sys
 
 DAY = 86400
 BUDGET = 80 * 1024 ** 2
+SVHOME_RSS_TARGET = 55 * 1024 ** 2
 NODES = {"win-desktop", "svhome"}
 
 
@@ -49,6 +50,8 @@ def check(path, rollout_path, *, now=None):
     deadline = 2 * interval + 20
     last_good = first_good = last_check = prior_stamp = None
     peaks, identity = {}, {}
+    linux_last_rss = linux_max_rss = None
+    linux_at_or_above = 0
     samples = source_checks = missed = 0
     last_error = None
     with path.with_suffix(".jsonl").open("rb") as stream:
@@ -79,6 +82,9 @@ def check(path, rollout_path, *, now=None):
                     require(type(rss) is int and type(peak) is int and 0 < rss <= peak < BUDGET
                             and peak >= peaks.get(name, 0), "invalid_kernel_peak")
                     peaks[name] = peak
+                linux_last_rss = nodes["svhome"]["rss_bytes"]
+                linux_max_rss = max(linux_max_rss or 0, linux_last_rss)
+                linux_at_or_above += linux_last_rss >= SVHOME_RSS_TARGET
                 # The writer counts a valid kernel reading even if the source hash probe then times out.
                 samples += 1
                 if not last_error:
@@ -102,6 +108,13 @@ def check(path, rollout_path, *, now=None):
         "release": report["release"], "state": state, "samples": report["samples"],
         "source_checks": source_checks, "missed": report["missed"], "observed_seconds": report["observed_seconds"],
         "peak_mib": {k: round(v / 1024 ** 2, 2) for k, v in report["maximum_bytes"].items()},
+        "svhome_sampled_rss": {
+            "exclusive_target_bytes": SVHOME_RSS_TARGET,
+            "samples": samples,
+            "at_or_above_target": linux_at_or_above,
+            "last_bytes": linux_last_rss,
+            "max_bytes": linux_max_rss,
+        },
         "last_observation_utc": report["updated_utc"], "required_seconds": DAY,
     }
     if state == "failed":

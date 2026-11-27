@@ -1,0 +1,261 @@
+{
+  "generated_at": "2026-11-27T13:08:08+0700",
+  "elapsed_s": 45.77,
+  "effort_mutation_allowed": false,
+  "antigravity_cached_content_probe": {
+    "ok": true,
+    "skipped": false,
+    "host": "https://daily-cloudcode-pa.googleapis.com",
+    "probe_ms": 219,
+    "generate_with_cachedContent": {
+      "status": 403,
+      "fieldRecognized": true,
+      "snippet": "{\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"You do not have a valid license of this product. Please contact your administrator to request a license. If you are not an enterprise user and believe you are receiving this message as an error, please try using the latest version and logging in again. (#3501)\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/google.rpc.ErrorInfo\",\n        \"reason\": \"SUBSCRIPTION_REQUIRED\",\n        \"domain\": \"cloudaicompanion.googleapis.com\",\n        \"metadata\": {\n          \"uiMessage\": \"true\",\n          \"error_number\": \"1001\"\n        }\n      },\n      {\n        \"@type\": \"type.googleapis.com/google.rpc.Help\",\n        \"links\": [\n          {\n            \"description\": \"Learn more\",\n            \"url\": \"https://clo"
+    },
+    "createCachedContent_rpc": {
+      "status": 404,
+      "rpcExists": false,
+      "snippet": "<!DOCTYPE html>\n<html lang=en>\n  <meta charset=utf-8>\n  <meta name=viewport content=\"initial-scale=1, minimum-scale=1, width=device-width\">\n  <title>Error 404 (Not Found)!!1</title>\n  <style>\n    *{margin:0;padding:0}html,code{font:15px/22px arial,sans-serif}html{background:#fff;color:#222;padding:15px}body{margin:7% auto 0;max-width:390px;min-height:180px;padding:30px 0 15px}* > body{background:url(//www.google.com/images/errors/robot.png) 100% 5px no-repeat;padding-right:205px}p{margin:11px 0 22px;overflow:hidden}ins{color:#777;text-decoration:none}a img{border:0}@media screen and (max-width"
+    },
+    "verdict": "FIELD_ACCEPTED_NO_CREATE_RPC_USE_IMPLICIT_ONLY",
+    "licensed_account_generate_probe": {
+      "ok": true,
+      "host": "https://daily-cloudcode-pa.googleapis.com",
+      "verifiedAccount": "inference-succeeded",
+      "status": 403,
+      "snippet": "{\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"You do not have a valid license of this product. Please contact your administrator to request a license. If you are not an enterprise user and believe you are receiving this message as an error, please try using the latest version and logging in again. (#3501)\",\n    \"status\": \"PERMISSION_DENIED\",\n    \"details\": [\n      {\n        \"@type\": \"type.googleapis.com/google.rpc.ErrorInfo\",\n        \"reason\": \"SUBSCRIPTION_REQUIRED\",\n        \"domain\": \"cloudaicompanion.googleapis.com\",\n        \"metadata\": {\n          \"uiMessage\": \"true\",\n          \"error_number\": \"1001\"\n        }\n      },\n      {\n        \"@type\": \"type.googleapis.com/google.rpc.Help\",\n   "
+    }
+  },
+  "ab_benchmark": {
+    "live_sqlite_audit": {
+      "rows_gemini_total": 1540,
+      "total_prompt_tokens": 163684259,
+      "total_cached_tokens": 106284184,
+      "total_uncached_tokens": 57400075,
+      "side_query_rows_ge_6k": 77,
+      "side_query_uncached_tokens_before": 3640444,
+      "side_query_top_samples": [
+        {
+          "model": "gemini-3.8-flash-low",
+          "inputTokens": 154894,
+          "cached": 0,
+          "outputTokens": 510
+        },
+        {
+          "model": "gemini-3.8-flash-low",
+          "inputTokens": 130032,
+          "cached": 0,
+          "outputTokens": 21
+        },
+        {
+          "model": "gemini-3.8-flash-low",
+          "inputTokens": 120899,
+          "cached": 0,
+          "outputTokens": 16
+        },
+        {
+          "model": "gemini-3.8-flash-low",
+          "inputTokens": 115933,
+          "cached": 0,
+          "outputTokens": 181
+        },
+        {
+          "model": "gemini-3.8-flash-low",
+          "inputTokens": 111325,
+          "cached": 0,
+          "outputTokens": 21
+        }
+      ],
+      "http_499_rows": 83,
+      "http_499_wasted_tokens_before": 11480062,
+      "http_499_top_session_repeats": 11,
+      "http_499_top_session_tokens_before": 5021851,
+      "prefix_edit_rows": 5,
+      "settings_change_rows": 115,
+      "append_only_rows": 76
+    },
+    "engine_replay_ab": {
+      "side_query_shield": {
+        "tokens_before": 114736,
+        "tokens_after": 71,
+        "tokens_saved": 114665,
+        "reduction_pct": 99.94,
+        "latency_ms": 1.828
+      },
+      "immortal_harvest_499_storm": {
+        "retries_simulated": 13,
+        "upstream_calls_before": 13,
+        "upstream_calls_after": 1,
+        "ram_replays": 12,
+        "tokens_before": 1978925,
+        "tokens_after": 152225,
+        "tokens_saved": 1826700,
+        "reduction_pct": 92.31,
+        "replay_12x_total_ms": 0.129,
+        "weekly_quota_pct_saved": 49.37
+      },
+      "pre_send_titans_firewall": {
+        "raw_chars": 30451,
+        "compacted_chars": 1033,
+        "saved_pct": 96.61,
+        "turn2_relation": "append-only",
+        "turn2_first_diff_index": -1,
+        "error_preserved": true,
+        "latency_ms": 13.373
+      },
+      "static_stabilizer_and_breakeven": {
+        "tools_canonicalized": true,
+        "warm_200k_protected_from_bad_compaction": true,
+        "oracle_keepalive_recommended": true,
+        "effort_mutation_allowed": false
+      }
+    },
+    "real_db_projected_savings": {
+      "real_side_query_tokens_before": 3640444,
+      "real_side_query_tokens_after_est": 138600,
+      "real_side_query_tokens_saved": 3501844,
+      "real_499_storm_tokens_before": 11480062,
+      "real_499_storm_tokens_saved_est": 9758053,
+      "combined_eliminated_waste_tokens": 13259897,
+      "weekly_quota_pct_saved_from_waste_alone": 358.38,
+      "window_5h_quota_pct_saved_from_waste_alone": 1489.88
+    }
+  },
+  "dual_node_sync_and_live_verification": {
+    "files_synced": {
+      "chimera_total_files": 480,
+      "tquota_total_files": 719,
+      "win_release_updated": 2,
+      "svhome_chimera_repo_updated": 175,
+      "svhome_chimera_release_updated": 191,
+      "svhome_tquota_updated": 9
+    },
+    "zero_drift_sha256": {
+      "win_release_drift": 0,
+      "svhome_chimera_repo_drift": 0,
+      "svhome_chimera_release_drift": 0,
+      "svhome_tquota_drift": 0,
+      "total_drift": 0
+    },
+    "svhome_tests": {
+      "python_ok": true,
+      "python_tail": "_boot_ram_and_mcp_41_tools) ... ok\ntest_08_gemini_prism_homeostasis_and_quota_oracle (tests.test_aeon_dynamo.TestAeonDynamoUnified.test_08_gemini_prism_homeostasis_and_quota_oracle) ... ok\n\n----------------------------------------------------------------------\nRan 10 tests in 0.273s\n\nOK (skipped=1)\n",
+      "node_ok": true,
+      "node_tail": "12 zero-token RAM replays (50.576498ms)\n✔ CHIMERA-PRISM Pillar 5: 3-Way Static Envelope Forensics + Canonical Stabilizer pinpoints exact drift component (31.518872ms)\n✔ CHIMERA-PRISM Pillar 6: Quota Oracle + Black-Scholes Cache Handoff + /api/gemini/prism & /api/darwin/invariant-gate (12.895901ms)\nℹ tests 68\nℹ suites 0\nℹ pass 68\nℹ fail 0\nℹ cancelled 0\nℹ skipped 0\nℹ todo 0\nℹ duration_ms 4571.02078\n"
+    },
+    "live_win": {
+      "gemini_prism": {
+        "ok": true,
+        "engine": "chimera-prism-gemini",
+        "effortMutationAllowed": false,
+        "gatePass": true,
+        "invariants": {
+          "zeroPrefixEditsOk": true,
+          "effortPreservedOk": true,
+          "freezeOnSendEnabled": true,
+          "sideQueryShieldEnabled": true,
+          "immortalHarvestEnabled": true
+        },
+        "cacheHitPct": 98.27,
+        "totalSavedTokens": 0,
+        "savedWeeklyPct": 0,
+        "weeklyUncachedPerPct": 3700000,
+        "turnsObserved": 2,
+        "titansFirewallTriggered": 0,
+        "titansTokensSaved": 0,
+        "sideQueriesShielded": 0,
+        "sideQueryTokensSaved": 0,
+        "staticEnvelopesStabilized": 0,
+        "retroactivePrefixEditsBlocked": 0,
+        "prefixEditsObserved": 0,
+        "settingsChangesObserved": 0,
+        "appendOnlyObserved": 1,
+        "staticDriftByPart": {
+          "systemInstruction": 0,
+          "tools": 0,
+          "toolConfig": 0,
+          "generationConfig": 0
+        },
+        "oraclePredictions": 0,
+        "oraclePredictedUncachedTotal": 0,
+        "actualUncachedTotal": 4845,
+        "actualCachedTotal": 275725,
+        "actualPromptTotal": 280570,
+        "immortalVault": {
+          "inflightCount": 2,
+          "completedCount": 2,
+          "inflightCoalesced": 0,
+          "completedReplays": 0,
+          "detachedHarvestsStarted": 0,
+          "detachedHarvestsCompleted": 0,
+          "prefillTokensSaved": 0,
+          "preDispatchCancels": 0,
+          "postPrefillCancels": 0,
+          "postPrefillRetriesBlocked": 0,
+          "warmAccountRotationsBlocked": 0
+        }
+      },
+      "invariant_gate_pass": true,
+      "chimera_rss_mb": null,
+      "chimera_pid": null,
+      "homeostasis_gemini_prism_reachable": null
+    },
+    "live_svhome": {
+      "gemini_prism": {
+        "ok": true,
+        "engine": "chimera-prism-gemini",
+        "effortMutationAllowed": false,
+        "gatePass": true,
+        "invariants": {
+          "zeroPrefixEditsOk": true,
+          "effortPreservedOk": true,
+          "freezeOnSendEnabled": true,
+          "sideQueryShieldEnabled": true,
+          "immortalHarvestEnabled": true
+        },
+        "cacheHitPct": null,
+        "totalSavedTokens": 0,
+        "savedWeeklyPct": 0,
+        "weeklyUncachedPerPct": 3700000,
+        "turnsObserved": 0,
+        "titansFirewallTriggered": 0,
+        "titansTokensSaved": 0,
+        "sideQueriesShielded": 0,
+        "sideQueryTokensSaved": 0,
+        "staticEnvelopesStabilized": 0,
+        "retroactivePrefixEditsBlocked": 0,
+        "prefixEditsObserved": 0,
+        "settingsChangesObserved": 0,
+        "appendOnlyObserved": 0,
+        "staticDriftByPart": {
+          "systemInstruction": 0,
+          "tools": 0,
+          "toolConfig": 0,
+          "generationConfig": 0
+        },
+        "oraclePredictions": 0,
+        "oraclePredictedUncachedTotal": 0,
+        "actualUncachedTotal": 0,
+        "actualCachedTotal": 0,
+        "actualPromptTotal": 0,
+        "immortalVault": {
+          "inflightCount": 0,
+          "completedCount": 0,
+          "inflightCoalesced": 0,
+          "completedReplays": 0,
+          "detachedHarvestsStarted": 0,
+          "detachedHarvestsCompleted": 0,
+          "prefillTokensSaved": 0,
+          "preDispatchCancels": 0,
+          "postPrefillCancels": 0,
+          "postPrefillRetriesBlocked": 0,
+          "warmAccountRotationsBlocked": 0
+        }
+      },
+      "invariant_gate_pass": true,
+      "chimera_rss_mb": null,
+      "chimera_pid": null,
+      "homeostasis_gemini_prism_reachable": null
+    }
+  }
+}

@@ -102,6 +102,10 @@ class CodeSearchIndex:
         self._lock = threading.Lock()
         self._conn = sqlite3.connect(str(self.db_path), check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
+        # Only this connection is affected. Other SQLite users in the daemon
+        # keep their own page budgets and the database header is unchanged.
+        if os.environ.get("CHIMERA_COMPACT_INDEX_CACHE") == "1":
+            self._conn.execute("PRAGMA cache_size=-384")
         self._init_schema()
 
     def _init_schema(self) -> None:
