@@ -15,3 +15,8 @@ scripts/measure_code_search_updates.py text eol=lf
 # The FTS report and the 24-hour collector reference byte-level digests.
 tasks/code_search_updates_ab_20261127.json text eol=lf
 tasks/workstation_rollout_bd18ec94f55c_win25476.json text eol=lf
+
+# The VSA replay and release receipts record the bytes exercised on both nodes.
+scripts/measure_vsa_ingest.py text eol=lf
+tasks/vsa_encoder_replay_20261127.json text eol=lf
+tasks/workstation_rollout_9d578fa676f7_win6020.json text eol=lf
