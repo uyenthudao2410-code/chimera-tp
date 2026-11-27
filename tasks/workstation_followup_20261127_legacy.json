@@ -1,6 +1,5 @@
 {
   "schema": "chimera.workstation-followup/1",
-  "release": "5e25fafe4a8f2de1d2b492c6fbfc992166e79cad",
   "development_commit": "d3861f61b89de619b7a826b613dab3c654208a31",
   "linux_core_regressions": {
     "ok": true,
@@ -58,15 +57,69 @@
       "src/request-footprint.js": "f318b95fa29153cc37136d523b504b243af7797be91cb2b22a2f83a4b611901b",
       "src/wire-delta-serializer.js": "fb613e5945e7b51965b1ff84fa32a2b21802bba46db568225bf16904a9dadf6a",
       "test/embedded-tool-prefix.test.js": "5e885cc751a060d6598738a2cc7ad9628788712aa862300a9753b8dbb655a158"
+    },
+    "linux_fixture": {
+      "ok": true,
+      "state": "completed",
+      "error": null,
+      "ssh_route": "phantom_ssh",
+      "attempt_id": "4a22e9829fcc426c8fcdf9baa8de0c34",
+      "request_id": "1e207e4f1e2a4f8293000ce7a52d714c",
+      "exit_code": 0,
+      "stdout": "\u2714 preserve embedded disclosure hashes after a tail rewrite or removal (10.412611ms)\n\u2714 serializer counts actual reuse of an embedded tool row, independently of top-level tools (3.229075ms)\n\u2139 tests 2\n\u2139 suites 0\n\u2139 pass 2\n\u2139 fail 0\n\u2139 cancelled 0\n\u2139 skipped 0\n\u2139 todo 0\n\u2139 duration_ms 151.094788\n",
+      "stderr": "",
+      "snapshot": "3a6087d2ce01ba0b78b08e1ea28a6f030fd3973de990a4ff4af9a267486f959d",
+      "verified_admission": true,
+      "source_sha256": {
+        "src/request-footprint.js": "f318b95fa29153cc37136d523b504b243af7797be91cb2b22a2f83a4b611901b",
+        "src/wire-delta-serializer.js": "fb613e5945e7b51965b1ff84fa32a2b21802bba46db568225bf16904a9dadf6a",
+        "test/embedded-tool-prefix.test.js": "5e885cc751a060d6598738a2cc7ad9628788712aa862300a9753b8dbb655a158"
+      },
+      "dependency_files": 14
     }
   },
   "memory": {
-    "report": "tasks/live_daemon_soak_5e25fafe4a8f_win5268.json",
-    "observer_pid": 9504,
+    "report": "tasks/live_daemon_soak_3bb6a24fb27c_win33212.json",
+    "observer_pid": 33620,
     "allocator_fixture": "tasks/svhome_allocator_startup_ab_5e25fafe4a8f.json",
     "full_transfer_allocator_trial": "interrupted_by_running_guard_io_pressure",
     "changed_live_allocator": false,
-    "allocator_fixture_sha256": "36feaf9c8c482ad49a37e82eca1786515906843a208ecc20f7aa2402ce0b0e91"
+    "allocator_fixture_sha256": "36feaf9c8c482ad49a37e82eca1786515906843a208ecc20f7aa2402ce0b0e91",
+    "prior_window": {
+      "report": "tasks/live_daemon_soak_5e25fafe4a8f_win5268.json",
+      "terminal_check": {
+        "release": "5e25fafe4a8f2de1d2b492c6fbfc992166e79cad",
+        "state": "failed",
+        "samples": 16,
+        "source_checks": 1,
+        "missed": 0,
+        "observed_seconds": 1800.015,
+        "peak_mib": {
+          "win-desktop": 57.85,
+          "svhome": 71.25
+        },
+        "last_observation_utc": "2026-11-27T03:01:27.604755+00:00",
+        "required_seconds": 86400,
+        "reason": "win-desktop: PID or start time changed"
+      },
+      "sha256": "4d161b32645dc0c637d4a81070dcbfa892a68750149078c023f37ad1cc722226"
+    },
+    "snapshot": {
+      "release": "3bb6a24fb27ca730204e46e2acb8e5eedb38d58a",
+      "state": "running",
+      "samples": 1,
+      "source_checks": 1,
+      "missed": 0,
+      "observed_seconds": 0.0,
+      "peak_mib": {
+        "win-desktop": 63.31,
+        "svhome": 58.57
+      },
+      "last_observation_utc": "2026-11-27T03:04:42.414760+00:00",
+      "required_seconds": 86400
+    },
+    "start_utc": "2026-11-27T03:04:42.406760+00:00",
+    "earliest_finish_utc": "2026-11-28T03:04:42.406760+00:00"
   },
   "cad": {
     "preflight": "tasks/cad_shared_cpu95_5e25fafe4a8f.json",
@@ -84,6 +137,27 @@
     "colab_cu": 0,
     "cad": "deferred"
   },
-  "source_parity_scope": "The deployed release is pinned. The legacy layout and relay changes were verified in development, not installed in the serving processes.",
-  "captured_utc": "2026-11-27T03:00:31.886341+00:00"
+  "source_parity_scope": "The two serving nodes match the observed Git source snapshot byte-for-byte on disk across nodes. The compatibility refactor and relay changes were tested in development.",
+  "captured_utc": "2026-11-27T03:00:31.886341+00:00",
+  "release_at_preflight": "5e25fafe4a8f2de1d2b492c6fbfc992166e79cad",
+  "observed_runtime": {
+    "release": "3bb6a24fb27ca730204e46e2acb8e5eedb38d58a",
+    "path": "tasks/observed_serving_3bb6a24fb27c_win33212.json",
+    "sha256": "2b948f26644082c02b90f089a15e678aaf71455413e3effccbc3d3f84a4db66c",
+    "source_count": 116,
+    "changed_package_paths": [
+      "chimera_tp/platform/agent_symbiont.py",
+      "chimera_tp/platform/client.py",
+      "chimera_tp/platform/darwin_engine.py",
+      "chimera_tp/platform/mcp_server.py",
+      "chimera_tp/platform/substrate.py"
+    ],
+    "pids": {
+      "win-desktop": 33212,
+      "svhome": 4066005
+    },
+    "roots_still_label_previous_release": true,
+    "captured_at": "2026-11-27T03:04:23.669854+00:00"
+  },
+  "followup_utc": "2026-11-27T03:05:25.228631+00:00"
 }

@@ -124,17 +124,18 @@
     "budget_exclusive_bytes": 83886080,
     "snapshot": {
       "release": "5e25fafe4a8f2de1d2b492c6fbfc992166e79cad",
-      "state": "running",
-      "samples": 2,
+      "state": "failed",
+      "samples": 16,
       "source_checks": 1,
       "missed": 0,
-      "observed_seconds": 120.125,
+      "observed_seconds": 1800.015,
       "peak_mib": {
         "win-desktop": 57.85,
         "svhome": 71.25
       },
-      "last_observation_utc": "2026-11-27T02:31:27.615340+00:00",
-      "required_seconds": 86400
+      "last_observation_utc": "2026-11-27T03:01:27.604755+00:00",
+      "required_seconds": 86400,
+      "reason": "win-desktop: PID or start time changed"
     },
     "previous_soak_windows": [
       {
@@ -192,7 +193,8 @@
     "expected_pids": {
       "win-desktop": 5268,
       "svhome": 4038034
-    }
+    },
+    "window_ended": true
   },
   "concurrent_build": {
     "path": "tasks/guarded_client_pair_5e25fafe4a8f.json",
@@ -353,5 +355,11 @@
     "user_manager_reexec": true,
     "electron_webview2_application_consolidation_measured": false
   },
-  "plan": "docs/WORKSTATION_EXECUTION_PLAN.md"
+  "plan": "docs/WORKSTATION_EXECUTION_PLAN.md",
+  "superseded_by_runtime_observation": {
+    "receipt": "tasks/observed_serving_3bb6a24fb27c_win33212.json",
+    "report": "tasks/live_daemon_soak_3bb6a24fb27c_win33212.json",
+    "summary": "tasks/workstation_followup_20261127_legacy.json",
+    "reason": "both_daemons_restarted_with_five_changed_package_files"
+  }
 }

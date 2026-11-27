@@ -6,7 +6,7 @@ Cập nhật ngày 27/11/2026 theo giờ Việt Nam. Mục tiêu là người d�
 
 ## Bản đang phục vụ và điều kiện nghiệm thu
 
-Hai daemon và hai tác vụ 08:00 sử dụng commit `5e25fafe4a8f2de1d2b492c6fbfc992166e79cad`. Khi chuyển từng máy, đã kiểm SHA-256 của 115 tệp Python, thư viện native đang nạp, HTTP và một sự kiện Pulse nhận ở đầu kia. Windows khởi động lại lúc 09:23. Cửa sổ bắt đầu lúc 09:00 dừng sau 11 mẫu. Cửa sổ 24 giờ mới bắt đầu lúc **09:29:27 ngày 27/11/2026** (UTC+7), với PID 5268 trên Windows và 4038034 trên Linux. Cửa sổ lúc 07:14 thất bại khi Linux đạt 82,14 MiB. Cửa sổ lúc 08:41 kết thúc khi đổi PID để sửa lỗi HTTP 403 của tác vụ Windows. [Biên nhận chuyển phiên](../tasks/workstation_rollout_5e25fafe4a8f.json) · [Báo cáo RAM hiện hành](../tasks/live_daemon_soak_5e25fafe4a8f_win5268.json) · [Trước khi Windows khởi động lại](../tasks/live_daemon_soak_5e25fafe4a8f.json) · [Đỉnh 82,14 MiB](../tasks/live_daemon_soak_6076079bd54c.json) · [Lần đổi PID](../tasks/live_daemon_soak_79e05f9f370b.json)
+Đối chiếu lúc 10:04 ngày 27/11 ghi nhận hai daemon nạp lại mã lúc 10:02, giữ tên thư mục release cũ. Toàn bộ **116 tệp Python** trên hai máy khớp nhau. Năm tệp khác bản `5e25fafe4a8f`; bộ nguồn quan sát được đã lưu ở Git `3bb6a24fb27c`. Cửa sổ 09:29 dừng sau 16 mẫu do đổi PID. Cửa sổ 24 giờ hiện tính từ **10:04:42 ngày 27/11**, PID Windows **33212** và Linux **4066005**. [Đối chiếu nguồn](../tasks/observed_serving_3bb6a24fb27c_win33212.json) · [Báo cáo RAM](../tasks/live_daemon_soak_3bb6a24fb27c_win33212.json) · [Cửa sổ đã kết thúc](../tasks/live_daemon_soak_5e25fafe4a8f_win5268.json)
 
 | Đường sử dụng | Kết quả trên hai máy |
 | --- | --- |
@@ -22,11 +22,11 @@ Sau khi nạp lại trình quản lý systemd của UID 1000, 36 dịch vụ đa
 
 Hai tiến trình thực tế đã gọi cùng một build qua CLI `swarm` và MCP. Linux ghi đúng một lần chạy cho cặp đó. Cả hai nhận cùng ZIP 151 byte. Sửa nguồn chưa commit tạo ZIP mới 165 byte, đổi toolchain buộc build lại, và lượt gặp lỗi không được dùng lại từ cache. Trước khi nạp lại trình quản lý systemd, yêu cầu trần ghi SSD trả `io_cap_unavailable` trước khi compiler chạy. Bộ thử đã xóa đúng vé thử của nó. [Biên nhận hai client](../tasks/guarded_client_pair_5e25fafe4a8f.json)
 
-Để đối chiếu kết quả 24 giờ từ thư mục dự án, chạy `python -I -B -S scripts/check_daemon_soak.py tasks/live_daemon_soak_5e25fafe4a8f_win5268.json`. Lệnh đọc từng mẫu JSONL, đối chiếu PID, đỉnh kernel, thời lượng, hash biên nhận triển khai và các mốc kiểm nguồn. Mã thoát 0 xác nhận `passed`, 1 là đang đo, 2 là thất bại, mẫu đã cũ hoặc bằng chứng chưa đủ. Phép kiểm chỉ đọc tệp. [Mã đối chiếu](../scripts/check_daemon_soak.py) · [Nhật ký từng mẫu](../tasks/live_daemon_soak_5e25fafe4a8f_win5268.jsonl)
+Để đối chiếu kết quả 24 giờ từ thư mục dự án, chạy `python -I -B -S scripts/check_daemon_soak.py tasks/live_daemon_soak_3bb6a24fb27c_win33212.json`. Lệnh đọc từng mẫu JSONL, đối chiếu PID, đỉnh kernel, thời lượng, hash biên nhận triển khai và các mốc kiểm nguồn. Mã thoát 0 xác nhận `passed`, 1 là đang đo, 2 là thất bại, mẫu đã cũ hoặc bằng chứng chưa đủ. Phép kiểm chỉ đọc tệp. [Mã đối chiếu](../scripts/check_daemon_soak.py) · [Nhật ký từng mẫu](../tasks/live_daemon_soak_3bb6a24fb27c_win33212.jsonl)
 
 ## Mã phát triển và bản đang phục vụ
 
-Trên nhánh cục bộ `codex/workstation-integration-20261127`, bản `d3861f6` chuyển 11 module v9–v12 vào `chimera_tp.legacy`. Hai đường import trả cùng đối tượng module. Wheel Windows nạp đúng DLL và đọc được pickle cũ. Job Linux kiểm tra hai thứ tự import bằng thư viện native của release. Hai daemon tiếp tục chạy `5e25fafe4a8f`. [Biên bản mã và wheel](../tasks/workstation_followup_20261127_legacy.json)
+Trên nhánh cục bộ `codex/workstation-integration-20261127`, bản `d3861f6` chuyển 11 module v9–v12 vào `chimera_tp.legacy`. Hai đường import trả cùng đối tượng module. Wheel Windows nạp đúng DLL và đọc được pickle cũ. Job Linux kiểm tra hai thứ tự import bằng thư viện native của release. Theo Ä‘á»‘i chiáº¿u trÆ°á»›c 10:00, hai daemon tiếp tục chạy `5e25fafe4a8f`. [Biên bản mã và wheel](../tasks/workstation_followup_20261127_legacy.json)
 
 Ba cặp tiến trình Linux cho RSS nghỉ trung vị 40,25 MiB với allocator mặc định và 40,11 MiB khi giới hạn hai arena. Sau khi gọi đồng thời các API tùy chọn, RSS lớn nhất trong các mẫu tương ứng là 48,48 và 46,64 MiB. Lượt thử có truyền dữ liệu bị guard ngắt do áp lực I/O. Cấu hình allocator thật được giữ nguyên. [Dữ liệu từng tiến trình](../tasks/svhome_allocator_startup_ab_5e25fafe4a8f.json)
 
