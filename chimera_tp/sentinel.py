@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import shutil
@@ -11,11 +12,12 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+from collections.abc import Iterator
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, BinaryIO
 
-from .active_pipe import ComputePlan, execute_operator
+from .active_pipe import analyze_log_lines
 from .merkle_sync import DEFAULT_IGNORE_DIRS
 
 _ERROR_KEYWORDS = ("ERROR", "CRITICAL", "FATAL", "EXCEPTION", "FAIL", "THẤT BẠI")
@@ -108,15 +110,46 @@ def _collect_log_files(config: Any, max_files: int = 12) -> list[Path]:
     return [p for _, p in ordered[: max(1, int(max_files))]]
 
 
-def _read_tail_bytes(path: Path, max_bytes: int) -> bytes:
-    sz = int(path.stat().st_size)
-    if sz <= max_bytes:
-        return path.read_bytes()
-    with path.open("rb") as f:
-        f.seek(max(0, sz - max_bytes))
-        raw = f.read(max_bytes)
-    nl = raw.find(b"\n")
-    return raw[nl + 1 :] if 0 <= nl < len(raw) - 1 else raw
+def _seek_log_tail(stream: BinaryIO, limit: int) -> int:
+    """Position at the first complete line of the captured suffix and return its length."""
+    end = os.fstat(stream.fileno()).st_size
+    length = min(end, max(0, limit))
+    start = end - length
+    stream.seek(start)
+    if start and length:
+        remaining = length
+        while remaining:
+            part = stream.readline(min(65536, remaining))
+            if not part:
+                break
+            remaining -= len(part)
+            if part.endswith(b"\n"):
+                if remaining:
+                    return remaining
+                break
+        # Preserve the original suffix when it contains no LF before the final byte.
+        stream.seek(start)
+    return length
+
+
+def _tail_lines(stream: BinaryIO, remaining: int, digest) -> Iterator[str]:
+    pending = bytearray()
+    while remaining:
+        block = stream.read(min(65536, remaining))
+        if not block:
+            break
+        remaining -= len(block)
+        digest.update(block)
+        # LF ends a complete UTF-8 line. Keep the suffix so CRLF, multi-byte
+        # characters and all of str.splitlines()'s other separators stay intact.
+        end = block.rfind(b"\n") + 1
+        if end:
+            pending.extend(memoryview(block)[:end])
+            yield from pending.decode("utf-8", errors="replace").splitlines()
+            pending.clear()
+        pending.extend(memoryview(block)[end:])
+    if pending:
+        yield from pending.decode("utf-8", errors="replace").splitlines()
 
 
 class SentinelEngine:
@@ -127,9 +160,42 @@ class SentinelEngine:
         self.ops_dir.mkdir(parents=True, exist_ok=True)
         self.db_path = self.ops_dir / "sentinel.db"
         self._lock = threading.Lock()
+        self._log_reports: dict[Path, tuple[int, bytes, dict[str, Any]]] = {}
         self._conn = sqlite3.connect(str(self.db_path), check_same_thread=False)
         self._conn.row_factory = sqlite3.Row
         self._init_schema()
+
+    def _log_report(self, path: Path, limit: int) -> dict[str, Any]:
+        """Called under the scan lock. Only identical suffix bytes may reuse a report."""
+        with path.open("rb") as stream:
+            length = _seek_log_tail(stream, limit)
+            previous = self._log_reports.get(path)
+            if previous is not None and length == previous[0]:
+                start = stream.tell()
+                remaining = length
+                digest = hashlib.sha256()
+                while remaining:
+                    block = stream.read(min(65536, remaining))
+                    if not block:
+                        break
+                    remaining -= len(block)
+                    digest.update(block)
+                if not remaining and digest.digest() == previous[1]:
+                    return previous[2]
+                stream.seek(start)
+
+            # Hash the bytes actually parsed, including when a writer changes the
+            # file between the comparison above and this pass.
+            digest = hashlib.sha256()
+            report = analyze_log_lines(_tail_lines(stream, length, digest))
+
+        self._log_reports.pop(path, None)
+        # Counts, timestamps and hourly buckets are bounded by the analyzer.
+        # Template text may be as large as a single unbroken line.
+        if (len(self._log_reports) < 12
+                and sum(len(t["template"]) for t in report["top_templates"]) <= 4096):
+            self._log_reports[path] = (length, digest.digest(), report)
+        return report
 
     def _init_schema(self) -> None:
         with self._lock:
@@ -255,15 +321,15 @@ class SentinelEngine:
         # 3) Log template spike detection across discovered *.log files
         log_files = _collect_log_files(config, max_files=max_log_files)
         logs_scanned: list[dict[str, Any]] = []
-        plan = ComputePlan(op="log_analytics")
-
         with self._lock:
+            current_paths = set(log_files)
+            for retired in self._log_reports.keys() - current_paths:
+                del self._log_reports[retired]
             cur = self._conn.cursor()
             for lp in log_files:
                 try:
-                    raw = _read_tail_bytes(lp, tail_bytes)
-                    out_b, total_lines, _ = execute_operator(raw, plan)
-                    rep = json.loads(out_b.decode("utf-8"))
+                    rep = self._log_report(lp, tail_bytes)
+                    total_lines = rep["total_lines"]
                 except Exception:
                     continue
                 sev = rep.get("severity_counts", {})

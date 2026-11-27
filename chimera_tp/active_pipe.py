@@ -13,6 +13,7 @@ import sqlite3
 import struct
 import threading
 import time
+from collections.abc import Iterable
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any, Literal
@@ -190,6 +191,64 @@ def _execute_multi_grep_lines(
     return hits
 
 
+def analyze_log_lines(lines: Iterable[str]) -> dict[str, Any]:
+    """Summarize decoded log lines for the wire operator and the local Sentinel."""
+    sev_counts = {"CRITICAL": 0, "ERROR": 0, "WARN": 0, "INFO": 0, "OTHER": 0}
+    hourly: dict[str, int] = {}
+    templates: dict[str, dict[str, Any]] = {}
+    total_lines = 0
+    for raw_line in lines:
+        if not raw_line.strip():
+            continue
+        total_lines += 1
+        upper = raw_line.upper()
+        if "CRITICAL" in upper:
+            sev_counts["CRITICAL"] += 1
+        elif "ERROR" in upper or "FAIL" in upper or "EXCEPTION" in upper:
+            sev_counts["ERROR"] += 1
+        elif "WARN" in upper:
+            sev_counts["WARN"] += 1
+        elif "INFO" in upper:
+            sev_counts["INFO"] += 1
+        else:
+            sev_counts["OTHER"] += 1
+
+        hm = _HOUR_RE.search(raw_line)
+        if hm:
+            hb = f"{hm.group(1)} {hm.group(2)}:00"
+            hourly[hb] = hourly.get(hb, 0) + 1
+
+        ts_m = _TS_RE.search(raw_line)
+        ts_str = ts_m.group(0) if ts_m else ""
+        tmpl = _normalize_log_template(raw_line)
+        ent = templates.get(tmpl)
+        if ent is None:
+            templates[tmpl] = {
+                "template": tmpl,
+                "count": 1,
+                "first_ts": ts_str,
+                "last_ts": ts_str,
+            }
+        else:
+            ent["count"] += 1
+            if ts_str:
+                if not ent["first_ts"]:
+                    ent["first_ts"] = ts_str
+                ent["last_ts"] = ts_str
+
+    top_templates = sorted(
+        templates.values(), key=lambda x: (-int(x["count"]), str(x["template"]))
+    )[:20]
+    report = {
+        "total_lines": total_lines,
+        "unique_templates": len(templates),
+        "severity_counts": sev_counts,
+        "hourly_top": dict(sorted(hourly.items(), key=lambda kv: kv[0])[-24:]),
+        "top_templates": top_templates,
+    }
+    return report
+
+
 def execute_operator(data: bytes, plan: ComputePlan) -> tuple[bytes, int, list[str]]:
     """Run an active compute operator locally, returning (result_bytes, matches, preview_top5)."""
     if plan.op == "filter_lines":
@@ -263,64 +322,12 @@ def execute_operator(data: bytes, plan: ComputePlan) -> tuple[bytes, int, list[s
         return payload, len(summary), preview
 
     if plan.op == "log_analytics":
-        sev_counts = {"CRITICAL": 0, "ERROR": 0, "WARN": 0, "INFO": 0, "OTHER": 0}
-        hourly: dict[str, int] = {}
-        templates: dict[str, dict[str, Any]] = {}
-        total_lines = 0
-        for raw_line in _iter_log_lines(data):
-            if not raw_line.strip():
-                continue
-            total_lines += 1
-            upper = raw_line.upper()
-            if "CRITICAL" in upper:
-                sev_counts["CRITICAL"] += 1
-            elif "ERROR" in upper or "FAIL" in upper or "EXCEPTION" in upper:
-                sev_counts["ERROR"] += 1
-            elif "WARN" in upper:
-                sev_counts["WARN"] += 1
-            elif "INFO" in upper:
-                sev_counts["INFO"] += 1
-            else:
-                sev_counts["OTHER"] += 1
-
-            hm = _HOUR_RE.search(raw_line)
-            if hm:
-                hb = f"{hm.group(1)} {hm.group(2)}:00"
-                hourly[hb] = hourly.get(hb, 0) + 1
-
-            ts_m = _TS_RE.search(raw_line)
-            ts_str = ts_m.group(0) if ts_m else ""
-            tmpl = _normalize_log_template(raw_line)
-            ent = templates.get(tmpl)
-            if ent is None:
-                templates[tmpl] = {
-                    "template": tmpl,
-                    "count": 1,
-                    "first_ts": ts_str,
-                    "last_ts": ts_str,
-                }
-            else:
-                ent["count"] += 1
-                if ts_str:
-                    if not ent["first_ts"]:
-                        ent["first_ts"] = ts_str
-                    ent["last_ts"] = ts_str
-
-        top_templates = sorted(
-            templates.values(), key=lambda x: (-int(x["count"]), str(x["template"]))
-        )[:20]
-        report = {
-            "total_lines": total_lines,
-            "unique_templates": len(templates),
-            "severity_counts": sev_counts,
-            "hourly_top": dict(sorted(hourly.items(), key=lambda kv: kv[0])[-24:]),
-            "top_templates": top_templates,
-        }
+        report = analyze_log_lines(_iter_log_lines(data))
         payload = json.dumps(report, ensure_ascii=False, indent=2).encode("utf-8")
         preview = [
-            f"[{t['count']}x] {t['template'][:110]}" for t in top_templates[:5]
+            f"[{t['count']}x] {t['template'][:110]}" for t in report["top_templates"][:5]
         ]
-        return payload, total_lines, preview
+        return payload, report["total_lines"], preview
 
     if plan.op == "multi_grep":
         lines = data.decode("utf-8", errors="replace").splitlines()
