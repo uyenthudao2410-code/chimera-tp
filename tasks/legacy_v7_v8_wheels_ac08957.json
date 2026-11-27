@@ -1,0 +1,50 @@
+{
+  "schema": "chimera.legacy-wheel-validation/1",
+  "scope": "Offline wheel builds from one Git source archive. Each wheel was installed into an empty temporary target and imported in isolated Python processes.",
+  "development_commit": "ac0895762e239aab840f2e58897824842468b3e0",
+  "source_archive_sha256": "e511ffd859c5191e2af26572de89242e3fec7cb5e5999122f5238cab0f625161",
+  "platforms": {
+    "win-desktop": {
+      "python": "3.11.7",
+      "wheel": "chimera_tp-18.0.0-py3-none-any.whl",
+      "wheel_sha256": "fc101c11e4bc2f2399d47abff41607bf61aa58b3199a24df089135c62c52bb53",
+      "legacy_modules": 19,
+      "load_orders": 2,
+      "old_pickle_globals": 3,
+      "bench_module_entries": 2,
+      "merkle_crdt_shuffled_orders": 20,
+      "native": "pure-Python wheel, no installed source tree on sys.path",
+      "layout_test": "OK",
+      "crdt_test": "OK",
+      "archive_sha256": "e511ffd859c5191e2af26572de89242e3fec7cb5e5999122f5238cab0f625161",
+      "commit": "ac0895762e239aab840f2e58897824842468b3e0"
+    },
+    "svhome": {
+      "python": "3.14.4",
+      "wheel": "chimera_tp-18.0.0-py3-none-any.whl",
+      "wheel_sha256": "591c300441d82a8465337b1500cd276e1884d10ab225f8d47533ef420873770b",
+      "legacy_modules": 19,
+      "load_orders": 2,
+      "old_pickle_globals": 3,
+      "bench_module_entries": 2,
+      "merkle_crdt_shuffled_orders": 20,
+      "native": "pure-Python wheel, no installed source tree on sys.path",
+      "layout_test": "OK",
+      "crdt_test": "OK",
+      "limits": {
+        "memory_high": 214745088,
+        "memory_max": 268435456,
+        "swap_max": 0,
+        "tasks_max": 128,
+        "cpu_quota_pct": 95,
+        "io_write_bps": 8388608,
+        "io_devices": [
+          "8:0",
+          "8:2"
+        ]
+      },
+      "archive_sha256": "e511ffd859c5191e2af26572de89242e3fec7cb5e5999122f5238cab0f625161",
+      "commit": "ac0895762e239aab840f2e58897824842468b3e0"
+    }
+  }
+}

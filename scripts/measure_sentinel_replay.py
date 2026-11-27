@@ -59,6 +59,24 @@ def snapshot(db_path, destination):
     return {"source_scan_local": row[0], "files": files, "sha256": fingerprint(files)}
 
 
+def prepare_imports(source, destination):
+    """Give both daemons compiled top-level package modules without touching either checkout."""
+    import py_compile
+
+    package = destination / "chimera_tp"
+    package.mkdir(parents=True)
+    for entry in (source / "chimera_tp").iterdir():
+        if entry.name == "__pycache__":
+            continue
+        local = package / entry.name
+        local.symlink_to(entry.resolve(strict=True))
+        if entry.is_file() and entry.suffix == ".py":
+            py_compile.compile(str(local), doraise=True)
+    for name in ("scripts", "native", "plugins", "bin"):
+        (destination / name).symlink_to((source / name).resolve(strict=True))
+    return sum(1 for _ in (package / "__pycache__").glob("*.pyc"))
+
+
 def trial(root, fixture):
     sys.path.insert(0, str(root))
     from chimera_tp.autopilot import OpsConfig
@@ -83,6 +101,7 @@ def trial(root, fixture):
             raise RuntimeError("wrong daemon for replay")
         if not request(port, "/api/health").get("ok"):
             raise RuntimeError("private health check failed")
+        idle = rss()
         samples = []
         for kind in PASSES:
             if kind == "one_changed":
@@ -104,7 +123,7 @@ def trial(root, fixture):
             samples.append({"pass": kind, "ms": round(elapsed, 3), "cpu_ms": round(cpu, 3),
                             "memory_bytes": rss(), "lines": sum(r["lines"] for r in stable["logs"]),
                             "reports_sha256": fingerprint(stable)})
-        return samples
+        return {"idle_bytes": idle, "samples": samples}
     finally:
         daemon.close()
 
@@ -116,6 +135,10 @@ def run(args):
     source_hashes = {arm: {n: digest((root / n).read_bytes()) for n in SOURCES} for arm, root in roots.items()}
     with tempfile.TemporaryDirectory(prefix="chimera-sentinel-ab-", dir="/dev/shm") as directory:
         folder = Path(directory)
+        prepared = {arm: folder / arm for arm in roots}
+        pyc_counts = {arm: prepare_imports(root, prepared[arm]) for arm, root in roots.items()}
+        if len(set(pyc_counts.values())) != 1:
+            raise RuntimeError("different precompiled package module counts")
         fixture = folder / "snapshot"
         fixture.mkdir()
         captured = snapshot(args.sentinel_db, fixture)
@@ -127,12 +150,12 @@ def run(args):
                     env = {**os.environ, **dict.fromkeys(keys, home), "MALLOC_ARENA_MAX": "2"}
                     child = subprocess.run(
                         [sys.executable, "-I", "-B", "-S", str(Path(__file__).resolve()), "--trial-root",
-                         str(roots[arm]), "--fixture", str(fixture)], cwd=home, env=env,
+                         str(prepared[arm]), "--fixture", str(fixture)], cwd=home, env=env,
                         capture_output=True, text=True, timeout=45,
                     )
                     if child.returncode:
                         raise RuntimeError(child.stderr[-1800:] or f"trial exited {child.returncode}")
-                    trials.append({"pair": pair + 1, "arm": arm, "samples": json.loads(child.stdout)})
+                    trials.append({"pair": pair + 1, "arm": arm, **json.loads(child.stdout)})
         for item in captured["files"]:
             if digest((fixture / item["name"]).read_bytes()) != item["sha256"]:
                 raise RuntimeError("snapshot changed during replay")
@@ -154,6 +177,7 @@ def run(args):
             "scope": "private Linux daemons with frozen log tails; no service or webhook probes",
             "python": sys.version.split()[0], "source_sha256": source_hashes, "snapshot": captured,
             "collector_sha256": digest(Path(__file__).read_bytes()), "pairs": args.pairs,
+            "private_pyc_counts": pyc_counts,
             "trials": trials, "summary": summary}
 
 

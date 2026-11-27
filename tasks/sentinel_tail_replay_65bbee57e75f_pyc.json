@@ -1,0 +1,440 @@
+{
+  "schema": "chimera.sentinel-scan-replay/1",
+  "utc": "2026-11-27T08:11:13.084925+00:00",
+  "scope": "private Linux daemons with frozen log tails; no service or webhook probes",
+  "python": "3.14.4",
+  "source_sha256": {
+    "baseline": {
+      "chimera_tp/active_pipe.py": "8edd0c094c4156b5f9499e635e743204014f4efdd3da94ff05dfadaa094869d8",
+      "chimera_tp/sentinel.py": "86f29681aeb6576f371461769f40fae80a6eddea9feb71b4caf90d20d21871ea"
+    },
+    "candidate": {
+      "chimera_tp/active_pipe.py": "52c315755cee1465ce5c64f8054a10ccf50067892fd32e89815d72bd8363c546",
+      "chimera_tp/sentinel.py": "59f97e4d0f5614f8711df54c76650a63aca88a39c50db92039104600120bfab9"
+    }
+  },
+  "snapshot": {
+    "source_scan_local": "2026-11-27 15:09:59",
+    "files": [
+      {
+        "name": "00.log",
+        "bytes": 2097153,
+        "sha256": "7c252cae6942e9b513b58432f9655a3de9cfb53c3ec3ec280e23a8cd64c30a7d"
+      },
+      {
+        "name": "01.log",
+        "bytes": 23670,
+        "sha256": "6557aea1914bdef0feafea42d1bb65e0061c8d9f405eb7615ea1fba5a522082c"
+      },
+      {
+        "name": "02.log",
+        "bytes": 1425491,
+        "sha256": "dccb13355db93b7f74838c6a99258447b079b8016c8bda49baa8e23a7c06c1e0"
+      },
+      {
+        "name": "03.log",
+        "bytes": 470342,
+        "sha256": "22b93348cb4e9b8439e44cdc897928a81f76fe55c623fca8ff5bce3e90af1b38"
+      },
+      {
+        "name": "04.log",
+        "bytes": 5896,
+        "sha256": "d047c02ee4f8854cafc2dbd551c66499563d05dd7a90ffddfbae5b6a152a297c"
+      },
+      {
+        "name": "05.log",
+        "bytes": 8879,
+        "sha256": "eca14588898bc0ca46e5fb27a6363fa0da4a5b1c306ce476a52ef311cf202392"
+      },
+      {
+        "name": "06.log",
+        "bytes": 19584,
+        "sha256": "0fbadd4b92211c29028032346d699873c9027b12263f6c804ce4cb2305dbed0b"
+      },
+      {
+        "name": "07.log",
+        "bytes": 20258,
+        "sha256": "63b7a8ad0588bffa7dc948dad7d7ff51e4156b4fec82398c39519d2b4d7f33bd"
+      },
+      {
+        "name": "08.log",
+        "bytes": 10483,
+        "sha256": "d1a9c94b920a8613ce799a626748738ea048a49663a49c5244f1b81b77880ce3"
+      },
+      {
+        "name": "09.log",
+        "bytes": 7076,
+        "sha256": "ad949601fe4b1d2bec5f33a704e80706fbda1e26eca95f5216be10b0b4511eed"
+      },
+      {
+        "name": "10.log",
+        "bytes": 9276,
+        "sha256": "8a537cbe29ff3900a6595167621407f6328dbe27cb03cd815edac6b8852b17a5"
+      },
+      {
+        "name": "11.log",
+        "bytes": 9332,
+        "sha256": "23469e9f3e1738db0e1d41fcf8fa226dcd13db243a3859e355c5af8cd55d0b03"
+      }
+    ],
+    "sha256": "2e351ec263dfdd051e95aa00adb55efc080ee31619bf31c63c05be9b63ee64af"
+  },
+  "collector_sha256": "4179706a53a7728c86a0fbaf2a70acba68e2ef1d12eb3445c7642fa08c393b51",
+  "pairs": 3,
+  "private_pyc_counts": {
+    "baseline": 45,
+    "candidate": 45
+  },
+  "trials": [
+    {
+      "pair": 1,
+      "arm": "baseline",
+      "idle_bytes": {
+        "VmHWM": 41295872,
+        "VmRSS": 41295872,
+        "RssAnon": 25042944
+      },
+      "samples": [
+        {
+          "pass": "cold",
+          "ms": 882.277,
+          "cpu_ms": 829.488,
+          "memory_bytes": {
+            "VmHWM": 45203456,
+            "VmRSS": 44441600,
+            "RssAnon": 27209728
+          },
+          "lines": 73463,
+          "reports_sha256": "6a58237a9bad6b4867d4a1303a6d852c3bf24ea3cf34dff6c7be2682e4ef6762"
+        },
+        {
+          "pass": "unchanged",
+          "ms": 892.601,
+          "cpu_ms": 845.17,
+          "memory_bytes": {
+            "VmHWM": 47366144,
+            "VmRSS": 45350912,
+            "RssAnon": 28119040
+          },
+          "lines": 73463,
+          "reports_sha256": "7e93dcda6d9f0bd8ab81c5afd06a06f8dff74d99f7161183829e08065ee67672"
+        },
+        {
+          "pass": "one_changed",
+          "ms": 860.722,
+          "cpu_ms": 813.119,
+          "memory_bytes": {
+            "VmHWM": 47472640,
+            "VmRSS": 45371392,
+            "RssAnon": 28139520
+          },
+          "lines": 73463,
+          "reports_sha256": "322b3bf7d0ae22b6b8f73d89261b8312ef3dee9768eeadb724bbb69bdb8d8e12"
+        }
+      ]
+    },
+    {
+      "pair": 1,
+      "arm": "candidate",
+      "idle_bytes": {
+        "VmHWM": 41484288,
+        "VmRSS": 41484288,
+        "RssAnon": 25071616
+      },
+      "samples": [
+        {
+          "pass": "cold",
+          "ms": 949.687,
+          "cpu_ms": 890.781,
+          "memory_bytes": {
+            "VmHWM": 43679744,
+            "VmRSS": 43679744,
+            "RssAnon": 26292224
+          },
+          "lines": 73463,
+          "reports_sha256": "6a58237a9bad6b4867d4a1303a6d852c3bf24ea3cf34dff6c7be2682e4ef6762"
+        },
+        {
+          "pass": "unchanged",
+          "ms": 17.806,
+          "cpu_ms": 17.261,
+          "memory_bytes": {
+            "VmHWM": 43921408,
+            "VmRSS": 43921408,
+            "RssAnon": 26533888
+          },
+          "lines": 73463,
+          "reports_sha256": "7e93dcda6d9f0bd8ab81c5afd06a06f8dff74d99f7161183829e08065ee67672"
+        },
+        {
+          "pass": "one_changed",
+          "ms": 525.546,
+          "cpu_ms": 492.989,
+          "memory_bytes": {
+            "VmHWM": 44044288,
+            "VmRSS": 44044288,
+            "RssAnon": 26656768
+          },
+          "lines": 73463,
+          "reports_sha256": "322b3bf7d0ae22b6b8f73d89261b8312ef3dee9768eeadb724bbb69bdb8d8e12"
+        }
+      ]
+    },
+    {
+      "pair": 2,
+      "arm": "candidate",
+      "idle_bytes": {
+        "VmHWM": 41312256,
+        "VmRSS": 41312256,
+        "RssAnon": 25075712
+      },
+      "samples": [
+        {
+          "pass": "cold",
+          "ms": 905.078,
+          "cpu_ms": 849.611,
+          "memory_bytes": {
+            "VmHWM": 43483136,
+            "VmRSS": 43483136,
+            "RssAnon": 26296320
+          },
+          "lines": 73463,
+          "reports_sha256": "6a58237a9bad6b4867d4a1303a6d852c3bf24ea3cf34dff6c7be2682e4ef6762"
+        },
+        {
+          "pass": "unchanged",
+          "ms": 22.875,
+          "cpu_ms": 17.366,
+          "memory_bytes": {
+            "VmHWM": 43724800,
+            "VmRSS": 43724800,
+            "RssAnon": 26537984
+          },
+          "lines": 73463,
+          "reports_sha256": "7e93dcda6d9f0bd8ab81c5afd06a06f8dff74d99f7161183829e08065ee67672"
+        },
+        {
+          "pass": "one_changed",
+          "ms": 522.727,
+          "cpu_ms": 488.995,
+          "memory_bytes": {
+            "VmHWM": 43847680,
+            "VmRSS": 43847680,
+            "RssAnon": 26660864
+          },
+          "lines": 73463,
+          "reports_sha256": "322b3bf7d0ae22b6b8f73d89261b8312ef3dee9768eeadb724bbb69bdb8d8e12"
+        }
+      ]
+    },
+    {
+      "pair": 2,
+      "arm": "baseline",
+      "idle_bytes": {
+        "VmHWM": 41254912,
+        "VmRSS": 41254912,
+        "RssAnon": 25055232
+      },
+      "samples": [
+        {
+          "pass": "cold",
+          "ms": 943.926,
+          "cpu_ms": 887.675,
+          "memory_bytes": {
+            "VmHWM": 45150208,
+            "VmRSS": 44425216,
+            "RssAnon": 27246592
+          },
+          "lines": 73463,
+          "reports_sha256": "6a58237a9bad6b4867d4a1303a6d852c3bf24ea3cf34dff6c7be2682e4ef6762"
+        },
+        {
+          "pass": "unchanged",
+          "ms": 900.651,
+          "cpu_ms": 846.838,
+          "memory_bytes": {
+            "VmHWM": 47271936,
+            "VmRSS": 45318144,
+            "RssAnon": 28139520
+          },
+          "lines": 73463,
+          "reports_sha256": "7e93dcda6d9f0bd8ab81c5afd06a06f8dff74d99f7161183829e08065ee67672"
+        },
+        {
+          "pass": "one_changed",
+          "ms": 881.368,
+          "cpu_ms": 829.414,
+          "memory_bytes": {
+            "VmHWM": 47394816,
+            "VmRSS": 45355008,
+            "RssAnon": 28176384
+          },
+          "lines": 73463,
+          "reports_sha256": "322b3bf7d0ae22b6b8f73d89261b8312ef3dee9768eeadb724bbb69bdb8d8e12"
+        }
+      ]
+    },
+    {
+      "pair": 3,
+      "arm": "baseline",
+      "idle_bytes": {
+        "VmHWM": 41218048,
+        "VmRSS": 41218048,
+        "RssAnon": 25051136
+      },
+      "samples": [
+        {
+          "pass": "cold",
+          "ms": 853.225,
+          "cpu_ms": 805.442,
+          "memory_bytes": {
+            "VmHWM": 45322240,
+            "VmRSS": 44404736,
+            "RssAnon": 27226112
+          },
+          "lines": 73463,
+          "reports_sha256": "6a58237a9bad6b4867d4a1303a6d852c3bf24ea3cf34dff6c7be2682e4ef6762"
+        },
+        {
+          "pass": "unchanged",
+          "ms": 843.187,
+          "cpu_ms": 795.062,
+          "memory_bytes": {
+            "VmHWM": 47472640,
+            "VmRSS": 45314048,
+            "RssAnon": 28135424
+          },
+          "lines": 73463,
+          "reports_sha256": "7e93dcda6d9f0bd8ab81c5afd06a06f8dff74d99f7161183829e08065ee67672"
+        },
+        {
+          "pass": "one_changed",
+          "ms": 837.522,
+          "cpu_ms": 790.369,
+          "memory_bytes": {
+            "VmHWM": 47472640,
+            "VmRSS": 45334528,
+            "RssAnon": 28155904
+          },
+          "lines": 73463,
+          "reports_sha256": "322b3bf7d0ae22b6b8f73d89261b8312ef3dee9768eeadb724bbb69bdb8d8e12"
+        }
+      ]
+    },
+    {
+      "pair": 3,
+      "arm": "candidate",
+      "idle_bytes": {
+        "VmHWM": 41246720,
+        "VmRSS": 41246720,
+        "RssAnon": 25075712
+      },
+      "samples": [
+        {
+          "pass": "cold",
+          "ms": 857.112,
+          "cpu_ms": 815.564,
+          "memory_bytes": {
+            "VmHWM": 43474944,
+            "VmRSS": 43474944,
+            "RssAnon": 26292224
+          },
+          "lines": 73463,
+          "reports_sha256": "6a58237a9bad6b4867d4a1303a6d852c3bf24ea3cf34dff6c7be2682e4ef6762"
+        },
+        {
+          "pass": "unchanged",
+          "ms": 29.767,
+          "cpu_ms": 17.368,
+          "memory_bytes": {
+            "VmHWM": 43716608,
+            "VmRSS": 43716608,
+            "RssAnon": 26533888
+          },
+          "lines": 73463,
+          "reports_sha256": "7e93dcda6d9f0bd8ab81c5afd06a06f8dff74d99f7161183829e08065ee67672"
+        },
+        {
+          "pass": "one_changed",
+          "ms": 486.138,
+          "cpu_ms": 467.367,
+          "memory_bytes": {
+            "VmHWM": 43839488,
+            "VmRSS": 43839488,
+            "RssAnon": 26656768
+          },
+          "lines": 73463,
+          "reports_sha256": "322b3bf7d0ae22b6b8f73d89261b8312ef3dee9768eeadb724bbb69bdb8d8e12"
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "cold": {
+      "baseline": {
+        "wall_ms_median": 882.277,
+        "cpu_ms_median": 829.488,
+        "rss_bytes_median": 44425216,
+        "peak_bytes_max": 45322240
+      },
+      "candidate": {
+        "wall_ms_median": 905.078,
+        "cpu_ms_median": 849.611,
+        "rss_bytes_median": 43483136,
+        "peak_bytes_max": 43679744
+      }
+    },
+    "unchanged": {
+      "baseline": {
+        "wall_ms_median": 892.601,
+        "cpu_ms_median": 845.17,
+        "rss_bytes_median": 45318144,
+        "peak_bytes_max": 47472640
+      },
+      "candidate": {
+        "wall_ms_median": 22.875,
+        "cpu_ms_median": 17.366,
+        "rss_bytes_median": 43724800,
+        "peak_bytes_max": 43921408
+      }
+    },
+    "one_changed": {
+      "baseline": {
+        "wall_ms_median": 860.722,
+        "cpu_ms_median": 813.119,
+        "rss_bytes_median": 45355008,
+        "peak_bytes_max": 47472640
+      },
+      "candidate": {
+        "wall_ms_median": 522.727,
+        "cpu_ms_median": 488.995,
+        "rss_bytes_median": 43847680,
+        "peak_bytes_max": 44044288
+      }
+    }
+  },
+  "kernel_limits": {
+    "memory_high": 214745088,
+    "memory_max": 268435456,
+    "swap_max": 0,
+    "tasks_max": 128,
+    "cpu_quota_pct": 95.0,
+    "io_write_bps": 8388608,
+    "io_devices": [
+      "8:0",
+      "8:2"
+    ]
+  },
+  "guard": {
+    "samples": 25,
+    "max_service_p95_ms": {
+      "http://127.0.0.1:9780/.well-known/chimera.json": 15.012644696980715,
+      "http://127.0.0.1:8787/api/health": 14.758429024368525
+    }
+  },
+  "linux_tests": [
+    "Ran 9 tests in 0.680s",
+    "",
+    "OK"
+  ]
+}

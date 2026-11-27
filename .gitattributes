@@ -27,6 +27,9 @@ tasks/vsa_periodic_writes_962efbbc09a1.json -text
 tasks/live_daemon_soak_962efbbc09a1_win8996.json -text
 tasks/live_daemon_soak_962efbbc09a1_win8996.jsonl -text
 tasks/workstation_rollout_65bbee57e75f_win1608.json text eol=lf
+tasks/live_daemon_soak_65bbee57e75f_win1608.json -text
+tasks/live_daemon_soak_65bbee57e75f_win1608.jsonl -text
+tasks/observed_serving_04695988c8e8_win7688.json text eol=lf
 tasks/windows_cuda_worker_api_65bbee57e75f.json text eol=lf
 tasks/svhome_vsa_heap_962efbbc09a1.json text eol=lf
 scripts/measure_windows_cuda_worker.py text eol=lf
