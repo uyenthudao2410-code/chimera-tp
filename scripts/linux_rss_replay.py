@@ -1,6 +1,6 @@
 """Fixtures and timed workloads for comparing private Linux daemon builds."""
 
-from contextlib import closing
+from contextlib import closing, contextmanager
 import hashlib
 import json
 import os
@@ -145,32 +145,105 @@ def packet_replay(port):
     }
 
 
-def observe_cycle(daemon, request, memory, expected_ingest, expected_log_lines):
+@contextmanager
+def private_peer(root, seed_db, home, env):
+    """Start a separate production CLI on loopback with a private DB, home and ephemeral ports."""
+    import re
+    import selectors
+    import shutil
+    import subprocess
+    import sys
+    import tempfile
+    from measure_daemon_cli import request
+
+    home.mkdir(mode=0o700)
+    config = dict(node_name="rss-replay-peer", role="server", dashboard_bind="127.0.0.1:0",
+                  beam_port=0, rpc_v4_port=0, rpc_v6_port=-1, query_port=0, immortal_v4_port=0,
+                  immortal_v6_port=-1, warp_port=-1, edge_proxy_port=-1, nat_punch_port=0,
+                  phantom_enabled=False, peer_ipv4="", peer_ipv6="", search_roots=[], edge_targets={},
+                  allowed_query_roots=[str(home)], daily_time="99:99")
+    (home / "config.json").write_text(json.dumps(config))
+    shutil.copyfile(seed_db, home / "vsa_memory.db")
+    keys = ("HOME", "TMPDIR", "XDG_STATE_HOME", "XDG_CONFIG_HOME", "XDG_DATA_HOME", "XDG_CACHE_HOME")
+    peer_env = {**env, **dict.fromkeys(keys, str(home))}
+    # The peer uses a fixed baseline configuration across all measured arms.
+    peer_env.pop("CHIMERA_COMPACT_INDEX_CACHE", None)
+    command = [sys.executable, "-I", "-B", "-S", "-u", str(Path(__file__).with_name("measure_daemon_cli.py")),
+               "--service", str(root), str(home)]
+    with tempfile.TemporaryFile() as errors, subprocess.Popen(
+        command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=errors, cwd=home, env=peer_env
+    ) as child:
+        try:
+            banner = bytearray()
+            with selectors.DefaultSelector() as selector:
+                selector.register(child.stdout, selectors.EVENT_READ)
+                deadline = time.monotonic() + 20
+                while not (match := re.search(rb"Daemon listening at http://127\.0\.0\.1:(\d+)\r?\n", banner)):
+                    if not selector.select(max(0, deadline - time.monotonic())):
+                        raise TimeoutError("second private CLI did not announce a port")
+                    chunk = os.read(child.stdout.fileno(), 4096)
+                    if not chunk or len(banner) > 8192:
+                        raise RuntimeError("second private CLI did not start")
+                    banner.extend(chunk)
+            port = int(match.group(1))
+            beacon = request(port, "/.well-known/chimera.json")
+            if (beacon["pid"], beacon["node_name"]) != (child.pid, config["node_name"]) or port == 9780:
+                raise RuntimeError("unexpected private peer identity")
+            yield port, child.pid
+        finally:
+            child.stdin.close()
+            if child.poll() is None:
+                child.terminate()
+            try:
+                child.wait(timeout=6)
+            except subprocess.TimeoutExpired:
+                child.kill()
+                child.wait()
+
+
+def sync_private_peer(port, peer_port, request, local_total):
+    peer_before = request(peer_port, "/api/vsa/stats")["item_count"]
+    response = request(port, "/api/vsa/sync-peer",
+                       {"peer_base": f"http://127.0.0.1:{peer_port}", "limit": 500, "bidirectional": True})
+    peer_total = request(peer_port, "/api/vsa/stats")["item_count"]
+    if (not response.get("ok") or response["local_total"] != local_total
+            or response["peer_total"] != peer_total or response["pulled"] != min(500, peer_before)
+            or response["pushed"] != min(500, local_total)):
+        raise RuntimeError("two-daemon VSA counts did not match")
+    return {key: response[key] for key in ("pulled", "pushed", "local_total", "peer_total", "elapsed_ms")}
+
+
+def observe_cycle(daemon, request, memory, expected_ingest, expected_log_lines, peer_port=None, *, accelerated=False):
     """Replay timed server work in ephemeral mode, with no configured peer or live relay writes."""
     port = daemon.http_addr[1]
     started = time.monotonic()
     samples, events = [], []
-    for due in range(0, CYCLE_SECONDS + 1, 5):
+    scan_times = (5, 10) if accelerated else (300, 600)
+    duration = 15 if accelerated else CYCLE_SECONDS
+    for due in range(0, duration + 1, 5):
         time.sleep(max(0, started + due - time.monotonic()))
-        if due in (300, 600):
+        if due in scan_times:
             scan = daemon.sentinel.scan(daemon.config)
             lines = [r["lines"] for r in scan["logs_scanned"]]
             if lines != expected_log_lines:
                 raise RuntimeError("Sentinel replay inputs changed")
             events.append({"op": "sentinel", "scheduled_s": due, "lines": lines})
-        if due == 600:
+        if due == scan_times[-1]:
             response = request(port, "/api/overmind/hippocampus/ingest-tquota",
                                {"tquota_admin_url": daemon.config.tquota_admin_url, "limit": 300})
             counts = [response[k] for k in ("stored_count", "changed_count", "total_items")]
             if not response.get("ok") or counts != expected_ingest:
                 raise RuntimeError("timed VSA replay changed store contents")
             events.append({"op": "tquota_ingest", "scheduled_s": due, "counts": counts})
+            if peer_port:
+                sync = sync_private_peer(port, peer_port, request, counts[2])
+                events.append({"op": "vsa_sync", "scheduled_s": due, **sync})
         ping = time.perf_counter()
         if not request(port, "/api/health").get("ok"):
             raise RuntimeError("private daemon failed a timed health check")
         latency_ms = (time.perf_counter() - ping) * 1000
         samples.append({"t_s": round(time.monotonic() - started, 3), **memory(),
                         "health_ms": round(latency_ms, 3)})
-    return {"duration_s": samples[-1]["t_s"], "interval_s": 5, "events": events, "samples": samples,
+    return {"accelerated": accelerated, "duration_s": samples[-1]["t_s"], "interval_s": 5, "events": events, "samples": samples,
             "samples_at_or_above_55_mib": sum(r["VmRSS"] >= RSS_LIMIT for r in samples),
             "max_rss_bytes": max(r["VmRSS"] for r in samples), "max_hwm_bytes": max(r["VmHWM"] for r in samples)}

@@ -5,7 +5,7 @@ opens its own tmpfs copy and loopback HTTP port. Results contain counters and ha
 """
 
 import argparse
-from contextlib import closing
+from contextlib import closing, nullcontext
 import ctypes
 import gc
 import hashlib
@@ -202,6 +202,11 @@ def trial(args):
         if checks[1][1] or checks[2] != checks[1]:
             raise RuntimeError("repeated input changed the database")
         stages["ingest"] = memory()
+        peer_sync = None
+        if args.peer_port:
+            from linux_rss_replay import sync_private_peer
+            peer_sync = sync_private_peer(port, args.peer_port, request, checks[-1][2])
+            stages["after_peer_sync"] = memory()
         gc.collect()
         trim = ctypes.CDLL(None).malloc_trim
         trim.argtypes, trim.restype = [ctypes.c_size_t], ctypes.c_int
@@ -215,13 +220,14 @@ def trial(args):
                 raise RuntimeError("health did not recover")
             latencies.append((time.perf_counter() - start) * 1000)
         stages["after_health"] = memory()
-        if args.observe_cycle:
+        if args.observe_cycle or args.accelerated_cycle:
             from linux_rss_replay import observe_cycle
-            cycle = observe_cycle(daemon, request, memory, checks[-1], replay_counts["log_lines"])
+            cycle = observe_cycle(daemon, request, memory, checks[-1], replay_counts["log_lines"],
+                                  args.peer_port, accelerated=args.accelerated_cycle)
             stages["after_cycle"] = memory()
         return {"pid": os.getpid(), "source_root": str(args.root), "policy": args.arm,
                 "checks": checks, "stages": stages, "serving_counts": replay_counts,
-                "packets": packets, "cycle": cycle, "fts_cache_pragma": cache_kib,
+                "packets": packets, "cycle": cycle, "fts_cache_pragma": cache_kib, "peer_sync": peer_sync,
                 "replay_timings_ms": replay_timings,
                 "cpu_s": round(time.process_time() - cpu_start, 4),
                 "health_p95_ms": round(sorted(latencies)[14], 3),
@@ -270,7 +276,10 @@ def run(args):
             pass
 
     rows = []
-    with tempfile.TemporaryDirectory(dir="/dev/shm", prefix="chimera-rss-") as folder:
+    # The guard owns this outer tmpfs directory. Its cleanup still runs when
+    # a resource trip kills the collector together with the measured daemon.
+    scratch = args.collect_to.parent if args.collect_to else "/dev/shm"
+    with tempfile.TemporaryDirectory(dir=scratch, prefix="chimera-rss-") as folder:
         db = Path(folder) / "snapshot.sqlite"
         baseline, candidate = args.root, args.candidate_root
         bytecode_files = None
@@ -309,11 +318,24 @@ def run(args):
                                 cmd.append("--packet-replay")
                             if args.observe_cycle:
                                 cmd.append("--observe-cycle")
-                            p = subprocess.run(cmd, cwd=private, env=env, capture_output=True, text=True,
-                                               timeout=750 if args.observe_cycle else 50)
+                            if args.accelerated_cycle:
+                                cmd.append("--accelerated-cycle")
+                            peer = nullcontext(None)
+                            peer_home = Path(private) / "second-peer"
+                            if args.private_peer:
+                                from linux_rss_replay import private_peer
+                                peer = private_peer(baseline, db, peer_home, env)
+                            with peer as listener:
+                                if listener:
+                                    cmd.extend(["--peer-port", str(listener[0])])
+                                p = subprocess.run(cmd, cwd=private, env=env, capture_output=True, text=True,
+                                                   timeout=750 if args.observe_cycle else 50)
                             if p.returncode:
                                 raise RuntimeError(f"{arm}: {p.stderr[-1000:]}")
                             row = json.loads(p.stdout)
+                            if listener:
+                                row["peer_pid"] = listener[1]
+                                row["peer_vsa_sha256"] = logical_vsa_hash(peer_home / "vsa_memory.db")
                             if identity:
                                 row["vsa_content_sha256"] = logical_vsa_hash(Path(private) / "ops" / "vsa_memory.db")
                             if row["jemalloc_mapped"] != arm.startswith("jemalloc"):
@@ -322,14 +344,15 @@ def run(args):
             finally:
                 server.shutdown()
                 thread.join(3)
-        if digest(db.read_bytes()) != seed_hash or Replay.calls != len(rows) * (4 if args.observe_cycle else 3):
+        if digest(db.read_bytes()) != seed_hash or Replay.calls != len(rows) * (4 if args.observe_cycle or args.accelerated_cycle else 3):
             raise RuntimeError("replay fixture changed")
     if len({json.dumps((row["checks"], row["serving_counts"])) for row in rows}) != 1:
         raise RuntimeError("different ingest results across trials")
     if identity:
         if source_identity(args.root, args.candidate_root) != identity:
             raise RuntimeError("private package copies changed")
-        if len({(r["vsa_content_sha256"], r["packets"]["payload_sha256"], r["packets"]["rpc_sha256"])
+        if len({(r["vsa_content_sha256"], r["packets"]["payload_sha256"], r["packets"]["rpc_sha256"],
+                 r.get("peer_vsa_sha256"))
                 for r in rows}) != 1:
             raise RuntimeError("stored VSA values or transport bytes differ across trials")
     summary = {}
@@ -366,10 +389,14 @@ def guarded(args):
         command.extend(["--serving-ops", str(args.serving_ops)])
     if args.candidate_root:
         command.extend(["--candidate-root", str(args.candidate_root)])
+    if args.private_peer:
+        command.append("--private-peer")
     if args.precompile:
         command.append("--precompile")
     if args.observe_cycle:
         command.append("--observe-cycle")
+    if args.accelerated_cycle:
+        command.append("--accelerated-cycle")
     if not args.within_guard:
         child = subprocess.run(peer_guard.limited_command(command + ["--within-guard"], policy),
                                check=True, stdout=subprocess.PIPE, text=True)
@@ -386,8 +413,12 @@ def guarded(args):
                 repeatable=True,
             )
             if not execution["ok"]:
+                trip = execution.get("guard_trip", {})
+                health = trip.get("health", {}).get("health", {})
+                diagnostic = {key: health.get(key) for key in ("psi_some_avg10", "service_p95_ms", "load1", "temp_c")}
                 raise RuntimeError(f"guarded comparison failed: {execution['stderr'][-1400:]} "
-                                   f"{execution.get('error', '')}")
+                                   f"{execution.get('error', '')} wall_ms={execution['process_wall_ms']} "
+                                   f"guard={json.dumps(diagnostic)}")
             result = json.loads(receipt.read_text())
         result["peer_guard"] = {"limits_verified": admission["limits_verified"],
                                 "policy": effective, "runtime": execution["runtime_guard"],
@@ -400,8 +431,12 @@ if __name__ == "__main__":
     p.add_argument("--root", type=Path, required=True)
     p.add_argument("--db", type=Path, required=True)
     p.add_argument("--candidate-root", type=Path, help="Private release with the native and FTS changes")
-    p.add_argument("--observe-cycle", action="store_true", help="Observe one private candidate for 660 seconds")
+    cycle_options = p.add_mutually_exclusive_group()
+    cycle_options.add_argument("--observe-cycle", action="store_true", help="Observe one private candidate for 660 seconds")
+    cycle_options.add_argument("--accelerated-cycle", action="store_true", help="Replay scheduled operations in 15 seconds, without a soak verdict")
     p.add_argument("--precompile", action="store_true", help="Prepare checked-hash bytecode in new private copies")
+    p.add_argument("--private-peer", action="store_true", help="Add a 500-row VSA round trip with a separate private CLI")
+    p.add_argument("--peer-port", type=int, help=argparse.SUPPRESS)
     p.add_argument("--packet-replay", action="store_true", help=argparse.SUPPRESS)
     p.add_argument("--policies", nargs="+", choices=POLICIES, default=["current", "mimalloc", "glibc", "jemalloc"])
     p.add_argument("--repeats", type=int, choices=(1, 2, 3), default=2)
@@ -418,10 +453,14 @@ if __name__ == "__main__":
     if not args.arm:
         if ("glibc_candidate" in args.policies) != bool(args.candidate_root):
             p.error("--candidate-root and the glibc_candidate policy must be supplied together")
+        if args.private_peer and (not args.candidate_root or set(args.policies) - {"glibc_raw", "glibc_candidate"}):
+            p.error("--private-peer requires the checked candidate with the common glibc policy")
         if args.precompile and not args.candidate_root:
             p.error("--precompile requires private candidate comparison")
         if args.candidate_root and (args.root == args.candidate_root or not args.serving_ops):
             p.error("candidate comparison requires two separate source trees and --serving-ops")
+        if args.accelerated_cycle and not args.private_peer:
+            p.error("--accelerated-cycle requires --private-peer")
         if args.observe_cycle and (args.policies != ["glibc_candidate"] or args.repeats != 1):
             p.error("--observe-cycle requires one glibc_candidate trial")
     if args.collect_to:

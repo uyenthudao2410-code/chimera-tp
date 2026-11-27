@@ -1,0 +1,193 @@
+{
+  "ts": "2026-11-27 17:35:09",
+  "synced_win": [
+    "C:\\Users\\Admin\\AppData\\Local\\chimera\\releases\\65bbee57e75f",
+    "C:\\Users\\Admin\\AppData\\Local\\chimera\\releases\\bios_13f684d79832"
+  ],
+  "synced_sv_ch": [
+    "/home/svhome/.local/share/chimera/releases/bios_13f684d79832",
+    "~/DEV/chimera-tp"
+  ],
+  "synced_sv_tq": "/home/svhome/DEV/Tqouta/local-relay",
+  "sha_drift": {
+    "win_ch": 0,
+    "sv_ch": 0,
+    "sv_tq": 0
+  },
+  "svhome_tests": {
+    "python": [
+      "Ran 13 tests in 6.345s",
+      "OK"
+    ],
+    "tquota_node": [
+      "ℹ tests 23",
+      "ℹ pass 23",
+      "ℹ fail 0"
+    ]
+  },
+  "deploy_gate_win_tquota": {
+    "ok": true,
+    "service": "tquota",
+    "force_kill_allowed": true,
+    "recommended_strategy": "allow_idle_restart",
+    "blue_green_required": false,
+    "probe": {
+      "reachable": true,
+      "pid": 14860,
+      "active_streams": 0,
+      "active_detached": 0,
+      "busy": false
+    },
+    "active_maintenance_locks": 0,
+    "blocked_restarts_total": 0,
+    "safe_grants_total": 1
+  },
+  "win_tquota_reloaded": true,
+  "ab_benchmarks": {
+    "raw_ingest": {
+      "ok": true,
+      "inserted": {
+        "codex": 327,
+        "antigravity": 242,
+        "t3_code": 261
+      },
+      "total_inserted": 830,
+      "elapsed_ms": 1594.61
+    },
+    "raw_arena_ab": {
+      "ok": true,
+      "queries_evaluated": 15,
+      "winner": "CAUSAL_RAW_RAG",
+      "raw_rag": {
+        "evidence_hit_pct": 100.0,
+        "avg_ms": 14.17
+      },
+      "causal_raw_rag": {
+        "evidence_hit_pct": 100.0,
+        "causal_links_added_total": 75,
+        "avg_ms": 20.99
+      },
+      "lossy_summary_baseline": {
+        "available": true,
+        "evidence_hit_pct": 0.0,
+        "avg_ms": 0.27
+      },
+      "autophagy_proposal": {
+        "auto_activated": false,
+        "recommendation": "Use pointer-over-raw (CAUSAL-RAW-RAG) as ground truth; demote standalone lossy summaries to navigation pointers."
+      },
+      "elapsed_ms": 537.07
+    },
+    "raw_recall_live_sample": {
+      "count": 7,
+      "candidates_scanned": 2,
+      "causal_added": 5,
+      "elapsed_ms": 5.79,
+      "sources": [
+        "t3_raw"
+      ]
+    },
+    "primer_nerve_vs_3ps": {
+      "before_3_powershell_ms": 991.45,
+      "after_prime_plus_nerve_ms": 198.69,
+      "speedup_x": 4.99,
+      "prime_ms": 180.92,
+      "file_hash_ok": true
+    },
+    "remote_xray_vs_ssh": {
+      "before_cold_ssh_ms": 1355.32,
+      "after_remote_xray_phantom_ms": 71.02,
+      "speedup_x": 19.08,
+      "remote_ok": true
+    },
+    "warm_repl_vs_cold_ps_python": {
+      "before_cold_ps_python_ms": 342.35,
+      "after_warm_repl_ms": 15.42,
+      "speedup_x": 22.2,
+      "stdout": "ae391de9c517"
+    },
+    "warm_primer_and_shortcircuit": {
+      "warm_prime_http_ms": 43.05,
+      "prime_engine_ms": 28.47,
+      "shell_shortcircuit_http_ms": 1.65,
+      "shell_shortcircuit_hit": true,
+      "shell_sibling_hit": true
+    }
+  },
+  "live_vitals": {
+    "win_rss_mb": 28.61,
+    "win_org_alive": true,
+    "win_mnemosyne": {
+      "ok": true,
+      "db_path": "V:/mnemosyne/akashic_raw.sqlite",
+      "db_mb": 3.59,
+      "raw_chunks": 830,
+      "causal_links": 8417,
+      "raw_tool_outputs": 0,
+      "doc_pages": 0,
+      "by_source": {
+        "antigravity_raw": 242,
+        "codex_raw": 327,
+        "t3_raw": 261
+      },
+      "stats": {
+        "ingested_chunks": 830,
+        "recalls": 32,
+        "causal_expansions": 80,
+        "reality_stamps_checked": 146,
+        "tool_captures": 0,
+        "doc_pages_indexed": 0,
+        "codex_reranks": 0
+      }
+    },
+    "win_entropy_audit": {
+      "ok": true,
+      "os": "nt",
+      "memory": {
+        "memory_load_pct": 76,
+        "phys_total_gb": 30.85,
+        "phys_avail_gb": 7.32,
+        "commit_total_gb": 47.86,
+        "commit_used_gb": 39.45,
+        "commit_pct": 82.4
+      },
+      "findings": [
+        {
+          "severity": "P1",
+          "code": "HIGH_COMMIT_PRESSURE",
+          "detail": "Commit Charge at 82.4% (39.45/47.86 GB) increases page-fault latency on shell spawns.",
+          "recommendation": "Use CHIMERA-WARM-REPL + ShellShortCircuit + lazy-spawn idle pythonw worker pools (e.g. office_pdl.warmup_pool on-demand).",
+          "auto_activated": false
+        }
+      ],
+      "law2_zero_choke": true,
+      "law6_auto_activated": false,
+      "elapsed_ms": 0.13
+    },
+    "win_swarm_pacer": {
+      "ok": true,
+      "enabled": true,
+      "effortMutationAllowed": false,
+      "burstWindowMs": 1200,
+      "maxBurstCalls": 3,
+      "activeSwarmSessions": 0,
+      "overSubscribedWarning": false,
+      "accounts": {},
+      "stats": {
+        "requestsSeen": 0,
+        "zeroOverheadFastPath": 0,
+        "burstAffinityGrants": 0,
+        "staggeredCalls": 0,
+        "totalStaggerMs": 0,
+        "peakConcurrentSessions": 0,
+        "overSubscribedEvents": 0
+      }
+    },
+    "svhome_live": {
+      "rss_mb": 55.14,
+      "alive": true,
+      "mnemosyne": "chimera-mnemosyne-v1",
+      "pacer_ok": true
+    }
+  }
+}

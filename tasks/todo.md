@@ -481,3 +481,35 @@
 | Live Tquota PRISM + Bridge Telemetry Surfaced | Invisible in Chimera UI | **`93.8%` hit · `15.99M` tok (`432%` wk) · `41` Sub · `1` CB · `xhigh 100%`** | **Real-time single-pane quota shield** |
 | Live Visual Audit (`1280×800` Chromium) | — | **`0` console errors · `0` wrapped buttons · `0` clipped tabs** | **10/10 verified visually** |
 | Live Daemon RAM & Sync Parity (`win ⇄ svhome`) | `65.6` / `70.0 MiB` (old shot) | **`23.4–32.3 MiB` Win · `52.0–52.9 MiB` `svhome` · `0` SHA drift** | **Well under `< 80 MiB` Law 7** |
+
+
+---
+
+# CHIMERA-MNEMOSYNE — Unified Zero-Loss Raw-Memory & Zero-Shell Execution (All 3 Waves, 2026-11-27)
+
+## Checklist
+- [x] **Core Engine `chimera_tp/platform/mnemosyne.py`** (100% Python stdlib, `0` NumPy, lazy-loaded `0 B` boot RSS, SQLite WAL + FTS5 on `V:\mnemosyne\akashic_raw.sqlite` / `/mnt/chimera-dev/mnemosyne/akashic_raw.sqlite`):
+  - `AkashicRawStore`: Append-Only verbatim raw indexer (`mode=ro`, incremental bookmarks) across Codex (`thread_history_1.sqlite` `240 MB`), Antigravity (`86` `transcript_full.jsonl` `155 MB`), T3 Code (`statev2.sqlite` `554 MB`), Dual-Channel `PostToolUse` tool outputs (`raw_ref_id`), and Lossless PDF/DOCX/MD page store (`doc_page`, `SHA-256` cached)
+  - `CAUSAL-RAW-RAG` + `Live Reality Stamp`: Deterministic anchor threading (`file_path`, `AST symbol`, `error_sig`, `thread_id` — `0` LLM graph) fixing `arXiv:2610.30755` Cascade blind spot + `< 0.5 ms` live disk `mtime/SHA-256` grounding (`CURRENT_ON_DISK` / `HISTORICAL_FILE_CHANGED`) without mutating raw records
+  - `BirthPrimerEngine` (`CHIMERA-PRIMER`): `< 30 ms` warm Turn-0 perception (`Env Fingerprint`, RAM repo tree, PDF/DOCX catalog, Top-K `AKASHIC-RAW`, Swarm Bulletin, `>= 4` worker soft pacing warning) + `SwarmZeroTokenWatchdog` (`0`-token replacement for LLM `@monitor`)
+  - `ShellShortCircuitGuard`: `PreToolUse` `< 2 ms` Swarm idempotent replay shield + `PostToolUse` Dual-Channel Lossless Capture (`100%` raw + `<= 1.2 KB` high-surprise excerpt)
+  - `WarmPythonReplPool`: Persistent `BELOW_NORMAL | CREATE_NO_WINDOW` warm Python worker + race-free `Singleflight` coalescing (`15.42 ms` vs `342.35 ms` cold PS+Python)
+  - `EntropyCommitAuditor` + `NocturnalRawArena`: `< 0.2 ms` Win32/Linux Commit RAM audit + live A/B arena (`RAW-RAG` vs `CAUSAL-RAW-RAG` vs `thought-briefs.sqlite`)
+- [x] **Wave 2 — `CHIMERA-NERVE-RPC`, Lifecycle Hooks & MCP Integration** (`agent_probe.py`, `agent_symbiont.py`, `substrate.py`, `client.py`, `mcp_server.py`, `omega_spine/hook_router.py`, `omega_spine/streamable_mcp.py`, `plugins/chimera-cortex/mcp_instructions.md`):
+  - Added 6 zero-spawn ops into `chimera_xray_batch` (`remote_xray`, `file_hash`, `win_probe`, `watch_until`, `raw_recall`, `doc_page`) while preserving `6` crisp Eager Super-Tools on `/mcp` + registered **49th stdio MCP tool `chimera_mnemosyne`**
+  - Upgraded `HookRouter` (`SessionStart` Primer, `PreToolUse` Shell Short-Circuit, `PostToolUse` Dual-Channel Capture, `PreInvocation` KV-Safe Append-Only Raw Whisper) + fixed `streamable_mcp.py` `pytest → unittest` auto-fallback on `svhome` Python 3.14
+- [x] **Wave 3 — Tquota Micro-Burst KV Affinity Pacer & Entropy Root-Cause Audit** (`E:\DEV\Chung\.ch-relay\local-relay\src\swarm-kv-pacer.js`, `gemini-native-gateway.js`, `routes-hyperdrive.js`, `test/swarm-kv-pacer.test.js`):
+  - Wired `SwarmKvPacer` (`0.00 ms` single-agent fast path, `1200 ms / 3-call` micro-burst window for warm KV session, abort-aware `180–650 ms` sibling stagger, `effortMutationAllowed: false`, `GET /api/swarm/pacer`)
+  - Pinpointed live Windows Commit Charge `82.4%` (`39.45 / 47.86 GB`) culprits without breaking business apps (Law 6 `auto_activated=False`): `office_print.py worker` (`office_pdl.warmup_pool()` holding `6 × 388 MB = 2.33 GB` idle `multiprocessing` workers) + `office_dashboard.py` (`411.5 MB`) + `OneDrive` (`1.49 GB / 2,485s CPU`)
+- [x] **Dual-Node Zero-Drift Verification & Live A/B (`tasks/chimera_mnemosyne_ab.json`)**: **`88/88` tests PASS** (`29/29` Win Py + `13/13` `svhome` Py + `23/23` Win Node + `23/23` `svhome` Node), **`0` SHA-256 drift** (`win_ch: 0`, `sv_ch: 0`, `sv_tq: 0`), `SwarmMaintenanceLock` verified `active_streams=0` before reloading Windows Tquota (`win_pacer.ok=true`, `gatePass=true`), live RSS **`28.61 MiB` Win** & **`55.14 MiB` `svhome`** (`< 80 MiB` Law 7)
+
+## Review — Measured BEFORE vs AFTER (CHIMERA-MNEMOSYNE Live, 2026-11-27)
+| Benchmark / Metric | BEFORE (Legacy / Baseline) | AFTER (`CHIMERA-MNEMOSYNE` Live) | Delta |
+|---|---:|---:|---|
+| Real History Recall Arena (`15` live local queries) | `0.0%` hit (`thought-briefs.sqlite` lossy summary) | **`100.0%` hit** (`RAW-RAG 14.2ms` · **`CAUSAL-RAW-RAG 21.0ms`, `+75` causal links**) | **`+100 pp` hit · `0` lossy compression** |
+| Cross-Brain Raw Index (`V:\mnemosyne\akashic_raw.sqlite`) | `0%` of `950 MB` logs indexed | **`830` real turns (`327` Codex + `242` AGY + `261` T3) · `8,417` causal links (`3.59 MB`)** | **Ingested in `1.59s` · `5.79 ms` live query** |
+| `PreToolUse` Swarm Duplicate Read-Only Shell | `~330 ms` PS + AMSI + `1` Cloud LLM turn | **`1.65 ms` HTTP RAM short-circuit** (`sibling_hit=true`, `0` spawns) | **`~200×` faster OS · `0` shell spawns** |
+| Session Orientation (`3×` PS vs `BirthPrimer` + Nerve) | `991.45 ms` OS + `3` Cloud LLM turns | **`198.7 ms` cold · `28.5 ms` warm engine (`43.1 ms` HTTP)** | **`4.99×` cold · `23×` warm · `0` dò turns** |
+| Remote `svhome` Probe (`ssh python3` vs `remote_xray`) | `1,355.32 ms` cold SSH | **`71.02 ms` over `PHANTOM-5MS`** (`0` SSH spawns) | **`19.08×` faster (`-94.8%`)** |
+| Python Snippet Exec (Cold PS+Py vs `WARM-REPL`) | `342.35 ms` ConPTY + AMSI | **`15.42 ms` persistent warm worker + Singleflight** | **`22.20×` faster (`-95.5%`)** |
+| Swarm Micro-Burst KV Pacer & Dual-Node RSS (`<80M`) | Unpaced `6`-worker prefix thrash | **`/api/swarm/pacer` LIVE × 2 (`effortMutationAllowed=false`) · `28.6` / `55.1 MiB`** | **`88/88` tests · `0` SHA drift · Law 7 PASS** |

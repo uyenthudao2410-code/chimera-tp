@@ -1843,8 +1843,13 @@ class StreamableMcpServer:
                 if not py_tests and (repo / "tests").is_dir():
                     py_tests = [p.relative_to(repo).as_posix() for p in sorted((repo / "tests").glob("test_*.py"))[:6]]
                 if py_tests:
-                    exec_cmd = [sys.executable, "-m", "pytest", "-q", *sorted(set(py_tests))]
-                    runner = "pytest"
+                    import importlib.util as _ilu
+                    if _ilu.find_spec("pytest") is not None:
+                        exec_cmd = [sys.executable, "-m", "pytest", "-q", *sorted(set(py_tests))]
+                        runner = "pytest"
+                    else:
+                        exec_cmd = [sys.executable, "-m", "unittest", *sorted(set(py_tests))]
+                        runner = "unittest"
             elif has_js and shutil.which("node"):
                 js_tests = [
                     p.relative_to(repo).as_posix()

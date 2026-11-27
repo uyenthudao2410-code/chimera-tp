@@ -46,3 +46,11 @@
   1. **NEVER inject unaliased tags/wrappers/deltas into `contents[]` by default on live multi-turn Antigravity sessions.** Any optimization touching multi-turn `contents[]` MUST stay strictly opt-in until verified with `prefixEditsObserved === 0` on live multi-turn traffic.
   2. **Only transform stateless 1-entry `baseline` blobs (`contents.length === 1`, `toolCount === 0`, `cached === 0` ALWAYS)** by default — zero risk to any warm KV cache, massive instant savings (`-95%` on `70K–155K` Flash side-queries).
   3. **Always audit live `:12500/api/gemini/prism` & `local-usage.sqlite` 3–5 minutes after any gateway change** to confirm `cacheHitPct >= 90%` and `prefixEditsObserved == 0`!
+
+## 2026-11-27 — Windows Daemon JobObject Persistence & Tailscale Port-Filter Rule
+- **Root Cause:**
+  1. Reloading Windows Tquota via plain `Start-Process` inside `run_command` attached the child `node.exe` to `run_command`'s Windows JobObject (`KILL_ON_JOB_CLOSE`), terminating Tquota immediately on shell exit.
+  2. A prior crashed `restart` CLI (`PID 20564`) left a stale `data\lifecycle.lock` blocking every `tquota daemon|restart` and Tray Auto-Heal attempt (`LIFECYCLE_LOCKED`), while `start-local.ps1` line 44 called `Get-NetTCPConnection -LocalPort 12500 -State Listen` without filtering `LocalAddress`, mistaking `tailscaled.exe` on `100.72.186.41:12500` for a loopback port conflict.
+- **Permanent Rule:**
+  1. NEVER start/reload long-lived Windows daemons with plain `Start-Process` inside `run_command`. Always use the daemon's JobObject-breaking launcher (`node src/server.js daemon` / WMI `Win32_Process.Create` / ScheduledTask), AND always verify the PID and `/healthz` in a **second independent command** after the launch command exits.
+  2. Always filter `Get-NetTCPConnection` port-occupancy probes to loopback/wildcard addresses (`127.0.0.1`, `::1`, `0.0.0.0`, `::`) so Tailscale Serve/Forward listeners on `100.x.y.z` never false-block local startups.

@@ -100,12 +100,13 @@ def _make_sample_repo(root: Path) -> Path:
         encoding="utf-8",
     )
     (repo / "tests" / "test_calc.py").write_text(
-        "import sys\n"
+        "import sys, unittest\n"
         "from pathlib import Path\n"
         "sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'src'))\n"
         "from calc import add\n\n"
-        "def test_add():\n"
-        "    assert add(2, 3) == 5\n",
+        "class TestCalc(unittest.TestCase):\n"
+        "    def test_add(self):\n"
+        "        self.assertEqual(add(2, 3), 5)\n",
         encoding="utf-8",
     )
     subprocess.run(["git", "init", "-q"], cwd=repo, check=True)
@@ -473,7 +474,7 @@ class TestOmegaSpineMcpHooks(unittest.TestCase):
                 cv1 = mcp_call("chimera_commit_verify", {"repo": str(repo), "changed_files": ["src/calc.py"]})
                 self.assertTrue(cv1["ok"], msg=cv1)
                 self.assertFalse(cv1["cache_hit"])
-                self.assertEqual(cv1["runner"], "pytest")
+                self.assertIn(cv1["runner"], ("pytest", "unittest"))
 
                 cv2 = mcp_call("chimera_commit_verify", {"repo": str(repo), "changed_files": ["src/calc.py"]})
                 self.assertTrue(cv2["ok"])
