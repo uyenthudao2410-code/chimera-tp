@@ -6,3 +6,12 @@ tasks/observed_serving_3bb6a24fb27c_win33212.json text eol=crlf
 scripts/measure_workstation_apps.py text eol=lf
 scripts/workstation_webviews.py text eol=lf
 tasks/workstation_webview_hosts_20261127T031023.json text eol=crlf
+
+# Keep Python package bytes portable between Windows and Linux checkouts.
+chimera_tp/**/*.py text eol=lf
+tests/test_v4_hyperos.py text eol=lf
+scripts/measure_code_search_updates.py text eol=lf
+
+# The FTS report and the 24-hour collector reference byte-level digests.
+tasks/code_search_updates_ab_20261127.json text eol=lf
+tasks/workstation_rollout_bd18ec94f55c_win25476.json text eol=lf

@@ -283,6 +283,52 @@ class TestV4HyperOS(unittest.TestCase):
             finally:
                 idx.close()
 
+    def test_code_search_legacy_rowids_and_transaction_recovery(self) -> None:
+        import sqlite3
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp) / "source"
+            root.mkdir()
+            for name in ("edit", "remove", "keep", "binary"):
+                (root / (name + ".py")).write_text("old" + name, encoding="utf-8")
+
+            index = CodeSearchIndex(Path(tmp) / "code_index.db")
+            try:
+                index.incremental_index([root])
+                db = index._conn
+                with db:
+                    # Older indexes may have different metadata and FTS rowids for the same path.
+                    db.execute("UPDATE code_fts SET rowid = rowid + 100")
+                    db.execute("INSERT INTO code_fts VALUES ('edit.py', 'source', 'legacyduplicate')")
+                    db.execute("INSERT INTO code_fts VALUES ('remove.py', 'source', 'legacyduplicate')")
+                    db.execute(
+                        "CREATE TRIGGER fail_update BEFORE UPDATE ON files BEGIN "
+                        "SELECT RAISE(ABORT, 'write interrupted'); END"
+                    )
+
+                (root / "remove.py").unlink()
+                (root / "edit.py").write_text("replacement search term", encoding="utf-8")
+                (root / "binary.py").write_bytes(b"\x00binary content")
+                with self.assertRaisesRegex(sqlite3.IntegrityError, "write interrupted"):
+                    index.incremental_index([root])
+                self.assertFalse(db.in_transaction)
+                self.assertEqual(index.search("oldremove")["total_hits"], 1)
+                self.assertEqual(index.search("legacyduplicate")["total_hits"], 2)
+                db.execute("DROP TRIGGER fail_update")
+
+                report = index.incremental_index([root])
+                for key, count in {"updated": 1, "removed": 1, "skipped_unchanged": 1,
+                                   "skipped_binary_or_large": 1, "total_files": 3}.items():
+                    self.assertEqual(report[key], count, key)
+                self.assertEqual(index.search("replacement")["total_hits"], 1)
+                self.assertEqual(index.search("legacyduplicate")["total_hits"], 0)
+                self.assertEqual(index.search("oldremove")["total_hits"], 0)
+                self.assertEqual(index.search("oldkeep")["total_hits"], 1)
+                self.assertEqual(index.search("oldbinary")["total_hits"], 1)
+                self.assertEqual(db.execute("SELECT count(*) FROM code_fts").fetchone()[0], 3)
+            finally:
+                index.close()
+
     def test_holo_backup_gf256_2of3_entropy_all_pairs_and_tamper(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             src_dir = Path(td) / "secret_cfg"

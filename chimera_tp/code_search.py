@@ -150,26 +150,29 @@ class CodeSearchIndex:
             if not root.exists():
                 continue
             for dirpath, dirnames, filenames in os.walk(root):
+                directory = Path(dirpath)
+                relative_dir = directory.relative_to(root)
+                repo = relative_dir.parts[0] if relative_dir.parts else root.name
+                prefix = relative_dir.as_posix() + "/" if relative_dir.parts else ""
                 dirnames[:] = sorted(
                     d for d in dirnames if d not in SEARCH_IGNORE_DIRS and not d.startswith(".")
                 )
                 for fn in sorted(filenames):
-                    fp = Path(dirpath) / fn
-                    if fn.endswith(_IGNORE_SUFFIXES) or fp.suffix.lower() not in TEXT_EXTENSIONS:
-                        continue
-                    rel = fp.relative_to(root).as_posix()
-                    parts = Path(rel).parts
-                    repo = parts[0] if len(parts) > 1 else root.name
                     if repo_counts.get(repo, 0) >= max_files_per_repo:
+                        # Descendants share the top-level repo. The root's children do not.
+                        if relative_dir.parts:
+                            dirnames.clear()
+                        break
+                    fp = directory / fn
+                    if fn.endswith(_IGNORE_SUFFIXES) or fp.suffix.lower() not in TEXT_EXTENSIONS:
                         continue
                     try:
                         st = fp.stat()
                     except OSError:
                         continue
-                    size = int(st.st_size)
-                    mtime_ns = int(st.st_mtime_ns)
+                    rel = prefix + fn
                     disk_key = f"{root.name}/{rel}" if len(roots) > 1 else rel
-                    disk_entries[disk_key] = (fp, str(root), repo, size, mtime_ns)
+                    disk_entries[disk_key] = (root, rel, repo, st.st_size, st.st_mtime_ns)
                     repo_counts[repo] = repo_counts.get(repo, 0) + 1
                     seen_count += 1
                     if seen_count >= max_files:
@@ -186,52 +189,62 @@ class CodeSearchIndex:
 
         with self._lock:
             cur = self._conn.cursor()
-            existing = {
-                str(row["rel_path"]): (int(row["size"]), int(row["mtime_ns"]))
-                for row in cur.execute("SELECT rel_path, size, mtime_ns FROM files").fetchall()
-            }
+            with self._conn:
+                # Keep FTS rowids stable even when another connection writes this index.
+                cur.execute("BEGIN IMMEDIATE")
+                old_rows: dict[str, list[int]] = {}
+                for key, size, mtime_ns in cur.execute("SELECT rel_path, size, mtime_ns FROM files"):
+                    entry = disk_entries.get(key)
+                    if entry is not None and entry[3] == size and entry[4] == mtime_ns:
+                        del disk_entries[key]
+                        skipped_unchanged += 1
+                    else:
+                        old_rows[key] = []
 
-            to_delete = [k for k in existing if k not in disk_entries]
-            for dk in to_delete:
-                cur.execute("DELETE FROM code_fts WHERE rel_path = ?", (dk,))
-                cur.execute("DELETE FROM files WHERE rel_path = ?", (dk,))
-                removed += 1
+                # An existing database may have different metadata/FTS rowids or duplicate
+                # documents. Read the virtual table once for the entire batch of paths.
+                if old_rows:
+                    for rowid, key in cur.execute("SELECT rowid, rel_path FROM code_fts"):
+                        rowids = old_rows.get(key)
+                        if rowids is not None:
+                            rowids.append(rowid)
+                delete_document = "DELETE FROM code_fts WHERE rowid = ?"
+                for key, rowids in old_rows.items():
+                    if key not in disk_entries:
+                        cur.executemany(delete_document, ((rowid,) for rowid in rowids))
+                        cur.execute("DELETE FROM files WHERE rel_path = ?", (key,))
+                        removed += 1
 
-            for dk, (fp, root_str, repo, size, mtime_ns) in disk_entries.items():
-                prev = existing.get(dk)
-                if prev is not None and prev[0] == size and prev[1] == mtime_ns:
-                    skipped_unchanged += 1
-                    continue
-                text = _read_indexable_text(fp, max_file_bytes=max_file_bytes)
-                if text is None:
-                    skipped_binary_or_large += 1
-                    continue
-                if prev is not None:
-                    cur.execute("DELETE FROM code_fts WHERE rel_path = ?", (dk,))
+                for key, (root, rel, repo, size, mtime_ns) in disk_entries.items():
+                    text = _read_indexable_text(root / rel, max_file_bytes=max_file_bytes)
+                    if text is None:
+                        skipped_binary_or_large += 1
+                        continue
+                    cur.executemany(delete_document, ((rowid,) for rowid in old_rows.get(key, ())))
+                    cur.execute(
+                        """
+                        INSERT INTO files (rel_path, root_path, repo, size, mtime_ns, indexed_at)
+                        VALUES (?, ?, ?, ?, ?, ?)
+                        ON CONFLICT(rel_path) DO UPDATE SET
+                            root_path = excluded.root_path,
+                            repo = excluded.repo,
+                            size = excluded.size,
+                            mtime_ns = excluded.mtime_ns,
+                            indexed_at = excluded.indexed_at
+                        """,
+                        (key, str(root), repo, size, mtime_ns, now_local),
+                    )
+                    cur.execute(
+                        "INSERT INTO code_fts (rel_path, repo, content) VALUES (?, ?, ?)",
+                        (key, repo, text),
+                    )
+                    updated += 1
+
                 cur.execute(
-                    """
-                    INSERT INTO files (rel_path, root_path, repo, size, mtime_ns, indexed_at)
-                    VALUES (?, ?, ?, ?, ?, ?)
-                    ON CONFLICT(rel_path) DO UPDATE SET
-                        root_path = excluded.root_path,
-                        repo = excluded.repo,
-                        size = excluded.size,
-                        mtime_ns = excluded.mtime_ns,
-                        indexed_at = excluded.indexed_at
-                    """,
-                    (dk, root_str, repo, size, mtime_ns, now_local),
+                    "INSERT INTO meta (k, v) VALUES ('last_indexed_at', ?) "
+                    "ON CONFLICT(k) DO UPDATE SET v = excluded.v",
+                    (now_local,),
                 )
-                cur.execute(
-                    "INSERT INTO code_fts (rel_path, repo, content) VALUES (?, ?, ?)",
-                    (dk, repo, text),
-                )
-                updated += 1
-
-            cur.execute(
-                "INSERT INTO meta (k, v) VALUES ('last_indexed_at', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v",
-                (now_local,),
-            )
-            self._conn.commit()
             if removed >= 100:
                 self._conn.execute("VACUUM")
                 self._conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")

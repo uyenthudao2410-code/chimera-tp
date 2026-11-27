@@ -1,0 +1,442 @@
+{
+  "ok": true,
+  "state": "completed",
+  "request_id": "04c9ae92ca3b4a71b537ee512690cb86",
+  "attempt_id": "4f74453a1cbb4c1196a5e82c190475f7",
+  "ssh_route": "phantom_ssh",
+  "exit_code": 0,
+  "stderr": "",
+  "elapsed_end_to_end_ms": 6063.0,
+  "guard": {
+    "accepted": true,
+    "reason": "capacity",
+    "limits_verified": true,
+    "effective_policy": {
+      "ram_reserve_mib": 2560,
+      "job_memory_mib": 512,
+      "disk_reserve_mib": 14306,
+      "job_disk_mib": 128,
+      "cpu_quota_pct": 95,
+      "max_tasks": 128,
+      "runtime_seconds": 150,
+      "psi_cpu_pct": 25.0,
+      "psi_memory_pct": 1.0,
+      "psi_io_pct": 5.0,
+      "max_load1": 1.8,
+      "max_temp_c": 70.0,
+      "service_urls": [
+        "http://127.0.0.1:9780/.well-known/chimera.json"
+      ],
+      "service_p95_ms": 150.0,
+      "service_samples": 5,
+      "service_timeout_s": 0.5,
+      "max_sample_age_s": 5.0,
+      "require_io_cap": true,
+      "io_write_bps": 8388608,
+      "disk_path": "/home/svhome"
+    }
+  },
+  "tests": "test_code_search_fts5_merkle_incremental_and_sanitization (test_v4_hyperos.TestV4HyperOS.test_code_search_fts5_merkle_incremental_and_sanitization) ... ok\ntest_code_search_legacy_rowids_and_transaction_recovery (test_v4_hyperos.TestV4HyperOS.test_code_search_legacy_rowids_and_transaction_recovery) ... ok\n\n----------------------------------------------------------------------\nRan 2 tests in 0.017s\n\nOK",
+  "benchmark": {
+    "snapshot_bytes": 42840064,
+    "snapshot_sha256": "1ddf16fa54727e4a06e46e8268b169d4a39085cfbddd97a8986bb356ba5224cb",
+    "indexed_files": 2199,
+    "sqlite_version": "3.46.1",
+    "python_version": "3.14.4",
+    "module_sha256": {
+      "baseline": "16a5c1144194ad3386acc78b3be1ba48ffdf0754d5cf715a60af5e053d112c34",
+      "candidate": "8b7d6e2ab2fb801500567da60d6abe54bb4f6f6ef7a7b48ee37bbd7ae81602d3"
+    },
+    "trials": [
+      {
+        "mode": "unchanged",
+        "pair": 1,
+        "version": "baseline",
+        "counts": {
+          "total_files": 2199,
+          "updated": 0,
+          "removed": 0,
+          "skipped_unchanged": 2199,
+          "skipped_binary_or_large": 0
+        },
+        "fts_documents": 2199,
+        "marker_hits": 0,
+        "search_sha256": "6cb66aa2800305e34ff5e16623dd8875484ba0975a783f85ae01ccdfb0310d50",
+        "elapsed_ms": 123.93,
+        "vm_steps_floor": 10000,
+        "before_kib": {
+          "VmHWM": 20980,
+          "VmRSS": 20980
+        },
+        "opened_kib": {
+          "VmHWM": 27120,
+          "VmRSS": 27120
+        },
+        "indexed_kib": {
+          "VmHWM": 31792,
+          "VmRSS": 31792
+        }
+      },
+      {
+        "mode": "unchanged",
+        "pair": 1,
+        "version": "candidate",
+        "counts": {
+          "total_files": 2199,
+          "updated": 0,
+          "removed": 0,
+          "skipped_unchanged": 2199,
+          "skipped_binary_or_large": 0
+        },
+        "fts_documents": 2199,
+        "marker_hits": 0,
+        "search_sha256": "6cb66aa2800305e34ff5e16623dd8875484ba0975a783f85ae01ccdfb0310d50",
+        "elapsed_ms": 53.06,
+        "vm_steps_floor": 10000,
+        "before_kib": {
+          "VmHWM": 20808,
+          "VmRSS": 20808
+        },
+        "opened_kib": {
+          "VmHWM": 26972,
+          "VmRSS": 26972
+        },
+        "indexed_kib": {
+          "VmHWM": 28188,
+          "VmRSS": 28188
+        }
+      },
+      {
+        "mode": "unchanged",
+        "pair": 2,
+        "version": "candidate",
+        "counts": {
+          "total_files": 2199,
+          "updated": 0,
+          "removed": 0,
+          "skipped_unchanged": 2199,
+          "skipped_binary_or_large": 0
+        },
+        "fts_documents": 2199,
+        "marker_hits": 0,
+        "search_sha256": "6cb66aa2800305e34ff5e16623dd8875484ba0975a783f85ae01ccdfb0310d50",
+        "elapsed_ms": 58.24,
+        "vm_steps_floor": 10000,
+        "before_kib": {
+          "VmHWM": 20952,
+          "VmRSS": 20952
+        },
+        "opened_kib": {
+          "VmHWM": 27020,
+          "VmRSS": 27020
+        },
+        "indexed_kib": {
+          "VmHWM": 28236,
+          "VmRSS": 28236
+        }
+      },
+      {
+        "mode": "unchanged",
+        "pair": 2,
+        "version": "baseline",
+        "counts": {
+          "total_files": 2199,
+          "updated": 0,
+          "removed": 0,
+          "skipped_unchanged": 2199,
+          "skipped_binary_or_large": 0
+        },
+        "fts_documents": 2199,
+        "marker_hits": 0,
+        "search_sha256": "6cb66aa2800305e34ff5e16623dd8875484ba0975a783f85ae01ccdfb0310d50",
+        "elapsed_ms": 115.39,
+        "vm_steps_floor": 10000,
+        "before_kib": {
+          "VmHWM": 20892,
+          "VmRSS": 20892
+        },
+        "opened_kib": {
+          "VmHWM": 27124,
+          "VmRSS": 27124
+        },
+        "indexed_kib": {
+          "VmHWM": 31796,
+          "VmRSS": 31796
+        }
+      },
+      {
+        "mode": "unchanged",
+        "pair": 3,
+        "version": "baseline",
+        "counts": {
+          "total_files": 2199,
+          "updated": 0,
+          "removed": 0,
+          "skipped_unchanged": 2199,
+          "skipped_binary_or_large": 0
+        },
+        "fts_documents": 2199,
+        "marker_hits": 0,
+        "search_sha256": "6cb66aa2800305e34ff5e16623dd8875484ba0975a783f85ae01ccdfb0310d50",
+        "elapsed_ms": 116.77,
+        "vm_steps_floor": 10000,
+        "before_kib": {
+          "VmHWM": 20932,
+          "VmRSS": 20932
+        },
+        "opened_kib": {
+          "VmHWM": 27032,
+          "VmRSS": 27032
+        },
+        "indexed_kib": {
+          "VmHWM": 31708,
+          "VmRSS": 31708
+        }
+      },
+      {
+        "mode": "unchanged",
+        "pair": 3,
+        "version": "candidate",
+        "counts": {
+          "total_files": 2199,
+          "updated": 0,
+          "removed": 0,
+          "skipped_unchanged": 2199,
+          "skipped_binary_or_large": 0
+        },
+        "fts_documents": 2199,
+        "marker_hits": 0,
+        "search_sha256": "6cb66aa2800305e34ff5e16623dd8875484ba0975a783f85ae01ccdfb0310d50",
+        "elapsed_ms": 52.47,
+        "vm_steps_floor": 10000,
+        "before_kib": {
+          "VmHWM": 20996,
+          "VmRSS": 20996
+        },
+        "opened_kib": {
+          "VmHWM": 27108,
+          "VmRSS": 27108
+        },
+        "indexed_kib": {
+          "VmHWM": 28324,
+          "VmRSS": 28324
+        }
+      },
+      {
+        "mode": "mixed",
+        "pair": 1,
+        "version": "baseline",
+        "counts": {
+          "total_files": 2187,
+          "updated": 12,
+          "removed": 12,
+          "skipped_unchanged": 2175,
+          "skipped_binary_or_large": 0
+        },
+        "fts_documents": 2187,
+        "marker_hits": 12,
+        "search_sha256": "6ddba3f011e7840e981d3ef5a72b543860413c63246d22ffc61d59a0f2120340",
+        "elapsed_ms": 470.23,
+        "vm_steps_floor": 580000,
+        "before_kib": {
+          "VmHWM": 20936,
+          "VmRSS": 20936
+        },
+        "opened_kib": {
+          "VmHWM": 27040,
+          "VmRSS": 27040
+        },
+        "indexed_kib": {
+          "VmHWM": 33748,
+          "VmRSS": 33748
+        }
+      },
+      {
+        "mode": "mixed",
+        "pair": 1,
+        "version": "candidate",
+        "counts": {
+          "total_files": 2187,
+          "updated": 12,
+          "removed": 12,
+          "skipped_unchanged": 2175,
+          "skipped_binary_or_large": 0
+        },
+        "fts_documents": 2187,
+        "marker_hits": 12,
+        "search_sha256": "6ddba3f011e7840e981d3ef5a72b543860413c63246d22ffc61d59a0f2120340",
+        "elapsed_ms": 82.25,
+        "vm_steps_floor": 20000,
+        "before_kib": {
+          "VmHWM": 20780,
+          "VmRSS": 20780
+        },
+        "opened_kib": {
+          "VmHWM": 27004,
+          "VmRSS": 27004
+        },
+        "indexed_kib": {
+          "VmHWM": 30204,
+          "VmRSS": 30204
+        }
+      },
+      {
+        "mode": "mixed",
+        "pair": 2,
+        "version": "candidate",
+        "counts": {
+          "total_files": 2187,
+          "updated": 12,
+          "removed": 12,
+          "skipped_unchanged": 2175,
+          "skipped_binary_or_large": 0
+        },
+        "fts_documents": 2187,
+        "marker_hits": 12,
+        "search_sha256": "6ddba3f011e7840e981d3ef5a72b543860413c63246d22ffc61d59a0f2120340",
+        "elapsed_ms": 81.84,
+        "vm_steps_floor": 20000,
+        "before_kib": {
+          "VmHWM": 20792,
+          "VmRSS": 20792
+        },
+        "opened_kib": {
+          "VmHWM": 27008,
+          "VmRSS": 27008
+        },
+        "indexed_kib": {
+          "VmHWM": 30252,
+          "VmRSS": 30252
+        }
+      },
+      {
+        "mode": "mixed",
+        "pair": 2,
+        "version": "baseline",
+        "counts": {
+          "total_files": 2187,
+          "updated": 12,
+          "removed": 12,
+          "skipped_unchanged": 2175,
+          "skipped_binary_or_large": 0
+        },
+        "fts_documents": 2187,
+        "marker_hits": 12,
+        "search_sha256": "6ddba3f011e7840e981d3ef5a72b543860413c63246d22ffc61d59a0f2120340",
+        "elapsed_ms": 474.89,
+        "vm_steps_floor": 580000,
+        "before_kib": {
+          "VmHWM": 20988,
+          "VmRSS": 20988
+        },
+        "opened_kib": {
+          "VmHWM": 27104,
+          "VmRSS": 27104
+        },
+        "indexed_kib": {
+          "VmHWM": 33808,
+          "VmRSS": 33808
+        }
+      },
+      {
+        "mode": "mixed",
+        "pair": 3,
+        "version": "baseline",
+        "counts": {
+          "total_files": 2187,
+          "updated": 12,
+          "removed": 12,
+          "skipped_unchanged": 2175,
+          "skipped_binary_or_large": 0
+        },
+        "fts_documents": 2187,
+        "marker_hits": 12,
+        "search_sha256": "6ddba3f011e7840e981d3ef5a72b543860413c63246d22ffc61d59a0f2120340",
+        "elapsed_ms": 471.45,
+        "vm_steps_floor": 580000,
+        "before_kib": {
+          "VmHWM": 20864,
+          "VmRSS": 20864
+        },
+        "opened_kib": {
+          "VmHWM": 26900,
+          "VmRSS": 26900
+        },
+        "indexed_kib": {
+          "VmHWM": 33604,
+          "VmRSS": 33604
+        }
+      },
+      {
+        "mode": "mixed",
+        "pair": 3,
+        "version": "candidate",
+        "counts": {
+          "total_files": 2187,
+          "updated": 12,
+          "removed": 12,
+          "skipped_unchanged": 2175,
+          "skipped_binary_or_large": 0
+        },
+        "fts_documents": 2187,
+        "marker_hits": 12,
+        "search_sha256": "6ddba3f011e7840e981d3ef5a72b543860413c63246d22ffc61d59a0f2120340",
+        "elapsed_ms": 82.75,
+        "vm_steps_floor": 20000,
+        "before_kib": {
+          "VmHWM": 20792,
+          "VmRSS": 20792
+        },
+        "opened_kib": {
+          "VmHWM": 27020,
+          "VmRSS": 27020
+        },
+        "indexed_kib": {
+          "VmHWM": 30224,
+          "VmRSS": 30224
+        }
+      }
+    ]
+  },
+  "windows_tests": "test_code_search_fts5_merkle_incremental_and_sanitization (test_v4_hyperos.TestV4HyperOS.test_code_search_fts5_merkle_incremental_and_sanitization) ... ok\ntest_code_search_legacy_rowids_and_transaction_recovery (test_v4_hyperos.TestV4HyperOS.test_code_search_legacy_rowids_and_transaction_recovery) ... ok\n\n----------------------------------------------------------------------\nRan 2 tests in 0.115s\n\nOK",
+  "schema": "chimera.code-search-copy-ab/1",
+  "measured_utc": "2026-11-27T05:43:40+00:00",
+  "scope": "Linux SQLite online backup in tmpfs; sparse fixture reproducing indexed paths, sizes and mtimes; alternating fresh processes; 12 updates and 12 removals; no writes to the serving index.",
+  "source_paths": {
+    "index": "~/.chimera_ops/code_index.db",
+    "baseline": "747ec51dad10f86c3f9a3433a12c57828b5115d3:chimera_tp/code_search.py",
+    "candidate": "chimera_tp/code_search.py",
+    "harness": "scripts/measure_code_search_updates.py"
+  },
+  "harness_sha256": "c6f0f63f322e1199e53c93fb8c0827f98dced9c6e051d1296eb21e22dd5de3be",
+  "summary": {
+    "unchanged": {
+      "baseline": {
+        "median_elapsed_ms": 116.77,
+        "median_kernel_peak_mib": 31.047,
+        "median_peak_growth_since_open_mib": 4.562,
+        "median_sql_vm_steps_floor": 10000
+      },
+      "candidate": {
+        "median_elapsed_ms": 53.06,
+        "median_kernel_peak_mib": 27.574,
+        "median_peak_growth_since_open_mib": 1.188,
+        "median_sql_vm_steps_floor": 10000
+      }
+    },
+    "mixed": {
+      "baseline": {
+        "median_elapsed_ms": 471.45,
+        "median_kernel_peak_mib": 32.957,
+        "median_peak_growth_since_open_mib": 6.547,
+        "median_sql_vm_steps_floor": 580000
+      },
+      "candidate": {
+        "median_elapsed_ms": 82.25,
+        "median_kernel_peak_mib": 29.516,
+        "median_peak_growth_since_open_mib": 3.129,
+        "median_sql_vm_steps_floor": 20000
+      }
+    }
+  }
+}
