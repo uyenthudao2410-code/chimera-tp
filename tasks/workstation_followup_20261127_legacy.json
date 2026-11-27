@@ -1,0 +1,89 @@
+{
+  "schema": "chimera.workstation-followup/1",
+  "release": "5e25fafe4a8f2de1d2b492c6fbfc992166e79cad",
+  "development_commit": "d3861f61b89de619b7a826b613dab3c654208a31",
+  "linux_core_regressions": {
+    "ok": true,
+    "state": "completed",
+    "error": null,
+    "exit_code": 0,
+    "request_id": "36d8b2aa02a142ac96fd29f61888b34e",
+    "attempt_id": "760ad6f727804e06bf21599ff428f409",
+    "ssh_route": "phantom_ssh",
+    "stdout": "{\"tests\": 27, \"skipped\": 0, \"errors\": 0, \"failures\": 0, \"python\": \"3.14.4\", \"package_files\": 115, \"test_modules\": [\"test_peer_guard\", \"test_vsa_disk_budget\", \"test_daily_autopilot\", \"test_build_placement\"]}\n",
+    "stderr": "...........................\n----------------------------------------------------------------------\nRan 27 tests in 14.071s\n\nOK\n"
+  },
+  "windows_core_regressions": "s...s.s....................             [100%]\r\n24 passed, 3 skipped, 33 subtests passed in 16.00s",
+  "cad_regressions": [
+    "\u00c3\u00a2\u00e2\u20ac\u017e\u00c2\u00b9 tests 7",
+    "\u00c3\u00a2\u00e2\u20ac\u017e\u00c2\u00b9 pass 7",
+    "\u00c3\u00a2\u00e2\u20ac\u017e\u00c2\u00b9 fail 0"
+  ],
+  "legacy_regression": {
+    "windows": {
+      "tests": 29,
+      "failures": 0,
+      "subtests": 2
+    },
+    "linux": {
+      "ok": true,
+      "state": "completed",
+      "error": null,
+      "request_id": "3c33f2bb848748a9afb63ef420d9c1d1",
+      "attempt_id": "bd57b0ebc8184c8fafec39de5123d4bd",
+      "ssh_route": "phantom_ssh",
+      "stdout": "both import orders; old pickle; native loaded\n",
+      "stderr": ".\n----------------------------------------------------------------------\nRan 1 test in 0.730s\n\nOK\n",
+      "exit_code": 0,
+      "snapshot": "d2b01d31ee8a84506dd16101b23e5f3fed79cd28682f20b154215eca63538583"
+    },
+    "windows_clean_wheel": {
+      "modules": 11,
+      "native_loaded": true,
+      "wheel": "chimera_tp-18.0.0-py3-none-any.whl",
+      "sha256": "a3b5f3b0cf772e3b0bb6d11728d1e639aed2fec175e11ada3abae3fb347f9404"
+    }
+  },
+  "relay": {
+    "root": "E:/DEV/Chung/.ch-relay/local-relay",
+    "tests": [
+      "test/embedded-tool-prefix.test.js",
+      "test/request-footprint.test.js",
+      "test/incremental-prefix-delta-worker.test.js"
+    ],
+    "passed": 17,
+    "live_hit_rate_measured": false,
+    "daemon_restarted": false,
+    "sha256": {
+      "src/request-footprint.js": "f318b95fa29153cc37136d523b504b243af7797be91cb2b22a2f83a4b611901b",
+      "src/wire-delta-serializer.js": "fb613e5945e7b51965b1ff84fa32a2b21802bba46db568225bf16904a9dadf6a",
+      "test/embedded-tool-prefix.test.js": "5e885cc751a060d6598738a2cc7ad9628788712aa862300a9753b8dbb655a158"
+    }
+  },
+  "memory": {
+    "report": "tasks/live_daemon_soak_5e25fafe4a8f_win5268.json",
+    "observer_pid": 9504,
+    "allocator_fixture": "tasks/svhome_allocator_startup_ab_5e25fafe4a8f.json",
+    "full_transfer_allocator_trial": "interrupted_by_running_guard_io_pressure",
+    "changed_live_allocator": false,
+    "allocator_fixture_sha256": "36feaf9c8c482ad49a37e82eca1786515906843a208ecc20f7aa2402ce0b0e91"
+  },
+  "cad": {
+    "preflight": "tasks/cad_shared_cpu95_5e25fafe4a8f.json",
+    "completed_pairs": 0,
+    "automatic_offload": false,
+    "preflight_sha256": "614fc8cefc59299d5da2eecf138924a61434b0504f012652a55410a4e8da79db"
+  },
+  "io": {
+    "reexec": "tasks/guest_io_reexec_5e25fafe4a8f.json",
+    "persistent_configuration": false,
+    "reexec_sha256": "267de77e39a99b2680dac72adb37f9bd98d68f875c6df84f093873e95d1fafc2"
+  },
+  "decisions": {
+    "ricoh_queue": "preserved",
+    "colab_cu": 0,
+    "cad": "deferred"
+  },
+  "source_parity_scope": "The deployed release is pinned. The legacy layout and relay changes were verified in development, not installed in the serving processes.",
+  "captured_utc": "2026-11-27T03:00:31.886341+00:00"
+}

@@ -24,6 +24,14 @@ Hai tiến trình thực tế đã gọi cùng một build qua CLI `swarm` và M
 
 Để đối chiếu kết quả 24 giờ từ thư mục dự án, chạy `python -I -B -S scripts/check_daemon_soak.py tasks/live_daemon_soak_5e25fafe4a8f_win5268.json`. Lệnh đọc từng mẫu JSONL, đối chiếu PID, đỉnh kernel, thời lượng, hash biên nhận triển khai và các mốc kiểm nguồn. Mã thoát 0 xác nhận `passed`, 1 là đang đo, 2 là thất bại, mẫu đã cũ hoặc bằng chứng chưa đủ. Phép kiểm chỉ đọc tệp. [Mã đối chiếu](../scripts/check_daemon_soak.py) · [Nhật ký từng mẫu](../tasks/live_daemon_soak_5e25fafe4a8f_win5268.jsonl)
 
+## Mã phát triển và bản đang phục vụ
+
+Trên nhánh cục bộ `codex/workstation-integration-20261127`, bản `d3861f6` chuyển 11 module v9–v12 vào `chimera_tp.legacy`. Hai đường import trả cùng đối tượng module. Wheel Windows nạp đúng DLL và đọc được pickle cũ. Job Linux kiểm tra hai thứ tự import bằng thư viện native của release. Hai daemon tiếp tục chạy `5e25fafe4a8f`. [Biên bản mã và wheel](../tasks/workstation_followup_20261127_legacy.json)
+
+Ba cặp tiến trình Linux cho RSS nghỉ trung vị 40,25 MiB với allocator mặc định và 40,11 MiB khi giới hạn hai arena. Sau khi gọi đồng thời các API tùy chọn, RSS lớn nhất trong các mẫu tương ứng là 48,48 và 46,64 MiB. Lượt thử có truyền dữ liệu bị guard ngắt do áp lực I/O. Cấu hình allocator thật được giữ nguyên. [Dữ liệu từng tiến trình](../tasks/svhome_allocator_startup_ab_5e25fafe4a8f.json)
+
+Tquota đã kiểm thử việc dùng lại hash các hàng khai báo công cụ trong `input[]` khi các tin nhắn sau thay đổi. Bộ tuần tự hóa ghi nhận riêng những hàng công cụ nhúng thực sự được dùng lại. Chưa có số đo tác động trên relay đang phục vụ. [Kiểm thử và hash mã relay](../tasks/workstation_followup_20261127_legacy.json)
+
 ## Ba nguồn và ý nghĩa đối với thiết kế
 
 | Nguồn | Bằng chứng dùng để ra quyết định |

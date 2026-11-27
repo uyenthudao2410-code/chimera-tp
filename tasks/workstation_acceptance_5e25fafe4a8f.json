@@ -28,7 +28,9 @@
   },
   "serving_source_count": 115,
   "source_set_sha256": "1d8ae58ab45eb125c2d3290c9253c807a130001482252c4afa8ea22001a366a6",
-  "verified_workspace_equals_serving": true,
+  "verified_workspace_equals_serving_at_rollout": true,
+  "verified_workspace_equals_serving": false,
+  "development_followup": "tasks/workstation_followup_20261127_legacy.json",
   "verified_native_sha256": {
     "win-desktop": "1a7006fe93da5bce618d93f647c6bd67fecd45d201a76c6c1810c3a09fe5e880",
     "svhome": "64e250008d7ed1884b1225607866179c1d38cb24deb62b6d3e343a0f895b53e2"

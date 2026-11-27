@@ -1,0 +1,108 @@
+{
+  "schema": "chimera.linux-allocator-ab/1",
+  "utc": "2026-11-27T02:47:09.682537+00:00",
+  "release": "5e25fafe4a8f2de1d2b492c6fbfc992166e79cad",
+  "scope": "Private daemons on temporary ports: boot, health, Pulse, VSA stats and concurrent optional routes. PHANTOM disabled. The separate full transfer trial was interrupted by the receiver I/O pressure guard.",
+  "profiler_sha256": "6f3c6de076510c77431c74ad8577b381a2f52630b919973c6d6cfda413400359",
+  "worker_snapshot": "43745f2787d7c0e77b85d651a5f4518c4d3c8f9d32a599f4884b5212b804d6f0",
+  "admission_verified": true,
+  "raw_sha256": "810348c5947818c05583243fbab504b4b1a8a19eae536cba7a6386d202f0b57d",
+  "stats": {
+    "default": {
+      "median_idle_mib": 40.25,
+      "max_after_vsa_mib": 40.55078125,
+      "max_after_concurrent_optional_mib": 48.4765625
+    },
+    "arenas2": {
+      "median_idle_mib": 40.11328125,
+      "max_after_vsa_mib": 40.59765625,
+      "max_after_concurrent_optional_mib": 46.63671875
+    }
+  },
+  "samples": [
+    {
+      "arm": "default",
+      "pid": 4059247,
+      "python": "3.14.4",
+      "idle_rss_bytes": [
+        42205184,
+        42205184,
+        42205184,
+        42205184,
+        42205184
+      ],
+      "after_vsa": 42516480,
+      "after_concurrent_optional_routes": 50814976
+    },
+    {
+      "arm": "arenas2",
+      "pid": 4059348,
+      "python": "3.14.4",
+      "idle_rss_bytes": [
+        42033152,
+        42033152,
+        42033152,
+        42033152,
+        42033152
+      ],
+      "after_vsa": 42340352,
+      "after_concurrent_optional_routes": 48398336
+    },
+    {
+      "arm": "arenas2",
+      "pid": 4059433,
+      "python": "3.14.4",
+      "idle_rss_bytes": [
+        42262528,
+        42262528,
+        42262528,
+        42262528,
+        42262528
+      ],
+      "after_vsa": 42569728,
+      "after_concurrent_optional_routes": 48902144
+    },
+    {
+      "arm": "default",
+      "pid": 4059518,
+      "python": "3.14.4",
+      "idle_rss_bytes": [
+        42217472,
+        42217472,
+        42217472,
+        42217472,
+        42217472
+      ],
+      "after_vsa": 42520576,
+      "after_concurrent_optional_routes": 50831360
+    },
+    {
+      "arm": "default",
+      "pid": 4059622,
+      "python": "3.14.4",
+      "idle_rss_bytes": [
+        42127360,
+        42127360,
+        42127360,
+        42127360,
+        42127360
+      ],
+      "after_vsa": 42438656,
+      "after_concurrent_optional_routes": 50728960
+    },
+    {
+      "arm": "arenas2",
+      "pid": 4059696,
+      "python": "3.14.4",
+      "idle_rss_bytes": [
+        42061824,
+        42061824,
+        42061824,
+        42061824,
+        42061824
+      ],
+      "after_vsa": 42369024,
+      "after_concurrent_optional_routes": 48689152
+    }
+  ]
+}
