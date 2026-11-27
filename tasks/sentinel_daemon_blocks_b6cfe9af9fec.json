@@ -1,0 +1,165 @@
+{
+  "ok": true,
+  "state": "completed",
+  "error": null,
+  "exit_code": 0,
+  "attempt_id": "66d9279e1e8f4048a68f91fa734ee9e9",
+  "request_id": "ab36e950d4d0426faad076d973f2ee32",
+  "runtime_guard": {
+    "completed_samples": 38,
+    "worst_service_p95_ms": {
+      "http://127.0.0.1:9780/.well-known/chimera.json": 21.958895958960056
+    }
+  },
+  "stderr": "",
+  "limits_verified": true,
+  "trial": {
+    "source_scan_local": "2026-11-27 10:59:31",
+    "source_pid": 4072947,
+    "release_root": "/home/svhome/.local/share/chimera/releases/b6cfe9af9fec",
+    "candidate_sha256": "bfcf8dc80f37bff6a3249effcba89dbffc235a060f2cc3223644e3ffc8cb9f16",
+    "readings": [
+      {
+        "pair": 1,
+        "arm": "base",
+        "idle": {
+          "VmHWM": 41078784,
+          "VmRSS": 41078784
+        },
+        "after_real_log_scans": {
+          "VmHWM": 50675712,
+          "VmRSS": 44982272
+        },
+        "after_status_reads": {
+          "VmHWM": 50675712,
+          "VmRSS": 45232128
+        },
+        "scan_ms": [
+          880.72,
+          845.95
+        ],
+        "digest": "ec5ea19001eab05263c3d57bb3b4356d58cab483fc61e65d220ef81fd31919c9",
+        "logs": 12,
+        "lines": 73249
+      },
+      {
+        "pair": 1,
+        "arm": "blocks",
+        "idle": {
+          "VmHWM": 41377792,
+          "VmRSS": 41377792
+        },
+        "after_real_log_scans": {
+          "VmHWM": 44883968,
+          "VmRSS": 44883968
+        },
+        "after_status_reads": {
+          "VmHWM": 45129728,
+          "VmRSS": 45129728
+        },
+        "scan_ms": [
+          875.16,
+          849.16
+        ],
+        "digest": "ec5ea19001eab05263c3d57bb3b4356d58cab483fc61e65d220ef81fd31919c9",
+        "logs": 12,
+        "lines": 73249
+      },
+      {
+        "pair": 2,
+        "arm": "blocks",
+        "idle": {
+          "VmHWM": 41119744,
+          "VmRSS": 41119744
+        },
+        "after_real_log_scans": {
+          "VmHWM": 44625920,
+          "VmRSS": 44625920
+        },
+        "after_status_reads": {
+          "VmHWM": 44871680,
+          "VmRSS": 44871680
+        },
+        "scan_ms": [
+          849.5,
+          845.16
+        ],
+        "digest": "ec5ea19001eab05263c3d57bb3b4356d58cab483fc61e65d220ef81fd31919c9",
+        "logs": 12,
+        "lines": 73249
+      },
+      {
+        "pair": 2,
+        "arm": "base",
+        "idle": {
+          "VmHWM": 41078784,
+          "VmRSS": 41078784
+        },
+        "after_real_log_scans": {
+          "VmHWM": 50626560,
+          "VmRSS": 44965888
+        },
+        "after_status_reads": {
+          "VmHWM": 50626560,
+          "VmRSS": 45219840
+        },
+        "scan_ms": [
+          859.89,
+          850.85
+        ],
+        "digest": "ec5ea19001eab05263c3d57bb3b4356d58cab483fc61e65d220ef81fd31919c9",
+        "logs": 12,
+        "lines": 73249
+      },
+      {
+        "pair": 3,
+        "arm": "base",
+        "idle": {
+          "VmHWM": 41189376,
+          "VmRSS": 41189376
+        },
+        "after_real_log_scans": {
+          "VmHWM": 50528256,
+          "VmRSS": 45092864
+        },
+        "after_status_reads": {
+          "VmHWM": 50528256,
+          "VmRSS": 45342720
+        },
+        "scan_ms": [
+          857.3,
+          842.05
+        ],
+        "digest": "ec5ea19001eab05263c3d57bb3b4356d58cab483fc61e65d220ef81fd31919c9",
+        "logs": 12,
+        "lines": 73249
+      },
+      {
+        "pair": 3,
+        "arm": "blocks",
+        "idle": {
+          "VmHWM": 41058304,
+          "VmRSS": 41058304
+        },
+        "after_real_log_scans": {
+          "VmHWM": 44572672,
+          "VmRSS": 44572672
+        },
+        "after_status_reads": {
+          "VmHWM": 44822528,
+          "VmRSS": 44822528
+        },
+        "scan_ms": [
+          860.57,
+          839.1
+        ],
+        "digest": "ec5ea19001eab05263c3d57bb3b4356d58cab483fc61e65d220ef81fd31919c9",
+        "logs": 12,
+        "lines": 73249
+      }
+    ],
+    "input_count": 12,
+    "input_bytes": 4092398
+  },
+  "scope": "Six isolated instances of the serving daemon with private state, native library and 12 real log tails held in tmpfs. PHANTOM, automatic seeding, production index/history and external targets were left out. Two Sentinel scans and health/VSA/truth reads per instance."
+}

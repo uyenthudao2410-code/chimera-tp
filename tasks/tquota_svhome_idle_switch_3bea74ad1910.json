@@ -1,0 +1,165 @@
+{
+  "schema": "chimera.tquota-relay-switch/1",
+  "peer": "svhome",
+  "prior_observation": "tasks/workstation_relay_live_20261127.json",
+  "windows_runtime_root": "E:\\DEV\\Chung\\.ch-relay\\local-relay",
+  "windows_source_sha256": {
+    "src/request-footprint.js": "f318b95fa29153cc37136d523b504b243af7797be91cb2b22a2f83a4b611901b",
+    "src/wire-delta-serializer.js": "fb613e5945e7b51965b1ff84fa32a2b21802bba46db568225bf16904a9dadf6a",
+    "test/embedded-tool-prefix.test.js": "5e885cc751a060d6598738a2cc7ad9628788712aa862300a9753b8dbb655a158"
+  },
+  "switch": {
+    "schema": "tquota.verified-idle-switch/1",
+    "unit": "tquota.service",
+    "root": "/home/svhome/DEV/Tqouta/local-relay",
+    "idle_samples": [
+      {
+        "utc": "2026-11-27T04:11:27.755411+00:00",
+        "active": 0,
+        "pending": 0
+      },
+      {
+        "utc": "2026-11-27T04:11:28.769397+00:00",
+        "active": 0,
+        "pending": 0
+      }
+    ],
+    "seal": {
+      "pid": 4066133,
+      "boot_id": "607b1f80-1641-4497-9391-33be88a3d92d",
+      "phase": "sealed",
+      "quiesced": true,
+      "pending": 0,
+      "completed_utc": "2026-11-27T04:11:29.188754+00:00"
+    },
+    "new": {
+      "utc": "2026-11-27T04:11:31.342099+00:00",
+      "pid": 4079258,
+      "boot_id": "720ed6cd-ae66-40a1-9bdd-5f5feac1bfd0",
+      "ready_ports": [
+        12500,
+        12504
+      ],
+      "in_sync": true,
+      "offline_phase": "open",
+      "embedded_tool_rows_reused": {
+        "prefixDelta": 0,
+        "wireDeltaSerializer": 0
+      }
+    },
+    "candidate_archive_sha256": "3bea74ad1910d1bcecddf1f1994734a6712eaee66b77c6395f14bae80c370f0e",
+    "backup": "/home/svhome/.local/state/tquota/relay-switches/3bea74ad1910/rollback.zip",
+    "backup_sha256": "937480ed6737b6d9474a45340d8306ce9be75f8a9d4251730ec0de4726d6d39a",
+    "old_source_sha256": {
+      "src/request-footprint.js": "7d04cb1cd65efba2962b8a21eeb8d750cc9c0b12b3754a0ee358f9707e6aa0fe",
+      "src/wire-delta-serializer.js": "64e2a38daac415c5a075feb2248efb8525e08fd6137b88a0cf94c2c84a31852b",
+      "test/embedded-tool-prefix.test.js": null
+    },
+    "new_source_sha256": {
+      "src/request-footprint.js": "f318b95fa29153cc37136d523b504b243af7797be91cb2b22a2f83a4b611901b",
+      "src/wire-delta-serializer.js": "fb613e5945e7b51965b1ff84fa32a2b21802bba46db568225bf16904a9dadf6a",
+      "test/embedded-tool-prefix.test.js": "5e885cc751a060d6598738a2cc7ad9628788712aa862300a9753b8dbb655a158"
+    },
+    "chimera_service_pid": 4072947
+  },
+  "checked_utc": "2026-11-27T04:16:56.861019+00:00",
+  "systemd_pid": 4079258,
+  "systemd_active_state": "active",
+  "boot_id": "720ed6cd-ae66-40a1-9bdd-5f5feac1bfd0",
+  "cwd": "/home/svhome/DEV/Tqouta/local-relay",
+  "ready_by_port": {
+    "12500": true,
+    "12504": true
+  },
+  "source_in_sync": true,
+  "on_disk_sha256": {
+    "src/request-footprint.js": "f318b95fa29153cc37136d523b504b243af7797be91cb2b22a2f83a4b611901b",
+    "src/wire-delta-serializer.js": "fb613e5945e7b51965b1ff84fa32a2b21802bba46db568225bf16904a9dadf6a",
+    "test/embedded-tool-prefix.test.js": "5e885cc751a060d6598738a2cc7ad9628788712aa862300a9753b8dbb655a158"
+  },
+  "verified_rollback_contents": true,
+  "embedded_tool_rows_reused": {
+    "prefixDelta": 1,
+    "wireDeltaSerializer": 0
+  },
+  "wire_bytes_reused": 4058355,
+  "chimera_service_pid": 4072947,
+  "later_service_observation": {
+    "checked_utc": "2026-11-27T04:32:55.335621+00:00",
+    "systemd_pid": 4083191,
+    "boot_id": "967c9d81-7fd2-4600-9c7d-f3e430b5d948",
+    "ready_by_port": {
+      "12500": true,
+      "12504": true
+    },
+    "source_in_sync": true,
+    "on_disk_sha256": {
+      "src/request-footprint.js": "f318b95fa29153cc37136d523b504b243af7797be91cb2b22a2f83a4b611901b",
+      "src/wire-delta-serializer.js": "fb613e5945e7b51965b1ff84fa32a2b21802bba46db568225bf16904a9dadf6a",
+      "test/embedded-tool-prefix.test.js": "5e885cc751a060d6598738a2cc7ad9628788712aa862300a9753b8dbb655a158"
+    },
+    "embedded_tool_rows_reused": {
+      "prefixDelta": 13,
+      "wireDeltaSerializer": 0
+    },
+    "wire_bytes_reused": 0,
+    "systemd_service_starts_local": [
+      "2026-11-27T11:11:29+07:00",
+      "2026-11-27T11:25:26+07:00",
+      "2026-11-27T11:26:34+07:00"
+    ],
+    "chimera_service_pid": 4083925
+  },
+  "interpretation": "Per-process counters restart at zero. Counts from different boot IDs are separate observations.",
+  "post_switch_tests": {
+    "files": [
+      "test/embedded-tool-prefix.test.js",
+      "test/incremental-prefix-delta-worker.test.js",
+      "test/request-footprint.test.js"
+    ],
+    "win-desktop": {
+      "exit_code": 0,
+      "cases": {
+        "tests": 17,
+        "pass": 17,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      }
+    },
+    "svhome": {
+      "ok": true,
+      "state": "completed",
+      "reason": null,
+      "returncode": 0,
+      "cases": {
+        "tests": 17,
+        "pass": 17,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0
+      },
+      "runtime_guard": {
+        "completed_samples": 2,
+        "worst_service_p95_ms": {
+          "http://127.0.0.1:9780/.well-known/chimera.json": 2.7378369122743607
+        }
+      },
+      "request_id": "22e89980dcd045e9ac621e771f2df4af",
+      "attempt_id": "f60abcba031d46dfad05c4740b023556",
+      "limits_verified": true,
+      "limits": {
+        "memory_high": 429494272,
+        "memory_max": 536870912,
+        "swap_max": 0,
+        "tasks_max": 128,
+        "cpu_quota_pct": 95,
+        "io_write_bps": 8388608,
+        "io_devices": [
+          "8:0",
+          "8:2"
+        ]
+      }
+    }
+  }
+}

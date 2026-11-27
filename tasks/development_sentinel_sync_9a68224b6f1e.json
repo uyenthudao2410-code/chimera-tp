@@ -1,0 +1,34 @@
+{
+  "schema": "chimera.development-source-sync/2",
+  "verified_utc": "2026-11-27T04:31:44.633100+00:00",
+  "parent": "development_source_sync_20261127.json",
+  "integration_commit": "e54e077e0f8f953d92944d21652bfc57b091639f",
+  "serving_release": "9a68224b6f1ef84637b9a334e86e4ced48bb3b6c",
+  "development_root": "/home/svhome/DEV/chimera-tp",
+  "compared_package_files": 117,
+  "compared_support_paths": [
+    "scripts/measure_workstation_apps.py",
+    "scripts/workstation_webviews.py",
+    "tests/test_agent_hyper_bus.py",
+    "tests/test_legacy_layout.py",
+    "tests/test_v12_galactic.py",
+    "tests/test_v3_hypergrid.py",
+    "tests/test_v9_hyperdrive.py",
+    "tests/test_workstation_webviews.py"
+  ],
+  "changed_files": {
+    "chimera_tp/active_pipe.py": "bfcf8dc80f37bff6a3249effcba89dbffc235a060f2cc3223644e3ffc8cb9f16",
+    "tests/test_v3_hypergrid.py": "80fe318361b7bc08bdc4fdb56326bdfeaec9826060cb7f776c4e073d211b7907"
+  },
+  "other_parent_files_match": true,
+  "previous_bytes": {
+    "previous_sha256": {
+      "chimera_tp/active_pipe.py": "c65c84942ec453e49c1038f2fb2003e80f845b81b97e1c858d16b194f6dd201c",
+      "tests/test_v3_hypergrid.py": "5796e1e60067fb3dd41344c77035ba7b922e02fc6c106a74361e55e3eb9ba538"
+    },
+    "archive": "/home/svhome/DEV/.chimera-workstation/sentinel-dev-9a68224b6f1e/previous.zip",
+    "sha256": "1e777188461cbb132778f34d6bc9ab745c3dab4c066ea6acfddb16ecfb3f5abf"
+  },
+  "windows_and_linux_tree_digest": "766606bf927fa349ba279bf61a7d530837c3682ff933c0aa5ca156bd8983c217",
+  "scope": "Byte comparison of both complete development Python packages and eight named supporting paths. Only the two Sentinel paths were synchronized in this change."
+}
