@@ -1,0 +1,109 @@
+{
+  "schema": "chimera.windows-cuda-peak-isolation/1",
+  "utc": "2026-11-27T05:06:08.089721+00:00",
+  "loaded_source_root": "C:\\Users\\Admin\\AppData\\Local\\chimera\\releases\\e13c4da7d80b",
+  "driver_module_sha256": "a16fa4d8a8a60909f1e662d661262d19cd9dffa70dee63cdbbf12bd7545eb658",
+  "source_inventory": "workstation_rollout_e13c4da7d80b.json",
+  "serving_failure": "live_daemon_soak_b40921be2466_win25500.json",
+  "observed_windows_pid": 25500,
+  "observed_windows_kernel_peak_bytes": 227549184,
+  "driver_modules_observed": [
+    "nvcuda.dll",
+    "nvcuda64.dll",
+    "nvapi64.dll",
+    "nvapi64_impl.dll"
+  ],
+  "direct_fresh_processes": [
+    {
+      "device": "NVIDIA GeForce GTX 1650",
+      "rows": 2,
+      "matches_cpu": true,
+      "samples": [
+        {
+          "stage": "module_import",
+          "rss_bytes": 24117248,
+          "peak_bytes": 24117248
+        },
+        {
+          "stage": "driver_probe",
+          "ms": 35.55,
+          "rss_bytes": 42815488,
+          "peak_bytes": 42881024
+        },
+        {
+          "stage": "two_row_hamming",
+          "ms": 143.7,
+          "rss_bytes": 49467392,
+          "peak_bytes": 144019456
+        }
+      ]
+    },
+    {
+      "device": "NVIDIA GeForce GTX 1650",
+      "rows": 2,
+      "matches_cpu": true,
+      "samples": [
+        {
+          "stage": "module_import",
+          "rss_bytes": 24170496,
+          "peak_bytes": 24170496
+        },
+        {
+          "stage": "driver_probe",
+          "ms": 29.66,
+          "rss_bytes": 42958848,
+          "peak_bytes": 42958848
+        },
+        {
+          "stage": "two_row_hamming",
+          "ms": 117.29,
+          "rss_bytes": 49360896,
+          "peak_bytes": 144306176
+        }
+      ]
+    },
+    {
+      "device": "NVIDIA GeForce GTX 1650",
+      "rows": 2,
+      "matches_cpu": true,
+      "samples": [
+        {
+          "stage": "module_import",
+          "rss_bytes": 23818240,
+          "peak_bytes": 23818240
+        },
+        {
+          "stage": "driver_probe",
+          "ms": 28.42,
+          "rss_bytes": 42774528,
+          "peak_bytes": 42782720
+        },
+        {
+          "stage": "two_row_hamming",
+          "ms": 104.93,
+          "rss_bytes": 48750592,
+          "peak_bytes": 143998976
+        }
+      ]
+    }
+  ],
+  "parent_before_children": {
+    "rss_bytes": 23932928,
+    "peak_bytes": 23932928
+  },
+  "parent_after_each_child": [
+    {
+      "rss_bytes": 24444928,
+      "peak_bytes": 24588288
+    },
+    {
+      "rss_bytes": 24444928,
+      "peak_bytes": 24588288
+    },
+    {
+      "rss_bytes": 24449024,
+      "peak_bytes": 24588288
+    }
+  ],
+  "scope": "Three fresh isolated Windows interpreters ran two zero-vector 10,016-bit Hamming rows using the installed driver. A separate parent collected three matching child calculations. The live process also had the CUDA driver mapped. Its exact 217 MiB peak is not attributed to a particular request."
+}

@@ -1,0 +1,678 @@
+{
+  "schema": "chimera.speculative-cache-comparison/1",
+  "scope": "Isolated processes. Three alternating paired trials per OS on 16 eligible real source files and 16 synthetic 128 KiB short-line files. Timings cover all 16 operations. No production TTL, routing, affinity or worker timing changed.",
+  "baseline": "9a68224b6f1ef84637b9a334e86e4ced48bb3b6c",
+  "candidate": "e13c4da7d80b30046c8dbf5e88e99ced43786331",
+  "integration": "3590c5f95bdd07ac0d0085e5f31067c3e8fd6308",
+  "tests": {
+    "win-desktop": "16 passed (hyper-bus and Symbiont suites)",
+    "svhome": "..........\n----------------------------------------------------------------------\nRan 10 tests in 18.846s\n\nOK"
+  },
+  "guarded_job": {
+    "request_id": "a593ccf099f04e00bab6f78e1da9cc36",
+    "attempt_id": "7eae72c067eb4c06a467e227ac21a3ef",
+    "exit_code": 0,
+    "ssh_route": "phantom_ssh",
+    "runtime_guard": {
+      "completed_samples": 56,
+      "worst_service_p95_ms": {
+        "http://127.0.0.1:9780/.well-known/chimera.json": 12.912171892821789
+      }
+    },
+    "stderr": "..........\n----------------------------------------------------------------------\nRan 10 tests in 18.846s\n\nOK\n",
+    "limits": {
+      "memory_high": 429494272,
+      "memory_max": 536870912,
+      "swap_max": 0,
+      "tasks_max": 128,
+      "cpu_quota_pct": 95.0,
+      "io_write_bps": 8388608,
+      "io_devices": [
+        "8:0",
+        "8:2"
+      ]
+    },
+    "limits_verified": true,
+    "artifact_sha256": "0ddd81411005c146fcc13d53b86dcabf046b06a208ae8b44714d144f3c046551"
+  },
+  "windows": {
+    "schema": "chimera.speculative-file-cache/1",
+    "platform": "win32",
+    "python": "3.11.7",
+    "utc": "2026-11-27T04:54:11.343936+00:00",
+    "cases": {
+      "source_files": {
+        "medians": {
+          "baseline": {
+            "after_warm_mib": 30.09765625,
+            "peak_mib": 34.80078125,
+            "warm_ms": 34.831,
+            "read_ms": 29.276
+          },
+          "candidate": {
+            "after_warm_mib": 29.609375,
+            "peak_mib": 35.04296875,
+            "warm_ms": 31.803,
+            "read_ms": 28.627
+          }
+        },
+        "runs": [
+          {
+            "arm": "baseline",
+            "files": 16,
+            "input_bytes": 661502,
+            "corpus_sha256": "679f422544dc2418194750b6b8b7f686064908010f1337da25305032b721b9c7",
+            "hits": 16,
+            "canonical_hashes": 0,
+            "correct_slices": 16,
+            "warm_ms": 42.719,
+            "read_ms": 29.276,
+            "before_warm": {
+              "rss_bytes": 30691328,
+              "peak_bytes": 36634624
+            },
+            "after_warm": {
+              "rss_bytes": 31559680,
+              "peak_bytes": 36634624
+            },
+            "after_reads": {
+              "rss_bytes": 31580160,
+              "peak_bytes": 36634624
+            }
+          },
+          {
+            "arm": "candidate",
+            "files": 16,
+            "input_bytes": 661502,
+            "corpus_sha256": "679f422544dc2418194750b6b8b7f686064908010f1337da25305032b721b9c7",
+            "hits": 16,
+            "canonical_hashes": 16,
+            "correct_slices": 16,
+            "warm_ms": 31.803,
+            "read_ms": 39.564,
+            "before_warm": {
+              "rss_bytes": 30711808,
+              "peak_bytes": 36864000
+            },
+            "after_warm": {
+              "rss_bytes": 30961664,
+              "peak_bytes": 36864000
+            },
+            "after_reads": {
+              "rss_bytes": 30969856,
+              "peak_bytes": 36864000
+            }
+          },
+          {
+            "arm": "candidate",
+            "files": 16,
+            "input_bytes": 661502,
+            "corpus_sha256": "679f422544dc2418194750b6b8b7f686064908010f1337da25305032b721b9c7",
+            "hits": 16,
+            "canonical_hashes": 16,
+            "correct_slices": 16,
+            "warm_ms": 81.108,
+            "read_ms": 28.627,
+            "before_warm": {
+              "rss_bytes": 30801920,
+              "peak_bytes": 36745216
+            },
+            "after_warm": {
+              "rss_bytes": 31047680,
+              "peak_bytes": 36745216
+            },
+            "after_reads": {
+              "rss_bytes": 31055872,
+              "peak_bytes": 36745216
+            }
+          },
+          {
+            "arm": "baseline",
+            "files": 16,
+            "input_bytes": 661502,
+            "corpus_sha256": "679f422544dc2418194750b6b8b7f686064908010f1337da25305032b721b9c7",
+            "hits": 16,
+            "canonical_hashes": 0,
+            "correct_slices": 16,
+            "warm_ms": 34.831,
+            "read_ms": 38.977,
+            "before_warm": {
+              "rss_bytes": 30437376,
+              "peak_bytes": 36491264
+            },
+            "after_warm": {
+              "rss_bytes": 31092736,
+              "peak_bytes": 36491264
+            },
+            "after_reads": {
+              "rss_bytes": 31100928,
+              "peak_bytes": 36491264
+            }
+          },
+          {
+            "arm": "baseline",
+            "files": 16,
+            "input_bytes": 661502,
+            "corpus_sha256": "679f422544dc2418194750b6b8b7f686064908010f1337da25305032b721b9c7",
+            "hits": 16,
+            "canonical_hashes": 0,
+            "correct_slices": 16,
+            "warm_ms": 29.307,
+            "read_ms": 22.986,
+            "before_warm": {
+              "rss_bytes": 31383552,
+              "peak_bytes": 36298752
+            },
+            "after_warm": {
+              "rss_bytes": 31907840,
+              "peak_bytes": 36298752
+            },
+            "after_reads": {
+              "rss_bytes": 31932416,
+              "peak_bytes": 36298752
+            }
+          },
+          {
+            "arm": "candidate",
+            "files": 16,
+            "input_bytes": 661502,
+            "corpus_sha256": "679f422544dc2418194750b6b8b7f686064908010f1337da25305032b721b9c7",
+            "hits": 16,
+            "canonical_hashes": 16,
+            "correct_slices": 16,
+            "warm_ms": 22.717,
+            "read_ms": 25.248,
+            "before_warm": {
+              "rss_bytes": 31350784,
+              "peak_bytes": 36253696
+            },
+            "after_warm": {
+              "rss_bytes": 31481856,
+              "peak_bytes": 36253696
+            },
+            "after_reads": {
+              "rss_bytes": 31490048,
+              "peak_bytes": 36253696
+            }
+          }
+        ]
+      },
+      "short_lines": {
+        "medians": {
+          "baseline": {
+            "after_warm_mib": 78.90625,
+            "peak_mib": 79.3046875,
+            "warm_ms": 91.502,
+            "read_ms": 38.196
+          },
+          "candidate": {
+            "after_warm_mib": 33.3359375,
+            "peak_mib": 35.96875,
+            "warm_ms": 57.953,
+            "read_ms": 22.669
+          }
+        },
+        "runs": [
+          {
+            "arm": "baseline",
+            "files": 16,
+            "input_bytes": 2097152,
+            "corpus_sha256": "891d5ac376b1dde4cd3f6ac65861cf303442a156f7ffdb56936e6b24576c8d3f",
+            "hits": 16,
+            "canonical_hashes": 0,
+            "correct_slices": 16,
+            "warm_ms": 91.502,
+            "read_ms": 38.196,
+            "before_warm": {
+              "rss_bytes": 33648640,
+              "peak_bytes": 38219776
+            },
+            "after_warm": {
+              "rss_bytes": 82739200,
+              "peak_bytes": 82739200
+            },
+            "after_reads": {
+              "rss_bytes": 83099648,
+              "peak_bytes": 83156992
+            }
+          },
+          {
+            "arm": "candidate",
+            "files": 16,
+            "input_bytes": 2097152,
+            "corpus_sha256": "891d5ac376b1dde4cd3f6ac65861cf303442a156f7ffdb56936e6b24576c8d3f",
+            "hits": 16,
+            "canonical_hashes": 16,
+            "correct_slices": 16,
+            "warm_ms": 57.953,
+            "read_ms": 25.406,
+            "before_warm": {
+              "rss_bytes": 32538624,
+              "peak_bytes": 37183488
+            },
+            "after_warm": {
+              "rss_bytes": 34648064,
+              "peak_bytes": 37183488
+            },
+            "after_reads": {
+              "rss_bytes": 34656256,
+              "peak_bytes": 37183488
+            }
+          },
+          {
+            "arm": "candidate",
+            "files": 16,
+            "input_bytes": 2097152,
+            "corpus_sha256": "891d5ac376b1dde4cd3f6ac65861cf303442a156f7ffdb56936e6b24576c8d3f",
+            "hits": 16,
+            "canonical_hashes": 16,
+            "correct_slices": 16,
+            "warm_ms": 56.991,
+            "read_ms": 19.21,
+            "before_warm": {
+              "rss_bytes": 32841728,
+              "peak_bytes": 37715968
+            },
+            "after_warm": {
+              "rss_bytes": 34955264,
+              "peak_bytes": 37715968
+            },
+            "after_reads": {
+              "rss_bytes": 34963456,
+              "peak_bytes": 37715968
+            }
+          },
+          {
+            "arm": "baseline",
+            "files": 16,
+            "input_bytes": 2097152,
+            "corpus_sha256": "891d5ac376b1dde4cd3f6ac65861cf303442a156f7ffdb56936e6b24576c8d3f",
+            "hits": 16,
+            "canonical_hashes": 0,
+            "correct_slices": 16,
+            "warm_ms": 118.145,
+            "read_ms": 34.422,
+            "before_warm": {
+              "rss_bytes": 33013760,
+              "peak_bytes": 37597184
+            },
+            "after_warm": {
+              "rss_bytes": 83447808,
+              "peak_bytes": 83447808
+            },
+            "after_reads": {
+              "rss_bytes": 83456000,
+              "peak_bytes": 83513344
+            }
+          },
+          {
+            "arm": "baseline",
+            "files": 16,
+            "input_bytes": 2097152,
+            "corpus_sha256": "891d5ac376b1dde4cd3f6ac65861cf303442a156f7ffdb56936e6b24576c8d3f",
+            "hits": 16,
+            "canonical_hashes": 0,
+            "correct_slices": 16,
+            "warm_ms": 79.592,
+            "read_ms": 39.169,
+            "before_warm": {
+              "rss_bytes": 33034240,
+              "peak_bytes": 37421056
+            },
+            "after_warm": {
+              "rss_bytes": 81989632,
+              "peak_bytes": 81989632
+            },
+            "after_reads": {
+              "rss_bytes": 82350080,
+              "peak_bytes": 82407424
+            }
+          },
+          {
+            "arm": "candidate",
+            "files": 16,
+            "input_bytes": 2097152,
+            "corpus_sha256": "891d5ac376b1dde4cd3f6ac65861cf303442a156f7ffdb56936e6b24576c8d3f",
+            "hits": 16,
+            "canonical_hashes": 16,
+            "correct_slices": 16,
+            "warm_ms": 61.694,
+            "read_ms": 22.669,
+            "before_warm": {
+              "rss_bytes": 33398784,
+              "peak_bytes": 38137856
+            },
+            "after_warm": {
+              "rss_bytes": 35512320,
+              "peak_bytes": 38137856
+            },
+            "after_reads": {
+              "rss_bytes": 35520512,
+              "peak_bytes": 38137856
+            }
+          }
+        ]
+      }
+    }
+  },
+  "svhome": {
+    "schema": "chimera.speculative-file-cache/1",
+    "platform": "linux",
+    "python": "3.14.4",
+    "utc": "2026-11-27T04:54:34.119684+00:00",
+    "cases": {
+      "source_files": {
+        "medians": {
+          "baseline": {
+            "after_warm_mib": 37.5546875,
+            "peak_mib": 37.59375,
+            "warm_ms": 4.937,
+            "read_ms": 1.995
+          },
+          "candidate": {
+            "after_warm_mib": 37.53125,
+            "peak_mib": 37.640625,
+            "warm_ms": 4.666,
+            "read_ms": 1.823
+          }
+        },
+        "runs": [
+          {
+            "arm": "baseline",
+            "files": 16,
+            "input_bytes": 661502,
+            "corpus_sha256": "679f422544dc2418194750b6b8b7f686064908010f1337da25305032b721b9c7",
+            "hits": 16,
+            "canonical_hashes": 0,
+            "correct_slices": 16,
+            "warm_ms": 4.857,
+            "read_ms": 1.995,
+            "before_warm": {
+              "rss_bytes": 39145472,
+              "peak_bytes": 39358464
+            },
+            "after_warm": {
+              "rss_bytes": 39145472,
+              "peak_bytes": 39358464
+            },
+            "after_reads": {
+              "rss_bytes": 39145472,
+              "peak_bytes": 39358464
+            }
+          },
+          {
+            "arm": "candidate",
+            "files": 16,
+            "input_bytes": 661502,
+            "corpus_sha256": "679f422544dc2418194750b6b8b7f686064908010f1337da25305032b721b9c7",
+            "hits": 16,
+            "canonical_hashes": 16,
+            "correct_slices": 16,
+            "warm_ms": 4.666,
+            "read_ms": 1.879,
+            "before_warm": {
+              "rss_bytes": 39583744,
+              "peak_bytes": 39583744
+            },
+            "after_warm": {
+              "rss_bytes": 39583744,
+              "peak_bytes": 39583744
+            },
+            "after_reads": {
+              "rss_bytes": 39583744,
+              "peak_bytes": 39583744
+            }
+          },
+          {
+            "arm": "candidate",
+            "files": 16,
+            "input_bytes": 661502,
+            "corpus_sha256": "679f422544dc2418194750b6b8b7f686064908010f1337da25305032b721b9c7",
+            "hits": 16,
+            "canonical_hashes": 16,
+            "correct_slices": 16,
+            "warm_ms": 4.552,
+            "read_ms": 1.708,
+            "before_warm": {
+              "rss_bytes": 39346176,
+              "peak_bytes": 39432192
+            },
+            "after_warm": {
+              "rss_bytes": 39346176,
+              "peak_bytes": 39432192
+            },
+            "after_reads": {
+              "rss_bytes": 39346176,
+              "peak_bytes": 39432192
+            }
+          },
+          {
+            "arm": "baseline",
+            "files": 16,
+            "input_bytes": 661502,
+            "corpus_sha256": "679f422544dc2418194750b6b8b7f686064908010f1337da25305032b721b9c7",
+            "hits": 16,
+            "canonical_hashes": 0,
+            "correct_slices": 16,
+            "warm_ms": 5.492,
+            "read_ms": 2.155,
+            "before_warm": {
+              "rss_bytes": 39378944,
+              "peak_bytes": 39583744
+            },
+            "after_warm": {
+              "rss_bytes": 39378944,
+              "peak_bytes": 39583744
+            },
+            "after_reads": {
+              "rss_bytes": 39378944,
+              "peak_bytes": 39583744
+            }
+          },
+          {
+            "arm": "baseline",
+            "files": 16,
+            "input_bytes": 661502,
+            "corpus_sha256": "679f422544dc2418194750b6b8b7f686064908010f1337da25305032b721b9c7",
+            "hits": 16,
+            "canonical_hashes": 0,
+            "correct_slices": 16,
+            "warm_ms": 4.937,
+            "read_ms": 1.857,
+            "before_warm": {
+              "rss_bytes": 39387136,
+              "peak_bytes": 39419904
+            },
+            "after_warm": {
+              "rss_bytes": 39387136,
+              "peak_bytes": 39419904
+            },
+            "after_reads": {
+              "rss_bytes": 39387136,
+              "peak_bytes": 39419904
+            }
+          },
+          {
+            "arm": "candidate",
+            "files": 16,
+            "input_bytes": 661502,
+            "corpus_sha256": "679f422544dc2418194750b6b8b7f686064908010f1337da25305032b721b9c7",
+            "hits": 16,
+            "canonical_hashes": 16,
+            "correct_slices": 16,
+            "warm_ms": 9.66,
+            "read_ms": 1.823,
+            "before_warm": {
+              "rss_bytes": 39354368,
+              "peak_bytes": 39469056
+            },
+            "after_warm": {
+              "rss_bytes": 39354368,
+              "peak_bytes": 39469056
+            },
+            "after_reads": {
+              "rss_bytes": 39354368,
+              "peak_bytes": 39469056
+            }
+          }
+        ]
+      },
+      "short_lines": {
+        "medians": {
+          "baseline": {
+            "after_warm_mib": 72.1328125,
+            "peak_mib": 72.46484375,
+            "warm_ms": 48.811,
+            "read_ms": 10.975
+          },
+          "candidate": {
+            "after_warm_mib": 38.625,
+            "peak_mib": 40.33984375,
+            "warm_ms": 11.746,
+            "read_ms": 1.348
+          }
+        },
+        "runs": [
+          {
+            "arm": "baseline",
+            "files": 16,
+            "input_bytes": 2097152,
+            "corpus_sha256": "891d5ac376b1dde4cd3f6ac65861cf303442a156f7ffdb56936e6b24576c8d3f",
+            "hits": 16,
+            "canonical_hashes": 0,
+            "correct_slices": 16,
+            "warm_ms": 48.811,
+            "read_ms": 11.722,
+            "before_warm": {
+              "rss_bytes": 40337408,
+              "peak_bytes": 42377216
+            },
+            "after_warm": {
+              "rss_bytes": 75636736,
+              "peak_bytes": 75636736
+            },
+            "after_reads": {
+              "rss_bytes": 75984896,
+              "peak_bytes": 75984896
+            }
+          },
+          {
+            "arm": "candidate",
+            "files": 16,
+            "input_bytes": 2097152,
+            "corpus_sha256": "891d5ac376b1dde4cd3f6ac65861cf303442a156f7ffdb56936e6b24576c8d3f",
+            "hits": 16,
+            "canonical_hashes": 16,
+            "correct_slices": 16,
+            "warm_ms": 11.579,
+            "read_ms": 1.838,
+            "before_warm": {
+              "rss_bytes": 40501248,
+              "peak_bytes": 42463232
+            },
+            "after_warm": {
+              "rss_bytes": 40501248,
+              "peak_bytes": 42463232
+            },
+            "after_reads": {
+              "rss_bytes": 40501248,
+              "peak_bytes": 42463232
+            }
+          },
+          {
+            "arm": "candidate",
+            "files": 16,
+            "input_bytes": 2097152,
+            "corpus_sha256": "891d5ac376b1dde4cd3f6ac65861cf303442a156f7ffdb56936e6b24576c8d3f",
+            "hits": 16,
+            "canonical_hashes": 16,
+            "correct_slices": 16,
+            "warm_ms": 12.805,
+            "read_ms": 1.348,
+            "before_warm": {
+              "rss_bytes": 40652800,
+              "peak_bytes": 42262528
+            },
+            "after_warm": {
+              "rss_bytes": 40652800,
+              "peak_bytes": 42262528
+            },
+            "after_reads": {
+              "rss_bytes": 40652800,
+              "peak_bytes": 42262528
+            }
+          },
+          {
+            "arm": "baseline",
+            "files": 16,
+            "input_bytes": 2097152,
+            "corpus_sha256": "891d5ac376b1dde4cd3f6ac65861cf303442a156f7ffdb56936e6b24576c8d3f",
+            "hits": 16,
+            "canonical_hashes": 0,
+            "correct_slices": 16,
+            "warm_ms": 41.182,
+            "read_ms": 10.876,
+            "before_warm": {
+              "rss_bytes": 40304640,
+              "peak_bytes": 42291200
+            },
+            "after_warm": {
+              "rss_bytes": 75624448,
+              "peak_bytes": 75624448
+            },
+            "after_reads": {
+              "rss_bytes": 75972608,
+              "peak_bytes": 75972608
+            }
+          },
+          {
+            "arm": "baseline",
+            "files": 16,
+            "input_bytes": 2097152,
+            "corpus_sha256": "891d5ac376b1dde4cd3f6ac65861cf303442a156f7ffdb56936e6b24576c8d3f",
+            "hits": 16,
+            "canonical_hashes": 0,
+            "correct_slices": 16,
+            "warm_ms": 54.652,
+            "read_ms": 10.975,
+            "before_warm": {
+              "rss_bytes": 40370176,
+              "peak_bytes": 42237952
+            },
+            "after_warm": {
+              "rss_bytes": 75669504,
+              "peak_bytes": 75669504
+            },
+            "after_reads": {
+              "rss_bytes": 76017664,
+              "peak_bytes": 76017664
+            }
+          },
+          {
+            "arm": "candidate",
+            "files": 16,
+            "input_bytes": 2097152,
+            "corpus_sha256": "891d5ac376b1dde4cd3f6ac65861cf303442a156f7ffdb56936e6b24576c8d3f",
+            "hits": 16,
+            "canonical_hashes": 16,
+            "correct_slices": 16,
+            "warm_ms": 11.746,
+            "read_ms": 1.288,
+            "before_warm": {
+              "rss_bytes": 40386560,
+              "peak_bytes": 42299392
+            },
+            "after_warm": {
+              "rss_bytes": 40386560,
+              "peak_bytes": 42299392
+            },
+            "after_reads": {
+              "rss_bytes": 40386560,
+              "peak_bytes": 42299392
+            }
+          }
+        ]
+      }
+    }
+  }
+}

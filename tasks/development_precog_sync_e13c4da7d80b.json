@@ -1,0 +1,48 @@
+{
+  "schema": "chimera.development-change-parity/1",
+  "verified_utc": "2026-11-27T05:06:32.651727+00:00",
+  "prior": "development_source_sync_20261127.json",
+  "integration": "3590c5f95bdd07ac0d0085e5f31067c3e8fd6308",
+  "development_root": "/home/svhome/DEV/chimera-tp",
+  "scope": "Four paths of the integrated cache fix; all other package and selected support paths compared read-only. Concurrent workspace changes are outside this change.",
+  "changed_paths_match": {
+    "chimera_tp/platform/agent_probe.py": "d65935d2fa43f5787846607d6f7fa513256b44ff394172f4d8f37a5682df1436",
+    "chimera_tp/platform/agent_symbiont.py": "0847f3fc38dc53120ae07fbcc0a1d7835044e427ad7f48ff1f26c1a9a7277f5c",
+    "tests/test_agent_symbiont.py": "16def077f5a227ad800d94844a43d8746533a52d8c64ba7dd124511ac8be6069",
+    "scripts/measure_speculative_file_cache.py": "34d16691c0f2a2548b56870f02a1184c329285f4fb87356c218f656d098329da"
+  },
+  "linux_replacement_applied_to": [
+    "chimera_tp/platform/agent_probe.py",
+    "tests/test_agent_symbiont.py",
+    "scripts/measure_speculative_file_cache.py"
+  ],
+  "linux_already_equal": [
+    "chimera_tp/platform/agent_symbiont.py"
+  ],
+  "rollback": {
+    "previous_sha256": {
+      "chimera_tp/platform/agent_probe.py": "6832481bc3d887d9802b13a120b55aa4f739a8bdc0f60af2d58dfbe01bf67fdf",
+      "tests/test_agent_symbiont.py": "f580e525e1741eeb0356683d4f09522d1d40506ec5ec4d7c2a68f5c81615b768",
+      "scripts/measure_speculative_file_cache.py": null
+    },
+    "archive": "/home/svhome/DEV/.chimera-workstation/precog-dev-e13c4da7d80b/previous.zip",
+    "sha256": "a224881efae638bd04887b74fa19651bcef1de28ffe7c6cdf5b516dd56cb4acf"
+  },
+  "package_files": {
+    "win-desktop": 118,
+    "svhome": 118
+  },
+  "support_paths": [
+    "scripts/measure_speculative_file_cache.py",
+    "scripts/measure_workstation_apps.py",
+    "scripts/workstation_webviews.py",
+    "tests/test_agent_hyper_bus.py",
+    "tests/test_agent_symbiont.py",
+    "tests/test_legacy_layout.py",
+    "tests/test_v12_galactic.py",
+    "tests/test_v3_hypergrid.py",
+    "tests/test_v9_hyperdrive.py",
+    "tests/test_workstation_webviews.py"
+  ],
+  "other_differences": {}
+}
