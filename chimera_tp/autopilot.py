@@ -4,12 +4,14 @@ from __future__ import annotations
 
 import ctypes
 import hashlib
+import http.client
 import json
 import math
 import os
 import random
 import socket
 import sqlite3
+import tempfile
 import threading
 import time
 import urllib.error
@@ -111,42 +113,44 @@ def _bucket_from_ts(ts_local: str) -> str:
         return time_bucket_for_hour()
 
 
+if os.name == "nt":
+    class _PMC_EX(ctypes.Structure):
+        _fields_ = [
+            ("cb", ctypes.c_uint32),
+            ("PageFaultCount", ctypes.c_uint32),
+            ("PeakWorkingSetSize", ctypes.c_size_t),
+            ("WorkingSetSize", ctypes.c_size_t),
+            ("QuotaPeakPagedPoolUsage", ctypes.c_size_t),
+            ("QuotaPagedPoolUsage", ctypes.c_size_t),
+            ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t),
+            ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
+            ("PagefileUsage", ctypes.c_size_t),
+            ("PeakPagefileUsage", ctypes.c_size_t),
+            ("PrivateUsage", ctypes.c_size_t),
+        ]
+
+    class _MEMSTAT(ctypes.Structure):
+        _fields_ = [
+            ("dwLength", ctypes.c_uint32),
+            ("dwMemoryLoad", ctypes.c_uint32),
+            ("ullTotalPhys", ctypes.c_uint64),
+            ("ullAvailPhys", ctypes.c_uint64),
+            ("ullTotalPageFile", ctypes.c_uint64),
+            ("ullAvailPageFile", ctypes.c_uint64),
+            ("ullTotalVirtual", ctypes.c_uint64),
+            ("ullAvailVirtual", ctypes.c_uint64),
+            ("ullAvailExtendedVirtual", ctypes.c_uint64),
+        ]
+
+
 def get_zero_weight_status(budget_mb: float = 80.0) -> dict[str, Any]:
     """Read current process RSS & host free RAM using pure OS APIs (zero heavy deps)."""
-    rss_mb = 0.0
+    rss_bytes = peak_bytes = 0
     free_gb = 0.0
     total_gb = 0.0
 
     if os.name == "nt":
         try:
-            class _PMC_EX(ctypes.Structure):
-                _fields_ = [
-                    ("cb", ctypes.c_uint32),
-                    ("PageFaultCount", ctypes.c_uint32),
-                    ("PeakWorkingSetSize", ctypes.c_size_t),
-                    ("WorkingSetSize", ctypes.c_size_t),
-                    ("QuotaPeakPagedPoolUsage", ctypes.c_size_t),
-                    ("QuotaPagedPoolUsage", ctypes.c_size_t),
-                    ("QuotaPeakNonPagedPoolUsage", ctypes.c_size_t),
-                    ("QuotaNonPagedPoolUsage", ctypes.c_size_t),
-                    ("PagefileUsage", ctypes.c_size_t),
-                    ("PeakPagefileUsage", ctypes.c_size_t),
-                    ("PrivateUsage", ctypes.c_size_t),
-                ]
-
-            class _MEMSTAT(ctypes.Structure):
-                _fields_ = [
-                    ("dwLength", ctypes.c_uint32),
-                    ("dwMemoryLoad", ctypes.c_uint32),
-                    ("ullTotalPhys", ctypes.c_uint64),
-                    ("ullAvailPhys", ctypes.c_uint64),
-                    ("ullTotalPageFile", ctypes.c_uint64),
-                    ("ullAvailPageFile", ctypes.c_uint64),
-                    ("ullTotalVirtual", ctypes.c_uint64),
-                    ("ullAvailVirtual", ctypes.c_uint64),
-                    ("ullAvailExtendedVirtual", ctypes.c_uint64),
-                ]
-
             k32 = ctypes.windll.kernel32
             k32.GetCurrentProcess.restype = ctypes.c_void_p
             pmc = _PMC_EX()
@@ -158,7 +162,8 @@ def get_zero_weight_status(budget_mb: float = 80.0) -> dict[str, Any]:
             get_pmi.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint32]
             get_pmi.restype = ctypes.c_int
             if get_pmi(hproc, ctypes.byref(pmc), pmc.cb):
-                rss_mb = pmc.WorkingSetSize / (1024.0 * 1024.0)
+                rss_bytes = pmc.WorkingSetSize
+                peak_bytes = pmc.PeakWorkingSetSize
             ms = _MEMSTAT()
             ms.dwLength = ctypes.sizeof(ms)
             k32.GlobalMemoryStatusEx.argtypes = [ctypes.c_void_p]
@@ -172,9 +177,9 @@ def get_zero_weight_status(budget_mb: float = 80.0) -> dict[str, Any]:
         try:
             for ln in Path("/proc/self/status").read_text(encoding="utf-8").splitlines():
                 if ln.startswith("VmRSS:"):
-                    kb = float(ln.split()[1])
-                    rss_mb = kb / 1024.0
-                    break
+                    rss_bytes = int(ln.split()[1]) * 1024
+                elif ln.startswith("VmHWM:"):
+                    peak_bytes = int(ln.split()[1]) * 1024
             for ln in Path("/proc/meminfo").read_text(encoding="utf-8").splitlines():
                 if ln.startswith("MemTotal:"):
                     total_gb = float(ln.split()[1]) / (1024.0 * 1024.0)
@@ -184,12 +189,15 @@ def get_zero_weight_status(budget_mb: float = 80.0) -> dict[str, Any]:
             pass
 
     return {
-        "daemon_ram_mb": round(rss_mb, 2),
+        "daemon_ram_mb": round(rss_bytes / 1024**2, 2),
+        "daemon_rss_bytes": rss_bytes,
+        "daemon_peak_rss_bytes": peak_bytes,
         "host_free_ram_gb": round(free_gb, 2),
         "host_total_ram_gb": round(total_gb, 2),
         "cpu_threads": os.cpu_count() or 1,
         "ram_budget_mb": budget_mb,
-        "zero_weight_ok": bool(rss_mb <= budget_mb),
+        "zero_weight_ok": 0 < rss_bytes < budget_mb * 1024**2,
+        "peak_within_budget": 0 < peak_bytes < budget_mb * 1024**2,
     }
 
 
@@ -253,10 +261,13 @@ class OpsConfig:
     phantom_ssh_port: int = 2222
     phantom_http_port: int = 9789
     phantom_tquota_port: int = 12550
+    phantom_egress_port: int = 9791
     phantom_reverse_tquota_port: int = 12551
     phantom_reverse_http_port: int = 9790
-    phantom_allowed_ports: list[int] = field(default_factory=lambda: [22, 8787, 9780, 12500, 12504])
-    phantom_reverse_allowed_ports: list[int] = field(default_factory=lambda: [9780, 12500, 12504])
+    phantom_reverse_egress_port: int = 9792
+    phantom_allowed_ports: list[int] = field(default_factory=lambda: [22, 8787, 9780, 9781, 12500, 12504])
+    phantom_reverse_allowed_ports: list[int] = field(default_factory=lambda: [9780, 9781, 12500, 12504])
+    peer_egress_proxy_url: str = ""
     drop_ttl_s: int = 600
     tquota_admin_url: str = "http://127.0.0.1:12504"
     tquota_relay_url: str = "http://127.0.0.1:12500"
@@ -787,6 +798,34 @@ class TelemetryStore:
             ).fetchone()
         return bool(row and int(row["c"]) > 0)
 
+    def daily_result(self, directory: Path) -> dict[str, Any] | None:
+        """Recover today's committed result, including rows from older releases."""
+        prefix = datetime.now().astimezone().strftime("%Y-%m-%d")
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT id, summary_json FROM runs WHERE trigger IN ('daily','daemon_daily') "
+                "AND ts_local LIKE ? ORDER BY id DESC LIMIT 1", (prefix + "%",),
+            ).fetchone()
+        if row is None:
+            return None
+        result = json.loads(row["summary_json"])
+        result["run_id"] = row["id"]
+        if "pushed_to_hub" not in result:
+            # Older builds stored the final delivery flag only in the last report on disk.
+            try:
+                latest = json.loads((directory / "latest_report.json").read_bytes())
+                if (latest.get("run_id"), latest.get("ts_utc")) == (row["id"], result.get("ts_utc")):
+                    result["pushed_to_hub"] = latest.get("pushed_to_hub")
+            except (FileNotFoundError, ValueError):
+                pass
+            result.setdefault("pushed_to_hub", None)
+        return result
+
+    def finish_daily_result(self, summary: dict[str, Any]) -> None:
+        payload = json.dumps(summary, ensure_ascii=False)
+        with self._lock, self._conn:
+            self._conn.execute("UPDATE runs SET summary_json=? WHERE id=?", (payload, summary["run_id"]))
+
     def get_dashboard_state(self, limit: int = 30) -> dict[str, Any]:
         with self._lock:
             run_rows = self._conn.execute(
@@ -905,8 +944,22 @@ class TelemetryStore:
             self._conn.close()
 
 
+def _open_peer_http(request: urllib.request.Request, timeout_s: float):
+    # Only the installed site's configuration selects where a real node credential may go.
+    # A CLI trial can use a different --ops-dir and its own unauthenticated fixtures.
+    site = OpsConfig.load()
+    if site.peer_ipv4:
+        from .platform.peer_guard import authenticate_peer_request
+
+        origin = f"http://{site.peer_ipv4}:{site.peer_dashboard_port}"
+        if authenticate_peer_request(request, origin):
+            opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+            return opener.open(request, timeout=timeout_s)
+    return urllib.request.urlopen(request, timeout=timeout_s)
+
+
 def _http_get_json(url: str, timeout_s: float = 4.0) -> dict[str, Any]:
-    with urllib.request.urlopen(url, timeout=timeout_s) as resp:
+    with _open_peer_http(urllib.request.Request(url), timeout_s) as resp:
         return json.loads(resp.read().decode("utf-8"))
 
 
@@ -917,7 +970,7 @@ def _http_post_json(url: str, obj: dict[str, Any], timeout_s: float = 10.0) -> d
         headers={"Content-Type": "application/json"},
         method="POST",
     )
-    with urllib.request.urlopen(req, timeout=timeout_s) as resp:
+    with _open_peer_http(req, timeout_s) as resp:
         return json.loads(resp.read().decode("utf-8"))
 
 
@@ -928,7 +981,7 @@ def _http_post_bytes(url: str, data: bytes, timeout_s: float = 20.0) -> dict[str
         headers={"Content-Type": "application/octet-stream"},
         method="POST",
     )
-    with urllib.request.urlopen(req, timeout=timeout_s) as resp:
+    with _open_peer_http(req, timeout_s) as resp:
         return json.loads(resp.read().decode("utf-8"))
 
 
@@ -997,8 +1050,12 @@ def _bench_local_checks(genome_params: dict[str, Any], ops_dir: Path) -> dict[st
 
     # 2) 16 MiB Shared-Memory Wormhole vs TCP loopback
     sz16 = 16 * 1024 * 1024
-    p16 = (b"WH16-AUTO-" + os.urandom(54)) * (sz16 // 64)
-    exp_sha = hashlib.sha256(p16).hexdigest()
+    block = (b"WH16-AUTO-" + os.urandom(54)) * 1024
+    blocks = range(sz16 // len(block))
+    expected = hashlib.sha256()
+    for _ in blocks:
+        expected.update(block)
+    exp_sha = expected.hexdigest()
 
     srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     srv.bind(("127.0.0.1", 0))
@@ -1020,7 +1077,8 @@ def _bench_local_checks(genome_params: dict[str, Any], ops_dir: Path) -> dict[st
     t_tcp0 = time.perf_counter()
     try:
         cli.connect(("127.0.0.1", srv.getsockname()[1]))
-        cli.sendall(p16)
+        for _ in blocks:
+            cli.sendall(block)
         cli.shutdown(socket.SHUT_WR)
         th_t.join(timeout=10.0)
     finally:
@@ -1029,15 +1087,21 @@ def _bench_local_checks(genome_params: dict[str, Any], ops_dir: Path) -> dict[st
     tcp_lo_ms = (time.perf_counter() - t_tcp0) * 1000.0
     tcp_lo_gbps = (sz16 * 8.0) / max(tcp_lo_ms * 1e6, 0.001)
 
+    if th_t.is_alive() or tcp_hash.hexdigest() != exp_sha:
+        raise RuntimeError("daily TCP loopback returned incomplete data")
+
     wh_gbps = 0.0
     wh_ms = 0.0
     wh_ok = False
+    # Both endpoints map this ring in the serving process. Sixteen 64 KiB blocks
+    # fit at once, while the benchmark still hashes and transfers the full 16 MiB.
+    ring_bytes = 1024 * 1024
     if has_native():
         wh_name = f"AUTO_{os.getpid()}_{time.monotonic_ns()}"
-        chunk_buf = bytearray(4 * 1024 * 1024)
+        chunk_buf = bytearray(256 * 1024)
         wh_hash = hashlib.sha256()
         ready = threading.Event()
-        with WormholeChannel.create(wh_name, capacity_mb=8) as wh_tx:
+        with WormholeChannel.create(wh_name, capacity_bytes=ring_bytes) as wh_tx:
             def _wh_rx() -> None:
                 with WormholeChannel.open(wh_name) as wh_r:
                     mv = memoryview(chunk_buf)
@@ -1052,11 +1116,12 @@ def _bench_local_checks(genome_params: dict[str, Any], ops_dir: Path) -> dict[st
             th_w.start()
             ready.wait(timeout=3.0)
             tw0 = time.perf_counter()
-            wh_tx.write_all(p16)
+            for _ in blocks:
+                wh_tx.write_all(block)
             wh_tx.mark_eof()
             th_w.join(timeout=10.0)
             wh_ms = (time.perf_counter() - tw0) * 1000.0
-        wh_ok = wh_hash.hexdigest() == exp_sha
+        wh_ok = not th_w.is_alive() and wh_hash.hexdigest() == exp_sha
         wh_gbps = (sz16 * 8.0) / max(wh_ms * 1e6, 0.001)
 
     # 3) Simulated 5% loss WAN resilience check (512 KiB @ 80 Mbps, 40 ms RTT)
@@ -1103,6 +1168,9 @@ def _bench_local_checks(genome_params: dict[str, Any], ops_dir: Path) -> dict[st
         "gfni_native_ms": round(nat_ms, 2),
         "gfni_speedup": round(gfni_speedup, 2),
         "wormhole_ok": wh_ok,
+        "wormhole_ring_bytes": ring_bytes if has_native() else 0,
+        "wormhole_transfer_bytes": sz16 if wh_ok else 0,
+        "tcp_loopback_verified_bytes": sz16,
         "wormhole_ms": round(wh_ms, 2),
         "wormhole_gbps": round(wh_gbps, 2),
         "tcp_loopback_gbps": round(tcp_lo_gbps, 2),
@@ -1231,9 +1299,8 @@ def _bench_live_peer(
         domain_dict = tele_store.latest_for_domain("watched_log")
 
     t_qt0 = time.perf_counter()
-    with urllib.request.urlopen(
-        f"{base_url}/api/raw_query_file?path={urllib.parse.quote(q_file)}", timeout=20.0
-    ) as resp:
+    raw_request = urllib.request.Request(f"{base_url}/api/raw_query_file?path={urllib.parse.quote(q_file)}")
+    with _open_peer_http(raw_request, 20.0) as resp:
         raw_q = resp.read()
     local_filt, local_cnt, _ = execute_operator(
         raw_q, ComputePlan(op="filter_lines", needle="ERROR")
@@ -1290,6 +1357,7 @@ def _bench_live_peer(
             shadow_dir=ops_dir / "merkle_shadows",
             est_loss=loss_h,
             timeout_s=20.0,
+            post_json=_http_post_json,
         )
         merkle_ok = bool(merkle_res.get("verified_root_match"))
     except Exception as exc:
@@ -1503,13 +1571,42 @@ def run_daily_autopilot(
     trigger: str = "manual",
     ops_dir: Path | None = None,
 ) -> dict[str, Any]:
-    """Execute full daily health, Before-vs-After evaluation, and Contextual UCB1 update."""
+    """Run manual requests individually and join the timer and daemon on a scheduled day."""
     base_dir = Path(ops_dir) if ops_dir else default_ops_dir()
+    if trigger not in ("daily", "daemon_daily"):
+        return _run_autopilot_cycle(config, store, trigger, base_dir)
+
+    from .platform.agent_workspace import LeaseBusy, _lock
+
+    database = store.db_path.resolve()
+    lease = database.with_name(database.name + ".daily.lock")
+    deadline = time.monotonic() + 180
+    while True:
+        try:
+            with _lock(lease):
+                completed = store.daily_result(base_dir)
+                if completed is not None:
+                    return completed
+                return _run_autopilot_cycle(config, store, trigger, base_dir)
+        except LeaseBusy:
+            if time.monotonic() >= deadline:
+                raise TimeoutError("scheduled autopilot is still running in another process")
+            time.sleep(0.1)
+
+
+def _run_autopilot_cycle(
+    config: OpsConfig, store: TelemetryStore, trigger: str, base_dir: Path
+) -> dict[str, Any]:
     active_bucket = time_bucket_for_hour()
     genome_id, genome_params = store.select_genome(config.active_profile)
 
     local_res = _bench_local_checks(genome_params, base_dir)
-    peer_res = _bench_live_peer(config, genome_params, base_dir)
+    try:
+        peer_res = _bench_live_peer(config, genome_params, base_dir)
+    except (OSError, http.client.HTTPException) as exc:
+        # Keep the successful local measurement. A failed peer trial must not restart the
+        # full benchmark at every scheduler tick. Manual requests can retry immediately.
+        peer_res = {"reachable": False, "probe_completed": False, "reason": str(exc)}
     zw = get_zero_weight_status()
 
     anomalies: list[str] = []
@@ -1529,6 +1626,9 @@ def run_daily_autopilot(
     if not zw["zero_weight_ok"]:
         score -= 5
         anomalies.append(f"HIGH_DAEMON_RAM_{zw['daemon_ram_mb']}MB")
+    elif not zw["peak_within_budget"]:
+        score -= 5
+        anomalies.append(f"HIGH_DAEMON_PEAK_{zw['daemon_peak_rss_bytes'] / 1024**2:.2f}MiB")
 
     if config.peer_ipv4:
         if not peer_res.get("reachable"):
@@ -1613,8 +1713,20 @@ def run_daily_autopilot(
         msg += f" Alerts={','.join(anomalies)}"
     store.log_event(level, "AUTOPILOT", msg)
 
-    report_path = base_dir / "latest_report.json"
-    tmp = base_dir / "latest_report.json.tmp"
-    tmp.write_text(json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
-    os.replace(tmp, report_path)
+    if trigger in ("daily", "daemon_daily"):
+        store.finish_daily_result(summary)
+    # A manual run and a timer may publish reports concurrently.
+    with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=base_dir,
+                                     prefix=".latest-report-", suffix=".tmp", delete=False) as output:
+        tmp = Path(output.name)
+        try:
+            json.dump(summary, output, indent=2, ensure_ascii=False)
+        except BaseException:
+            output.close()
+            tmp.unlink(missing_ok=True)
+            raise
+    try:
+        os.replace(tmp, base_dir / "latest_report.json")
+    finally:
+        tmp.unlink(missing_ok=True)
     return summary

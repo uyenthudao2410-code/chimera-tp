@@ -23,6 +23,8 @@ class PulseBus:
         peer_base_resolver: Callable[[], str] | None = None,
         fallback_peer_resolver: Callable[[], str] | None = None,
         on_flow: Callable[..., Any] | None = None,
+        on_activity: Callable[[str, bool, int], None] | None = None,
+        authorize_peer_request: Callable[[urllib.request.Request], None] | None = None,
     ) -> None:
         self.node_name = node_name
         self.max_events = int(max_events)
@@ -30,6 +32,8 @@ class PulseBus:
         self.peer_base_resolver = peer_base_resolver
         self.fallback_peer_resolver = fallback_peer_resolver
         self.on_flow = on_flow
+        self.on_activity = on_activity
+        self.authorize_peer_request = authorize_peer_request
 
         self._lock = threading.Lock()
         self._cond = threading.Condition(self._lock)
@@ -38,6 +42,25 @@ class PulseBus:
         self._kv: collections.OrderedDict[str, dict[str, Any]] = collections.OrderedDict()
         self._relayed_count: int = 0
         self._received_remote_count: int = 0
+        self._activity_lock = threading.Lock()
+        self._latest_relay_observed = 0
+
+    def _observe(self, operation: str, success: bool, sequence: int) -> None:
+        if self.on_activity is not None:
+            try:
+                # Relay threads can finish in a different order from publication.
+                # An old peer acknowledgement cannot overwrite a newer refusal.
+                if operation == "pulse.relay":
+                    with self._activity_lock:
+                        if sequence <= self._latest_relay_observed:
+                            return
+                        self._latest_relay_observed = sequence
+                        self.on_activity(operation, success, sequence)
+                else:
+                    self.on_activity(operation, success, sequence)
+            except Exception:
+                # A telemetry failure cannot undo an already published event.
+                pass
 
     def publish(
         self,
@@ -64,6 +87,7 @@ class PulseBus:
                 self._received_remote_count += 1
             self._cond.notify_all()
 
+        self._observe("pulse.publish", True, ev["seq"])
         if relay and orig == self.node_name and self.peer_base_resolver is not None:
             threading.Thread(target=self._relay_event_to_peer, args=(ev,), daemon=True).start()
 
@@ -95,6 +119,7 @@ class PulseBus:
             except Exception:
                 continue
         if not candidates:
+            self._observe("pulse.relay", False, ev["seq"])
             return
         body = json.dumps(
             {
@@ -106,6 +131,7 @@ class PulseBus:
             },
             ensure_ascii=False,
         ).encode("utf-8")
+        expected = json.loads(body)
         opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
         for peer_base in candidates:
             try:
@@ -115,13 +141,33 @@ class PulseBus:
                     headers={"Content-Type": "application/json"},
                     method="POST",
                 )
+                if self.authorize_peer_request:
+                    self.authorize_peer_request(req)
                 with opener.open(req, timeout=3.0) as r:
-                    r.read()
+                    # The peer's publish API echoes the committed event. A bare 200 does
+                    # not confirm delivery and must not trigger another publish attempt.
+                    limit = len(body) * 8 + 16 * 1024
+                    reply = r.read(limit + 1)
+                    try:
+                        result = json.loads(reply) if len(reply) <= limit else None
+                    except (ValueError, UnicodeError):
+                        result = None
+                    received = result.get("event") if isinstance(result, dict) else None
+                    confirmed = (isinstance(received, dict) and result.get("ok") is True
+                                 and type(received.get("seq")) is int and received["seq"] > 0
+                                 and received.get("origin") == expected["origin_node"]
+                                 and all(k in received and received[k] == expected[k]
+                                         for k in ("topic", "payload", "app")))
+                if not confirmed:
+                    self._observe("pulse.relay", False, ev["seq"])
+                    return
                 with self._lock:
                     self._relayed_count += 1
+                self._observe("pulse.relay", True, ev["seq"])
                 return
             except Exception:
                 continue
+        self._observe("pulse.relay", False, ev["seq"])
 
     def poll(
         self,

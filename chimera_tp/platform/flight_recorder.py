@@ -31,6 +31,8 @@ class FlightRecorderBlackBox:
         self.interval_s = max(0.1, float(interval_s))
         self._lock = threading.Lock()
         self._ring: collections.deque[dict[str, Any]] = collections.deque(maxlen=self.max_frames)
+        self._forensics: collections.deque[dict[str, Any]] = collections.deque(maxlen=64)
+        self._forensic_seq: int = 0
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
         self._freezes: int = 0
@@ -114,6 +116,29 @@ class FlightRecorderBlackBox:
                 continue
         return out
 
+    def record_forensic(self, kind: str, record: dict[str, Any]) -> dict[str, Any]:
+        """Append a bounded, zero-disk-write forensic event (e.g. KV-cache prefix break) to RAM ring."""
+        with self._lock:
+            self._forensic_seq += 1
+            entry = {
+                "seq": self._forensic_seq,
+                "ts_ms": int(time.time() * 1000),
+                "ts": datetime.now().astimezone().isoformat(timespec="seconds"),
+                "kind": str(kind or "event"),
+                **dict(record or {}),
+            }
+            self._forensics.append(entry)
+            return entry
+
+    def query_forensics(self, kind: str = "", limit: int = 32) -> list[dict[str, Any]]:
+        wanted = str(kind or "").strip()
+        cap = max(1, min(int(limit), 64))
+        with self._lock:
+            rows = list(self._forensics)
+        if wanted:
+            rows = [r for r in rows if r.get("kind") == wanted]
+        return list(reversed(rows[-cap:]))
+
     def stats(self) -> dict[str, Any]:
         with self._lock:
             return {
@@ -121,6 +146,8 @@ class FlightRecorderBlackBox:
                 "max_frames": self.max_frames,
                 "interval_s": self.interval_s,
                 "freezes": self._freezes,
+                "forensic_events": len(self._forensics),
+                "forensic_total": self._forensic_seq,
             }
 
 

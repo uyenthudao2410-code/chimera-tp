@@ -53,6 +53,16 @@ def _probe_http_target(url: str, timeout_s: float = 1.5) -> dict[str, Any]:
 
 def _diagnose_template(template: str) -> str:
     low = template.lower()
+    if "mail_fail_502" in low or "502" in low and "mail" in low:
+        return "Lỗi SMTP/Mail Proxy HTTP 502 từ upstream; bật backoff/circuit-breaker gửi thư và kiểm tra endpoint mailer."
+    if "close_wait" in low or "close-wait" in low or "socket" in low and "leak" in low:
+        return "Socket CLOSE-WAIT tích tụ; kích hoạt reaper đóng idle stream và kiểm tra keepalive upstream."
+    if "permission denied" in low or "rc=126" in low:
+        return "Lỗi quyền thực thi nhị phân trên mount `noexec` (/dev/shm); chuyển sang /tmp và cấp `chmod 755`."
+    if "token_revoked" in low or "401 unauthorized" in low:
+        return "Token OAuth phụ bị thu hồi (401); kiểm tra tài khoản trong pool hoặc xoay auth profile."
+    if "memoryerror" in low or "out of memory" in low or "oom" in low:
+        return "Áp lực bộ nhớ cao; kích hoạt hibernate proxy rảnh hoặc chuyển tác vụ nặng sang Colab CPU_HIGH_MEM."
     if "couldn't find remote ref" in low or "git fetch" in low:
         return "Kiểm tra nhánh git remote (`git remote prune origin` hoặc cập nhật tên branch trong auto-pull.sh)."
     if "connection refused" in low or "timed out" in low:
@@ -143,6 +153,12 @@ class SentinelEngine:
                     detail TEXT NOT NULL,
                     diagnosis TEXT NOT NULL
                 );
+                CREATE TABLE IF NOT EXISTS alert_dedup (
+                    dedup_key TEXT PRIMARY KEY,
+                    last_ts REAL NOT NULL,
+                    last_count INTEGER NOT NULL,
+                    suppressed INTEGER NOT NULL DEFAULT 0
+                );
                 CREATE TABLE IF NOT EXISTS scans (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     ts_local TEXT NOT NULL,
@@ -160,12 +176,16 @@ class SentinelEngine:
         max_log_files: int = 12,
         tail_bytes: int = 2 * 1024 * 1024,
         probe_timeout_s: float = 1.5,
+        alert_dedup_window_s: float = 1800.0,
+        on_spike_callback: Any | None = None,
     ) -> dict[str, Any]:
         from .autopilot import get_zero_weight_status
 
         t0 = time.perf_counter()
         now_local = datetime.now().astimezone().strftime("%Y-%m-%d %H:%M:%S")
+        now_epoch = time.time()
         alerts: list[dict[str, str]] = []
+        suppressed_repeats = 0
 
         # 1) Service health probes (strictly loopback targets)
         services: list[dict[str, Any]] = []
@@ -269,9 +289,26 @@ class SentinelEngine:
                     ).fetchone()
                     prev_cnt = int(prev_row["last_count"]) if prev_row is not None else 0
                     if t_count >= 25 or (t_count > prev_cnt and t_count >= max(10, prev_cnt * 2)):
-                        severity = "CRITICAL" if ("CRITICAL" in upper_t or t_count >= 100) else "WARN"
-                        alerts.append(
-                            {
+                        dedup_key = f"{lp.name}|LOG_SPIKE|{t_text[:120]}"
+                        drow = cur.execute(
+                            "SELECT last_ts, last_count, suppressed FROM alert_dedup WHERE dedup_key = ?",
+                            (dedup_key,),
+                        ).fetchone()
+                        is_dup_spam = (
+                            drow is not None
+                            and float(alert_dedup_window_s) > 0.0
+                            and (now_epoch - float(drow["last_ts"])) < float(alert_dedup_window_s)
+                            and t_count < max(int(drow["last_count"]) * 2, int(drow["last_count"]) + 25)
+                        )
+                        if is_dup_spam:
+                            suppressed_repeats += 1
+                            cur.execute(
+                                "UPDATE alert_dedup SET suppressed = suppressed + 1 WHERE dedup_key = ?",
+                                (dedup_key,),
+                            )
+                        else:
+                            severity = "CRITICAL" if ("CRITICAL" in upper_t or t_count >= 100) else "WARN"
+                            alert_obj = {
                                 "severity": severity,
                                 "category": "LOG_SPIKE",
                                 "source": lp.name,
@@ -279,7 +316,21 @@ class SentinelEngine:
                                 "detail": t_text[:220],
                                 "diagnosis": _diagnose_template(t_text),
                             }
-                        )
+                            alerts.append(alert_obj)
+                            cur.execute(
+                                """
+                                INSERT INTO alert_dedup (dedup_key, last_ts, last_count, suppressed)
+                                VALUES (?, ?, ?, 0)
+                                ON CONFLICT(dedup_key) DO UPDATE
+                                SET last_ts = excluded.last_ts, last_count = excluded.last_count, suppressed = 0
+                                """,
+                                (dedup_key, now_epoch, t_count),
+                            )
+                            if on_spike_callback is not None:
+                                try:
+                                    on_spike_callback(alert_obj)
+                                except Exception:
+                                    pass
                     cur.execute(
                         """
                         INSERT INTO templates_baseline (file_path, template, last_count, updated_at)
@@ -324,6 +375,7 @@ class SentinelEngine:
                 "logs_scanned": logs_scanned,
                 "alerts": alerts[:20],
                 "alert_count": len(alerts),
+                "suppressed_repeats": suppressed_repeats,
                 "elapsed_ms": round((time.perf_counter() - t0) * 1000.0, 2),
             }
             cur.execute(

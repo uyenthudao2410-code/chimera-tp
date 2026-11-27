@@ -12,22 +12,6 @@ import time
 import urllib.request
 from pathlib import Path
 
-from .active_pipe import ActivePipeEngine, ComputePlan, remote_active_query
-from .autopilot import OpsConfig, TelemetryStore, default_ops_dir, run_daily_autopilot
-from .code_search import CodeSearchIndex
-from .dashboard import ChimeraDaemon
-from .edge_proxy import LocalEdgeProxy
-from .fabric import BeamServer, ChimeraFabric, beam_send
-from .holo_backup import create_holo_backup, list_holo_backups, restore_holo_backup
-from .merkle_sync import merkle_beam_sync
-from .nat_buster import attempt_direct_punch, discover_nat_profile
-from .native import WormholeChannel
-from .probe import probe_environment
-from .protocol import ChimeraReceiver, ChimeraSender, FaultProfile
-from .sentinel import SentinelEngine
-from .telepathy import TelepathicStore, benchmark_compression, train_domain_dictionary
-from .warp import WarpClient, WarpServer
-
 
 def _configure_utf8() -> None:
     for stream in (sys.stdout, sys.stderr):
@@ -103,6 +87,42 @@ def _add_send_options(p: argparse.ArgumentParser) -> None:
     )
 
 
+def _add_daemon_parser(sub) -> None:
+    parser = sub.add_parser("daemon", help="Run 24/7 Mission-Control Dashboard & UDP accelerator services")
+    parser.add_argument("--ops-dir", default="", help="Override ops directory")
+    parser.add_argument("--bind", default="", help="Override dashboard HOST:PORT")
+    parser.add_argument("--no-seed", action="store_true", help="Skip startup baseline run when telemetry DB is empty")
+
+
+def _run_daemon(args: argparse.Namespace) -> int:
+    from . import __version__
+    from .autopilot import OpsConfig, default_ops_dir
+    from .dashboard import ChimeraDaemon
+
+    ops_dir = Path(args.ops_dir) if args.ops_dir else default_ops_dir()
+    cfg = OpsConfig.load(ops_dir)
+    if args.bind:
+        cfg.dashboard_bind = args.bind
+    stop_requested = False
+
+    def request_stop(_signum: int, _frame: object) -> None:
+        nonlocal stop_requested
+        stop_requested = True
+
+    signal.signal(signal.SIGINT, request_stop)
+    if hasattr(signal, "SIGTERM"):
+        signal.signal(signal.SIGTERM, request_stop)
+    daemon = ChimeraDaemon(config=cfg, ops_dir=ops_dir, auto_seed_on_empty=not args.no_seed).start()
+    try:
+        print(f"CHIMERA-HYPER v{__version__} Daemon listening at http://{daemon.http_addr[0]}:{daemon.http_addr[1]}",
+              flush=True)
+        while not stop_requested:
+            time.sleep(0.5)
+    finally:
+        daemon.close()
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     _configure_utf8()
     parser = argparse.ArgumentParser(
@@ -110,6 +130,31 @@ def main(argv: list[str] | None = None) -> int:
         description="CHIMERA-HYPER v5.0: PHANTOM-5MS Tunnel + Ghost-PTY + Ghost-FS + Medic + Drop-Portal",
     )
     sub = parser.add_subparsers(dest="command", required=True)
+    arguments = sys.argv[1:] if argv is None else argv
+    if arguments and arguments[0] == "daemon":
+        # The service runs for days. Keep unrelated CLI parsers and build workers out of its interpreter.
+        _add_daemon_parser(sub)
+        return _run_daemon(parser.parse_args(arguments))
+    from .active_pipe import ActivePipeEngine, ComputePlan, remote_active_query
+    from .autopilot import OpsConfig, TelemetryStore, default_ops_dir, run_daily_autopilot
+    from .code_search import CodeSearchIndex
+    from .edge_proxy import LocalEdgeProxy
+    from .fabric import BeamServer, ChimeraFabric, beam_send
+    from .holo_backup import create_holo_backup, list_holo_backups, restore_holo_backup
+    from .merkle_sync import merkle_beam_sync
+    from .nat_buster import attempt_direct_punch, discover_nat_profile
+    from .native import WormholeChannel
+    from .probe import probe_environment
+    from .protocol import ChimeraReceiver, ChimeraSender, FaultProfile
+    from .sentinel import SentinelEngine
+    from .telepathy import TelepathicStore, benchmark_compression, train_domain_dictionary
+    from .warp import WarpClient, WarpServer
+    from .platform import aether_cli, build_placement, guarded_build, swarm_symbols
+    aether_cli.configure(sub.add_parser("aether", help="Opt-in workstation, revision and peer utilities"))
+    guarded_build.configure(sub.add_parser("swarm", help="Run a verified build on the workstation or an admitted SSH peer"))
+    build_placement.configure(sub.add_parser("swarm-placement", help="Measure and select a site for a repeatable build"))
+    guarded_build.configure_queue(sub.add_parser("swarm-queue", help="Inspect and retry deferred build inputs"))
+    swarm_symbols.configure(sub.add_parser("swarm-symbols", help="Find Python definitions in a shared source snapshot"))
 
     # ---- Daily Work Subcommands (CHIMERA-HYPER v1.0) ----
     p_beam = sub.add_parser("beam", help="Zero-Byte DNA Vault + GFNI Wire file/directory sync")
@@ -187,10 +232,7 @@ def main(argv: list[str] | None = None) -> int:
     p_init.add_argument("--daily-time", default="08:00", help="Daily HH:MM local time")
     p_init.add_argument("--profile", default="auto-darwin", choices=("auto-darwin", "max-speed", "lossy-armor", "exotic-v05"))
 
-    p_daemon = sub.add_parser("daemon", help="Run 24/7 Mission-Control Dashboard & UDP accelerator services")
-    p_daemon.add_argument("--ops-dir", default="", help="Override ops directory")
-    p_daemon.add_argument("--bind", default="", help="Override dashboard HOST:PORT")
-    p_daemon.add_argument("--no-seed", action="store_true", help="Skip startup baseline run when telemetry DB is empty")
+    _add_daemon_parser(sub)
 
     p_auto = sub.add_parser("autopilot", help="Run one daily health + Before-vs-After + Darwinian UCB1 cycle")
     p_auto.add_argument("--ops-dir", default="", help="Override ops directory")
@@ -428,13 +470,31 @@ def main(argv: list[str] | None = None) -> int:
     p_ship.add_argument("--peer", default="http://127.0.0.1:9789", help="Peer Chimera URL via PHANTOM or loopback")
     p_ship.add_argument("--window", type=float, default=1.5, help="Storm tx_delta observation window in seconds")
 
-    # ---- v19-v21 CHIMERA-HYPERDESK, COSMOS & OMEGA ENTITY Subcommands ----
-    p_hdesk = sub.add_parser("hyperdesk", help="v19 CHIMERA-HYPERDESK multitasking optimizer (diagnose, optimize, cryo, wall, reap, hydra, dam, vram-bench, thaw)")
-    p_hdesk.add_argument("action", choices=("diagnose", "optimize", "cryo", "wall", "reap", "hydra", "dam", "vram-bench", "thaw", "status"))
-    p_hdesk.add_argument("--dry-run", action="store_true", help="Inspect actions without modifying processes")
+    # ---- v19-v23 CHIMERA-HYPERDESK, PHANTOM-SILICON, COSMOS & OMEGA ENTITY Subcommands ----
+    p_hdesk = sub.add_parser("hyperdesk", help="v19-v23 CHIMERA-HYPERDESK & PHANTOM-SILICON optimizer (diagnose, optimize, auto, mirage, pwm, stasis, gpu-fence, gpu-phoenix, cryo, wall, reap, hydra, dam, vram-bench, thaw)")
+    p_hdesk.add_argument(
+        "action",
+        choices=("diagnose", "optimize", "auto", "mirage", "pwm", "stasis", "gpu-fence", "gpu-phoenix", "cryo", "wall", "reap", "hydra", "dam", "vram-bench", "thaw", "status"),
+    )
+    p_hdesk.add_argument("auto_cmd", nargs="?", default="status", help="Sub-action (auto: status|on|off|tick; mirage: status|promote|sync|demote|bench; stasis: status|hibernate|wake)")
+    p_hdesk.add_argument("--path", default="", help="Target folder path for mirage promote/demote/sync/bench")
+    p_hdesk.add_argument("--recycle", action="store_true", help="Allow gpu-phoenix to safely recycle bloated Chromium GPU process")
+    p_hdesk.add_argument("--dry-run", action="store_true", help="Inspect actions without modifying processes/files")
     p_hdesk.add_argument("--release", action="store_true", help="Release Silicon Wall or Sync Dam back to full defaults")
     p_hdesk.add_argument("--payload-mb", type=float, default=4.0, help="VRAM swap benchmark payload size in MB")
     p_hdesk.add_argument("--anchor", default="", help="Override CHIMERA anchor URL")
+
+    p_exile = sub.add_parser("exile", help="Run a local build, an admitted peer task or an explicit Colab operation")
+    p_exile.add_argument("cmd", nargs="?", default="", help="Command for the chosen platform (omit for peer status)")
+    p_exile.add_argument("--cwd", default="", help="Local workspace directory to map/sync")
+    p_exile.add_argument("--target", default="auto", choices=("auto", "local", "svhome", "colab"),
+                         help="Use local for the caller's workstation. Exile's default selects its configured peer.")
+    p_exile.add_argument("--sync", action="store_true", help="Stream local workspace source files to remote temp dir before running")
+    p_exile.add_argument("--reuse", metavar="ENVIRONMENT_ID", help="Coalesce a declared repeatable job")
+    p_exile.add_argument("--artifact", action="append", default=[], help="Workspace-relative build output")
+    p_exile.add_argument("--require-io-cap", action="store_true")
+    p_exile.add_argument("--timeout", type=int, default=120)
+    p_exile.add_argument("--anchor", default="", help="Override CHIMERA anchor URL")
 
     p_cos = sub.add_parser("cosmos", help="v20 CHIMERA-COSMOS Sovereign Infrastructure Entity (status, sre, genesis, assimilate, resolve)")
     p_cos.add_argument("action", choices=("status", "sre", "genesis", "assimilate", "resolve"))
@@ -468,6 +528,16 @@ def main(argv: list[str] | None = None) -> int:
     _add_send_options(p_connect)
 
     args = parser.parse_args(argv)
+    if args.command == "swarm":
+        return guarded_build.cli(args)
+    if args.command == "swarm-placement":
+        return build_placement.cli(args)
+    if args.command == "swarm-queue":
+        return guarded_build.queue_cli(args)
+    if args.command == "swarm-symbols":
+        return swarm_symbols.cli(args)
+    if args.command == "aether":
+        return aether_cli.execute(args)
 
     if args.command == "ship-check":
         from .overmind_cortex import OvermindCortex
@@ -689,33 +759,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     if args.command == "daemon":
-        ops_dir = Path(args.ops_dir) if args.ops_dir else default_ops_dir()
-        cfg = OpsConfig.load(ops_dir)
-        if args.bind:
-            cfg.dashboard_bind = args.bind
-        stop_ev = False
-
-        def _sig_stop(_signum: int, _frame: object) -> None:
-            nonlocal stop_ev
-            stop_ev = True
-
-        signal.signal(signal.SIGINT, _sig_stop)
-        if hasattr(signal, "SIGTERM"):
-            signal.signal(signal.SIGTERM, _sig_stop)
-
-        daemon = ChimeraDaemon(
-            config=cfg, ops_dir=ops_dir, auto_seed_on_empty=not bool(args.no_seed)
-        ).start()
-        print(
-            f"CHIMERA-HYPER v5.0 Daemon listening at http://{daemon.http_addr[0]}:{daemon.http_addr[1]}",
-            flush=True,
-        )
-        try:
-            while not stop_ev:
-                time.sleep(0.5)
-        finally:
-            daemon.close()
-        return 0
+        return _run_daemon(args)
 
     if args.command == "autopilot":
         ops_dir = Path(args.ops_dir) if args.ops_dir else default_ops_dir()
@@ -1575,6 +1619,88 @@ def main(argv: list[str] | None = None) -> int:
             with opener.open(f"{anchor}{ep}", timeout=15.0) as resp:
                 print(json.dumps(json.loads(resp.read().decode("utf-8")), indent=2, ensure_ascii=False))
             return 0
+        if act == "auto":
+            if args.auto_cmd == "status":
+                with opener.open(f"{anchor}/v1/hyperdesk/autonomic", timeout=10.0) as resp:
+                    print(json.dumps(json.loads(resp.read().decode("utf-8")), indent=2, ensure_ascii=False))
+                return 0
+            req = _urlreq.Request(
+                f"{anchor}/v1/hyperdesk/autonomic",
+                data=json.dumps({"action": args.auto_cmd, "dry_run": bool(args.dry_run)}).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with opener.open(req, timeout=15.0) as resp:
+                print(json.dumps(json.loads(resp.read().decode("utf-8")), indent=2, ensure_ascii=False))
+            return 0
+        if act == "pwm":
+            with opener.open(f"{anchor}/v1/hyperdesk/pwm/status", timeout=10.0) as resp:
+                print(json.dumps(json.loads(resp.read().decode("utf-8")), indent=2, ensure_ascii=False))
+            return 0
+        if act == "mirage":
+            sub_a = args.auto_cmd or "status"
+            if sub_a == "status":
+                with opener.open(f"{anchor}/v1/hyperdesk/mirage/status", timeout=10.0) as resp:
+                    print(json.dumps(json.loads(resp.read().decode("utf-8")), indent=2, ensure_ascii=False))
+                return 0
+            ep_m = f"/v1/hyperdesk/mirage/{sub_a}"
+            req = _urlreq.Request(
+                f"{anchor}{ep_m}",
+                data=json.dumps({"path": args.path, "dry_run": bool(args.dry_run)}).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with opener.open(req, timeout=300.0) as resp:
+                res = json.loads(resp.read().decode("utf-8"))
+            print(json.dumps(res, indent=2, ensure_ascii=False))
+            return 0 if res.get("ok") else 1
+        if act == "stasis":
+            sub_a = args.auto_cmd or "status"
+            if sub_a == "status":
+                with opener.open(f"{anchor}/v1/hyperdesk/stasis/status", timeout=10.0) as resp:
+                    print(json.dumps(json.loads(resp.read().decode("utf-8")), indent=2, ensure_ascii=False))
+                return 0
+            ep_s = "/v1/hyperdesk/stasis/hibernate" if sub_a == "hibernate" else "/v1/hyperdesk/stasis/wake"
+            req = _urlreq.Request(
+                f"{anchor}{ep_s}",
+                data=json.dumps({"dry_run": bool(args.dry_run)}).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with opener.open(req, timeout=20.0) as resp:
+                res = json.loads(resp.read().decode("utf-8"))
+            print(json.dumps(res, indent=2, ensure_ascii=False))
+            return 0 if res.get("ok") else 1
+        if act == "gpu-fence":
+            if args.auto_cmd == "status" and not args.dry_run:
+                req = _urlreq.Request(
+                    f"{anchor}/v1/hyperdesk/gpu-fence",
+                    data=json.dumps({"dry_run": False}).encode("utf-8"),
+                    headers={"Content-Type": "application/json"},
+                    method="POST",
+                )
+            else:
+                req = _urlreq.Request(
+                    f"{anchor}/v1/hyperdesk/gpu-fence",
+                    data=json.dumps({"dry_run": bool(args.dry_run)}).encode("utf-8"),
+                    headers={"Content-Type": "application/json"},
+                    method="POST",
+                )
+            with opener.open(req, timeout=15.0) as resp:
+                res = json.loads(resp.read().decode("utf-8"))
+            print(json.dumps(res, indent=2, ensure_ascii=False))
+            return 0 if res.get("ok") else 1
+        if act == "gpu-phoenix":
+            req = _urlreq.Request(
+                f"{anchor}/v1/hyperdesk/gpu-phoenix",
+                data=json.dumps({"allow_recycle": bool(args.recycle)}).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with opener.open(req, timeout=15.0) as resp:
+                res = json.loads(resp.read().decode("utf-8"))
+            print(json.dumps(res, indent=2, ensure_ascii=False))
+            return 0 if res.get("ok") else 1
         route_map = {
             "optimize": ("/v1/hyperdesk/optimize", {"dry_run": bool(args.dry_run)}),
             "cryo": ("/v1/hyperdesk/cryo", {"dry_run": bool(args.dry_run)}),
@@ -1591,6 +1717,26 @@ def main(argv: list[str] | None = None) -> int:
             res = json.loads(resp.read().decode("utf-8"))
         print(json.dumps(res, indent=2, ensure_ascii=False))
         return 0 if res.get("ok") else 1
+
+    if args.command == "exile":
+        import urllib.request as _urlreq
+        from .platform import discover_runtime_file
+
+        rt = discover_runtime_file()
+        anchor = (args.anchor or (rt or {}).get("anchor_url") or "http://127.0.0.1:9780").rstrip("/")
+        opener = _urlreq.build_opener(_urlreq.ProxyHandler({}))
+        if not args.cmd:
+            with opener.open(f"{anchor}/v1/exile/status?probe=1", timeout=15.0) as resp:
+                print(json.dumps(json.loads(resp.read().decode("utf-8")), indent=2, ensure_ascii=False))
+            return 0
+        from .platform.client import connect
+        client = connect(app="exile-cli", anchor_url=anchor, auto_register=False)
+        res = client.agent_exile(args.cmd, args.cwd or os.getcwd(), args.target, args.sync,
+                                 environment_id=args.reuse or "", reuse=bool(args.reuse),
+                                 artifacts=args.artifact, require_io_limit=args.require_io_cap,
+                                 timeout_s=args.timeout)
+        print(json.dumps(res, indent=2, ensure_ascii=False))
+        return 0 if res.get("ok") else (75 if res.get("state") == "deferred" else 1)
 
     if args.command == "cosmos":
         import urllib.request as _urlreq

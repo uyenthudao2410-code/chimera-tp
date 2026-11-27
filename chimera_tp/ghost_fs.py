@@ -145,17 +145,20 @@ class GhostFsEngine:
         if not target.is_dir():
             raise NotADirectoryError(f"Directory not found: {rel_clean}")
         try:
+            _nw = getattr(subprocess, "CREATE_NO_WINDOW", 0) if os.name == "nt" else 0
             st = subprocess.run(
                 ["git", "-C", str(target), "status", "--short", "--branch"],
                 capture_output=True,
                 text=True,
                 timeout=3.0,
+                creationflags=_nw,
             )
             lg = subprocess.run(
                 ["git", "-C", str(target), "log", "-n", "5", "--oneline"],
                 capture_output=True,
                 text=True,
                 timeout=3.0,
+                creationflags=_nw,
             )
             return {
                 "repo": rel_clean or self.root_dir.name,

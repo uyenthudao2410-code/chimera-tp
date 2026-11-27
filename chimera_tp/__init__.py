@@ -1,147 +1,218 @@
-"""CHIMERA-HYPER v12.0.0 OMEGA-GALACTIC (Hyperdrive + Sovereign + Organism + Galactic)."""
+"""CHIMERA transport, storage, and personal infrastructure primitives."""
 
-__version__ = "12.0.0"
+__version__ = "18.0.0"
 
-from .active_pipe import ActivePipeEngine, ActivePipeResult, ActiveQueryServer, ComputePlan, remote_active_query
-from .apex_synergy import ApexSynergyEngine
-from .autopilot import OpsConfig, TelemetryStore, get_zero_weight_status, run_daily_autopilot
-from .code_search import CodeSearchIndex
-from .dashboard import ChimeraDaemon
-from .dna_vault import DnaCodec, DnaStats, DnaVault, pack_directory, unpack_directory
-from .drop_portal import DropPortalStore, pack_ai_context
-from .edge_proxy import EdgeGateway, LocalEdgeProxy, edge_fetch_remote
-from .fabric import BeamReport, BeamServer, ChimeraFabric, beam_send, beam_send_merkle_patch
-from .ghost_fs import GhostFsEngine, build_propfind_xml
-from .ghost_pty import GhostPtyManager
-from .holo_backup import (
-    create_holo_backup,
-    list_holo_backups,
-    restore_holo_backup,
-    reconstruct_secret_gf256_2of3,
-    split_secret_gf256_2of3,
-)
-from .hyper_wire import (
-    HedgedRpcClient,
-    HedgedRpcServer,
-    HyperWireReceiver,
-    HyperWireReport,
-    HyperWireSender,
-    ImmortalMultiPathReceiver,
-    ImmortalMultiPathSender,
-    ImmortalReport,
-)
-from .medic import MedicEngine
-from .merkle_sync import MerkleSnapshot, ShadowMerkleIndex, merkle_beam_sync
-from .nat_buster import NatPunchResponder, attempt_direct_punch, discover_nat_profile
-from .native import (
-    WormholeChannel,
-    babel_mine,
-    batch_chacha20_xor,
-    chaos_step_q16,
-    cpu_caps,
-    has_native,
-    lz4_compress,
-    lz4_decompress,
-    simd_search_count,
-    tile_apply_xor,
-    tile_diff_xor,
-    v9_native_caps,
-    v12_native_caps,
-    vsa_bind_xor,
-    vsa_hamming,
-)
-from .phantom_tunnel import (
-    PhantomTunnelClient,
-    PhantomTunnelServer,
-    open_any_packet,
-    open_packet,
-    open_packet_fast,
-    seal_packet,
-    seal_packet_fast,
-)
-from .probe import EnvironmentProfile, RealmInfo, probe_environment
-from .protocol import ChimeraReceiver, ChimeraSender, FaultProfile, TransferReport
-from .sentinel import SentinelEngine
-from .telepathy import DomainDictionary, TelepathicCodec, TelepathicStore, train_domain_dictionary
-from .warp import WarpClient, WarpServer
-from .omega_bench import format_omega_markdown, run_omega_benchmark
-from .omega_compute import (
-    NeuralPpmCodec,
-    RemoteRamPool,
-    RemoteRamStore,
-    UepDisplayStream,
-    WasmActivePipe,
-    build_wasm_byte_counter_module,
-)
-from .omega_storage import (
-    GhostBlockEngine,
-    ParasiticDeadDropMesh,
-    RegeneratingMeshVault,
-    SlepianWolfSync,
-    detect_fs_mount_caps,
-)
-from .omega_transport import (
-    GeneticWireEngine,
-    MultiIspBondingEngine,
-    PolymorphicMimicLayer,
-    QuantumChaffShield,
-    RlncRecodingRelay,
-    SiliconDataPlane,
-    VirtualNicBridge,
-    detect_os_tun_caps,
-    hybrid_pq_decaps,
-    hybrid_pq_encaps,
-    hybrid_pq_keypair,
-    x25519_keypair,
-    x25519_shared,
-)
-from .singularity_airgap_crypto import (
-    AirGapFountainBridge,
-    PlausibleDeniabilityVault,
-    PrivateInfoRetrievalEngine,
-    build_deterministic_pir_db,
-)
-from .singularity_bench import format_singularity_markdown, run_singularity_benchmark
-from .singularity_kolmogorov_swarm import KolmogorovGrammarCodec, SwarmAnycastMesh
-from .singularity_time_crdt import HlcClock, MerkleCrdtReplica, MerkleCrdtShadowTwin, SpeculativeTimeWarpEngine
-from .v9_app_index import LiveClusterIndexer, RemoteAppStreamEngine, SharedCasTurboCache, UniversalInstantHub
-from .v9_bench import format_hyperdrive_markdown, run_hyperdrive_benchmark
-from .v9_dataplane import MultiWanSpeedFusionEngine, NativeDataPlaneEngine, ZeroCopyPacketRing
-from .v9_nvme_grid import MetadataTreeMirror, UnifiedHardwareGrid, VirtualNvmeFabric, WorkspaceHandOffManager
-from .v10_outlaw_engines import (
-    CausalTimeTravelFabric,
-    DctStegoDrive,
-    EtherDelayLineVault,
-    GeoTopologyFuzzyAuth,
-    ProceduralTarpitLabyrinth,
-    ScavengerGridScheduler,
-    WasmProgramSynthesizer,
-)
-from .v10_sovereign_crypto import FrostThreshold2of3, Gf256MpcEngine, InlineBitRotHealer
-from .v10_sovereign_runtime import AsymmetricKalmanBondEngine, VerifiableTraceProver, WasmLiveTeleportEngine
-from .v11_autopoietic_systems import (
-    ActiveMatterCell,
-    AutopoieticKernelEngine,
-    SplitBrainOrchestrator,
-    ThermodynamicResourceMarket,
-    UnifiedCausalRealityStream,
-)
-from .v11_organism_mesh import (
-    BabelPointerCodec,
-    CoupledChaoticWire,
-    DataGravityPlanner,
-    GravitationalOverlayRouter,
-    ImmuneProtocolOrganism,
-    MultiverseExecutor,
-)
-from .v12_bench import format_galactic_markdown, run_galactic_benchmark
-from .v12_galactic_engines import (
-    AlienDialectEngine,
-    CausalOriginTeleporter,
-    HolographicSlpEngine,
-    HyperdimensionalVsaMesh,
-    ReversibleBennettVM,
-)
+# Map the existing public names to their owning modules without importing the engines.
+_MODULE_EXPORTS = {
+    "active_pipe": (
+        "ActivePipeEngine",
+        "ActivePipeResult",
+        "ActiveQueryServer",
+        "ComputePlan",
+        "remote_active_query",
+    ),
+    "apex_synergy": ("ApexSynergyEngine",),
+    "autopilot": ("OpsConfig", "TelemetryStore", "get_zero_weight_status", "run_daily_autopilot"),
+    "code_search": ("CodeSearchIndex",),
+    "dashboard": ("ChimeraDaemon",),
+    "dna_vault": ("DnaCodec", "DnaStats", "DnaVault", "pack_directory", "unpack_directory"),
+    "drop_portal": ("DropPortalStore", "pack_ai_context"),
+    "edge_proxy": ("EdgeGateway", "LocalEdgeProxy", "edge_fetch_remote"),
+    "fabric": (
+        "BeamReport",
+        "BeamServer",
+        "ChimeraFabric",
+        "beam_send",
+        "beam_send_merkle_patch",
+    ),
+    "ghost_fs": ("GhostFsEngine", "build_propfind_xml"),
+    "ghost_pty": ("GhostPtyManager",),
+    "holo_backup": (
+        "create_holo_backup",
+        "list_holo_backups",
+        "restore_holo_backup",
+        "reconstruct_secret_gf256_2of3",
+        "split_secret_gf256_2of3",
+    ),
+    "hyper_wire": (
+        "HedgedRpcClient",
+        "HedgedRpcServer",
+        "HyperWireReceiver",
+        "HyperWireReport",
+        "HyperWireSender",
+        "ImmortalMultiPathReceiver",
+        "ImmortalMultiPathSender",
+        "ImmortalReport",
+    ),
+    "medic": ("MedicEngine",),
+    "merkle_sync": ("MerkleSnapshot", "ShadowMerkleIndex", "merkle_beam_sync"),
+    "nat_buster": ("NatPunchResponder", "attempt_direct_punch", "discover_nat_profile"),
+    "native": (
+        "WormholeChannel",
+        "babel_mine",
+        "batch_chacha20_xor",
+        "chaos_step_q16",
+        "cpu_caps",
+        "has_native",
+        "lz4_compress",
+        "lz4_decompress",
+        "simd_search_count",
+        "tile_apply_xor",
+        "tile_diff_xor",
+        "v9_native_caps",
+        "v12_native_caps",
+        "vsa_bind_xor",
+        "vsa_hamming",
+    ),
+    "phantom_tunnel": (
+        "PhantomTunnelClient",
+        "PhantomTunnelServer",
+        "open_any_packet",
+        "open_packet",
+        "open_packet_fast",
+        "seal_packet",
+        "seal_packet_fast",
+    ),
+    "probe": ("EnvironmentProfile", "RealmInfo", "probe_environment"),
+    "protocol": ("ChimeraReceiver", "ChimeraSender", "FaultProfile", "TransferReport"),
+    "sentinel": ("SentinelEngine",),
+    "telepathy": (
+        "DomainDictionary",
+        "TelepathicCodec",
+        "TelepathicStore",
+        "train_domain_dictionary",
+    ),
+    "warp": ("WarpClient", "WarpServer"),
+    "omega_bench": ("format_omega_markdown", "run_omega_benchmark"),
+    "omega_compute": (
+        "NeuralPpmCodec",
+        "RemoteRamPool",
+        "RemoteRamStore",
+        "UepDisplayStream",
+        "WasmActivePipe",
+        "build_wasm_byte_counter_module",
+    ),
+    "omega_storage": (
+        "GhostBlockEngine",
+        "ParasiticDeadDropMesh",
+        "RegeneratingMeshVault",
+        "SlepianWolfSync",
+        "detect_fs_mount_caps",
+    ),
+    "omega_transport": (
+        "GeneticWireEngine",
+        "MultiIspBondingEngine",
+        "PolymorphicMimicLayer",
+        "QuantumChaffShield",
+        "RlncRecodingRelay",
+        "SiliconDataPlane",
+        "VirtualNicBridge",
+        "detect_os_tun_caps",
+        "hybrid_pq_decaps",
+        "hybrid_pq_encaps",
+        "hybrid_pq_keypair",
+        "x25519_keypair",
+        "x25519_shared",
+    ),
+    "singularity_airgap_crypto": (
+        "AirGapFountainBridge",
+        "PlausibleDeniabilityVault",
+        "PrivateInfoRetrievalEngine",
+        "build_deterministic_pir_db",
+    ),
+    "singularity_bench": ("format_singularity_markdown", "run_singularity_benchmark"),
+    "singularity_kolmogorov_swarm": ("KolmogorovGrammarCodec", "SwarmAnycastMesh"),
+    "singularity_time_crdt": (
+        "HlcClock",
+        "MerkleCrdtReplica",
+        "MerkleCrdtShadowTwin",
+        "SpeculativeTimeWarpEngine",
+    ),
+    "v9_app_index": (
+        "LiveClusterIndexer",
+        "RemoteAppStreamEngine",
+        "SharedCasTurboCache",
+        "UniversalInstantHub",
+    ),
+    "v9_bench": ("format_hyperdrive_markdown", "run_hyperdrive_benchmark"),
+    "v9_dataplane": ("MultiWanSpeedFusionEngine", "NativeDataPlaneEngine", "ZeroCopyPacketRing"),
+    "v9_nvme_grid": (
+        "MetadataTreeMirror",
+        "UnifiedHardwareGrid",
+        "VirtualNvmeFabric",
+        "WorkspaceHandOffManager",
+    ),
+    "v10_outlaw_engines": (
+        "CausalTimeTravelFabric",
+        "DctStegoDrive",
+        "EtherDelayLineVault",
+        "GeoTopologyFuzzyAuth",
+        "ProceduralTarpitLabyrinth",
+        "ScavengerGridScheduler",
+        "WasmProgramSynthesizer",
+    ),
+    "v10_sovereign_crypto": ("FrostThreshold2of3", "Gf256MpcEngine", "InlineBitRotHealer"),
+    "v10_sovereign_runtime": (
+        "AsymmetricKalmanBondEngine",
+        "VerifiableTraceProver",
+        "WasmLiveTeleportEngine",
+    ),
+    "v11_autopoietic_systems": (
+        "ActiveMatterCell",
+        "AutopoieticKernelEngine",
+        "SplitBrainOrchestrator",
+        "ThermodynamicResourceMarket",
+        "UnifiedCausalRealityStream",
+    ),
+    "v11_organism_mesh": (
+        "BabelPointerCodec",
+        "CoupledChaoticWire",
+        "DataGravityPlanner",
+        "GravitationalOverlayRouter",
+        "ImmuneProtocolOrganism",
+        "MultiverseExecutor",
+    ),
+    "v12_bench": ("format_galactic_markdown", "run_galactic_benchmark"),
+    "v12_galactic_engines": (
+        "AlienDialectEngine",
+        "CausalOriginTeleporter",
+        "HolographicSlpEngine",
+        "HyperdimensionalVsaMesh",
+        "ReversibleBennettVM",
+    ),
+}
+_EXPORTS = {name: module for module, names in _MODULE_EXPORTS.items() for name in names}
+
+# These modules were also available through package attribute access.
+_SUBMODULES = set(_MODULE_EXPORTS) | {
+    "gf256",
+    "host_governor",
+    "impairment",
+    "lanes",
+    "overmind_cortex",
+    "platform",
+    "trinity_bridge",
+    "universe_ui",
+    "vsa_memory_service",
+}
+
+
+def __getattr__(name):
+    from importlib import import_module
+
+    if name in _SUBMODULES:
+        return import_module(f".{name}", __name__)
+    module = _EXPORTS.get(name)
+    if module is None:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    value = getattr(import_module(f".{module}", __name__), name)
+    globals()[name] = value
+    return value
+
+
+def __dir__():
+    return sorted(set(globals()) | _EXPORTS.keys() | _SUBMODULES)
+
 
 __all__ = [
     "ActivePipeEngine",

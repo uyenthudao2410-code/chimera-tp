@@ -15,6 +15,8 @@ from .discovery import _atomic_write_text, chimera_home_dir, discover_runtime_fi
 
 _AGENTS_BEGIN = "<!-- CHIMERA-UNIFY-BEGIN -->"
 _AGENTS_END = "<!-- CHIMERA-UNIFY-END -->"
+_AGENT_BUS_BEGIN = "<!-- CHIMERA-UNIFY-AGENT-BUS-BEGIN -->"
+_AGENT_BUS_END = "<!-- CHIMERA-UNIFY-AGENT-BUS-END -->"
 _SHELL_BEGIN = "# CHIMERA-UNIFY-BEGIN"
 _SHELL_END = "# CHIMERA-UNIFY-END"
 _TOML_BEGIN = "# CHIMERA-UNIFY-MCP-BEGIN"
@@ -42,7 +44,7 @@ def _upsert_marked_block(existing: str, begin: str, end: str, block_body: str) -
     wrapped = f"{begin}\n{block_body.rstrip()}\n{end}\n"
     pat = re.compile(re.escape(begin) + r".*?" + re.escape(end) + r"\r?\n?", re.S)
     if pat.search(existing):
-        return pat.sub(wrapped, existing, count=1)
+        return pat.sub(lambda _m: wrapped, existing, count=1)
     sep = "\n" if existing and not existing.endswith("\n") else ""
     gap = "\n" if existing.strip() else ""
     return f"{existing}{sep}{gap}{wrapped}"
@@ -70,7 +72,53 @@ This workstation/server runs **CHIMERA-TP (`v18.1`)**, a Zero-Weight (`< 80 MB`)
    - Or invoke unified compute directly via `POST {compute_url}` / Python `chimera_tp.platform.client.connect(app=...).compute(...)` / MCP tool `chimera_compute`.
 3. **Egress Membrane & Zero-Leak DLP (Auto-Injected):** Outbound HTTP/HTTPS automatically uses `HTTP_PROXY={proxy}` (Singleflight dedup, TTL/ETag cache, `429` auto-rescue, `< 50 us` secret-leak DLP `403` guard).
 4. **Cross-Host State & Safety:** Use `/v1/pulse` (Pub/Sub + KV), `/v1/search` (BM25 + AVX2 VSA), `/v1/jobs` (crash-resumable steps), `/v1/vault-sql` (SQLite replica), and `chimera-tp ghost` (CoW dry-run bubble).
+5. **Zero-Spawn Agent Hyper-Bus (Organ 3):** Never spawn sequential PowerShell/Node/Python shells for read-only inspection. Batch up to 40 file slices, regex searches, JSON queries, loopback HTTP GETs, read-only SQLite queries, and `git status` into one `chimera_xray_batch` MCP call (`POST {anchor}/v1/agent/xray-batch`), fetch 2-hop symbol context + tests via `chimera_callgraph_slice` (`POST {anchor}/v1/agent/callgraph-slice`), and verify edits with BLAKE2s memoization via `chimera_commit_verify` (`POST {anchor}/v1/agent/commit-verify`).
 """
+
+
+def _build_global_agent_bus_rule(anchor: str) -> str:
+    return f"""## CHIMERA Zero-Spawn Agent Hyper-Bus & Symbiont (Global Hybrid Routing Rule)
+
+When MCP server `chimera` is available (or local daemon `{anchor}` is up), follow hybrid low-latency routing:
+- **Cold-start orientation (1 call, `<25 ms`, `<=1.5 KB`):** Call `chimera_bootstrap` (or `GET {anchor}/v1/agent/bootstrap?repo=...`) instead of serial `ls`/`git status` turns.
+- **Large known file reads:** Use native parallel `read_file` with `StartLine`/`EndLine` (`~7 ms`, `46 KB/call` inline, 0 remote check); use `chimera_xray_batch` `op="outline"` first on unknown large files (`>300` lines) to get exact line ranges.
+- **Multi-query inspection (`0` PowerShell spawns, `<=8.6 KB` inline Spill-Shield):** Batch multiple `outline`, `regex_search`, `list_files`, `json_query`, loopback `http_get`, read-only `sqlite_ro`, `git_status`, and small `file_slice` ops into **one** `chimera_xray_batch` MCP call (invoke directly without spending a turn reading schema JSON).
+- **2-hop symbol context:** Call `chimera_callgraph_slice` (`POST {anchor}/v1/agent/callgraph-slice`).
+- **Transactional multi-file edits + verify:** Use `chimera_atomic_patch` (in-RAM AST/TOML/JSON/JS gate BEFORE disk write + impacted tests + auto-rollback) or `chimera_commit_verify` (BLAKE2s cached + Precog-Runner pre-warmed).
+- **Multi-agent safety & handoff:** Use `chimera_hive` (soft intent leases + Immune Reflex warnings) and `chimera_handoff_capsule` (`<1.5k`-token verified brain transfer across Codex / Claude / Antigravity)."""
+
+
+def _install_agent_global_beacons(home: Path, anchor: str) -> list[str]:
+    written: list[str] = []
+    body = _build_global_agent_bus_rule(anchor)
+    targets = [
+        (home / ".codex" / "AGENTS.md", (home / ".codex").is_dir()),
+        (home / ".gemini" / "AGENTS.md", (home / ".gemini").is_dir()),
+    ]
+    for path, parent_ok in targets:
+        if not parent_ok and not path.is_file():
+            continue
+        prev = path.read_text(encoding="utf-8", errors="ignore") if path.is_file() else ""
+        updated = _upsert_marked_block(prev, _AGENT_BUS_BEGIN, _AGENT_BUS_END, body)
+        if _atomic_write_text(path, updated):
+            written.append(str(path))
+    return written
+
+
+def _remove_agent_global_beacons(home: Path) -> list[str]:
+    cleaned_paths: list[str] = []
+    for path in (home / ".codex" / "AGENTS.md", home / ".gemini" / "AGENTS.md"):
+        if not path.is_file():
+            continue
+        prev = path.read_text(encoding="utf-8", errors="ignore")
+        new_txt, changed = _remove_marked_block(prev, _AGENT_BUS_BEGIN, _AGENT_BUS_END)
+        if changed:
+            if new_txt.strip():
+                _atomic_write_text(path, new_txt)
+            else:
+                path.unlink(missing_ok=True)
+            cleaned_paths.append(str(path))
+    return cleaned_paths
 
 
 def _install_dev_root_beacons(
@@ -211,21 +259,42 @@ def _configure_user_env_posix(
     return {"ok": True, "os": "posix", "changed": changed}
 
 
+def _t3_antigravity_mcp_targets(home: Path) -> list[tuple[str, Path, bool]]:
+    """Discover all T3 Code isolated Antigravity account profile MCP configs."""
+    out: list[tuple[str, Path, bool]] = []
+    ag_root = home / ".t3" / "userdata" / "providers" / "antigravity"
+    if not ag_root.is_dir():
+        return out
+    try:
+        for prof in sorted(ag_root.iterdir()):
+            if not prof.is_dir():
+                continue
+            cfg_dir = prof / "config"
+            if cfg_dir.is_dir() or (prof / "antigravity-acp").is_dir():
+                out.append((f"t3_antigravity:{prof.name[:10]}", cfg_dir / "mcp_config.json", True))
+    except OSError:
+        pass
+    return out
+
+
 def _register_mcp_configs(home: Path, python_exe: str, remove: bool = False) -> list[dict[str, Any]]:
     """Register/remove `chimera` stdio MCP server cleanly in existing AI agent config files."""
     results: list[dict[str, Any]] = []
-    json_targets = [
+    json_targets: list[tuple[str, Path, bool]] = [
         ("claude_code", home / ".claude.json", False),
         ("cursor", home / ".cursor" / "mcp.json", False),
         ("antigravity", home / ".gemini" / "antigravity" / "mcp_config.json", (home / ".gemini").is_dir()),
+        ("antigravity_cli", home / ".gemini" / "config" / "mcp_config.json", (home / ".gemini" / "config").is_dir()),
     ]
+    json_targets.extend(_t3_antigravity_mcp_targets(home))
     mcp_entry = {"command": python_exe, "args": ["-m", "chimera_tp", "mcp"]}
 
     for name, path, create_if_parent_exists in json_targets:
         if not path.is_file() and (remove or not create_if_parent_exists):
             continue
         try:
-            data = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
+            raw_txt = path.read_text(encoding="utf-8").strip() if path.is_file() else ""
+            data = json.loads(raw_txt) if raw_txt else {}
             if not isinstance(data, dict):
                 continue
             servers = data.get("mcpServers")
@@ -335,8 +404,9 @@ def unify_install(
         else:
             env_res = _configure_user_env_posix(home, shared, env_vars, remove=False)
 
-    # 4. Workspace-root AGENTS.md discovery beacons
+    # 4. Workspace-root & global AI agent AGENTS.md discovery beacons
     beacons = _install_dev_root_beacons(roots, anchor, proxy, openai_base, compute_url) if install_beacons else []
+    global_agent_beacons = _install_agent_global_beacons(home, anchor) if install_beacons else []
 
     # 5. Global AI Coding Agent MCP registration
     mcp_res = _register_mcp_configs(home, py_exe, remove=False) if install_mcp else []
@@ -354,6 +424,7 @@ def unify_install(
         "autoload": al_res,
         "user_env": env_res,
         "dev_root_beacons": beacons,
+        "global_agent_beacons": global_agent_beacons,
         "mcp_registrations": mcp_res,
     }
 
@@ -388,12 +459,14 @@ def unify_uninstall(
         else:
             env_res = _configure_user_env_posix(home, shared, env_vars, remove=True)
     beacons = _remove_dev_root_beacons(roots) if install_beacons else []
+    global_removed = _remove_agent_global_beacons(home) if install_beacons else []
     mcp_res = _register_mcp_configs(home, sys.executable, remove=True) if install_mcp else []
     if unify_path.is_file():
         unify_path.unlink(missing_ok=True)
     return {
         "ok": True,
         "removed_beacons": beacons,
+        "removed_global_beacons": global_removed,
         "user_env": env_res,
         "mcp_registrations": mcp_res,
     }
@@ -428,14 +501,20 @@ def unify_status(*, home_dir: Path | None = None) -> dict[str, Any]:
         env_active = envd.is_file()
 
     mcp_active: list[str] = []
-    for name, p in (
+    status_targets: list[tuple[str, Path]] = [
         ("claude_code", home / ".claude.json"),
         ("cursor", home / ".cursor" / "mcp.json"),
         ("antigravity", home / ".gemini" / "antigravity" / "mcp_config.json"),
-    ):
+        ("antigravity_cli", home / ".gemini" / "config" / "mcp_config.json"),
+    ]
+    status_targets.extend((n, p) for n, p, _ in _t3_antigravity_mcp_targets(home))
+    for name, p in status_targets:
         if p.is_file():
             try:
-                d = json.loads(p.read_text(encoding="utf-8"))
+                raw_txt = p.read_text(encoding="utf-8").strip()
+                if not raw_txt:
+                    continue
+                d = json.loads(raw_txt)
                 if isinstance(d.get("mcpServers"), dict) and "chimera" in d["mcpServers"]:
                     mcp_active.append(name)
             except Exception:

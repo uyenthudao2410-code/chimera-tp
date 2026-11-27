@@ -96,6 +96,7 @@ class GhostBubbleEngine:
             capture_output=True,
             text=True,
             timeout=max(1.0, float(timeout_s)),
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0) if os.name == "nt" else 0,
         )
         after = _snapshot_tree(bdir)
 

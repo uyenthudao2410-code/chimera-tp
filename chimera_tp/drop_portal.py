@@ -219,6 +219,7 @@ def pack_ai_context(
                     proc = subprocess.run(
                         ["git", "-C", str(rdir), "log", "-n", "4", "--oneline"],
                         capture_output=True,
+                        creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
                         text=True,
                         timeout=2.5,
                     )

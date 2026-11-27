@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import ctypes
+import functools
 import hashlib
 import os
 import struct
@@ -183,6 +184,50 @@ def _bind_signatures(lib: ctypes.CDLL) -> None:
         lib.chimera_babel_mine.argtypes = [c_void_p, c_size_t, c_u64, c_u32, c_u64_p, c_u32_p]
         lib.chimera_babel_mine.restype = None
 
+    if hasattr(lib, "chimera_pwm_start"):
+        lib.chimera_pwm_start.argtypes = [c_u32, c_u32]
+        lib.chimera_pwm_start.restype = c_i32
+
+    if hasattr(lib, "chimera_pwm_set_targets"):
+        lib.chimera_pwm_set_targets.argtypes = [c_u32_p, c_size_t, c_u32]
+        lib.chimera_pwm_set_targets.restype = c_i32
+
+    if hasattr(lib, "chimera_pwm_heartbeat"):
+        lib.chimera_pwm_heartbeat.argtypes = []
+        lib.chimera_pwm_heartbeat.restype = None
+
+    if hasattr(lib, "chimera_pwm_stop"):
+        lib.chimera_pwm_stop.argtypes = []
+        lib.chimera_pwm_stop.restype = c_i32
+
+    if hasattr(lib, "chimera_pwm_stats"):
+        lib.chimera_pwm_stats.argtypes = [c_u64_p, c_u64_p, c_u64_p, c_u32_p, c_u32_p]
+        lib.chimera_pwm_stats.restype = None
+
+    if hasattr(lib, "chimera_focus_hook_start"):
+        lib.chimera_focus_hook_start.argtypes = []
+        lib.chimera_focus_hook_start.restype = c_i32
+
+    if hasattr(lib, "chimera_focus_hook_stop"):
+        lib.chimera_focus_hook_stop.argtypes = []
+        lib.chimera_focus_hook_stop.restype = c_i32
+
+    if hasattr(lib, "chimera_stasis_register_group"):
+        lib.chimera_stasis_register_group.argtypes = [c_u32_p, c_size_t, c_u32_p, c_size_t]
+        lib.chimera_stasis_register_group.restype = c_i32
+
+    if hasattr(lib, "chimera_stasis_wake_pid"):
+        lib.chimera_stasis_wake_pid.argtypes = [c_u32]
+        lib.chimera_stasis_wake_pid.restype = c_u32
+
+    if hasattr(lib, "chimera_stasis_wake_all"):
+        lib.chimera_stasis_wake_all.argtypes = []
+        lib.chimera_stasis_wake_all.restype = c_u32
+
+    if hasattr(lib, "chimera_focus_state"):
+        lib.chimera_focus_state.argtypes = [c_u32_p, c_u64_p, c_u64_p]
+        lib.chimera_focus_state.restype = None
+
 
 _DLL: ctypes.CDLL | None = _discover_and_load_dll()
 
@@ -354,6 +399,20 @@ def gf256_decode_matrix(
     return b"".join(bytes(r) for r in d_rows)
 
 
+@functools.lru_cache(maxsize=1)
+def _cdc_gear() -> tuple[int, ...]:
+    """Low fingerprint bits of the gear table used by both native implementations."""
+    mask64 = (1 << 64) - 1
+    values = []
+    for byte in range(256):
+        x = (byte * 0x517CC1B727220A95 + 0x243F6A8885A308D3 + 0x9E3779B97F4A7C15) & mask64
+        x = ((x ^ (x >> 30)) * 0xBF58476D1CE4E5B9) & mask64
+        x = ((x ^ (x >> 27)) * 0x94D049BB133111EB) & mask64
+        value = (x ^ (x >> 31)) or 0x13579BDF2468ACE1
+        values.append(value & 0x0FFFFFFF)
+    return tuple(values)
+
+
 def fastcdc_split(
     data: bytes | bytearray | memoryview,
     min_sz: int = 4096,
@@ -385,13 +444,36 @@ def fastcdc_split(
             spans.append((start, n))
         return spans
 
-    # Simple deterministic fallback chunker
+    # Keep portable chunk identities identical when a peer lacks the native library.
+    bits = min(22, max(6, avg_c.bit_length() - 1))
+    strict = (1 << (bits + 1)) - 1
+    loose = (1 << (bits - 1)) - 1
+    gear = _cdc_gear()
     spans = []
     pos = 0
     while pos < n:
-        end = min(n, pos + avg_c)
-        spans.append((pos, end))
-        pos = end
+        if n - pos <= min_c:
+            spans.append((pos, n))
+            break
+        end = min(n, pos + max_c)
+        middle = min(end, pos + avg_c)
+        i = pos + min_c - 64
+        rolling = 0
+        while i < pos + min_c:
+            rolling = ((rolling << 1) + gear[data[i]]) & 0x0FFFFFFF
+            i += 1
+        cut = end
+        for stop, mask in ((middle, strict), (end, loose)):
+            while i < stop:
+                rolling = ((rolling << 1) + gear[data[i]]) & 0x0FFFFFFF
+                i += 1
+                if (rolling & mask) == 0:
+                    cut = i
+                    break
+            if cut != end:
+                break
+        spans.append((pos, cut))
+        pos = cut
     return spans
 
 
@@ -1447,3 +1529,103 @@ def babel_mine(
                 if best_dist == 0:
                     break
     return best_seed, best_dist
+
+
+# ---------------------------------------------------------------------------
+# v23.0 CHIMERA-PHANTOM-SILICON Rust Native PWM-Crusher & Focus Hook Wrappers
+# ---------------------------------------------------------------------------
+
+def has_native_pwm() -> bool:
+    return bool(_DLL is not None and hasattr(_DLL, "chimera_pwm_start"))
+
+
+def native_pwm_start(period_ms: int = 50, duty_pct: int = 25) -> bool:
+    if _DLL is None or not hasattr(_DLL, "chimera_pwm_start"):
+        return False
+    return bool(_DLL.chimera_pwm_start(int(period_ms), int(duty_pct)))
+
+
+def native_pwm_set_targets(pids: list[int] | set[int], duty_pct: int = 25) -> int:
+    if _DLL is None or not hasattr(_DLL, "chimera_pwm_set_targets"):
+        return 0
+    clean = [int(p) for p in pids if int(p) > 4][:64]
+    if not clean:
+        return int(_DLL.chimera_pwm_set_targets(None, 0, int(duty_pct)))
+    arr = (ctypes.c_uint32 * len(clean))(*clean)
+    return int(_DLL.chimera_pwm_set_targets(arr, len(clean), int(duty_pct)))
+
+
+def native_pwm_heartbeat() -> None:
+    if _DLL is not None and hasattr(_DLL, "chimera_pwm_heartbeat"):
+        _DLL.chimera_pwm_heartbeat()
+
+
+def native_pwm_stop() -> bool:
+    if _DLL is None or not hasattr(_DLL, "chimera_pwm_stop"):
+        return False
+    return bool(_DLL.chimera_pwm_stop())
+
+
+def native_pwm_stats() -> dict[str, Any]:
+    if _DLL is None or not hasattr(_DLL, "chimera_pwm_stats"):
+        return {"native": False, "cycles": 0, "suspends": 0, "resumes": 0, "active_pids": 0, "duty_pct": 100}
+    cyc = ctypes.c_uint64(0)
+    susp = ctypes.c_uint64(0)
+    res = ctypes.c_uint64(0)
+    act = ctypes.c_uint32(0)
+    duty = ctypes.c_uint32(100)
+    _DLL.chimera_pwm_stats(ctypes.byref(cyc), ctypes.byref(susp), ctypes.byref(res), ctypes.byref(act), ctypes.byref(duty))
+    return {
+        "native": True,
+        "cycles": int(cyc.value),
+        "suspends": int(susp.value),
+        "resumes": int(res.value),
+        "active_pids": int(act.value),
+        "duty_pct": int(duty.value),
+    }
+
+
+def native_focus_hook_start() -> bool:
+    if _DLL is None or not hasattr(_DLL, "chimera_focus_hook_start"):
+        return False
+    return bool(_DLL.chimera_focus_hook_start())
+
+
+def native_focus_hook_stop() -> bool:
+    if _DLL is None or not hasattr(_DLL, "chimera_focus_hook_stop"):
+        return False
+    return bool(_DLL.chimera_focus_hook_stop())
+
+
+def native_stasis_register_group(trigger_pids: list[int] | set[int], child_pids: list[int] | set[int]) -> int:
+    if _DLL is None or not hasattr(_DLL, "chimera_stasis_register_group"):
+        return 0
+    tr = [int(p) for p in trigger_pids if int(p) > 4]
+    ch = [int(p) for p in child_pids if int(p) > 4]
+    if not tr or not ch:
+        return 0
+    t_arr = (ctypes.c_uint32 * len(tr))(*tr)
+    c_arr = (ctypes.c_uint32 * len(ch))(*ch)
+    return int(_DLL.chimera_stasis_register_group(t_arr, len(tr), c_arr, len(ch)))
+
+
+def native_stasis_wake_pid(pid: int) -> int:
+    if _DLL is None or not hasattr(_DLL, "chimera_stasis_wake_pid"):
+        return 0
+    return int(_DLL.chimera_stasis_wake_pid(int(pid)))
+
+
+def native_stasis_wake_all() -> int:
+    if _DLL is None or not hasattr(_DLL, "chimera_stasis_wake_all"):
+        return 0
+    return int(_DLL.chimera_stasis_wake_all())
+
+
+def native_focus_state() -> dict[str, Any]:
+    if _DLL is None or not hasattr(_DLL, "chimera_focus_state"):
+        return {"native": False, "fg_pid": 0, "seq": 0, "auto_wakes": 0}
+    fg = ctypes.c_uint32(0)
+    seq = ctypes.c_uint64(0)
+    wakes = ctypes.c_uint64(0)
+    _DLL.chimera_focus_state(ctypes.byref(fg), ctypes.byref(seq), ctypes.byref(wakes))
+    return {"native": True, "fg_pid": int(fg.value), "seq": int(seq.value), "auto_wakes": int(wakes.value)}

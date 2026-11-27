@@ -92,7 +92,11 @@ class HostYieldGovernor:
                 di = cur[0] - prev[0]
                 dk = cur[1] - prev[1]
                 du = cur[2] - prev[2]
-                tot = max(1, dk + du)
+                tot = dk + du
+                # Guard against sub-50ms back-to-back GetSystemTimes calls where tot==0 falsely produced 100.0% CPU
+                if tot < 500_000:
+                    self._last_sys_times = prev
+                    return self._last_cpu_pct
                 pct = max(0.0, min(100.0, (1.0 - (di / float(tot))) * 100.0))
                 self._last_cpu_pct = round(pct, 1)
                 return self._last_cpu_pct
@@ -103,6 +107,7 @@ class HostYieldGovernor:
         idle_sec = self.get_idle_seconds()
         free_gb = 8.0
         total_gb = 16.0
+        ram_measured = False
         cpu_pct = 0.0
         if sys.platform == "win32":
             try:
@@ -111,6 +116,7 @@ class HostYieldGovernor:
                 if ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(mem)):
                     free_gb = round(mem.ullAvailPhys / (1024.0 ** 3), 2)
                     total_gb = round(mem.ullTotalPhys / (1024.0 ** 3), 2)
+                    ram_measured = True
             except Exception:
                 pass
             cpu_pct = self._read_win_cpu_pct()
@@ -127,6 +133,7 @@ class HostYieldGovernor:
                 if "MemAvailable" in info and "MemTotal" in info:
                     free_gb = round(info["MemAvailable"] / (1024.0 * 1024.0), 2)
                     total_gb = round(info["MemTotal"] / (1024.0 * 1024.0), 2)
+                    ram_measured = True
             except Exception:
                 pass
             try:
@@ -140,6 +147,7 @@ class HostYieldGovernor:
             "cpu_pct": cpu_pct,
             "free_ram_gb": free_gb,
             "total_ram_gb": total_gb,
+            "ram_measured": ram_measured,
         }
 
     def evaluate_state(self, override_metrics: dict[str, Any] | None = None) -> dict[str, Any]:

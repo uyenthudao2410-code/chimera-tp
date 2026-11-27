@@ -90,6 +90,7 @@ $dns = @(Get-DnsClientServerAddress | Where-Object { $_.ServerAddresses.Count -g
     proc = subprocess.run(
         ["powershell", "-NoProfile", "-NonInteractive", "-Command", ps_script],
         capture_output=True,
+        creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
         text=True,
         timeout=15,
         check=False,

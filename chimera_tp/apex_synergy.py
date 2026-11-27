@@ -531,6 +531,7 @@ class ApexSynergyEngine:
                 proc = subprocess.run(
                     ["git", "-C", str(repo_dir), "log", "-n", "5", "--oneline"],
                     capture_output=True,
+                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
                     text=True,
                     timeout=3.0,
                 )
@@ -891,6 +892,7 @@ class ApexSynergyEngine:
                 proc = subprocess.run(
                     [sys.executable, "-c", worker_code],
                     input=req_payload,
+                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
                     capture_output=True,
                     text=True,
                     timeout=60,

@@ -15,7 +15,6 @@ import urllib.request
 from datetime import datetime
 from typing import Any, Callable
 
-from ..vsa_memory_service import encode_text_10k
 from .nvcuda_ptx import NvCudaPtxEngine
 
 
@@ -31,6 +30,7 @@ def probe_nvidia_gpu() -> dict[str, Any]:
             stderr=subprocess.DEVNULL,
             timeout=2.0,
             text=True,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
         ).strip()
         if not out:
             return {"present": False}
@@ -84,6 +84,8 @@ def probe_gpu_backends(force: bool = False) -> dict[str, Any]:
 def _dense_embed(text: str, dim: int = 256) -> list[float]:
     """Deterministic L2-normalized dense embedding derived from 10,000-bit Kanerva VSA."""
     dim = max(32, min(1024, int(dim)))
+    from ..vsa_memory_service import encode_text_10k
+
     vsa_bytes = encode_text_10k(text or "")
     vec = [0.0] * dim
     n_bytes = len(vsa_bytes)

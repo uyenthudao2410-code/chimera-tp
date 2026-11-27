@@ -19,6 +19,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from . import __version__
 from .active_pipe import (
     ActiveQueryServer,
     ComputePlan,
@@ -117,8 +118,8 @@ from .fabric import BeamServer, beam_send
 from .ghost_fs import GhostFsEngine
 from .ghost_pty import GhostPtyManager
 from .host_governor import HostYieldGovernor
+from .overmind_cortex import OvermindCortex
 from .trinity_bridge import TrinityCommandBridge
-from .vsa_memory_service import SharedVsaMemoryService
 from .holo_backup import (
     create_holo_backup,
     list_holo_backups,
@@ -151,6 +152,34 @@ class _ThreadingControlServer(http.server.ThreadingHTTPServer):
     allow_reuse_address = True
     daemon_threads = True
     request_queue_size = 64
+
+
+class _VsaServiceOnDemand:
+    """Share one VSA database connection across consumers only after a VSA operation."""
+
+    def __init__(self, path: Path):
+        self._path = path
+        self._lock = threading.Lock()
+        self._service = None
+        self._closed = False
+
+    def __getattr__(self, name):
+        if name.startswith("_"):
+            raise AttributeError(name)
+        with self._lock:
+            if self._closed:
+                raise RuntimeError("vsa_service_closed")
+            if self._service is None:
+                from .vsa_memory_service import SharedVsaMemoryService
+                self._service = SharedVsaMemoryService(db_path=self._path)
+            return getattr(self._service, name)
+
+    def close(self):
+        with self._lock:
+            self._closed = True
+            if self._service is not None:
+                self._service.close()
+                self._service = None
 
 
 class ChimeraDaemon:
@@ -191,7 +220,7 @@ class ChimeraDaemon:
         self.ghost_pty = GhostPtyManager()
         self.ghost_fs = GhostFsEngine(fs_root)
         self.medic = MedicEngine(self.ops_dir)
-        self.vsa_memory = SharedVsaMemoryService(db_path=self.ops_dir / "vsa_memory.db")
+        self.vsa_memory = _VsaServiceOnDemand(self.ops_dir / "vsa_memory.db")
         self.drop_portal = DropPortalStore(
             self.ops_dir / "drop_portal",
             default_ttl_s=int(getattr(self.config, "drop_ttl_s", 600)),
@@ -217,6 +246,8 @@ class ChimeraDaemon:
         self._last_nat_result: dict[str, Any] | None = None
         self._flow_lock = threading.Lock()
         self.host_governor = HostYieldGovernor(role=self.config.role)
+        self.overmind = OvermindCortex(ops_dir=self.ops_dir, node_id=self.config.node_name)
+        self.overmind.midbrain.vsa_memory = self.vsa_memory
         _peer_radar = (
             f"http://{self.config.peer_ipv4}:8787"
             if self.config.role == "controller" and self.config.peer_ipv4
@@ -230,6 +261,7 @@ class ChimeraDaemon:
             peer_trinity_resolver=(self.active_edge_peer_base if self.config.role == "controller" else None),
             ephemeral_mode=self._ephemeral_mode,
             on_flow=self.record_flow,
+            overmind=self.overmind,
         )
         self._flow_seq: int = 0
         self._flow_ring: deque[dict[str, Any]] = deque(maxlen=28)
@@ -375,6 +407,13 @@ class ChimeraDaemon:
             and bool(self.config.peer_ipv4)
         )
 
+    def authenticate_peer_request(self, req: urllib.request.Request) -> None:
+        """Attach the node credential only to an exact configured peer origin."""
+        if self.config.peer_ipv4:
+            from .platform.peer_guard import authenticate_peer_request
+
+            authenticate_peer_request(req, self.peer_http_base())
+
     def proxy_request(
         self,
         method: str,
@@ -392,9 +431,11 @@ class ChimeraDaemon:
             url = f"{b}{path_and_query}"
             headers = {"Content-Type": "application/json"} if method == "POST" else {}
             req = urllib.request.Request(url, data=body_bytes if method == "POST" else None, headers=headers, method=method)
+            self.authenticate_peer_request(req)
             t0 = time.perf_counter()
             try:
-                with urllib.request.urlopen(req, timeout=timeout_s) as r:
+                opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+                with opener.open(req, timeout=timeout_s) as r:
                     rb = r.read()
                     sc = int(r.status)
                     ms = (time.perf_counter() - t0) * 1000.0
@@ -607,11 +648,81 @@ class ChimeraDaemon:
                     extra_headers=extra_headers,
                 )
 
+            def _send_shard(self, path: Path) -> None:
+                import zlib
+
+                try:
+                    stream = path.open("rb")
+                except FileNotFoundError:
+                    self._send_json(404, {"error": "Shard not found"})
+                    return
+                with stream:
+                    remaining = os.fstat(stream.fileno()).st_size
+                    # Use identity framing for HTTP/1.0 clients that cannot dechunk.
+                    accepted = self.headers.get("Accept-Encoding", "").lower().split(",")
+                    compress = (remaining >= 512 and self.request_version == "HTTP/1.1"
+                                and any(token.strip() == "gzip" for token in accepted))
+                    encoder = zlib.compressobj(level=5, wbits=31) if compress else None
+                    self.send_response(200)
+                    self.send_header("Content-Type", "application/octet-stream")
+                    self.send_header("Vary", "Accept-Encoding")
+                    if encoder is None:
+                        self.send_header("Content-Length", str(remaining))
+                    else:
+                        self.send_header("Content-Encoding", "gzip")
+                        self.send_header("Transfer-Encoding", "chunked")
+                    self.end_headers()
+                    try:
+                        while remaining:
+                            block = stream.read(min(remaining, 64 * 1024))
+                            if not block:
+                                self.close_connection = True
+                                return
+                            remaining -= len(block)
+                            if encoder is None:
+                                self.wfile.write(block)
+                            else:
+                                self._write_http_chunk(encoder.compress(block))
+                        if encoder is not None:
+                            self._write_http_chunk(encoder.flush())
+                            self.wfile.write(b"0\r\n\r\n")
+                    except OSError:
+                        self.close_connection = True
+
+            def _write_http_chunk(self, block: bytes) -> None:
+                if block:
+                    self.wfile.write(f"{len(block):x}\r\n".encode("ascii"))
+                    self.wfile.write(block)
+                    self.wfile.write(b"\r\n")
+
             def _read_body(self) -> bytes:
                 clen = int(self.headers.get("Content-Length", "0"))
                 return self.rfile.read(clen) if clen > 0 else b""
 
+            def _allow_management_request(self) -> bool:
+                if self.client_address[0] in ("127.0.0.1", "::1"):
+                    return True
+                from .platform.peer_guard import load_peer_secret, verify_peer_auth
+
+                # Remote health checks must not grant access to the virtual-host proxy.
+                path = urllib.parse.urlsplit(self.path).path
+                host = (self.headers.get("Host") or "").lower().partition(":")[0].rstrip(".")
+                if (self.command == "GET" and path in ("/api/health", "/.well-known/chimera.json")
+                        and not host.endswith(".chimera.local")):
+                    return True
+                secret = load_peer_secret()
+                if secret and verify_peer_auth(self.headers.get("X-Chimera-Peer-Auth"), expected=secret):
+                    if path != "/api/phantom/offer":
+                        del self.headers["X-Chimera-Peer-Auth"]
+                    return True
+                # A denied POST can still have an unread body on this connection.
+                self.close_connection = True
+                self._send_json(403, {"error": "peer_auth_required"}, {"Connection": "close"})
+                return False
+
             def do_GET(self) -> None:
+                if not self._allow_management_request():
+                    return
                 host_prox = daemon_ref.platform.handle_host_proxy("GET", self.path, self.headers)
                 if host_prox is not None:
                     self._send_bytes(host_prox[0], host_prox[1], host_prox[2])
@@ -660,7 +771,9 @@ class ChimeraDaemon:
                         200,
                         {
                             "ok": True,
-                            "version": "12.0.0",
+                            "version": __version__,
+                            "package_version": __version__,
+                            "api_version": "12.0.0",
                             "node_name": daemon_ref.config.node_name,
                             "role": daemon_ref.config.role,
                             "hardware": cpu_caps(),
@@ -781,6 +894,23 @@ class ChimeraDaemon:
                     qs = urllib.parse.parse_qs(parsed.query)
                     dom = (qs.get("domain") or [""])[0].strip() or None
                     lim = int((qs.get("limit") or ["500"])[0] or 500)
+                    if self.headers.get("Accept") == "application/x-ndjson":
+                        self.send_response(200)
+                        self.send_header("Content-Type", "application/x-ndjson")
+                        self.send_header("Transfer-Encoding", "chunked")
+                        self.send_header("Vary", "Accept")
+                        self.end_headers()
+                        count = 0
+                        try:
+                            for row in daemon_ref.vsa_memory.iter_export(domain=dom, limit=lim):
+                                line = json.dumps(row, ensure_ascii=False).encode("utf-8")
+                                self._write_http_chunk(line + b"\n")
+                                count += 1
+                            self._write_http_chunk(json.dumps({"end": count}).encode("ascii") + b"\n")
+                            self.wfile.write(b"0\r\n\r\n")
+                        except OSError:
+                            self.close_connection = True
+                        return
                     self._send_json(
                         200,
                         {"ok": True, "items": daemon_ref.vsa_memory.export_items(domain=dom, limit=lim)},
@@ -796,6 +926,55 @@ class ChimeraDaemon:
                     qs = urllib.parse.parse_qs(parsed.query)
                     lim = int((qs.get("limit") or ["20"])[0] or 20)
                     self._send_json(200, daemon_ref.trinity.list_proofs(limit=lim))
+                    return
+                if parsed.path == "/api/overmind/state":
+                    self._send_json(
+                        200,
+                        {
+                            "ok": True,
+                            "node_id": daemon_ref.config.node_name,
+                            "crdt": daemon_ref.overmind.crdt.snapshot(),
+                            "pulse": daemon_ref.overmind.pulse.stats(),
+                            "flight_recorder": daemon_ref.overmind.flight_recorder.status(),
+                        },
+                    )
+                    return
+                if parsed.path == "/api/overmind/pulse":
+                    qs = urllib.parse.parse_qs(parsed.query)
+                    since_seq = int((qs.get("since_seq") or ["0"])[0] or 0)
+                    lim = int((qs.get("limit") or ["50"])[0] or 50)
+                    self._send_json(200, daemon_ref.overmind.pulse.poll(since_seq=since_seq, limit=lim))
+                    return
+                if parsed.path == "/api/overmind/flight-recorder":
+                    self._send_json(200, daemon_ref.overmind.flight_recorder.status())
+                    return
+                if parsed.path == "/api/midbrain/status":
+                    self._send_json(200, daemon_ref.overmind.midbrain.status())
+                    return
+                if parsed.path == "/api/symbiote/status":
+                    self._send_json(200, daemon_ref.overmind.symbiote.status())
+                    return
+                if parsed.path == "/api/symbiote/blob/get":
+                    qs = urllib.parse.parse_qs(parsed.query)
+                    bkey = str((qs.get("key") or [""])[0] or "").strip()
+                    raw = daemon_ref.overmind.symbiote.get_blob(bkey)
+                    if raw is None:
+                        self._send_json(404, {"ok": False, "error": "not_found", "key": bkey})
+                    else:
+                        self._send_json(
+                            200,
+                            {
+                                "ok": True,
+                                "key": bkey,
+                                "raw_bytes_len": len(raw),
+                                "data_b64": base64.b64encode(raw).decode("ascii"),
+                            },
+                        )
+                    return
+                if parsed.path == "/api/symbiote/kv-affinity":
+                    qs = urllib.parse.parse_qs(parsed.query)
+                    sid = str((qs.get("session_id") or [""])[0] or "").strip()
+                    self._send_json(200, daemon_ref.overmind.symbiote.get_kv_affinity(sid))
                     return
                 if parsed.path in (
                     "/api/pty/list",
@@ -1075,7 +1254,7 @@ class ChimeraDaemon:
                     if not cand.is_file():
                         self._send_json(404, {"error": "Shard not found"})
                         return
-                    self._send_bytes(200, "application/octet-stream", cand.read_bytes())
+                    self._send_shard(cand)
                     return
                 if parsed.path == "/api/status":
                     _, raw_json, etag = daemon_ref.get_cached_status()
@@ -1144,12 +1323,26 @@ class ChimeraDaemon:
                 self._send_json(404, {"error": "Not found"})
 
             def do_POST(self) -> None:
+                if not self._allow_management_request():
+                    return
                 if str(self.headers.get("Host") or "").lower().split(":", 1)[0].endswith(".chimera.local"):
                     host_prox = daemon_ref.platform.handle_host_proxy("POST", self.path, self.headers, self._read_body())
                     if host_prox is not None:
                         self._send_bytes(host_prox[0], host_prox[1], host_prox[2])
                         return
                 parsed = urllib.parse.urlparse(self.path)
+                if parsed.path in (
+                    "/v1/openai/v1/chat/completions",
+                    "/v1/openai/v1/responses",
+                    "/v1/openai/v1/completions",
+                ):
+                    if daemon_ref.platform.handle_openai_post_stream(
+                        self,
+                        parsed,
+                        self._read_body(),
+                        self.headers,
+                    ):
+                        return
                 if parsed.path.startswith("/v1/"):
                     plat_res = daemon_ref.platform.handle_post(
                         parsed,
@@ -1780,6 +1973,15 @@ class ChimeraDaemon:
 
                 if parsed.path == "/api/phantom/offer":
                     try:
+                        # Authenticate remote Phantom offers when a cluster peer.secret is configured
+                        client_ip = str(self.client_address[0] if self.client_address else "")
+                        is_loop = client_ip in ("127.0.0.1", "::1", "localhost")
+                        if not is_loop or os.environ.get("CHIMERA_REQUIRE_PEER_AUTH") == "1":
+                            from .platform.peer_guard import verify_peer_auth
+
+                            if not verify_peer_auth(self.headers.get("X-Chimera-Peer-Auth")):
+                                self._send_json(403, {"error": "phantom_peer_auth_required"})
+                                return
                         body = json.loads(self._read_body().decode("utf-8") or "{}")
                         if daemon_ref._phantom_srv is None:
                             self._send_json(503, {"error": "PhantomTunnelServer not enabled on node"})
@@ -2468,31 +2670,14 @@ class ChimeraDaemon:
                             return
                         dom = str(body.get("domain") or "").strip()
                         lim = int(body.get("limit") or 500)
-                        qs = urllib.parse.urlencode({k: v for k, v in (("domain", dom), ("limit", str(lim))) if v})
                         t0 = time.perf_counter()
-                        with urllib.request.urlopen(f"{peer_base}/api/vsa/export?{qs}", timeout=4.0) as resp:
-                            rem_data = json.loads(resp.read().decode("utf-8", errors="ignore"))
-                        rem_items = list(rem_data.get("items") or []) if isinstance(rem_data, dict) else []
-                        pulled = 0
-                        if rem_items:
-                            pull_res = daemon_ref.vsa_memory.store_batch(rem_items)
-                            pulled = int(pull_res.get("stored_count", len(rem_items)))
-                        pushed = 0
-                        peer_total = None
-                        if bool(body.get("bidirectional", True)):
-                            loc_items = daemon_ref.vsa_memory.export_items(domain=dom or None, limit=lim)
-                            if loc_items:
-                                push_req = urllib.request.Request(
-                                    f"{peer_base}/api/vsa/store",
-                                    data=json.dumps({"items": loc_items}, ensure_ascii=False).encode("utf-8"),
-                                    headers={"Content-Type": "application/json"},
-                                    method="POST",
-                                )
-                                with urllib.request.urlopen(push_req, timeout=4.0) as p_resp:
-                                    push_res = json.loads(p_resp.read().decode("utf-8", errors="ignore"))
-                                if isinstance(push_res, dict):
-                                    pushed = int(push_res.get("stored_count", len(loc_items)))
-                                    peer_total = push_res.get("total_items")
+                        sync = daemon_ref.vsa_memory.sync_peer(
+                            peer_base, domain=dom or None, limit=lim,
+                            bidirectional=bool(body.get("bidirectional", True)),
+                            authorize=daemon_ref.authenticate_peer_request,
+                        )
+                        pulled, pushed = sync["pulled"], sync["pushed"]
+                        peer_total = sync["peer_total"]
                         st_loc = daemon_ref.vsa_memory.stats()
                         elapsed_ms = round((time.perf_counter() - t0) * 1000.0, 2)
                         daemon_ref.record_flow(
@@ -2500,7 +2685,7 @@ class ChimeraDaemon:
                             daemon_ref.config.node_name,
                             daemon_ref.config.peer_name or "peer",
                             "VSA_SYNC",
-                            wire_bytes=len(json.dumps(rem_items)),
+                            wire_bytes=sync["body_bytes"],
                             elapsed_ms=elapsed_ms,
                             detail=f"pulled={pulled} pushed={pushed} total={st_loc.get('item_count')}",
                             ok=True,
@@ -2525,6 +2710,8 @@ class ChimeraDaemon:
                     try:
                         body = json.loads(self._read_body().decode("utf-8") or "{}")
                         from_peer = bool(body.get("from_peer", False))
+                        if from_peer and isinstance(body.get("crdt"), dict):
+                            daemon_ref.trinity.sync_crdt_from_peer(body["crdt"])
                         if body.get("evaluate_auto"):
                             ks = daemon_ref.trinity.evaluate_auto_kill_switch(
                                 burn_rate_pct_hr=float(body.get("burn_rate_pct_hr", 0.0)),
@@ -2541,6 +2728,292 @@ class ChimeraDaemon:
                         self._send_json(200, {"ok": True, "kill_switch": ks})
                     except Exception as exc:
                         self._send_json(400, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/overmind/state":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        self._send_json(200, daemon_ref.trinity.sync_crdt_from_peer(body))
+                    except Exception as exc:
+                        self._send_json(400, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/overmind/pulse":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        from_peer = bool(body.get("from_peer", False))
+                        peer_u = "" if (from_peer or not body.get("relay", True)) else daemon_ref.active_edge_peer_base()
+                        ev = daemon_ref.overmind.pulse.emit(
+                            str(body.get("topic") or "SYSTEM"),
+                            str(body.get("source") or "api"),
+                            body.get("payload") if isinstance(body.get("payload"), dict) else {},
+                            peer_url=peer_u,
+                            from_peer=from_peer,
+                        )
+                        self._send_json(200, {"ok": True, "event": ev})
+                    except Exception as exc:
+                        self._send_json(400, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/overmind/hippocampus/ingest-tquota":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        tq_url = str(
+                            body.get("tquota_admin_url")
+                            or getattr(daemon_ref.config, "tquota_admin_url", "http://127.0.0.1:12504")
+                        )
+                        res = daemon_ref.vsa_memory.ingest_tquota_thought_briefs(
+                            tq_url,
+                            limit=int(body.get("limit") or 300),
+                        )
+                        daemon_ref.record_flow(
+                            "crypto",
+                            "tquota",
+                            daemon_ref.config.node_name,
+                            "HIPPOCAMPUS_INGEST",
+                            wire_bytes=int(res.get("stored_count", 0)) * 1250,
+                            elapsed_ms=float(res.get("elapsed_ms", 0.0)),
+                            detail=f"fetched={res.get('fetched')} stored={res.get('stored_count')} total={res.get('total_items')}",
+                            ok=bool(res.get("ok")),
+                        )
+                        self._send_json(200 if res.get("ok") else 502, res)
+                    except Exception as exc:
+                        self._send_json(400, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/overmind/hippocampus/capsule":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        doms = body.get("domains") if isinstance(body.get("domains"), list) else None
+                        res = daemon_ref.vsa_memory.build_memory_capsule(
+                            str(body.get("query_text") or body.get("query") or ""),
+                            domains=doms,
+                            top_k=int(body.get("top_k") or 4),
+                            min_sim=float(body.get("min_sim", 0.502)),
+                            max_chars=int(body.get("max_chars") or 900),
+                        )
+                        self._send_json(200, res)
+                    except Exception as exc:
+                        self._send_json(400, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/overmind/flight-recorder":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        res = daemon_ref.overmind.flight_recorder.freeze_cassette(
+                            str(body.get("reason") or "manual_api"),
+                            extra=body.get("extra") if isinstance(body.get("extra"), dict) else None,
+                        )
+                        self._send_json(200, res)
+                    except Exception as exc:
+                        self._send_json(400, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/overmind/dlp-scan":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        if "text" in body:
+                            res = daemon_ref.overmind.dlp.scan_text(str(body.get("text") or ""))
+                        else:
+                            res = daemon_ref.overmind.dlp.scan_payload(body.get("payload", body))
+                        self._send_json(200, res)
+                    except Exception as exc:
+                        self._send_json(400, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/overmind/schedule":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        snap = daemon_ref.trinity.snapshot(refresh=False)
+                        gov = body.get("win_governor") if isinstance(body.get("win_governor"), dict) else snap.get("governor")
+                        cu = body.get("colab_cu") if body.get("colab_cu") is not None else ((snap.get("tquota") or {}).get("colab_remaining_cu") or 0.0)
+                        res = daemon_ref.overmind.planner.plan(
+                            str(body.get("task_type") or "light_daemon"),
+                            stack=body.get("stack") if isinstance(body.get("stack"), list) else None,
+                            est_sec=float(body.get("est_sec", 15.0)),
+                            win_governor=gov,
+                            svhome_free_ram_gb=float(body.get("svhome_free_ram_gb", 5.0)),
+                            colab_cu=float(cu),
+                        )
+                        self._send_json(200, res)
+                    except Exception as exc:
+                        self._send_json(400, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/midbrain/score":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        res = daemon_ref.overmind.midbrain.score(
+                            str(body.get("text") or ""),
+                            prev_text=str(body.get("prev_text") or ""),
+                            task_id=str(body.get("task_id") or ""),
+                        )
+                        self._send_json(200, res)
+                    except Exception as exc:
+                        self._send_json(400, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/midbrain/feedback":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        res = daemon_ref.vsa_memory.record_causal_feedback(
+                            list(body.get("item_ids") or []),
+                            success=bool(body.get("success", False)),
+                            rpe_delta=float(body.get("rpe_delta", 0.0) or 0.0),
+                        )
+                        self._send_json(200, res)
+                    except Exception as exc:
+                        self._send_json(400, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/midbrain/distill-pivots":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        res = daemon_ref.vsa_memory.distill_rpe_pivots(limit=int(body.get("limit") or 200))
+                        self._send_json(200, res)
+                    except Exception as exc:
+                        self._send_json(400, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/midbrain/probe":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        res = daemon_ref.overmind.midbrain.install_probe(body)
+                        self._send_json(200 if res.get("ok") else 400, res)
+                    except Exception as exc:
+                        self._send_json(400, {"error": str(exc)})
+                    return
+
+                if parsed.path == "/api/symbiote/blob/put":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        raw_b = base64.b64decode(str(body.get("data_b64") or ""), validate=False)
+                        res = daemon_ref.overmind.symbiote.put_blob(
+                            raw_b,
+                            key=body.get("key"),
+                            ttl_sec=int(body.get("ttl_sec") or 900),
+                            meta=body.get("meta") if isinstance(body.get("meta"), dict) else None,
+                        )
+                        self._send_json(200, res)
+                    except Exception as exc:
+                        self._send_json(400, {"ok": False, "error": str(exc)})
+                    return
+
+                if parsed.path == "/api/symbiote/immortal/register":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        res = daemon_ref.overmind.symbiote.register_immortal(
+                            str(body.get("turn_key") or ""),
+                            vault_key=str(body.get("vault_key") or ""),
+                            step_sig=str(body.get("step_sig") or ""),
+                            ttl_sec=int(body.get("ttl_sec") or 900),
+                            meta=body.get("meta") if isinstance(body.get("meta"), dict) else None,
+                        )
+                        self._send_json(200 if res.get("ok") else 400, res)
+                    except Exception as exc:
+                        self._send_json(400, {"ok": False, "error": str(exc)})
+                    return
+
+                if parsed.path == "/api/symbiote/immortal/complete":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        raw_sse = base64.b64decode(str(body.get("sse_b64") or ""), validate=False)
+                        res = daemon_ref.overmind.symbiote.complete_immortal(
+                            str(body.get("turn_key") or ""),
+                            raw_sse,
+                            vault_key=str(body.get("vault_key") or ""),
+                            step_sig=str(body.get("step_sig") or ""),
+                            detached_harvest=bool(body.get("detached_harvest", True)),
+                            cut=str(body.get("cut") or "completed"),
+                            model=str(body.get("model") or ""),
+                            effort=str(body.get("effort") or ""),
+                            ttl_sec=int(body.get("ttl_sec") or 900),
+                        )
+                        self._send_json(200 if res.get("ok") else 400, res)
+                    except Exception as exc:
+                        self._send_json(400, {"ok": False, "error": str(exc)})
+                    return
+
+                if parsed.path == "/api/symbiote/immortal/lookup":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        res = daemon_ref.overmind.symbiote.lookup_immortal(
+                            str(body.get("turn_key") or ""),
+                            step_sig=str(body.get("step_sig") or ""),
+                            require_detached=bool(body.get("require_detached", False)),
+                            include_bytes=bool(body.get("include_bytes", True)),
+                        )
+                        self._send_json(200, res)
+                    except Exception as exc:
+                        self._send_json(400, {"ok": False, "error": str(exc)})
+                    return
+
+                if parsed.path == "/api/symbiote/prefix/audit":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        res = daemon_ref.overmind.symbiote.audit_prefix(
+                            str(body.get("session_id") or "default"),
+                            list(body.get("item_digests") or []),
+                            account_id=str(body.get("account_id") or ""),
+                            tool_outputs=body.get("tool_outputs") if isinstance(body.get("tool_outputs"), list) else None,
+                        )
+                        self._send_json(200, res)
+                    except Exception as exc:
+                        self._send_json(400, {"ok": False, "error": str(exc)})
+                    return
+
+                if parsed.path == "/api/symbiote/observe-usage":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        res = daemon_ref.overmind.symbiote.observe_usage(body)
+                        self._send_json(200, res)
+                    except Exception as exc:
+                        self._send_json(400, {"ok": False, "error": str(exc)})
+                    return
+
+                if parsed.path == "/api/symbiote/precog-verify":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        res = daemon_ref.overmind.symbiote.precog_verify(
+                            str(body.get("repo_dir") or ""),
+                            changed_files=list(body.get("changed_files") or []),
+                            run_fast_tests=bool(body.get("run_fast_tests", False)),
+                            timeout_sec=int(body.get("timeout_sec") or 15),
+                        )
+                        self._send_json(200, res)
+                    except Exception as exc:
+                        self._send_json(400, {"ok": False, "error": str(exc)})
+                    return
+
+                if parsed.path == "/api/symbiote/surgeon/heal":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        res = daemon_ref.overmind.symbiote.heal_codex_rollout_jsonl(
+                            str(body.get("session_id") or ""),
+                            sessions_dir=body.get("sessions_dir") or None,
+                            min_idle_sec=float(body.get("min_idle_sec", 2.0)),
+                            dry_run=bool(body.get("dry_run", False)),
+                        )
+                        status_code = 200 if (res.get("ok") or res.get("skipped")) else (404 if res.get("reason") == "rollout_not_found" else 400)
+                        self._send_json(status_code, res)
+                    except Exception as exc:
+                        self._send_json(400, {"ok": False, "error": str(exc)})
+                    return
+
+                if parsed.path == "/api/symbiote/surgeon/fork":
+                    try:
+                        body = json.loads(self._read_body().decode("utf-8") or "{}")
+                        before_line = body.get("before_line")
+                        res = daemon_ref.overmind.symbiote.fork_rollout_to_last_clean_checkpoint(
+                            str(body.get("session_id") or ""),
+                            sessions_dir=body.get("sessions_dir") or None,
+                            before_line=int(before_line) if before_line is not None else None,
+                            before_call_id=str(body.get("before_call_id") or ""),
+                        )
+                        status_code = 200 if res.get("ok") else (404 if res.get("reason") == "rollout_not_found" else 400)
+                        self._send_json(status_code, res)
+                    except Exception as exc:
+                        self._send_json(400, {"ok": False, "error": str(exc)})
                     return
 
                 if parsed.path == "/api/galactic/live-teleport":
@@ -2637,17 +3110,21 @@ class ChimeraDaemon:
             self.config.warp_port = self._warp_srv.udp_addr[1]
 
         fb_port = 0 if self._ephemeral_mode else int(self.config.phantom_fallback_port)
+        egress_port = int(self.platform.egress.addr[1] or 9781) if self.platform is not None else 9781
         rev_fwds: dict[int, int] = {}
         if (not self._ephemeral_mode) and self.config.role == "server":
             rtq = int(getattr(self.config, "phantom_reverse_tquota_port", 12551))
             rhp = int(getattr(self.config, "phantom_reverse_http_port", 9790))
+            reg = int(getattr(self.config, "phantom_reverse_egress_port", 9792))
             if rtq > 0:
                 rev_fwds[rtq] = 12500
             if rhp > 0:
                 rev_fwds[rhp] = int(self.http_addr[1])
+            if reg > 0:
+                rev_fwds[reg] = egress_port
         self._phantom_srv = PhantomTunnelServer(
             fallback_port=fb_port,
-            allowed_forward_ports=list(self.config.phantom_allowed_ports) + [int(self.http_addr[1])],
+            allowed_forward_ports=list(self.config.phantom_allowed_ports) + [int(self.http_addr[1]), egress_port],
             reverse_forwards=rev_fwds,
         ).start()
 
@@ -2659,6 +3136,9 @@ class ChimeraDaemon:
             tq_port = int(getattr(self.config, "phantom_tquota_port", 0))
             if tq_port > 0:
                 ph_forwards[tq_port] = 12500
+            eg_port = int(getattr(self.config, "phantom_egress_port", 9791))
+            if eg_port > 0:
+                ph_forwards[eg_port] = 9781
             self._phantom_client = PhantomTunnelClient(
                 peer_http_base=self.peer_http_base(),
                 peer_udp_ip=self.config.peer_ipv4,
@@ -2666,8 +3146,8 @@ class ChimeraDaemon:
                 forwards=ph_forwards,
                 local_test_mode=False,
                 allowed_reverse_ports=list(
-                    getattr(self.config, "phantom_reverse_allowed_ports", [9780, 12500, 12504])
-                ) + [int(self.http_addr[1])],
+                    getattr(self.config, "phantom_reverse_allowed_ports", [9780, 9781, 12500, 12504])
+                ) + [int(self.http_addr[1]), egress_port],
             ).start_listeners()
             if not self._ephemeral_mode:
                 def _auto_phantom() -> None:
@@ -2746,7 +3226,8 @@ class ChimeraDaemon:
 
     def status_payload(self) -> dict[str, Any]:
         return {
-            "version": "12.0.0",
+            "version": __version__,
+            "api_version": "12.0.0",
             "config": self.config.to_dict(),
             "hardware": cpu_caps(),
             "zero_weight": get_zero_weight_status(),
@@ -2771,6 +3252,26 @@ class ChimeraDaemon:
             self.invalidate_status_cache()
             return res
 
+    def _handle_sentinel_spike(self, alert: dict[str, str]) -> None:
+        try:
+            sig = f"{alert.get('source', '')}|{alert.get('detail', '')}"
+            iid = f"sent_{hashlib.sha256(sig.encode('utf-8', errors='ignore')).hexdigest()[:12]}"
+            txt = f"{alert.get('source', '')} {alert.get('detail', '')} -> {alert.get('diagnosis', '')}"
+            self.vsa_memory.store(
+                iid,
+                domain="sentinel_reflex",
+                text=txt,
+                payload={"resolution_hint": str(alert.get("diagnosis") or ""), "severity": alert.get("severity", "WARN")},
+                reward=1.8,
+            )
+            if str(alert.get("severity") or "").upper() == "CRITICAL":
+                self.overmind.flight_recorder.freeze_cassette(
+                    f"sentinel_{alert.get('source', 'crit')}",
+                    extra={"alert": alert},
+                )
+        except Exception:
+            pass
+
     def _scheduler_loop(self) -> None:
         if self.auto_seed_on_empty:
             st = self.store.get_dashboard_state(limit=1)
@@ -2782,27 +3283,67 @@ class ChimeraDaemon:
 
         is_persistent = not self._ephemeral_mode
         last_sentinel = 0.0
+        last_hippocampus = 0.0
         if is_persistent and (self.config.role == "server" or self.config.search_roots):
             try:
                 if self.config.search_roots:
                     self.code_search.incremental_index([Path(p) for p in self.config.search_roots])
                 if self.config.role == "server":
-                    self.sentinel.scan(self.config)
+                    self.sentinel.scan(self.config, on_spike_callback=self._handle_sentinel_spike)
                     last_sentinel = time.monotonic()
                 self.invalidate_status_cache()
             except Exception as exc:
                 self.store.log_event("ERROR", "HYPEROS_INIT", str(exc))
 
         sent_iv = max(60, int(getattr(self.config, "sentinel_interval_s", 300)))
-        while not self._stop.wait(timeout=30.0):
+        while not self._stop.wait(timeout=15.0):
             try:
+                now_m = time.monotonic()
                 now_hm = datetime.now().astimezone().strftime("%H:%M")
                 if now_hm >= self.config.daily_time and not self.store.has_daily_run_today():
                     self.run_cycle(trigger="daemon_daily")
+                if is_persistent:
+                    zw = get_zero_weight_status()
+                    ph = self.phantom_status()
+                    cli_st = ph.get("client") if isinstance(ph.get("client"), dict) else {}
+                    tr_snap = self.trinity.snapshot(refresh=False)
+                    self.overmind.flight_recorder.record_sample(
+                        {
+                            "daemon_ram_mb": zw.get("daemon_ram_mb"),
+                            "host_free_ram_gb": zw.get("host_free_ram_gb"),
+                            "phantom_mode": cli_st.get("mode", "SERVER" if not cli_st else "DISCONNECTED"),
+                            "phantom_rtt_ms": cli_st.get("direct_rtt_ms", 0.0),
+                            "tx_bytes": cli_st.get("tx_bytes", 0),
+                            "phantom_conns": cli_st.get("active_conns", 0),
+                            "tquota_gossip_errors": (tr_snap.get("tquota") or {}).get("gossip_errors", 0),
+                            "tquota_burn_pct_hr": (tr_snap.get("kill_switch") or {}).get("quota_burn_rate_pct_hr", 0.0),
+                        }
+                    )
+                    if last_hippocampus == 0.0 or (now_m - last_hippocampus) >= 600.0:
+                        last_hippocampus = now_m
+                        tq_url = str(getattr(self.config, "tquota_admin_url", "http://127.0.0.1:12504"))
+                        self.vsa_memory.ingest_tquota_thought_briefs(tq_url, limit=300)
+                        peer_base = self.active_edge_peer_base()
+                        if peer_base:
+                            _http_post_json(f"{peer_base}/api/overmind/state", self.overmind.crdt.snapshot(), timeout_s=1.5)
+                            try:
+                                with urllib.request.urlopen(
+                                    urllib.request.Request(
+                                        f"http://127.0.0.1:{self.http_addr[1]}/api/vsa/sync-peer",
+                                        data=json.dumps({"peer_base": peer_base, "bidirectional": True}).encode("utf-8"),
+                                        headers={"Content-Type": "application/json"},
+                                        method="POST",
+                                    ),
+                                    timeout=4.0,
+                                ) as _sr:
+                                    _sr.read(64)
+                            except Exception:
+                                pass
+                        gc.collect()
                 if is_persistent and self.config.role == "server":
-                    if (time.monotonic() - last_sentinel) >= sent_iv:
-                        self.sentinel.scan(self.config)
-                        last_sentinel = time.monotonic()
+                    if (now_m - last_sentinel) >= sent_iv:
+                        self.sentinel.scan(self.config, on_spike_callback=self._handle_sentinel_spike)
+                        last_sentinel = now_m
                         self.invalidate_status_cache()
             except Exception as exc:
                 self.store.log_event("ERROR", "SCHEDULER", str(exc))

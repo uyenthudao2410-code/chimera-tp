@@ -139,6 +139,22 @@ def run_task(req, hw):
     if kind == "probe":
         return {"ok": True, "task_kind": kind, "hw": hw, "elapsed_ms": round((time.perf_counter() - t0) * 1000.0, 2)}
 
+    if kind == "python_compile":
+        files = req.get("files")
+        if not isinstance(files, dict) or not files or len(files) > 1000:
+            return {"ok": False, "task_kind": kind, "error": "invalid_source_set"}
+        hashes = {}
+        for name, source in sorted(files.items()):
+            if not isinstance(source, str):
+                return {"ok": False, "task_kind": kind, "error": "invalid_source"}
+            try:
+                compile(source, name, "exec", dont_inherit=True)
+            except (SyntaxError, ValueError) as exc:
+                return {"ok": False, "task_kind": kind, "error": str(exc), "file": name}
+            hashes[name] = hashlib.sha256(source.encode("utf-8")).hexdigest()
+        return {"ok": True, "task_kind": kind, "files": hashes,
+                "elapsed_ms": round((time.perf_counter() - t0) * 1000.0, 2)}
+
     if kind == "cuda_embed":
         texts = [str(x) for x in (req.get("texts") or [])]
         dim = max(32, min(1024, int(req.get("dim") or 256)))
@@ -453,6 +469,7 @@ class ColabCliBridge:
             errors="replace",
             timeout=timeout,
             env=env,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0) if os.name == "nt" else 0,
         )
         if check and proc.returncode != 0:
             raise RuntimeError(f"colab {' '.join(args)} failed ({proc.returncode}): {(proc.stderr or proc.stdout)[-400:]}")
@@ -700,11 +717,15 @@ class ColabCliBridge:
         )
         chosen_prof = str(profile or rt_sel["profile"]).strip().upper()
         sess = str(session_name or f"chimera_{chosen_prof.lower()}")
+        if chosen_prof not in RUNTIME_PROFILES or (require_gpu and not RUNTIME_PROFILES[chosen_prof]["gpu"]):
+            raise ValueError(f"Requested profile does not support the required compute: {chosen_prof}")
+        fallbacks = [p for p in rt_sel["fallback_chain"] if not require_gpu or RUNTIME_PROFILES[p]["gpu"]]
 
-        prov = self.ensure_session(sess, profile=chosen_prof, fallback_chain=rt_sel["fallback_chain"])
         tmp_script: Path | None = None
         stopped = False
         try:
+            # The provider may create the session even if the provisioning reply is lost.
+            prov = self.ensure_session(sess, profile=chosen_prof, fallback_chain=fallbacks or [chosen_prof])
             req_obj = {"task_kind": task_kind, **pl}
             req_b64 = base64.b64encode(json.dumps(req_obj, ensure_ascii=False).encode("utf-8")).decode("ascii")
             src = _UNIVERSAL_COLAB_RUNNER.replace("__REQ_B64__", req_b64)

@@ -56,7 +56,10 @@ def probe_hw_encoders() -> dict[str, Any]:
         try:
             import subprocess
 
-            pr = subprocess.run([ffmpeg, "-hide_banner", "-encoders"], capture_output=True, text=True, timeout=2.0, check=False)
+            pr = subprocess.run(
+                [ffmpeg, "-hide_banner", "-encoders"], capture_output=True, text=True, timeout=2.0,
+                check=False, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+            )
             out_t = pr.stdout
             for cand in ("h264_nvenc", "hevc_nvenc", "h264_qsv", "h264_vaapi", "libx264"):
                 if cand in out_t:

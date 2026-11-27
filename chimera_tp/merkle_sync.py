@@ -11,7 +11,7 @@ import time
 import urllib.request
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 _MERKLE_PATCH_MAGIC = b"CHMRK1"
 
@@ -324,6 +324,8 @@ def merkle_beam_sync(
     shadow_dir: Path,
     est_loss: float = 0.02,
     timeout_s: float = 25.0,
+    *,
+    post_json: Callable[..., dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Perform 0-RTT hash check + sparse FastCDC/Odess Merkle directory sync to remote BeamServer."""
     from .fabric import beam_send_merkle_patch
@@ -334,7 +336,8 @@ def merkle_beam_sync(
     shadow = ShadowMerkleIndex(Path(shadow_dir) / f"{ws}.json")
     snap = shadow.scan(local_dir)
 
-    diff_resp = _post_json(
+    send_manifest = post_json or _post_json
+    diff_resp = send_manifest(
         f"{peer_http_base.rstrip('/')}/api/merkle/diff",
         {"workspace_id": ws, "root_hash": snap.root_hash, "files": snap.files},
         timeout_s=min(10.0, timeout_s),
@@ -373,7 +376,7 @@ def merkle_beam_sync(
         timeout_s=timeout_s,
     )
 
-    verify_resp = _post_json(
+    verify_resp = send_manifest(
         f"{peer_http_base.rstrip('/')}/api/merkle/diff",
         {"workspace_id": ws, "root_hash": snap.root_hash, "files": snap.files},
         timeout_s=min(10.0, timeout_s),

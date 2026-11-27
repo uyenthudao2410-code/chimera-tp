@@ -13,6 +13,9 @@ chimera_dashboard.html
 chimera_eval_dashboard.html
 native/chimera_core/target/
 *.dll
+*.dll.prev
+/ErrorReports/
+/tasks/devdrive_setup.log
 *.so
 *.pdb
 *.lib

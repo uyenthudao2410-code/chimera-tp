@@ -145,8 +145,21 @@ class ChimeraClient:
             headers=self._headers(),
             method="POST",
         )
-        with urllib.request.urlopen(req, timeout=timeout or self.timeout_s) as r:
-            return json.loads(r.read().decode("utf-8"))
+        try:
+            with urllib.request.urlopen(req, timeout=timeout or self.timeout_s) as r:
+                return json.loads(r.read().decode("utf-8"))
+        except urllib.error.HTTPError as exc:
+            if not path.startswith("/v1/agent/") or exc.code not in {401, 403, 409}:
+                raise
+            # An explicit admission decision must not trigger in-process execution.
+            with exc:
+                try:
+                    response = json.load(exc)
+                except (ValueError, OSError):
+                    response = None
+            if isinstance(response, dict) and response.get("error"):
+                return {**response, "ok": False}
+            return {"ok": False, "error": f"agent_http_{exc.code}"}
 
     def capabilities(self) -> dict[str, Any]:
         if not self.available:
@@ -375,6 +388,739 @@ class ChimeraClient:
         if not self.available:
             return {"ok": False, "via": "local_fallback"}
         return self._post_json("/v1/vgpu/colab/stop", {"session": session}, timeout=30.0)
+
+    def hyperdesk_diagnose(self) -> dict[str, Any]:
+        if not self.available:
+            return {"ok": False, "via": "local_fallback"}
+        return self._get_json("/v1/hyperdesk/diagnose", timeout=10.0)
+
+    def hyperdesk_optimize(self, dry_run: bool = False) -> dict[str, Any]:
+        if not self.available:
+            return {"ok": False, "via": "local_fallback"}
+        return self._post_json("/v1/hyperdesk/optimize", {"dry_run": dry_run}, timeout=15.0)
+
+    def hyperdesk_autonomic(self, action: str = "status", policy: dict[str, Any] | None = None) -> dict[str, Any]:
+        if not self.available:
+            return {"ok": False, "via": "local_fallback"}
+        if action == "status" and not policy:
+            return self._get_json("/v1/hyperdesk/autonomic", timeout=10.0)
+        body: dict[str, Any] = {"action": action}
+        if policy:
+            body["policy"] = policy
+        return self._post_json("/v1/hyperdesk/autonomic", body, timeout=15.0)
+
+    def nvme_mirage(self, action: str = "status", path: str = "", dry_run: bool = False) -> dict[str, Any]:
+        if not self.available:
+            return {"ok": False, "via": "local_fallback"}
+        if action == "status":
+            return self._get_json("/v1/hyperdesk/mirage/status", timeout=10.0)
+        if action == "promote":
+            return self._post_json("/v1/hyperdesk/mirage/promote", {"path": path, "dry_run": dry_run}, timeout=300.0)
+        if action == "demote":
+            return self._post_json("/v1/hyperdesk/mirage/demote", {"path": path}, timeout=300.0)
+        if action == "sync":
+            return self._post_json("/v1/hyperdesk/mirage/sync", {"path": path or None}, timeout=180.0)
+        return self._post_json("/v1/hyperdesk/mirage/bench", {"path": path or "."}, timeout=30.0)
+
+    def agent_exile(self, cmd: str, cwd: str | None = None, target: str = "auto", sync_workspace: bool = False,
+                    *, environment_id: str = "", reuse: bool = False, artifacts=(),
+                    require_io_limit: bool = False, timeout_s: float = 120.0) -> dict[str, Any]:
+        if target == "local":
+            from .guarded_build import submit
+
+            # Local is the caller's workstation, including when its optional anchor is offline.
+            return submit(cmd, cwd=cwd or Path.cwd(), target="local", sync=True, environment_id=environment_id,
+                          reuse=reuse, artifacts=artifacts, require_io_limit=require_io_limit, timeout_s=timeout_s)
+        if not self.available:
+            return {"ok": False, "via": "local_fallback"}
+        status = self._get_json("/v1/exile/status", timeout=4)
+        if status.get("build_protocol") != 1:
+            local = urllib.parse.urlsplit(self.anchor_url).hostname in {"127.0.0.1", "localhost", "::1"}
+            if not local or target not in {"svhome", "auto", "colab"} or not status.get("ok"):
+                return {"ok": False, "error": "verified_exile_protocol_unavailable", "state": "deferred"}
+            cartridges = self.capabilities().get("cartridges", {})
+            if cartridges.get("hyper_desk", {}).get("status") != "active":
+                return {"ok": False, "state": "deferred", "error": "local_exile_cartridge_inactive"}
+            if target == "colab":
+                from .discovery import chimera_home_dir
+                from .exile_colab import run_local
+
+                if cartridges.get("vgpu_pareto", {}).get("status") != "active":
+                    return {"ok": False, "state": "deferred", "error": "local_colab_cartridge_inactive"}
+                return {**run_local(cmd, chimera_home_dir() / "exile-colab"), "via": "local_client_colab"}
+            from .guarded_build import submit
+            result = submit(cmd, cwd=cwd, peer=status["ssh_host"], remote_root=status["remote_dev_root"],
+                            sync=sync_workspace, environment_id=environment_id, reuse=reuse,
+                            artifacts=artifacts, require_io_limit=require_io_limit, timeout_s=timeout_s)
+            return {**result, "via": "local_client_ssh"}
+        return self._post_json(
+            "/v1/exile/run",
+            {"cmd": cmd, "cwd": cwd, "target": target, "sync_workspace": sync_workspace,
+             "reuse": reuse, "environment_id": environment_id, "artifacts": list(artifacts),
+             "require_io_limit": require_io_limit, "timeout_s": timeout_s},
+            timeout=max(180.0, timeout_s + 60.0, 600.0 if target == "colab" else 0),
+        )
+
+    def exile_handoff(
+        self,
+        steps: list[dict[str, Any]] | None = None,
+        *,
+        payload: Any = None,
+        blocks: dict[str, Any] | list[Any] | None = None,
+        op: str = "sha256_manifest",
+        params: dict[str, Any] | None = None,
+        job_id: str | None = None,
+        prefer_target: str | None = None,
+        step_key: str = "step_0",
+    ) -> dict[str, Any]:
+        if not self.available:
+            return {"ok": False, "via": "local_fallback"}
+        body: dict[str, Any] = {
+            "job_id": job_id,
+            "prefer_target": prefer_target,
+            "app": self.app,
+        }
+        if steps is not None:
+            body["steps"] = steps
+        else:
+            body.update({
+                "step_key": step_key,
+                "payload": payload,
+                "blocks": blocks,
+                "op": op,
+                "params": params or {},
+            })
+        try:
+            return self._post_json("/v1/exile/handoff", body, timeout=180.0)
+        except urllib.error.HTTPError as exc:
+            # Older anchors return 502 even for a valid, resumable handoff.
+            with exc:
+                try:
+                    reply = json.load(exc)
+                except (UnicodeError, ValueError):
+                    raise exc from None
+            if isinstance(reply, dict) and reply.get("job_id") and isinstance(reply.get("steps"), list):
+                return reply
+            raise
+
+    def exile_receipts(self, job_id: str | None = None, limit: int = 50) -> dict[str, Any]:
+        if not self.available:
+            return {"ok": False, "via": "local_fallback", "receipts": []}
+        params: dict[str, str] = {"limit": str(int(limit))}
+        if job_id:
+            params["job_id"] = job_id
+        return self._get_json(f"/v1/exile/receipts?{urllib.parse.urlencode(params)}")
+
+    def evidence(self, capability: str | None = None) -> dict[str, Any]:
+        if not self.available:
+            return {"ok": False, "via": "local_fallback"}
+        if capability:
+            return self._get_json(f"/v1/evidence?{urllib.parse.urlencode({'capability': capability})}")
+        return self._get_json("/v1/evidence")
+
+    def evidence_record(
+        self,
+        capability: str,
+        *,
+        execution_node: str | None = None,
+        fallback_mode: str | None = None,
+        ttl_s: float = 300.0,
+        verified: bool = True,
+        violated: bool = False,
+        metrics: dict[str, Any] | None = None,
+        receipt_id: str | None = None,
+    ) -> dict[str, Any]:
+        if not self.available:
+            return {"ok": False, "via": "local_fallback"}
+        body: dict[str, Any] = {
+            "capability": capability,
+            "fallback_mode": fallback_mode,
+            "ttl_s": float(ttl_s),
+            "verified": bool(verified),
+            "violated": bool(violated),
+            "metrics": metrics,
+            "receipt_id": receipt_id,
+        }
+        if execution_node is not None:
+            body["execution_node"] = execution_node
+        return self._post_json("/v1/evidence/record", body)
+
+    def omni_put(self, key: str, value: Any, namespace: str | None = None) -> dict[str, Any]:
+        if not self.available:
+            return self.kv_set(key, value)
+        return self._post_json("/v1/cosmos/omni/put", {"key": key, "value": value, "namespace": namespace or self.app})
+
+    def omni_get(self, key: str, namespace: str | None = None, as_of_seq: int | None = None) -> dict[str, Any]:
+        if not self.available:
+            return {"ok": True, "found": key in self._fallback_kv, "value": self._fallback_kv.get(key)}
+        params = {"key": key, "namespace": namespace or self.app}
+        if as_of_seq is not None:
+            params["as_of_seq"] = str(as_of_seq)
+        return self._get_json(f"/v1/cosmos/omni/get?{urllib.parse.urlencode(params)}")
+
+    def intent_compile(self, service: str, invariants: dict[str, Any]) -> dict[str, Any]:
+        if not self.available:
+            return {"ok": False, "via": "local_fallback"}
+        return self._post_json("/v1/omega/intent/compile", {"service": service, "invariants": invariants})
+
+    def omega_benchmark(self) -> dict[str, Any]:
+        if not self.available:
+            return {"ok": False, "via": "local_fallback"}
+        return self._post_json("/v1/omega/benchmark", {}, timeout=30.0)
+
+    def openai_forensics(self, limit: int = 32) -> dict[str, Any]:
+        if not self.available:
+            return {"ok": False, "via": "local_fallback", "forensics": []}
+        return self._get_json(f"/v1/openai/forensics?limit={int(limit)}")
+
+    def openai_precog_stats(self) -> dict[str, Any]:
+        if not self.available:
+            return {"ok": False, "via": "local_fallback"}
+        return self._get_json("/v1/openai/precog/stats")
+
+    def openai_turns(self, limit: int = 20) -> dict[str, Any]:
+        if not self.available:
+            return {"ok": False, "via": "local_fallback", "turns": [], "checkpoints": []}
+        return self._get_json(f"/v1/openai/turns?limit={int(limit)}")
+
+    def turn_checkpoint(
+        self,
+        turn_id: str,
+        root: str,
+        rel_paths: list[str],
+        meta: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        if not self.available:
+            return {"ok": False, "via": "local_fallback"}
+        return self._post_json(
+            "/v1/openai/turn/checkpoint",
+            {"turn_id": turn_id, "root": root, "rel_paths": list(rel_paths), "meta": dict(meta or {})},
+        )
+
+    def turn_finalize(self, turn_id: str) -> dict[str, Any]:
+        if not self.available:
+            return {"ok": False, "via": "local_fallback"}
+        return self._post_json("/v1/openai/turn/finalize", {"turn_id": turn_id})
+
+    def turn_rollback(self, turn_id: str, *, force: bool = False) -> dict[str, Any]:
+        if not self.available:
+            return {"ok": False, "via": "local_fallback"}
+        return self._post_json("/v1/openai/turn/rollback", {"turn_id": turn_id, "force": bool(force)})
+
+    def egress_pops(self) -> dict[str, Any]:
+        if not self.available:
+            return {"ok": False, "via": "local_fallback", "pops": []}
+        return self._get_json("/v1/egress/pops")
+
+    def blackbox_forensics(self, kind: str = "", limit: int = 32) -> dict[str, Any]:
+        if not self.available:
+            return {"ok": False, "via": "local_fallback", "forensics": []}
+        params = {"limit": str(int(limit))}
+        if kind:
+            params["kind"] = kind
+        return self._get_json(f"/v1/blackbox/forensics?{urllib.parse.urlencode(params)}")
+
+    # --- CHIMERA-ONE Organ 3: Zero-Spawn Agent Hyper-Bus (auto local in-process fallback!) ---
+    def xray_batch(
+        self,
+        ops: list[dict[str, Any]],
+        *,
+        cwd: str | None = None,
+        max_workers: int = 8,
+        compact: bool = True,
+        agent_id: str = "",
+    ) -> dict[str, Any]:
+        if self.available:
+            try:
+                return self._post_json(
+                    "/v1/agent/xray-batch",
+                    {"ops": ops, "cwd": cwd, "max_workers": max_workers, "compact": compact, "agent_id": agent_id},
+                    timeout=30.0,
+                )
+            except Exception:
+                pass
+        from .agent_probe import get_default_agent_bus
+
+        res = get_default_agent_bus().xray_batch(ops, cwd=cwd, max_workers=max_workers, compact=compact, agent_id=agent_id)
+        res["via"] = "in_process_fallback"
+        return res
+
+    def callgraph_slice(
+        self,
+        repo: str,
+        symbol: str,
+        *,
+        depth: int = 2,
+        include_tests: bool = True,
+        max_chars: int = 4500,
+    ) -> dict[str, Any]:
+        if self.available:
+            try:
+                return self._post_json(
+                    "/v1/agent/callgraph-slice",
+                    {
+                        "repo": repo,
+                        "symbol": symbol,
+                        "depth": depth,
+                        "include_tests": include_tests,
+                        "max_chars": max_chars,
+                    },
+                    timeout=30.0,
+                )
+            except urllib.error.HTTPError as exc:
+                if exc.code == 404:
+                    try:
+                        return json.loads(exc.read().decode("utf-8"))
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+        from .agent_probe import get_default_agent_bus
+
+        res = get_default_agent_bus().callgraph_slice(
+            repo, symbol, depth=depth, include_tests=include_tests, max_chars=max_chars
+        )
+        res["via"] = "in_process_fallback"
+        return res
+
+    def commit_verify(
+        self,
+        repo: str,
+        *,
+        files: list[str] | None = None,
+        run_tests: bool = True,
+        explicit_tests: list[str] | None = None,
+        max_tests: int = 4,
+        timeout_s: float = 60.0,
+        use_cache: bool = True,
+        compact: bool = True,
+    ) -> dict[str, Any]:
+        if self.available:
+            try:
+                return self._post_json(
+                    "/v1/agent/commit-verify",
+                    {
+                        "repo": repo,
+                        "files": files,
+                        "run_tests": run_tests,
+                        "explicit_tests": explicit_tests,
+                        "max_tests": max_tests,
+                        "timeout_s": timeout_s,
+                        "use_cache": use_cache,
+                        "compact": compact,
+                    },
+                    timeout=max(30.0, float(timeout_s) + 15.0),
+                )
+            except Exception:
+                pass
+        from .agent_probe import get_default_agent_bus
+
+        res = get_default_agent_bus().commit_verify(
+            repo,
+            files=files,
+            run_tests=run_tests,
+            explicit_tests=explicit_tests,
+            max_tests=max_tests,
+            timeout_s=timeout_s,
+            use_cache=use_cache,
+            compact=compact,
+        )
+        res["via"] = "in_process_fallback"
+        return res
+
+    def agent_probe_stats(self) -> dict[str, Any]:
+        if self.available:
+            try:
+                return self._get_json("/v1/agent/probe-stats")
+            except Exception:
+                pass
+        from .agent_probe import get_default_agent_bus
+
+        res = get_default_agent_bus().stats()
+        res["via"] = "in_process_fallback"
+        return res
+
+    def agent_hive(self, action: str = "status", **kwargs: Any) -> dict[str, Any]:
+        payload = {"action": action, **kwargs}
+        if self.available:
+            try:
+                return self._post_json("/v1/agent/hive", payload, timeout=10.0)
+            except Exception:
+                pass
+        from .agent_probe import get_default_agent_bus
+
+        hive = get_default_agent_bus().symbiont.hive
+        act = str(action or "status").lower()
+        if act == "lease":
+            res = hive.acquire_lease(
+                agent_id=str(kwargs.get("agent_id") or "agent"),
+                repo=str(kwargs.get("repo") or "."),
+                files=list(kwargs.get("files") or []),
+                intent=str(kwargs.get("intent") or ""),
+                action=str(kwargs.get("lease_action") or "edit"),
+                ttl_s=float(kwargs.get("ttl_s") or 120.0),
+            )
+        elif act == "release":
+            res = hive.release_lease(agent_id=str(kwargs.get("agent_id") or "agent"), repo=kwargs.get("repo"))
+        elif act == "immune_add":
+            res = hive.add_immune_rule(
+                pattern=str(kwargs.get("pattern") or ""),
+                warning=str(kwargs.get("warning") or ""),
+                scope=str(kwargs.get("scope") or "global"),
+                severity=str(kwargs.get("severity") or "warn"),
+                created_by=str(kwargs.get("agent_id") or "agent"),
+            )
+        elif act == "immune_list":
+            res = {"ok": True, "rules": hive.list_immune(limit=int(kwargs.get("limit") or 32))}
+        else:
+            res = hive.status(repo=kwargs.get("repo"))
+        res["via"] = "in_process_fallback"
+        return res
+
+    def atomic_patch(
+        self,
+        repo: str,
+        edits: list[dict[str, Any]],
+        *,
+        agent_id: str = "agent",
+        run_tests: bool = True,
+        explicit_tests: list[str] | None = None,
+        rollback_on_fail: bool = True,
+        max_tests: int = 4,
+        timeout_s: float = 60.0,
+        record_immune_on_gate_fail: bool = False,
+    ) -> dict[str, Any]:
+        payload = {
+            "repo": repo,
+            "edits": edits,
+            "agent_id": agent_id,
+            "run_tests": run_tests,
+            "explicit_tests": explicit_tests,
+            "rollback_on_fail": rollback_on_fail,
+            "max_tests": max_tests,
+            "timeout_s": timeout_s,
+            "record_immune_on_gate_fail": record_immune_on_gate_fail,
+        }
+        if self.available:
+            try:
+                return self._post_json("/v1/agent/atomic-patch", payload, timeout=max(30.0, float(timeout_s) + 15.0))
+            except Exception:
+                pass
+        from .agent_probe import get_default_agent_bus
+
+        res = get_default_agent_bus().symbiont.surgeon.atomic_patch(
+            repo,
+            edits,
+            agent_id=agent_id,
+            run_tests=run_tests,
+            explicit_tests=explicit_tests,
+            rollback_on_fail=rollback_on_fail,
+            max_tests=max_tests,
+            timeout_s=timeout_s,
+            record_immune_on_gate_fail=record_immune_on_gate_fail,
+        )
+        res["via"] = "in_process_fallback"
+        return res
+
+    def agent_precog(self, action: str = "status", **kwargs: Any) -> dict[str, Any]:
+        payload = {"action": action, **kwargs}
+        if self.available:
+            try:
+                return self._post_json("/v1/agent/precog", payload, timeout=15.0)
+            except Exception:
+                pass
+        from .agent_probe import get_default_agent_bus
+
+        precog = get_default_agent_bus().symbiont.precog
+        act = str(action or "status").lower()
+        if act == "notify_save":
+            res = precog.notify_save(
+                str(kwargs.get("repo") or "."),
+                list(kwargs.get("files") or kwargs.get("rel_paths") or []),
+                run_shadow_test=bool(kwargs.get("run_shadow_test", True)),
+                explicit_tests=kwargs.get("explicit_tests"),
+                max_tests=int(kwargs.get("max_tests") or 2),
+                timeout_s=float(kwargs.get("timeout_s") or 25.0),
+                agent_id=str(kwargs.get("agent_id") or "precog"),
+            )
+        elif act == "watch_start":
+            res = precog.start_watch(str(kwargs.get("repo") or "."), run_shadow_test=bool(kwargs.get("run_shadow_test", True)))
+        elif act == "watch_stop":
+            res = precog.stop_watch(kwargs.get("repo"))
+        else:
+            res = precog.status()
+        res["via"] = "in_process_fallback"
+        return res
+
+    def agent_capsule(self, action: str = "load", **kwargs: Any) -> dict[str, Any]:
+        payload = {"action": action, **kwargs}
+        if self.available:
+            try:
+                return self._post_json("/v1/agent/capsule", payload, timeout=15.0)
+            except Exception:
+                pass
+        from .agent_probe import get_default_agent_bus
+
+        caps = get_default_agent_bus().symbiont.capsules
+        act = str(action or "load").lower()
+        if act == "create":
+            res = caps.create(
+                str(kwargs.get("repo") or "."),
+                agent_id=str(kwargs.get("agent_id") or "agent"),
+                summary=str(kwargs.get("summary") or ""),
+                focus_files=kwargs.get("focus_files"),
+                focus_symbols=kwargs.get("focus_symbols"),
+                next_steps=kwargs.get("next_steps"),
+                include_git=bool(kwargs.get("include_git", True)),
+            )
+        elif act == "list":
+            res = caps.list_capsules(repo=kwargs.get("repo"), limit=int(kwargs.get("limit") or 10))
+        else:
+            res = caps.load(str(kwargs.get("capsule_id") or "latest"), repo=kwargs.get("repo"))
+        res["via"] = "in_process_fallback"
+        return res
+
+    def agent_bootstrap(self, repo: str, *, agent_id: str = "agent") -> dict[str, Any]:
+        if self.available:
+            try:
+                return self._post_json("/v1/agent/bootstrap", {"repo": repo, "agent_id": agent_id}, timeout=8.0)
+            except Exception:
+                pass
+        from .agent_probe import get_default_agent_bus
+
+        res = get_default_agent_bus().symbiont.bootstrap_snapshot(repo, agent_id=agent_id)
+        res["via"] = "in_process_fallback"
+        return res
+
+    def mirror_race(
+        self,
+        repo: str,
+        candidates: list[dict[str, Any]],
+        *,
+        explicit_tests: list[str] | None = None,
+        commit_winner: bool = True,
+        max_tests: int = 4,
+        timeout_s: float = 45.0,
+        agent_id: str = "agent",
+        offload_peer: bool = False,
+        peer_host: str = "svhome",
+        peer_repo: str | None = None,
+    ) -> dict[str, Any]:
+        if offload_peer:
+            # A peer on the preceding release still accepts unguarded mirror races.
+            from .peer_guard import guarded_build_required
+
+            return guarded_build_required()
+        payload = {
+            "repo": repo,
+            "candidates": candidates,
+            "explicit_tests": explicit_tests,
+            "commit_winner": commit_winner,
+            "max_tests": max_tests,
+            "timeout_s": timeout_s,
+            "agent_id": agent_id,
+            "offload_peer": offload_peer,
+            "peer_host": peer_host,
+            "peer_repo": peer_repo,
+        }
+        if self.available:
+            try:
+                return self._post_json("/v1/agent/mirror-race", payload, timeout=max(30.0, float(timeout_s) + 15.0))
+            except Exception:
+                pass
+        from .agent_probe import get_default_agent_bus
+
+        res = get_default_agent_bus().symbiont.mirror_race.race(
+            repo,
+            candidates,
+            explicit_tests=explicit_tests,
+            commit_winner=commit_winner,
+            max_tests=max_tests,
+            timeout_s=timeout_s,
+            agent_id=agent_id,
+            offload_peer=offload_peer,
+            peer_host=peer_host,
+            peer_repo=peer_repo,
+        )
+        res["via"] = "in_process_fallback"
+        return res
+
+    def agent_coroner(
+        self,
+        *,
+        log_files: list[str] | None = None,
+        auto_seed_immune: bool = False,
+        max_files: int = 6,
+    ) -> dict[str, Any]:
+        payload = {"log_files": log_files, "auto_seed_immune": auto_seed_immune, "max_files": max_files}
+        if self.available:
+            try:
+                return self._post_json("/v1/agent/coroner", payload, timeout=15.0)
+            except Exception:
+                pass
+        from .agent_probe import get_default_agent_bus
+
+        res = get_default_agent_bus().symbiont.coroner.scan(
+            log_files=log_files,
+            auto_seed_immune=auto_seed_immune,
+            max_files=max_files,
+        )
+        res["via"] = "in_process_fallback"
+        return res
+
+    def hyperdesk_soft_shield(
+        self,
+        *,
+        action: str = "apply",
+        promote_vips: bool = True,
+        demote_batch: bool = True,
+        extra_batch_pids: list[int] | None = None,
+        dry_run: bool = False,
+    ) -> dict[str, Any]:
+        payload = {
+            "action": action,
+            "promote_vips": promote_vips,
+            "demote_batch": demote_batch,
+            "extra_batch_pids": extra_batch_pids,
+            "dry_run": dry_run,
+        }
+        if self.available:
+            try:
+                return self._post_json("/v1/hyperdesk/soft-shield", payload, timeout=10.0)
+            except Exception:
+                pass
+        from .hyper_desk import HyperDeskEngine
+
+        hd = HyperDeskEngine()
+        res = hd.restore_soft_batch_shield() if action == "restore" else hd.apply_soft_batch_shield(
+            promote_vips=promote_vips,
+            demote_batch=demote_batch,
+            extra_batch_pids=extra_batch_pids,
+            dry_run=dry_run,
+        )
+        res["via"] = "in_process_fallback"
+        return res
+
+    def agent_exec(
+        self,
+        argv: list[str],
+        *,
+        cwd: str = ".",
+        stdin_text: str | None = None,
+        normalize_lf: bool = True,
+        env_overrides: dict[str, str] | None = None,
+        timeout_s: float = 60.0,
+        max_preview_chars: int = 2400,
+    ) -> dict[str, Any]:
+        payload: dict[str, Any] = {
+            "argv": list(argv),
+            "cwd": cwd,
+            "stdin_text": stdin_text,
+            "normalize_lf": normalize_lf,
+            "env_overrides": env_overrides,
+            "timeout_s": timeout_s,
+            "max_preview_chars": max_preview_chars,
+        }
+        if self.available:
+            try:
+                return self._post_json("/v1/agent/exec", payload, timeout=max(20.0, float(timeout_s) + 10.0))
+            except Exception:
+                pass
+        from .agent_probe import get_default_agent_bus
+
+        res = get_default_agent_bus().symbiont.direct_exec.run(
+            argv,
+            cwd=cwd,
+            stdin_text=stdin_text,
+            normalize_lf=normalize_lf,
+            env_overrides=env_overrides,
+            timeout_s=timeout_s,
+            max_preview_chars=max_preview_chars,
+        )
+        res["via"] = "in_process_fallback"
+        return res
+
+    def agent_run_dag(
+        self,
+        steps: list[dict[str, Any]],
+        *,
+        cwd: str = ".",
+        agent_id: str = "agent",
+    ) -> dict[str, Any]:
+        payload = {"steps": list(steps), "cwd": cwd, "agent_id": agent_id}
+        if self.available:
+            try:
+                return self._post_json("/v1/agent/run-dag", payload, timeout=180.0)
+            except Exception:
+                pass
+        from .agent_probe import get_default_agent_bus
+
+        res = get_default_agent_bus().symbiont.macro_dag.run_dag(steps, cwd=cwd, agent_id=agent_id)
+        res["via"] = "in_process_fallback"
+        return res
+
+    def agent_worktree_epoch(self, action: str = "epoch_status", **kwargs: Any) -> dict[str, Any]:
+        payload = {"action": action, **kwargs}
+        if self.available:
+            try:
+                return self._post_json("/v1/agent/worktree-epoch", payload, timeout=45.0)
+            except Exception:
+                pass
+        from .agent_probe import get_default_agent_bus
+
+        we = get_default_agent_bus().symbiont.worktree_epoch
+        act = str(action or "epoch_status").strip().lower()
+        if act == "create":
+            res = we.create_worktree(
+                str(kwargs.get("repo") or "."),
+                agent_id=str(kwargs.get("agent_id") or "agent"),
+                ref=str(kwargs.get("ref") or "HEAD"),
+                name=kwargs.get("name"),
+            )
+        elif act == "list":
+            res = we.list_worktrees(str(kwargs.get("repo") or "."))
+        elif act == "remove":
+            res = we.remove_worktree(str(kwargs.get("repo") or "."), str(kwargs.get("worktree_path") or ""), force=bool(kwargs.get("force", True)))
+        elif act == "epoch_claim":
+            res = we.epoch_claim(str(kwargs.get("release_dir") or kwargs.get("repo") or "."), agent_id=str(kwargs.get("agent_id") or "agent"), intent=str(kwargs.get("intent") or ""), ttl_s=float(kwargs.get("ttl_s") or 180.0))
+        elif act == "epoch_publish":
+            res = we.epoch_publish(str(kwargs.get("release_dir") or kwargs.get("repo") or "."), agent_id=str(kwargs.get("agent_id") or "agent"), files=list(kwargs.get("files") or []), sha256_map=kwargs.get("sha256_map"), verified_summary=str(kwargs.get("verified_summary") or ""), daemon_pid=int(kwargs.get("daemon_pid") or 0))
+        else:
+            res = we.epoch_status(kwargs.get("release_dir"))
+        res["via"] = "in_process_fallback"
+        return res
+
+    def agent_release_promote(self, action: str = "status", **kwargs: Any) -> dict[str, Any]:
+        payload = {"action": action, **kwargs}
+        if self.available:
+            try:
+                return self._post_json("/v1/agent/release-promote", payload, timeout=45.0)
+            except Exception:
+                pass
+        from .agent_probe import get_default_agent_bus
+
+        rp = get_default_agent_bus().symbiont.release_promote
+        act = str(action or "status").strip().lower()
+        if act == "promote":
+            res = rp.promote(
+                str(kwargs.get("source_dir") or "."),
+                str(kwargs.get("target_dir") or "."),
+                list(kwargs.get("files") or []),
+                agent_id=str(kwargs.get("agent_id") or "agent"),
+                snapshot_root=kwargs.get("snapshot_root"),
+                canary_imports=kwargs.get("canary_imports"),
+                verified_summary=str(kwargs.get("verified_summary") or ""),
+                dry_run=bool(kwargs.get("dry_run", False)),
+            )
+        elif act == "rollback":
+            res = rp.rollback(
+                epoch_id=kwargs.get("epoch_id"),
+                rollback_dir=kwargs.get("rollback_dir"),
+            )
+        else:
+            res = rp.status()
+        res["via"] = "in_process_fallback"
+        return res
 
 
 def connect(

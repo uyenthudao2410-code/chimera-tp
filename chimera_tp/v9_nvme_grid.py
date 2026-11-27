@@ -91,6 +91,7 @@ def probe_accelerators() -> dict[str, Any]:
                 text=True,
                 timeout=1.5,
                 check=False,
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0) if os.name == "nt" else 0,
             )
             if pr.returncode == 0 and pr.stdout.strip():
                 gpu_name = pr.stdout.strip().splitlines()[0].strip()

@@ -50,9 +50,12 @@ _P_NACK = 5
 _P_CLOSE = 6
 _P_PING = 7
 _P_PONG = 8
+_P_FEC = 9
 _REV_CONN_MASK = 0x80000000
 
 _CHUNK_MAX = 1080  # Fits comfortably inside 1280 B overlay / PPPoE MTUs with headers
+_MAX_RX_OOO = 128  # Cap out-of-order RX buffer per stream to protect <80 MiB RSS budget
+_FEC_GROUP = 4     # Lightweight 4-packet adaptive XOR parity block (<=4.5 KiB/stream)
 
 
 def _derive_keystream(key: bytes, nonce: bytes, length: int) -> bytes:
@@ -190,6 +193,11 @@ class _TunnelStream:
     tx_eof_at: float = 0.0
     last_fin_tx: float = 0.0
     fin_retries: int = 0
+    tx_pkts_sent: int = 0
+    nacks_seen: int = 0
+    fec_tx_start: int = 0
+    fec_tx_group: list[bytes] = field(default_factory=list)
+    fec_rx_cache: dict[int, bytes] = field(default_factory=dict)
 
 
 class _TunnelEndpointMixin:
@@ -203,6 +211,38 @@ class _TunnelEndpointMixin:
         self._conns: dict[int, _TunnelStream] = {}
         self._bytes_tx = 0
         self._bytes_rx = 0
+        self._fec_sent = 0
+        self._fec_recovered = 0
+
+    @staticmethod
+    def _fec_xor_pack(payloads: list[bytes]) -> bytes:
+        """Compute variable-length XOR parity frame prefixed with 2-byte big-endian lengths."""
+        packed = [struct.pack("!H", len(p)) + p for p in payloads]
+        max_len = max((len(x) for x in packed), default=0)
+        if max_len == 0:
+            return b""
+        acc = bytearray(max_len)
+        for item in packed:
+            for i, b in enumerate(item):
+                acc[i] ^= b
+        return bytes(acc)
+
+    @staticmethod
+    def _fec_xor_recover(parity: bytes, known_payloads: list[bytes]) -> bytes | None:
+        """Recover the single missing payload in a 4-packet parity group with 0-RTT wait."""
+        if len(parity) < 2:
+            return None
+        acc = bytearray(parity)
+        for p in known_payloads:
+            item = struct.pack("!H", len(p)) + p
+            if len(item) > len(acc):
+                return None
+            for i, b in enumerate(item):
+                acc[i] ^= b
+        rec_len = struct.unpack_from("!H", acc, 0)[0]
+        if rec_len > len(acc) - 2 or rec_len > _CHUNK_MAX:
+            return None
+        return bytes(acc[2 : 2 + rec_len])
 
     def _send_encrypted(
         self,
@@ -269,13 +309,33 @@ class _TunnelEndpointMixin:
                             flags = 1
                             wire_piece = comp
                     now_tx = time.perf_counter()
+                    fec_pkt: bytes | None = None
                     with self._mux_lock:
                         seq = stream.next_tx_seq
                         stream.next_tx_seq += 1
                         stream.tx_buffer[seq] = (flags, wire_piece, now_tx, 0, now_tx)
+                        stream.tx_pkts_sent += 1
                         stream.last_activity = now_tx
+                        # Adaptive zero-overhead FEC: activate only when NACK loss > 5% (or forced)
+                        loss_ratio = stream.nacks_seen / max(1, stream.tx_pkts_sent)
+                        if loss_ratio > 0.05:
+                            if not stream.fec_tx_group:
+                                stream.fec_tx_start = seq
+                            stream.fec_tx_group.append(piece)
+                            if len(stream.fec_tx_group) >= _FEC_GROUP:
+                                parity = self._fec_xor_pack(stream.fec_tx_group)
+                                if parity:
+                                    fec_pkt = _pack_inner(
+                                        _P_FEC, len(stream.fec_tx_group), stream.conn_id, stream.fec_tx_start, 0, parity
+                                    )
+                                    self._fec_sent += 1
+                                stream.fec_tx_group.clear()
+                        elif stream.fec_tx_group:
+                            stream.fec_tx_group.clear()
                     pkt = _pack_inner(_P_DATA, flags, stream.conn_id, seq, 0, wire_piece)
                     self._send_encrypted(sock, addr, key, sid, pkt, fast=stream.prefer_v9 or None)
+                    if fec_pkt is not None:
+                        self._send_encrypted(sock, addr, key, sid, fec_pkt, fast=stream.prefer_v9 or None)
         finally:
             now_fin = time.perf_counter()
             with self._mux_lock:
@@ -333,10 +393,39 @@ class _TunnelEndpointMixin:
             with self._mux_lock:
                 stream.last_activity = time.perf_counter()
                 if seq >= stream.rx_next_seq and seq not in stream.rx_chunks:
-                    stream.rx_chunks[seq] = plain
+                    if len(stream.rx_chunks) < _MAX_RX_OOO or seq == stream.rx_next_seq:
+                        stream.rx_chunks[seq] = plain
+                # Keep tiny bounded cache of recent group frames for 0-RTT FEC recovery (<=16 frames)
+                stream.fec_rx_cache[seq] = plain
+                if len(stream.fec_rx_cache) > 16:
+                    for old_s in sorted(stream.fec_rx_cache.keys())[:-16]:
+                        stream.fec_rx_cache.pop(old_s, None)
                 self._flush_rx_in_order(stream)
                 ack_seq = stream.rx_next_seq
             self._send_encrypted(sock, addr, key, sid, _pack_inner(_P_ACK, 0, stream.conn_id, ack_seq), fast=stream.prefer_v9 or None)
+        elif ptype == _P_FEC:
+            # Recover 1 missing packet in [seq .. seq+group_count-1] without waiting for NACK/retransmit
+            recovered = False
+            with self._mux_lock:
+                stream.last_activity = time.perf_counter()
+                group_n = max(1, min(_FEC_GROUP, flags if flags > 0 else _FEC_GROUP))
+                # Note: _handle_stream_frame doesn't receive aux directly; recover for standard _FEC_GROUP
+                needed = [s for s in range(seq, seq + group_n) if s not in stream.fec_rx_cache]
+                if len(needed) == 1:
+                    miss_seq = needed[0]
+                    known = [stream.fec_rx_cache[s] for s in range(seq, seq + group_n) if s != miss_seq]
+                    plain_rec = self._fec_xor_recover(body, known)
+                    if plain_rec is not None:
+                        stream.fec_rx_cache[miss_seq] = plain_rec
+                        if miss_seq >= stream.rx_next_seq and miss_seq not in stream.rx_chunks:
+                            if len(stream.rx_chunks) < _MAX_RX_OOO or miss_seq == stream.rx_next_seq:
+                                stream.rx_chunks[miss_seq] = plain_rec
+                        self._fec_recovered += 1
+                        recovered = True
+                        self._flush_rx_in_order(stream)
+                ack_seq = stream.rx_next_seq
+            if recovered:
+                self._send_encrypted(sock, addr, key, sid, _pack_inner(_P_ACK, 0, stream.conn_id, ack_seq), fast=stream.prefer_v9 or None)
         elif ptype == _P_FIN:
             with self._mux_lock:
                 stream.last_activity = time.perf_counter()
@@ -365,6 +454,7 @@ class _TunnelEndpointMixin:
             now = time.perf_counter()
             with self._mux_lock:
                 stream.last_activity = now
+                stream.nacks_seen += len(miss)
                 for s in [k_s for k_s in stream.tx_buffer if k_s < seq]:
                     del stream.tx_buffer[s]
                 for m in miss:
@@ -1121,10 +1211,19 @@ class PhantomTunnelClient(_TunnelEndpointMixin):
                     "timeout_s": timeout_s,
                     "local_test_mode": ltm,
                 }
+                offer_headers = {"Content-Type": "application/json"}
+                try:
+                    from .platform.peer_guard import load_peer_secret
+
+                    psec = load_peer_secret()
+                    if psec:
+                        offer_headers["X-Chimera-Peer-Auth"] = psec
+                except Exception:
+                    pass
                 req = urllib.request.Request(
                     f"{self.peer_http_base}/api/phantom/offer",
                     data=json.dumps(offer).encode("utf-8"),
-                    headers={"Content-Type": "application/json"},
+                    headers=offer_headers,
                     method="POST",
                 )
                 with urllib.request.urlopen(req, timeout=6.0) as resp:

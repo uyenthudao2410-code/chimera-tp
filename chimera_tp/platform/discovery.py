@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 import json
 import os
 import platform
@@ -167,9 +168,17 @@ class AppRegistry:
                 "linked_at": prev.get("linked_at", now),
                 "updated_at": now,
             }
+            if merged.get("adapter") is None:
+                merged.pop("adapter", None)
+            elif isinstance(merged.get("adapter"), dict):
+                merged["adapter"] = copy.deepcopy(merged["adapter"])
             self._linked[name] = merged
             self._save_locked()
-            return dict(merged)
+            return copy.deepcopy(merged)
+
+    def linked_entries(self) -> dict[str, dict[str, Any]]:
+        with self._lock:
+            return {k: copy.deepcopy(v) for k, v in self._linked.items()}
 
     def unlink_entry(self, app_name: str) -> bool:
         name = _sanitize_app_name(app_name)
@@ -201,8 +210,12 @@ class AppRegistry:
                 "last_seen": datetime.now().astimezone().strftime("%H:%M:%S"),
                 "heartbeats": int(prev.get("heartbeats", 0)) + 1,
             }
+            if isinstance(payload.get("adapter"), dict):
+                entry["adapter"] = copy.deepcopy(payload["adapter"])
+            elif isinstance(prev.get("adapter"), dict):
+                entry["adapter"] = copy.deepcopy(prev["adapter"])
             self._live[name] = entry
-            return dict(entry)
+            return copy.deepcopy(entry)
 
     def list_apps(self, stale_after_s: float = 180.0) -> list[dict[str, Any]]:
         now = time.time()
@@ -231,6 +244,9 @@ class AppRegistry:
                     "last_seen": (lv or {}).get("last_seen") or lnk.get("updated_at") or "",
                     "heartbeats": int((lv or {}).get("heartbeats") or 0),
                 }
+                adapter_cfg = (lv or {}).get("adapter") or lnk.get("adapter")
+                if isinstance(adapter_cfg, dict):
+                    item["adapter"] = copy.deepcopy(adapter_cfg)
                 out.append(item)
             return out
 
@@ -344,6 +360,7 @@ def link_project(
     port: int | None = None,
     qos: str = "interactive",
     registry_path: Path | None = None,
+    adapter: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     root = Path(project_dir).resolve()
     root.mkdir(parents=True, exist_ok=True)
@@ -363,12 +380,23 @@ def link_project(
                 prof = {**prof, **existing}
                 if app_name:
                     prof["app"] = _sanitize_app_name(app_name)
+                    if "domain" not in existing:
+                        prof["domain"] = f"{prof['app']}.chimera.local"
+                elif existing.get("app") and "domain" not in existing:
+                    prof["app"] = _sanitize_app_name(str(existing["app"]))
+                    prof["domain"] = f"{prof['app']}.chimera.local"
                 if port is not None and int(port) > 0:
                     prof["port"] = int(port)
         except Exception:
             pass
 
-    manifest = {
+    adapter_cfg: dict[str, Any] | None = None
+    if isinstance(adapter, dict):
+        adapter_cfg = copy.deepcopy(adapter)
+    elif isinstance(prof.get("adapter"), dict):
+        adapter_cfg = copy.deepcopy(prof["adapter"])
+
+    manifest: dict[str, Any] = {
         "schema": "chimera.manifest.v1",
         "app": prof["app"],
         "domain": prof["domain"],
@@ -379,6 +407,8 @@ def link_project(
         "needs": prof["needs"],
         "auto_attach": True,
     }
+    if adapter_cfg is not None:
+        manifest["adapter"] = adapter_cfg
     _atomic_write_text(manifest_path, json.dumps(manifest, indent=2, ensure_ascii=False))
 
     reg = AppRegistry(registry_path or (chimera_home_dir() / "apps.json"))
@@ -392,6 +422,7 @@ def link_project(
             "qos": manifest["qos"],
             "needs": manifest["needs"],
             "language": manifest["language"],
+            "adapter": copy.deepcopy(adapter_cfg) if adapter_cfg is not None else None,
         },
     )
     return {"ok": True, "manifest_path": str(manifest_path), "manifest": manifest, "entry": entry}
@@ -403,12 +434,14 @@ def init_project(
     port: int | None = None,
     with_bridge: bool = True,
     registry_path: Path | None = None,
+    adapter: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     res = link_project(
         project_dir=project_dir,
         app_name=app_name,
         port=port,
         registry_path=registry_path,
+        adapter=adapter,
     )
     root = Path(project_dir).resolve()
     bridge_path: Path | None = None
@@ -482,6 +515,7 @@ class PassivePortScanner:
                     stderr=subprocess.DEVNULL,
                     timeout=3.0,
                     text=True,
+                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
                 )
                 for line in out.splitlines():
                     parts = line.split()

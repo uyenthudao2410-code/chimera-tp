@@ -1404,10 +1404,17 @@ class ImmortalMultiPathSender:
         sym_size: int = SYM_SIZE,
         max_inflight_gens: int = 24,
         initial_loss_hint: float = 0.03,
+        source_ips: list[str] | None = None,
     ) -> None:
         if not targets:
             raise ValueError("ImmortalMultiPathSender requires at least one target")
         self.targets = list(targets)
+        if source_ips is not None:
+            if len(source_ips) != len(targets):
+                raise ValueError("one local source address is required per destination lane")
+            for source, (dest, _) in zip(source_ips, targets):
+                socket.inet_pton(_family_for_ip(dest), source)
+        self.source_ips = tuple(source_ips) if source_ips is not None else None
         self.gen_k = gen_k
         self.sym_size = sym_size
         self.max_inflight_gens = max_inflight_gens
@@ -1424,18 +1431,23 @@ class ImmortalMultiPathSender:
         t0 = time.perf_counter()
         orig_len = len(payload)
         socks: list[socket.socket] = []
-        for ip, _ in self.targets:
-            fam = _family_for_ip(ip)
-            s = socket.socket(fam, socket.SOCK_DGRAM)
-            _disable_connreset(s)
-            try:
-                s.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 4 * 1024 * 1024)
-                s.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 4 * 1024 * 1024)
-            except OSError:
-                pass
-            s.bind(_bind_any(fam))
-            s.setblocking(False)
-            socks.append(s)
+        try:
+            for idx, (ip, _) in enumerate(self.targets):
+                fam = _family_for_ip(ip)
+                s = socket.socket(fam, socket.SOCK_DGRAM)
+                socks.append(s)
+                _disable_connreset(s)
+                try:
+                    s.setsockopt(socket.SOL_SOCKET, socket.SO_RCVBUF, 4 * 1024 * 1024)
+                    s.setsockopt(socket.SOL_SOCKET, socket.SO_SNDBUF, 4 * 1024 * 1024)
+                except OSError:
+                    pass
+                s.bind((self.source_ips[idx], 0) if self.source_ips is not None else _bind_any(fam))
+                s.setblocking(False)
+        except OSError:
+            for opened in socks:
+                opened.close()
+            raise
 
         alive_lanes = list(range(len(socks)))
         lane_tx_counts = [0] * len(socks)

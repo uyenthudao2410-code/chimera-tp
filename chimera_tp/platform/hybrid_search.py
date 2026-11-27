@@ -7,9 +7,10 @@ import sqlite3
 import threading
 import time
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from ..vsa_memory_service import SharedVsaMemoryService
+if TYPE_CHECKING:
+    from ..vsa_memory_service import SharedVsaMemoryService
 
 
 class HybridPlatformSearch:

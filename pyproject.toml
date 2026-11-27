@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "chimera-tp"
-version = "18.0.0"
-description = "CHIMERA-HYPER v18.0.0 — Personal Infrastructure Brain & Open Platform Substrate (12 Hot Cartridges, 4-Tier Colab+PTX VGPU, DLP Egress, Vault-SQL, Folded-Cavity RLNC, Ghost Bubble)"
+dynamic = ["version"]
+description = "Personal infrastructure substrate for Windows and Linux with capability discovery, durable jobs, and optional compute and transport cartridges."
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.11"
@@ -34,8 +34,23 @@ classifiers = [
 ]
 dependencies = []
 
+[project.optional-dependencies]
+aether = ["cryptography", "imageio-ffmpeg", "openpyxl", "Pillow"]
+
 [project.scripts]
 chimera-tp = "chimera_tp.cli:main"
 
+[tool.setuptools]
+include-package-data = false
+
+[tool.setuptools.dynamic]
+version = {attr = "chimera_tp.__version__"}
+
 [tool.setuptools.packages.find]
 include = ["chimera_tp*"]
+
+[tool.setuptools.package-data]
+chimera_tp = ["_chimera_core.dll", "_chimera_core.so"]
+
+[tool.setuptools.exclude-package-data]
+"*" = ["*.prev", "*.pdb", "*.lib", "*.exp"]

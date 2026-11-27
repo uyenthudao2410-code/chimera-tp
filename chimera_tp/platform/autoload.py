@@ -67,6 +67,69 @@ def _install_win_orphan_job_guard() -> None:
         pass
 
 
+def _install_win_elastic_pool_shaper() -> None:
+    """CHIMERA-ZYGOTE-INTERCEPTOR (v23): Cap unbounded Windows multiprocessing.spawn pools under Commit pressure."""
+    if os.name != "nt" or os.environ.get("CHIMERA_ELASTIC_POOL", "1") == "0":
+        return
+    try:
+        import ctypes
+        import multiprocessing as _mp
+        import concurrent.futures as _cf
+
+        class _MEMSTAT(ctypes.Structure):
+            _fields_ = [
+                ("dwLength", ctypes.c_ulong),
+                ("dwMemoryLoad", ctypes.c_ulong),
+                ("ullTotalPhys", ctypes.c_ulonglong),
+                ("ullAvailPhys", ctypes.c_ulonglong),
+                ("ullTotalPageFile", ctypes.c_ulonglong),
+                ("ullAvailPageFile", ctypes.c_ulonglong),
+                ("ullTotalVirtual", ctypes.c_ulonglong),
+                ("ullAvailVirtual", ctypes.c_ulonglong),
+                ("sullAvailExtendedVirtual", ctypes.c_ulonglong),
+            ]
+
+        def _commit_pressure_cap(requested):
+            cap = int(os.environ.get("CHIMERA_MAX_SPAWN_WORKERS", "2") or 2)
+            ms = _MEMSTAT()
+            ms.dwLength = ctypes.sizeof(_MEMSTAT)
+            if not ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(ms)):
+                return requested
+            tot_pf = max(1, ms.ullTotalPageFile)
+            commit_pct = (1.0 - (ms.ullAvailPageFile / float(tot_pf))) * 100.0
+            avail_gb = ms.ullAvailPhys / (1024.0 ** 3)
+            under_pressure = (commit_pct >= 70.0) or (avail_gb < 8.0)
+            if not under_pressure:
+                return requested
+            if requested is None:
+                return max(1, min(cap, os.cpu_count() or 1))
+            if isinstance(requested, int) and requested > max(2, cap * 2):
+                return max(2, cap)
+            return requested
+
+        if not getattr(_mp.Pool, "_chimera_shaped", False):
+            _orig_pool = _mp.Pool
+
+            def _shaped_pool(processes=None, *args, **kwargs):
+                return _orig_pool(_commit_pressure_cap(processes), *args, **kwargs)
+
+            _shaped_pool._chimera_shaped = True
+            _mp.Pool = _shaped_pool
+
+        if not getattr(_cf.ProcessPoolExecutor, "_chimera_shaped", False):
+            _orig_ppe = _cf.ProcessPoolExecutor
+
+            class _ShapedProcessPoolExecutor(_orig_ppe):
+                _chimera_shaped = True
+
+                def __init__(self, max_workers=None, *args, **kwargs):
+                    super().__init__(max_workers=_commit_pressure_cap(max_workers), *args, **kwargs)
+
+            _cf.ProcessPoolExecutor = _ShapedProcessPoolExecutor
+    except Exception:
+        pass
+
+
 def _bootstrap() -> None:
     if os.environ.get("CHIMERA_DISABLE_AUTOLOAD") == "1":
         return
@@ -74,6 +137,7 @@ def _bootstrap() -> None:
     if "chimera_tp" in argv0 or "chimera-tp" in argv0:
         return
     _install_win_orphan_job_guard()
+    _install_win_elastic_pool_shaper()
 
     home = Path.home() / ".chimera"
     rt_path = home / "runtime.json"

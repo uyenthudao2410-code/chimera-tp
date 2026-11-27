@@ -117,6 +117,7 @@ class SharedBrowserGrid:
             cmd,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0) if os.name == "nt" else 0,
         )
         self._launches += 1
         self._last_activity = time.monotonic()

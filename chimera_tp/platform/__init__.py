@@ -1,63 +1,122 @@
 """CHIMERA-TP v16.0 Platform Substrate: CHIMERA-CONNECT, Egress-Membrane, Pulse, Hybrid Search, BlackBox & MCP."""
 
-from .autoload import autoload_status, install_autoload, install_systemd_dropin, uninstall_autoload
-from .browser_grid import SharedBrowserGrid, find_browser_binary
-from .client import ChimeraClient, connect, is_available
-from .colab_cli_bridge import (
-    ColabCliBridge,
-    parse_marked_json,
-    parse_usage_text,
-    select_lightest_profile,
-)
-from .cosmos_entity import (
-    CosmosEntityEngine,
-    ImmuneSecurityKernel,
-    OmniMemoryFabric,
-    ThermodynamicPhysicsEngine,
-    ZeroEnvCasStore,
-)
-from .discovery import (
-    AppRegistry,
-    PassivePortScanner,
-    chimera_home_dir,
-    discover_runtime_file,
-    init_project,
-    link_project,
-    runtime_beacon_paths,
-    write_agents_infra_doc,
-)
-from .egress_membrane import EgressMembraneProxy
-from .flight_recorder import DisklessSecretVault, FlightRecorderBlackBox
-from .folded_cavity_rlnc import CristaeFoldedCavityRLNC
-from .ghost_bubble import GhostBubbleEngine
-from .hybrid_search import HybridPlatformSearch
-from .hyper_desk import HyperDeskEngine, VramCompressedSwap
-from .immortal_jobs import ImmortalJobEngine
-from .mcp_server import handle_mcp_request, serve_mcp_stdio
-from .nvcuda_ptx import NvCudaPtxEngine
-from .omega_entity import OmegaEntityEngine
-from .pulse_bus import PulseBus
-from .substrate import PlatformSubstrate, render_smi
-from .unify import unify_install, unify_status, unify_uninstall
-from .vault_sql import VaultSqlFabric
-from .vgpu_gateway import VgpuParetoGateway, probe_gpu_backends, probe_nvidia_gpu
-from .zygote_canary import CanaryTwinJudge, ZygoteWorkerPool
+# Map the existing public names to their owning modules without importing the engines.
+_MODULE_EXPORTS = {
+    "agent_probe": (
+        "AgentHyperBus",
+        "AtomicCommitVerifyEngine",
+        "CallgraphTelepathyEngine",
+        "OmniProbeBatchEngine",
+        "TokenDietCompactor",
+        "get_default_agent_bus",
+    ),
+    "agent_symbiont": (
+        "AgentSymbiontCore",
+        "HiveMindCortex",
+        "PrecogRunnerEngine",
+        "SurgeonAtomicPatchEngine",
+        "TelepathyCapsuleEngine",
+    ),
+    "autoload": (
+        "autoload_status",
+        "install_autoload",
+        "install_systemd_dropin",
+        "uninstall_autoload",
+    ),
+    "browser_grid": ("SharedBrowserGrid", "find_browser_binary"),
+    "client": ("ChimeraClient", "connect", "is_available"),
+    "colab_cli_bridge": (
+        "ColabCliBridge",
+        "parse_marked_json",
+        "parse_usage_text",
+        "select_lightest_profile",
+    ),
+    "cosmos_entity": (
+        "CosmosEntityEngine",
+        "ImmuneSecurityKernel",
+        "OmniMemoryFabric",
+        "ThermodynamicPhysicsEngine",
+        "ZeroEnvCasStore",
+    ),
+    "discovery": (
+        "AppRegistry",
+        "PassivePortScanner",
+        "chimera_home_dir",
+        "discover_runtime_file",
+        "init_project",
+        "link_project",
+        "runtime_beacon_paths",
+        "write_agents_infra_doc",
+    ),
+    "egress_membrane": ("EgressMembraneProxy",),
+    "evidence": ("EvidenceLedger",),
+    "exile_handoff": ("CheckpointedExileCoordinator", "InMemoryWorkerTransport"),
+    "flight_recorder": ("DisklessSecretVault", "FlightRecorderBlackBox"),
+    "folded_cavity_rlnc": ("CristaeFoldedCavityRLNC",),
+    "ghost_bubble": ("GhostBubbleEngine",),
+    "hybrid_search": ("HybridPlatformSearch",),
+    "hyper_desk": ("HyperDeskEngine", "VramCompressedSwap"),
+    "phantom_silicon": (
+        "AgentExileEngine",
+        "GpuFenceManager",
+        "NvmeMirageEngine",
+        "SiliconThermostat",
+        "StasisPodManager",
+    ),
+    "immortal_jobs": ("ImmortalJobEngine",),
+    "mcp_server": ("handle_mcp_request", "serve_mcp_stdio"),
+    "nvcuda_ptx": ("NvCudaPtxEngine",),
+    "omega_entity": ("OmegaEntityEngine",),
+    "pulse_bus": ("PulseBus",),
+    "substrate": ("PlatformSubstrate", "render_smi"),
+    "unify": ("unify_install", "unify_status", "unify_uninstall"),
+    "vault_sql": ("VaultSqlFabric",),
+    "vgpu_gateway": ("VgpuParetoGateway", "probe_gpu_backends", "probe_nvidia_gpu"),
+    "zygote_canary": ("CanaryTwinJudge", "ZygoteWorkerPool"),
+}
+_EXPORTS = {name: module for module, names in _MODULE_EXPORTS.items() for name in names}
+
+# These modules were also available through package attribute access.
+_SUBMODULES = set(_MODULE_EXPORTS) | {
+    "workspace_undo",
+}
+
+
+def __getattr__(name):
+    from importlib import import_module
+
+    if name in _SUBMODULES:
+        return import_module(f".{name}", __name__)
+    module = _EXPORTS.get(name)
+    if module is None:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    value = getattr(import_module(f".{module}", __name__), name)
+    globals()[name] = value
+    return value
+
+
+def __dir__():
+    return sorted(set(globals()) | _EXPORTS.keys() | _SUBMODULES)
+
 
 __all__ = [
     "AppRegistry",
     "CanaryTwinJudge",
+    "CheckpointedExileCoordinator",
     "ChimeraClient",
     "ColabCliBridge",
     "CosmosEntityEngine",
     "CristaeFoldedCavityRLNC",
     "DisklessSecretVault",
     "EgressMembraneProxy",
+    "EvidenceLedger",
     "FlightRecorderBlackBox",
     "GhostBubbleEngine",
     "HybridPlatformSearch",
     "HyperDeskEngine",
     "ImmortalJobEngine",
     "ImmuneSecurityKernel",
+    "InMemoryWorkerTransport",
     "NvCudaPtxEngine",
     "OmegaEntityEngine",
     "OmniMemoryFabric",

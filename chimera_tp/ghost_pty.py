@@ -114,6 +114,7 @@ class GhostPtyManager:
                 stderr=subprocess.STDOUT,
                 cwd=work_dir,
                 bufsize=0,
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
             )
             entry = _PtyEntry(
                 session_id=sid,

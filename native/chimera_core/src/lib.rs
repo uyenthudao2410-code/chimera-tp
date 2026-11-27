@@ -2248,3 +2248,699 @@ pub unsafe extern "C" fn chimera_babel_mine(
         *out_best_dist = best_dist;
     }
 }
+
+// ---------------------------------------------------------------------------
+// v23.0 CHIMERA-PHANTOM-SILICON: Rust Native PWM-Crusher & <0.5ms Focus Hook
+// ---------------------------------------------------------------------------
+
+#[cfg(windows)]
+mod phantom_win {
+    use std::collections::{HashMap, HashSet};
+    use std::ffi::c_void;
+    use std::ptr;
+    use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
+    use std::sync::{Mutex, OnceLock};
+    use std::thread::{self, JoinHandle};
+    use std::time::{Duration, Instant};
+
+    type NtProcFn = unsafe extern "system" fn(*mut c_void) -> i32;
+    type WinEventProc = unsafe extern "system" fn(
+        h_win_event_hook: *mut c_void,
+        event: u32,
+        hwnd: *mut c_void,
+        id_object: i32,
+        id_child: i32,
+        id_event_thread: u32,
+        dwms_event_time: u32,
+    );
+
+    #[repr(C)]
+    struct Msg {
+        hwnd: *mut c_void,
+        message: u32,
+        w_param: usize,
+        l_param: isize,
+        time: u32,
+        pt_x: i32,
+        pt_y: i32,
+    }
+
+    #[link(name = "kernel32")]
+    extern "system" {
+        fn OpenProcess(dwDesiredAccess: u32, bInheritHandle: i32, dwProcessId: u32) -> *mut c_void;
+        fn CloseHandle(hObject: *mut c_void) -> i32;
+        fn GetCurrentProcessId() -> u32;
+        fn GetCurrentThreadId() -> u32;
+        fn GetModuleHandleA(lpModuleName: *const u8) -> *mut c_void;
+        fn GetProcAddress(hModule: *mut c_void, lpProcName: *const u8) -> *mut c_void;
+        fn GetTickCount64() -> u64;
+    }
+
+    #[link(name = "user32")]
+    extern "system" {
+        fn GetForegroundWindow() -> *mut c_void;
+        fn GetWindowThreadProcessId(hwnd: *mut c_void, lpdwProcessId: *mut u32) -> u32;
+        fn SetWinEventHook(
+            eventMin: u32,
+            eventMax: u32,
+            hmodWinEventProc: *mut c_void,
+            pfnWinEventProc: WinEventProc,
+            idProcess: u32,
+            idThread: u32,
+            dwFlags: u32,
+        ) -> *mut c_void;
+        fn UnhookWinEvent(hWinEventHook: *mut c_void) -> i32;
+        fn GetMessageW(lpMsg: *mut Msg, hWnd: *mut c_void, wMsgFilterMin: u32, wMsgFilterMax: u32) -> i32;
+        fn PostThreadMessageW(idThread: u32, msg: u32, wParam: usize, lParam: isize) -> i32;
+    }
+
+    const PROCESS_SUSPEND_RESUME: u32 = 0x0800;
+    const EVENT_SYSTEM_FOREGROUND: u32 = 0x0003;
+    const WINEVENT_OUTOFCONTEXT: u32 = 0x0000;
+    const WM_QUIT: u32 = 0x0012;
+
+    struct NtApis {
+        suspend: Option<NtProcFn>,
+        resume: Option<NtProcFn>,
+    }
+
+    static NT_APIS: OnceLock<NtApis> = OnceLock::new();
+
+    fn nt_apis() -> &'static NtApis {
+        NT_APIS.get_or_init(|| unsafe {
+            let hmod = GetModuleHandleA(b"ntdll.dll\0".as_ptr());
+            if hmod.is_null() {
+                return NtApis { suspend: None, resume: None };
+            }
+            let p_susp = GetProcAddress(hmod, b"NtSuspendProcess\0".as_ptr());
+            let p_res = GetProcAddress(hmod, b"NtResumeProcess\0".as_ptr());
+            NtApis {
+                suspend: if p_susp.is_null() { None } else { Some(std::mem::transmute(p_susp)) },
+                resume: if p_res.is_null() { None } else { Some(std::mem::transmute(p_res)) },
+            }
+        })
+    }
+
+    pub fn suspend_pid(pid: u32) -> bool {
+        unsafe {
+            let own = GetCurrentProcessId();
+            if pid <= 4 || pid == own {
+                return false;
+            }
+            let Some(f) = nt_apis().suspend else { return false };
+            let h = OpenProcess(PROCESS_SUSPEND_RESUME, 0, pid);
+            if h.is_null() {
+                return false;
+            }
+            let st = f(h);
+            CloseHandle(h);
+            st == 0
+        }
+    }
+
+    pub fn resume_pid(pid: u32) -> bool {
+        unsafe {
+            let own = GetCurrentProcessId();
+            if pid <= 4 || pid == own {
+                return false;
+            }
+            let Some(f) = nt_apis().resume else { return false };
+            let h = OpenProcess(PROCESS_SUSPEND_RESUME, 0, pid);
+            if h.is_null() {
+                return false;
+            }
+            let st = f(h);
+            CloseHandle(h);
+            st == 0
+        }
+    }
+
+    pub fn current_fg_pid() -> u32 {
+        unsafe {
+            let hwnd = GetForegroundWindow();
+            if hwnd.is_null() {
+                return 0;
+            }
+            let mut pid: u32 = 0;
+            GetWindowThreadProcessId(hwnd, &mut pid);
+            pid
+        }
+    }
+
+    struct PwmState {
+        targets: Vec<u32>,
+        period_ms: u32,
+        duty_pct: u32,
+        worker: Option<JoinHandle<()>>,
+    }
+
+    static PWM_STATE: OnceLock<Mutex<PwmState>> = OnceLock::new();
+    static PWM_RUNNING: AtomicBool = AtomicBool::new(false);
+    static PWM_STOP: AtomicBool = AtomicBool::new(false);
+    static PWM_HEARTBEAT_MS: AtomicU64 = AtomicU64::new(0);
+    static PWM_CYCLES: AtomicU64 = AtomicU64::new(0);
+    static PWM_SUSPENDS: AtomicU64 = AtomicU64::new(0);
+    static PWM_RESUMES: AtomicU64 = AtomicU64::new(0);
+    static PWM_ACTIVE_PIDS: AtomicU32 = AtomicU32::new(0);
+    static PWM_DUTY_PCT: AtomicU32 = AtomicU32::new(100);
+
+    // Stasis instant-wake map: trigger_pid -> list of suspended child PIDs to resume on focus (<0.5ms)
+    static STASIS_MAP: OnceLock<Mutex<HashMap<u32, Vec<u32>>>> = OnceLock::new();
+    static STASIS_ALL: OnceLock<Mutex<HashSet<u32>>> = OnceLock::new();
+    static LAST_FG_PID: AtomicU32 = AtomicU32::new(0);
+    static FG_CHANGE_SEQ: AtomicU64 = AtomicU64::new(0);
+    static STASIS_AUTO_WAKES: AtomicU64 = AtomicU64::new(0);
+    static FOCUS_HOOK_TID: AtomicU32 = AtomicU32::new(0);
+    static FOCUS_HOOK_RUNNING: AtomicBool = AtomicBool::new(false);
+    static FOCUS_HOOK_THREAD: OnceLock<Mutex<Option<JoinHandle<()>>>> = OnceLock::new();
+
+    fn pwm_state() -> &'static Mutex<PwmState> {
+        PWM_STATE.get_or_init(|| {
+            Mutex::new(PwmState {
+                targets: Vec::new(),
+                period_ms: 50,
+                duty_pct: 25,
+                worker: None,
+            })
+        })
+    }
+
+    fn stasis_map() -> &'static Mutex<HashMap<u32, Vec<u32>>> {
+        STASIS_MAP.get_or_init(|| Mutex::new(HashMap::new()))
+    }
+
+    fn stasis_all() -> &'static Mutex<HashSet<u32>> {
+        STASIS_ALL.get_or_init(|| Mutex::new(HashSet::new()))
+    }
+
+    fn focus_hook_slot() -> &'static Mutex<Option<JoinHandle<()>>> {
+        FOCUS_HOOK_THREAD.get_or_init(|| Mutex::new(None))
+    }
+
+    pub fn wake_group_for_pid(trigger_pid: u32) -> u32 {
+        if trigger_pid <= 4 {
+            return 0;
+        }
+        let to_wake: Vec<u32> = {
+            let Ok(mut map) = stasis_map().lock() else { return 0 };
+            map.remove(&trigger_pid).unwrap_or_default()
+        };
+        if to_wake.is_empty() {
+            return 0;
+        }
+        let mut woken = 0u32;
+        if let Ok(mut all) = stasis_all().lock() {
+            for &cpid in &to_wake {
+                all.remove(&cpid);
+            }
+        }
+        for cpid in to_wake {
+            if resume_pid(cpid) {
+                woken += 1;
+            }
+        }
+        if woken > 0 {
+            STASIS_AUTO_WAKES.fetch_add(woken as u64, Ordering::Relaxed);
+        }
+        woken
+    }
+
+    pub fn wake_all_stasis() -> u32 {
+        let pids: Vec<u32> = {
+            if let Ok(mut map) = stasis_map().lock() {
+                map.clear();
+            }
+            let Ok(mut all) = stasis_all().lock() else { return 0 };
+            all.drain().collect()
+        };
+        let mut woken = 0u32;
+        for pid in pids {
+            if resume_pid(pid) {
+                woken += 1;
+            }
+        }
+        woken
+    }
+
+    unsafe extern "system" fn fg_event_cb(
+        _hook: *mut c_void,
+        _event: u32,
+        hwnd: *mut c_void,
+        _id_object: i32,
+        _id_child: i32,
+        _id_event_thread: u32,
+        _dwms_event_time: u32,
+    ) {
+        if hwnd.is_null() {
+            return;
+        }
+        let mut pid: u32 = 0;
+        GetWindowThreadProcessId(hwnd, &mut pid);
+        if pid > 4 {
+            let prev = LAST_FG_PID.swap(pid, Ordering::AcqRel);
+            if prev != pid {
+                FG_CHANGE_SEQ.fetch_add(1, Ordering::AcqRel);
+            }
+            wake_group_for_pid(pid);
+        }
+    }
+
+    pub fn focus_hook_start() -> i32 {
+        if FOCUS_HOOK_RUNNING.swap(true, Ordering::AcqRel) {
+            return 1;
+        }
+        LAST_FG_PID.store(current_fg_pid(), Ordering::Release);
+        let handle = thread::Builder::new()
+            .name("chimera-rust-focus-hook".to_string())
+            .spawn(|| unsafe {
+                let tid = GetCurrentThreadId();
+                FOCUS_HOOK_TID.store(tid, Ordering::Release);
+                let hook = SetWinEventHook(
+                    EVENT_SYSTEM_FOREGROUND,
+                    EVENT_SYSTEM_FOREGROUND,
+                    ptr::null_mut(),
+                    fg_event_cb,
+                    0,
+                    0,
+                    WINEVENT_OUTOFCONTEXT,
+                );
+                if hook.is_null() {
+                    FOCUS_HOOK_TID.store(0, Ordering::Release);
+                    FOCUS_HOOK_RUNNING.store(false, Ordering::Release);
+                    return;
+                }
+                let mut msg = Msg {
+                    hwnd: ptr::null_mut(),
+                    message: 0,
+                    w_param: 0,
+                    l_param: 0,
+                    time: 0,
+                    pt_x: 0,
+                    pt_y: 0,
+                };
+                while GetMessageW(&mut msg, ptr::null_mut(), 0, 0) > 0 {}
+                UnhookWinEvent(hook);
+                FOCUS_HOOK_TID.store(0, Ordering::Release);
+                FOCUS_HOOK_RUNNING.store(false, Ordering::Release);
+            });
+        match handle {
+            Ok(h) => {
+                if let Ok(mut slot) = focus_hook_slot().lock() {
+                    *slot = Some(h);
+                }
+                1
+            }
+            Err(_) => {
+                FOCUS_HOOK_RUNNING.store(false, Ordering::Release);
+                0
+            }
+        }
+    }
+
+    pub fn focus_hook_stop() -> i32 {
+        let tid = FOCUS_HOOK_TID.load(Ordering::Acquire);
+        if tid != 0 {
+            unsafe {
+                PostThreadMessageW(tid, WM_QUIT, 0, 0);
+            }
+        }
+        let h = focus_hook_slot().lock().ok().and_then(|mut s| s.take());
+        if let Some(jh) = h {
+            let _ = jh.join();
+        }
+        FOCUS_HOOK_RUNNING.store(false, Ordering::Release);
+        1
+    }
+
+    pub fn pwm_heartbeat() {
+        let now = unsafe { GetTickCount64() };
+        PWM_HEARTBEAT_MS.store(now, Ordering::Release);
+    }
+
+    pub fn pwm_start(period_ms: u32, duty_pct: u32) -> i32 {
+        let p_ms = period_ms.clamp(20, 200);
+        let d_pct = duty_pct.clamp(10, 100);
+        pwm_heartbeat();
+        let Ok(mut st) = pwm_state().lock() else { return 0 };
+        st.period_ms = p_ms;
+        st.duty_pct = d_pct;
+        PWM_DUTY_PCT.store(d_pct, Ordering::Release);
+        if PWM_RUNNING.load(Ordering::Acquire) {
+            return 1;
+        }
+        PWM_STOP.store(false, Ordering::Release);
+        PWM_RUNNING.store(true, Ordering::Release);
+        let worker = thread::Builder::new()
+            .name("chimera-rust-pwm".to_string())
+            .spawn(|| {
+                while !PWM_STOP.load(Ordering::Acquire) {
+                    let (targets, period, duty) = {
+                        let Ok(s) = pwm_state().lock() else {
+                            thread::sleep(Duration::from_millis(25));
+                            continue;
+                        };
+                        (s.targets.clone(), s.period_ms, s.duty_pct)
+                    };
+                    PWM_ACTIVE_PIDS.store(targets.len() as u32, Ordering::Release);
+                    PWM_DUTY_PCT.store(duty, Ordering::Release);
+
+                    let now_tick = unsafe { GetTickCount64() };
+                    let hb = PWM_HEARTBEAT_MS.load(Ordering::Acquire);
+                    let deadman_expired = now_tick.saturating_sub(hb) > 10_000;
+
+                    if targets.is_empty() || duty >= 98 || deadman_expired {
+                        thread::sleep(Duration::from_millis(25));
+                        continue;
+                    }
+
+                    let fg_now = current_fg_pid();
+                    let seq_before = FG_CHANGE_SEQ.load(Ordering::Acquire);
+                    let run_ms = ((period as u64 * duty as u64) / 100).max(4) as u64;
+                    let sleep_ms = (period as u64).saturating_sub(run_ms).max(4);
+
+                    let mut suspended: Vec<u32> = Vec::with_capacity(targets.len());
+                    for pid in targets {
+                        if pid == fg_now {
+                            continue;
+                        }
+                        if suspend_pid(pid) {
+                            suspended.push(pid);
+                            PWM_SUSPENDS.fetch_add(1, Ordering::Relaxed);
+                        }
+                    }
+
+                    if !suspended.is_empty() {
+                        let deadline = Instant::now() + Duration::from_millis(sleep_ms);
+                        while Instant::now() < deadline {
+                            if PWM_STOP.load(Ordering::Acquire)
+                                || FG_CHANGE_SEQ.load(Ordering::Acquire) != seq_before
+                            {
+                                break;
+                            }
+                            let rem = deadline.saturating_duration_since(Instant::now());
+                            thread::sleep(rem.min(Duration::from_millis(5)));
+                        }
+                        // GUARANTEED RESUME INVARIANT: every suspended PID is resumed unconditionally.
+                        for pid in suspended {
+                            if resume_pid(pid) {
+                                PWM_RESUMES.fetch_add(1, Ordering::Relaxed);
+                            }
+                        }
+                        PWM_CYCLES.fetch_add(1, Ordering::Relaxed);
+                    }
+
+                    if !PWM_STOP.load(Ordering::Acquire) {
+                        thread::sleep(Duration::from_millis(run_ms));
+                    }
+                }
+                // Final safety resume sweep on exit
+                if let Ok(s) = pwm_state().lock() {
+                    for &pid in &s.targets {
+                        let _ = resume_pid(pid);
+                    }
+                }
+                PWM_ACTIVE_PIDS.store(0, Ordering::Release);
+                PWM_RUNNING.store(false, Ordering::Release);
+            });
+        match worker {
+            Ok(h) => {
+                st.worker = Some(h);
+                1
+            }
+            Err(_) => {
+                PWM_RUNNING.store(false, Ordering::Release);
+                0
+            }
+        }
+    }
+
+    pub fn pwm_set_targets(pids: &[u32], duty_pct: u32) -> i32 {
+        pwm_heartbeat();
+        let own = unsafe { GetCurrentProcessId() };
+        let clean: Vec<u32> = pids
+            .iter()
+            .copied()
+            .filter(|&p| p > 4 && p != own)
+            .take(64)
+            .collect();
+        let new_set: HashSet<u32> = clean.iter().copied().collect();
+        let removed: Vec<u32> = {
+            let Ok(mut st) = pwm_state().lock() else { return 0 };
+            let old = std::mem::replace(&mut st.targets, clean);
+            st.duty_pct = duty_pct.clamp(10, 100);
+            PWM_DUTY_PCT.store(st.duty_pct, Ordering::Release);
+            PWM_ACTIVE_PIDS.store(st.targets.len() as u32, Ordering::Release);
+            old.into_iter().filter(|p| !new_set.contains(p)).collect()
+        };
+        for pid in removed {
+            let _ = resume_pid(pid);
+        }
+        new_set.len() as i32
+    }
+
+    pub fn pwm_stop() -> i32 {
+        PWM_STOP.store(true, Ordering::Release);
+        let worker = {
+            let Ok(mut st) = pwm_state().lock() else { return 0 };
+            st.worker.take()
+        };
+        if let Some(h) = worker {
+            let _ = h.join();
+        }
+        if let Ok(mut st) = pwm_state().lock() {
+            for &pid in &st.targets {
+                let _ = resume_pid(pid);
+            }
+            st.targets.clear();
+        }
+        PWM_ACTIVE_PIDS.store(0, Ordering::Release);
+        PWM_RUNNING.store(false, Ordering::Release);
+        1
+    }
+
+    pub fn pwm_stats(
+        out_cycles: *mut u64,
+        out_suspends: *mut u64,
+        out_resumes: *mut u64,
+        out_active_pids: *mut u32,
+        out_duty_pct: *mut u32,
+    ) {
+        unsafe {
+            if !out_cycles.is_null() { *out_cycles = PWM_CYCLES.load(Ordering::Relaxed); }
+            if !out_suspends.is_null() { *out_suspends = PWM_SUSPENDS.load(Ordering::Relaxed); }
+            if !out_resumes.is_null() { *out_resumes = PWM_RESUMES.load(Ordering::Relaxed); }
+            if !out_active_pids.is_null() { *out_active_pids = PWM_ACTIVE_PIDS.load(Ordering::Relaxed); }
+            if !out_duty_pct.is_null() { *out_duty_pct = PWM_DUTY_PCT.load(Ordering::Relaxed); }
+        }
+    }
+
+    pub fn stasis_register_group(triggers: &[u32], children: &[u32]) -> i32 {
+        let own = unsafe { GetCurrentProcessId() };
+        let kids: Vec<u32> = children.iter().copied().filter(|&p| p > 4 && p != own).collect();
+        if kids.is_empty() {
+            return 0;
+        }
+        if let Ok(mut all) = stasis_all().lock() {
+            for &k in &kids {
+                all.insert(k);
+            }
+        }
+        if let Ok(mut map) = stasis_map().lock() {
+            for &t in triggers {
+                if t > 4 && t != own {
+                    let entry = map.entry(t).or_default();
+                    for &k in &kids {
+                        if !entry.contains(&k) {
+                            entry.push(k);
+                        }
+                    }
+                }
+            }
+        }
+        kids.len() as i32
+    }
+
+    pub fn focus_state(out_fg_pid: *mut u32, out_seq: *mut u64, out_auto_wakes: *mut u64) {
+        unsafe {
+            let fg = LAST_FG_PID.load(Ordering::Acquire);
+            if !out_fg_pid.is_null() {
+                *out_fg_pid = if fg > 0 { fg } else { current_fg_pid() };
+            }
+            if !out_seq.is_null() {
+                *out_seq = FG_CHANGE_SEQ.load(Ordering::Acquire);
+            }
+            if !out_auto_wakes.is_null() {
+                *out_auto_wakes = STASIS_AUTO_WAKES.load(Ordering::Relaxed);
+            }
+        }
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn chimera_pwm_start(period_ms: u32, duty_pct: u32) -> i32 {
+    #[cfg(windows)]
+    {
+        phantom_win::pwm_start(period_ms, duty_pct)
+    }
+    #[cfg(not(windows))]
+    {
+        let _ = (period_ms, duty_pct);
+        0
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn chimera_pwm_set_targets(pids: *const u32, count: usize, duty_pct: u32) -> i32 {
+    #[cfg(windows)]
+    {
+        let sl = if pids.is_null() || count == 0 {
+            &[]
+        } else {
+            std::slice::from_raw_parts(pids, count)
+        };
+        phantom_win::pwm_set_targets(sl, duty_pct)
+    }
+    #[cfg(not(windows))]
+    {
+        let _ = (pids, count, duty_pct);
+        0
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn chimera_pwm_heartbeat() {
+    #[cfg(windows)]
+    phantom_win::pwm_heartbeat();
+}
+
+#[no_mangle]
+pub extern "C" fn chimera_pwm_stop() -> i32 {
+    #[cfg(windows)]
+    {
+        phantom_win::pwm_stop()
+    }
+    #[cfg(not(windows))]
+    {
+        0
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn chimera_pwm_stats(
+    out_cycles: *mut u64,
+    out_suspends: *mut u64,
+    out_resumes: *mut u64,
+    out_active_pids: *mut u32,
+    out_duty_pct: *mut u32,
+) {
+    #[cfg(windows)]
+    phantom_win::pwm_stats(out_cycles, out_suspends, out_resumes, out_active_pids, out_duty_pct);
+    #[cfg(not(windows))]
+    {
+        if !out_cycles.is_null() { *out_cycles = 0; }
+        if !out_suspends.is_null() { *out_suspends = 0; }
+        if !out_resumes.is_null() { *out_resumes = 0; }
+        if !out_active_pids.is_null() { *out_active_pids = 0; }
+        if !out_duty_pct.is_null() { *out_duty_pct = 100; }
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn chimera_focus_hook_start() -> i32 {
+    #[cfg(windows)]
+    {
+        phantom_win::focus_hook_start()
+    }
+    #[cfg(not(windows))]
+    {
+        0
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn chimera_focus_hook_stop() -> i32 {
+    #[cfg(windows)]
+    {
+        phantom_win::focus_hook_stop()
+    }
+    #[cfg(not(windows))]
+    {
+        0
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn chimera_stasis_register_group(
+    triggers: *const u32,
+    trigger_count: usize,
+    children: *const u32,
+    child_count: usize,
+) -> i32 {
+    #[cfg(windows)]
+    {
+        let t_sl = if triggers.is_null() || trigger_count == 0 {
+            &[]
+        } else {
+            std::slice::from_raw_parts(triggers, trigger_count)
+        };
+        let c_sl = if children.is_null() || child_count == 0 {
+            &[]
+        } else {
+            std::slice::from_raw_parts(children, child_count)
+        };
+        phantom_win::stasis_register_group(t_sl, c_sl)
+    }
+    #[cfg(not(windows))]
+    {
+        let _ = (triggers, trigger_count, children, child_count);
+        0
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn chimera_stasis_wake_pid(pid: u32) -> u32 {
+    #[cfg(windows)]
+    {
+        let n = phantom_win::wake_group_for_pid(pid);
+        if n > 0 {
+            n
+        } else if phantom_win::resume_pid(pid) {
+            1
+        } else {
+            0
+        }
+    }
+    #[cfg(not(windows))]
+    {
+        let _ = pid;
+        0
+    }
+}
+
+#[no_mangle]
+pub extern "C" fn chimera_stasis_wake_all() -> u32 {
+    #[cfg(windows)]
+    {
+        phantom_win::wake_all_stasis()
+    }
+    #[cfg(not(windows))]
+    {
+        0
+    }
+}
+
+#[no_mangle]
+pub unsafe extern "C" fn chimera_focus_state(
+    out_fg_pid: *mut u32,
+    out_seq: *mut u64,
+    out_auto_wakes: *mut u64,
+) {
+    #[cfg(windows)]
+    phantom_win::focus_state(out_fg_pid, out_seq, out_auto_wakes);
+    #[cfg(not(windows))]
+    {
+        if !out_fg_pid.is_null() { *out_fg_pid = 0; }
+        if !out_seq.is_null() { *out_seq = 0; }
+        if !out_auto_wakes.is_null() { *out_auto_wakes = 0; }
+    }
+}

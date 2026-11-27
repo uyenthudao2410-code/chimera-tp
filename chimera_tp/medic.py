@@ -220,7 +220,8 @@ class MedicEngine:
             cmd = ["git", "-C", str(repo), "remote", "prune", "origin"]
             if dry_run:
                 cmd.append("--dry-run")
-            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=12.0)
+            proc = subprocess.run(cmd, capture_output=True, text=True, timeout=12.0,
+                                  creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
             result = {
                 "repo": str(repo),
                 "dry_run": dry_run,
