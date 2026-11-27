@@ -80,6 +80,39 @@ def _blake2s_short(data: bytes) -> str:
 
 
 _LINE_END = re.compile(rb"\r\n|[\n\r\v\f\x1c-\x1e]|\xc2\x85|\xe2\x80[\xa8\xa9]")
+_OTHER_LINE_ENDS = (b"\v", b"\f", b"\x1c", b"\x1d", b"\x1e", b"\xc2\x85", b"\xe2\x80\xa8", b"\xe2\x80\xa9")
+
+
+class _CachedTextLines:
+    """A bounded byte snapshot. Ordinary source slices decode only their requested rows."""
+
+    def __init__(self, data: bytes):
+        self.data = data
+        cr = data.count(b"\r")
+        self.normal = (not cr or cr == data.count(b"\r\n")) and not any(end in data for end in _OTHER_LINE_ENDS)
+        if self.normal:
+            self.count = data.count(b"\n") + int(bool(data) and not data.endswith(b"\n"))
+        else:
+            self.count = len(data.decode("utf-8", errors="replace").splitlines())
+
+    def read_range(self, first: int, last: int) -> list[str]:
+        last = min(last, self.count)
+        if last < first:
+            return []
+        # A deep slice is cheaper with one native split than with thousands of Python iterations.
+        if not self.normal or first > 128 or last - first > 256:
+            return self.data.decode("utf-8", errors="replace").splitlines()[first - 1:last]
+        start = 0
+        for _ in range(first - 1):
+            start = self.data.index(b"\n", start) + 1
+        end = start
+        for _ in range(last - first + 1):
+            lf = self.data.find(b"\n", end)
+            if lf < 0:
+                end = len(self.data)
+                break
+            end = lf + 1
+        return self.data[start:end].decode("utf-8", errors="replace").splitlines()
 
 
 def _line_offsets(stream, digest=None):
@@ -107,8 +140,7 @@ def _line_offsets(stream, digest=None):
             break
 
 
-def _file_identity(stream):
-    stat = os.fstat(stream.fileno())
+def _file_identity(stat: os.stat_result):
     return stat.st_dev, stat.st_ino, stat.st_size, stat.st_mtime_ns, stat.st_ctime_ns
 
 
@@ -122,7 +154,7 @@ class _SparseTextLines:
         digest = hashlib.blake2s(digest_size=12)
         breaks = last_end = 0
         with path.open("rb") as stream:
-            self.identity = _file_identity(stream)
+            self.identity = _file_identity(os.fstat(stream.fileno()))
             for after in _line_offsets(stream, digest):
                 breaks += 1
                 last_end = after
@@ -137,7 +169,7 @@ class _SparseTextLines:
         self.digest = digest.hexdigest()
 
     def _check(self, stream):
-        if _file_identity(stream) != self.identity:
+        if _file_identity(os.fstat(stream.fileno())) != self.identity:
             raise OSError("file_changed_during_read")
 
     def read_range(self, first: int, last: int) -> list[str]:
@@ -427,7 +459,7 @@ class OmniProbeBatchEngine:
         self._ops_run = 0
         self._shells_avoided = 0
         self._coalesced_hits = 0
-        self._spec_cache_lookup: Callable[[Path], tuple[str, list[str]] | None] | None = None
+        self._spec_cache_lookup: Callable[[Path], tuple[str, _CachedTextLines] | None] | None = None
 
     def _op_file_slice(
         self,
@@ -441,26 +473,24 @@ class OmniProbeBatchEngine:
         p = _safe_resolve(path_raw, base_dir)
         if not p.is_file():
             return {"ok": False, "error": "file_not_found", "path": str(p)}
-        spec_hit = False
 
         def load_lines():
-            nonlocal spec_hit
             lookup = self._spec_cache_lookup
             if lookup is not None:
                 cached_spec = lookup(p)
                 if cached_spec is not None:
-                    s_hash, s_lines = cached_spec
-                    spec_hit = True
-                    return s_hash, len(s_lines), lambda first, last: s_lines[first - 1:last]
+                    s_hash, snapshot = cached_spec
+                    return s_hash, snapshot.count, snapshot.read_range, True
             if p.stat().st_size > 256 * 1024:
                 index = _SparseTextLines(p)
-                return index.digest, index.count, index.read_range
+                return index.digest, index.count, index.read_range, False
             raw = p.read_bytes()
             lines = raw.decode("utf-8", errors="replace").splitlines()
-            return _blake2s_short(raw), len(lines), lambda first, last: lines[first - 1:last]
+            return _blake2s_short(raw), len(lines), lambda first, last: lines[first - 1:last], False
 
         key = "file:" + os.path.normcase(str(p))
-        sha, total, read_range = cache.get_or_load(key, load_lines) if cache else load_lines()
+        sha, total, read_range, spec_hit = cache.get_or_load(key, load_lines) if cache else load_lines()
+        source = {"speculative_hit": True} if spec_hit else {}
 
         # Support multiple non-contiguous ranges in ONE file read: ranges=[[10,30],[100,120]]
         ranges = spec.get("ranges")
@@ -475,7 +505,7 @@ class OmniProbeBatchEngine:
                         "end": e,
                         "lines": [f"{i}: {line}" for i, line in enumerate(read_range(s, e), s)],
                     })
-            return {"ok": True, "path": str(p), "total_lines": total, "hash": sha, "ranges": out_ranges}
+            return {"ok": True, "path": str(p), "total_lines": total, "hash": sha, "ranges": out_ranges, **source}
 
         if spec.get("skip") is not None or spec.get("first") is not None:
             start = max(1, int(spec.get("skip") or 0) + 1)
@@ -505,7 +535,7 @@ class OmniProbeBatchEngine:
             "start_line": start,
             "end_line": end if sliced else start,
             "hash": sha,
-            **({"speculative_hit": True} if spec_hit else {}),
+            **source,
             "text": "\n".join(sliced),
         }
 
@@ -1757,7 +1787,7 @@ class AgentHyperBus:
                         db_path=self._symbiont_db_path,
                         ephemeral=self._ephemeral,
                     )
-                    self.probe._spec_cache_lookup = self._symbiont.precog.get_speculative_lines
+                    self.probe._spec_cache_lookup = self._symbiont.precog.get_speculative_snapshot
         return self._symbiont
 
     def _attach_hive_alerts(self, res: dict[str, Any], *, agent_id: str, repo: str | None, files: list[str]) -> dict[str, Any]:

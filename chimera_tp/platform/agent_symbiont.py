@@ -659,7 +659,9 @@ class PrecogRunnerEngine:
         max_bytes_per_file: int = 65536,
         warm_cache: bool = True,
     ) -> dict[str, Any]:
-        """Speculative read-only OS page-cache & RAM Speculative Result Cache warmer (0 side effects)."""
+        """Warm the OS cache and retain at most one bounded byte string per eligible file."""
+        from .agent_probe import _CachedTextLines, _blake2s_short, _file_identity
+
         t0 = time.perf_counter()
         cap = max(4096, min(262144, int(max_bytes_per_file)))
         warmed: list[str] = []
@@ -674,24 +676,26 @@ class PrecogRunnerEngine:
                 p = Path(s).resolve()
                 if not p.is_file():
                     continue
-                st = p.stat()
-                read_len = st.st_size if (warm_cache and st.st_size <= self.SPEC_CACHE_MAX_FILE_BYTES) else cap
                 with p.open("rb") as fh:
+                    st = os.fstat(fh.fileno())
+                    identity = _file_identity(st)
+                    eligible = warm_cache and st.st_size <= self.SPEC_CACHE_MAX_FILE_BYTES
+                    read_len = st.st_size if eligible else cap
                     chunk = fh.read(read_len)
+                    stable = eligible and len(chunk) == st.st_size and _file_identity(os.fstat(fh.fileno())) == identity
                 total_bytes += len(chunk)
                 warmed.append(str(p))
-                if warm_cache and st.st_size <= self.SPEC_CACHE_MAX_FILE_BYTES and b"\x00" not in chunk[:2048]:
-                    text = chunk.decode("utf-8", errors="replace")
+                if stable and b"\x00" not in chunk[:2048]:
                     key = os.path.normcase(str(p))
-                    digest = hashlib.blake2s(chunk, digest_size=8).hexdigest()
+                    digest = _blake2s_short(chunk)
+                    snapshot = _CachedTextLines(chunk)
                     with self._lock:
                         self._spec_cache.pop(key, None)
                         self._spec_cache[key] = {
-                            "mtime_ns": st.st_mtime_ns,
-                            "size": st.st_size,
+                            "identity": identity,
                             "ts": now_m,
                             "hash": digest,
-                            "lines": text.splitlines(),
+                            "snapshot": snapshot,
                         }
                         while len(self._spec_cache) > self.SPEC_CACHE_MAX_FILES:
                             oldest = next(iter(self._spec_cache))
@@ -711,8 +715,10 @@ class PrecogRunnerEngine:
             "elapsed_ms": round((time.perf_counter() - t0) * 1000.0, 2),
         }
 
-    def get_speculative_lines(self, path: str | Path) -> tuple[str, list[str]] | None:
-        """Return (blake2s_hash, lines) in <0.05ms if file was pre-warmed by SSE tap & mtime/size still match."""
+    def get_speculative_snapshot(self, path: str | Path):
+        """Return cached bytes and line metadata only while the file identity still matches."""
+        from .agent_probe import _file_identity
+
         try:
             p = Path(path).resolve()
             key = os.path.normcase(str(p))
@@ -723,21 +729,26 @@ class PrecogRunnerEngine:
             entry = self._spec_cache.get(key)
         if not entry:
             return None
-        if (now_m - float(entry["ts"])) > self.SPEC_CACHE_TTL_S:
-            with self._lock:
-                self._spec_cache.pop(key, None)
-            return None
         try:
-            st = p.stat()
+            valid = (now_m - entry["ts"] <= self.SPEC_CACHE_TTL_S
+                     and _file_identity(p.stat()) == entry["identity"])
         except OSError:
-            return None
-        if st.st_mtime_ns != entry["mtime_ns"] or st.st_size != entry["size"]:
-            with self._lock:
-                self._spec_cache.pop(key, None)
-            return None
+            valid = False
         with self._lock:
+            if not valid:
+                if self._spec_cache.get(key) is entry:
+                    self._spec_cache.pop(key)
+                return None
             self._stats["spec_cache_hits"] += 1
-        return str(entry["hash"]), list(entry["lines"])
+        return entry["hash"], entry["snapshot"]
+
+    def get_speculative_lines(self, path: str | Path) -> tuple[str, list[str]] | None:
+        """Keep the original full-file read API for existing callers."""
+        found = self.get_speculative_snapshot(path)
+        if found is None:
+            return None
+        digest, snapshot = found
+        return digest, snapshot.read_range(1, snapshot.count)
 
     # --- Optional Event-Driven Win32 ReadDirectoryChangesW Repo Watcher ---
 

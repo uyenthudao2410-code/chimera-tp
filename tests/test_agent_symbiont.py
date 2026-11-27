@@ -16,7 +16,9 @@ Proves all 4 Symbiont pillars + agy-fast-inspired harness hardening:
 
 from __future__ import annotations
 
+import hashlib
 import json
+import os
 import tempfile
 import time
 import unittest
@@ -98,6 +100,57 @@ class TestAgentSymbiont(unittest.TestCase):
         )
         with opener.open(req, timeout=30.0) as r:
             return r.status, json.loads(r.read().decode("utf-8"))
+
+    def test_cached_ranges_match_unicode_splitlines(self) -> None:
+        from chimera_tp.platform.agent_probe import _CachedTextLines
+
+        for data in (b"", b"\r\n\n", b"abc", b"ab\r\n" * 700 + b"\xff",
+                     b"\xe2\x80\xa9a\x85b\x1c\r\xc2\x85c\xff", b"a\n" * 65536):
+            snapshot = _CachedTextLines(data)
+            expected = data.decode("utf-8", errors="replace").splitlines()
+            self.assertEqual(snapshot.count, len(expected))
+            for first, last in ((1, 1), (1, 128), (2, 115), (129, 135),
+                                (1, 580), (350, 710), (1000, 1600), (600, 599)):
+                self.assertEqual(snapshot.read_range(first, last), expected[first - 1:last])
+
+    def test_warm_and_cold_file_receipts_match_through_coalesced_ranges(self) -> None:
+        path = self.repo / "receipt.txt"
+        data = b"first\r\nnext\xe2\x80\xa8last\xff\n"
+        path.write_bytes(data)
+        common = {"op": "file_slice", "path": path.name}
+        body = {"cwd": str(self.repo), "ops": [
+            {**common, "id": "all", "start_line": 1, "end_line": 3},
+            {**common, "id": "parts", "ranges": [[1, 1], [3, 3]]},
+        ]}
+
+        def read():
+            status, response = self._post("/v1/agent/xray-batch", body)
+            self.assertEqual(status, 200)
+            self.assertTrue(response["ok"], response)
+            return response["results"]
+
+        cold = read()
+        _, warmed = self._post("/v1/agent/precog", {"action": "prefetch_paths", "paths": [str(path)]})
+        self.assertEqual(warmed["cached_count"], 1)
+        hot = read()
+        expected = hashlib.blake2s(data, digest_size=12).hexdigest()
+        for before, after in zip(cold, hot, strict=True):
+            self.assertEqual(before["hash"], expected)
+            self.assertEqual(after["hash"], expected)
+            self.assertTrue(after.get("speculative_hit"), after)
+            for key in ("total_lines", "text", "ranges"):
+                self.assertEqual(after.get(key), before.get(key))
+
+        # An editor can atomically replace a file while preserving size and mtime.
+        stamp = path.stat()
+        replacement = self.repo / "saved.txt"
+        new_data = data.replace(b"first", b"other")
+        replacement.write_bytes(new_data)
+        os.utime(replacement, ns=(stamp.st_atime_ns, stamp.st_mtime_ns))
+        replacement.replace(path)
+        for row in read():
+            self.assertFalse(row.get("speculative_hit"))
+            self.assertEqual(row["hash"], hashlib.blake2s(new_data, digest_size=12).hexdigest())
 
     def test_01_hivemind_leases_conflict_radar_and_immune_piggyback(self) -> None:
         # 1. Agent A (codex) claims lease on pkg/calc.py and registers an Immune Reflex rule
