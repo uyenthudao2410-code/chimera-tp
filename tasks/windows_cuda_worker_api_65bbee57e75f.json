@@ -1,0 +1,264 @@
+{
+  "schema": "chimera.windows-cuda-worker-api/1",
+  "root": "C:\\Users\\Admin\\AppData\\Local\\chimera\\releases\\65bbee57e75f",
+  "tree": "1b7087c976593a88ae0acd5917fc208e672832f6b240b0013360c5ae382b408f",
+  "collector_sha256": "e280a0f5ab773bb1f963edbf4bfbe3c9e16a5ff571426454a31bd5f41109247d",
+  "trials": [
+    {
+      "daemon_pid": 36832,
+      "device": "NVIDIA GeForce GTX 1650",
+      "sm": "7.5",
+      "n": 4096,
+      "dot": 18.0,
+      "cpu_dot": 18,
+      "rows": 64,
+      "vsa": {
+        "available": true,
+        "device": "NVIDIA GeForce GTX 1650",
+        "sm": "7.5",
+        "cold_total_ms": 144.36,
+        "leased_warm_total_ms": 1.019,
+        "kernel_ms": 0.551,
+        "lease_reused": true,
+        "lease_total_speedup": 141.67,
+        "lease_release_ms": 32.746,
+        "vram_retained_mb": 0.0,
+        "bit_exact_match_vs_cpu": true,
+        "kernel_speedup_vs_pure_py": 0.24
+      },
+      "samples": [
+        {
+          "stage": "boot",
+          "rss": 42131456,
+          "peak": 43589632
+        },
+        {
+          "stage": "status",
+          "rss": 42168320,
+          "peak": 43589632
+        },
+        {
+          "stage": "dot",
+          "rss": 42213376,
+          "peak": 43589632
+        },
+        {
+          "stage": "vsa",
+          "rss": 45182976,
+          "peak": 53342208
+        },
+        {
+          "stage": "concurrent",
+          "rss": 44675072,
+          "peak": 53342208
+        }
+      ],
+      "workers": [
+        {
+          "operation": "driver discovery",
+          "pid": 15456,
+          "peak_bytes": 48181248,
+          "exited": true
+        },
+        {
+          "operation": "dot",
+          "pid": 5888,
+          "peak_bytes": 164007936,
+          "exited": true
+        },
+        {
+          "operation": "VSA",
+          "pid": 31280,
+          "peak_bytes": 165560320,
+          "exited": true
+        },
+        {
+          "operation": "concurrent dot",
+          "pid": 35576,
+          "peak_bytes": 147722240,
+          "exited": true
+        },
+        {
+          "operation": "concurrent dot",
+          "pid": 34012,
+          "peak_bytes": 147763200,
+          "exited": true
+        }
+      ],
+      "driver_in_daemon": false
+    },
+    {
+      "daemon_pid": 27876,
+      "device": "NVIDIA GeForce GTX 1650",
+      "sm": "7.5",
+      "n": 65536,
+      "dot": 40.0,
+      "cpu_dot": 40,
+      "rows": 2048,
+      "vsa": {
+        "available": true,
+        "device": "NVIDIA GeForce GTX 1650",
+        "sm": "7.5",
+        "cold_total_ms": 169.999,
+        "leased_warm_total_ms": 3.688,
+        "kernel_ms": 1.833,
+        "lease_reused": true,
+        "lease_total_speedup": 46.1,
+        "lease_release_ms": 40.175,
+        "vram_retained_mb": 0.0,
+        "bit_exact_match_vs_cpu": true,
+        "kernel_speedup_vs_pure_py": 3.84
+      },
+      "samples": [
+        {
+          "stage": "boot",
+          "rss": 42496000,
+          "peak": 43761664
+        },
+        {
+          "stage": "status",
+          "rss": 42524672,
+          "peak": 43761664
+        },
+        {
+          "stage": "dot",
+          "rss": 42237952,
+          "peak": 43761664
+        },
+        {
+          "stage": "vsa",
+          "rss": 45084672,
+          "peak": 52621312
+        },
+        {
+          "stage": "concurrent",
+          "rss": 45096960,
+          "peak": 52621312
+        }
+      ],
+      "workers": [
+        {
+          "operation": "driver discovery",
+          "pid": 4768,
+          "peak_bytes": 48422912,
+          "exited": true
+        },
+        {
+          "operation": "dot",
+          "pid": 26148,
+          "peak_bytes": 164929536,
+          "exited": true
+        },
+        {
+          "operation": "VSA",
+          "pid": 20556,
+          "peak_bytes": 170545152,
+          "exited": true
+        },
+        {
+          "operation": "concurrent dot",
+          "pid": 23568,
+          "peak_bytes": 147542016,
+          "exited": true
+        },
+        {
+          "operation": "concurrent dot",
+          "pid": 36224,
+          "peak_bytes": 147841024,
+          "exited": true
+        }
+      ],
+      "driver_in_daemon": false
+    },
+    {
+      "daemon_pid": 8388,
+      "device": "NVIDIA GeForce GTX 1650",
+      "sm": "7.5",
+      "n": 262144,
+      "dot": -23.0,
+      "cpu_dot": -23,
+      "rows": 32768,
+      "vsa": {
+        "available": true,
+        "device": "NVIDIA GeForce GTX 1650",
+        "sm": "7.5",
+        "cold_total_ms": 167.851,
+        "leased_warm_total_ms": 24.15,
+        "kernel_ms": 10.022,
+        "lease_reused": true,
+        "lease_total_speedup": 6.95,
+        "lease_release_ms": 36.8,
+        "vram_retained_mb": 0.0,
+        "bit_exact_match_vs_cpu": true,
+        "kernel_speedup_vs_pure_py": 10.28
+      },
+      "samples": [
+        {
+          "stage": "boot",
+          "rss": 42184704,
+          "peak": 43724800
+        },
+        {
+          "stage": "status",
+          "rss": 42188800,
+          "peak": 43724800
+        },
+        {
+          "stage": "dot",
+          "rss": 42213376,
+          "peak": 43724800
+        },
+        {
+          "stage": "vsa",
+          "rss": 45285376,
+          "peak": 52846592
+        },
+        {
+          "stage": "concurrent",
+          "rss": 45219840,
+          "peak": 52846592
+        }
+      ],
+      "workers": [
+        {
+          "operation": "driver discovery",
+          "pid": 36832,
+          "peak_bytes": 48615424,
+          "exited": true
+        },
+        {
+          "operation": "dot",
+          "pid": 25520,
+          "peak_bytes": 170811392,
+          "exited": true
+        },
+        {
+          "operation": "VSA",
+          "pid": 31280,
+          "peak_bytes": 285151232,
+          "exited": true
+        },
+        {
+          "operation": "concurrent dot",
+          "pid": 36592,
+          "peak_bytes": 147591168,
+          "exited": true
+        },
+        {
+          "operation": "concurrent dot",
+          "pid": 35040,
+          "peak_bytes": 147722240,
+          "exited": true
+        }
+      ],
+      "driver_in_daemon": false
+    }
+  ],
+  "release": "sha256:65bbee57e75f0acd058ab53443415304884ce1af6661959072f68499da06e1b5",
+  "utc": "2026-11-27T07:37:32.733297+00:00",
+  "linux_tests": 11,
+  "windows_tests": 13,
+  "checked_worker_lifetimes": 15,
+  "max_parent_bytes": 53342208,
+  "max_worker_bytes": 285151232
+}

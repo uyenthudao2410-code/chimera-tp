@@ -1,0 +1,524 @@
+{
+  "schema": "chimera.linux-vsa-ingest-heap/1",
+  "scope": "ephemeral daemons in tmpfs, no peer sync",
+  "source_root": "/home/svhome/.local/share/chimera/releases/962efbbc09a1",
+  "collector_sha256": "8dd0c95f6298dd8a3461a9cef1314b1a53bb765ccc544daa9df9454ad090d404",
+  "vsa_sha256": "461d101e04efb3eaff9cf21d68fafd43aaee55acdf158ce68ecd1c352ece46bc",
+  "database_sha256": "541c840033b834ce7649b62218ace11afea7d6894ae8328ce819efd0747c90a2",
+  "export_sha256": "bc8e145aec08dadbaf52cc87abbffbd88b3463382ba44c1785218c22365d45c6",
+  "export_bytes": 708979,
+  "python": "3.14.4",
+  "libc": "glibc 2.43",
+  "malloc_arena_max": 2,
+  "replay_requests": 12,
+  "trials": [
+    {
+      "pair": 1,
+      "arm": "gc_only",
+      "pid": 4132643,
+      "baseline": {
+        "VmHWM": 41111552,
+        "VmRSS": 41111552,
+        "RssAnon": 24842240
+      },
+      "passes": [
+        {
+          "stored": 300,
+          "changed": 0,
+          "items": 1023,
+          "ingest_ms": 347.32,
+          "before": {
+            "VmHWM": 47616000,
+            "VmRSS": 47616000,
+            "RssAnon": 30306304
+          },
+          "after_gc": {
+            "VmHWM": 47616000,
+            "VmRSS": 47616000,
+            "RssAnon": 30306304
+          },
+          "after": {
+            "VmHWM": 47616000,
+            "VmRSS": 47616000,
+            "RssAnon": 30306304
+          },
+          "quiet": {
+            "VmHWM": 47616000,
+            "VmRSS": 47616000,
+            "RssAnon": 30306304
+          },
+          "trim_result": null,
+          "trim_ms": 0.002,
+          "collection_ms": 10.003
+        },
+        {
+          "stored": 300,
+          "changed": 0,
+          "items": 1023,
+          "ingest_ms": 318.17,
+          "before": {
+            "VmHWM": 51486720,
+            "VmRSS": 50700288,
+            "RssAnon": 33390592
+          },
+          "after_gc": {
+            "VmHWM": 51486720,
+            "VmRSS": 50692096,
+            "RssAnon": 33382400
+          },
+          "after": {
+            "VmHWM": 51486720,
+            "VmRSS": 50692096,
+            "RssAnon": 33382400
+          },
+          "quiet": {
+            "VmHWM": 51486720,
+            "VmRSS": 50692096,
+            "RssAnon": 33382400
+          },
+          "trim_result": null,
+          "trim_ms": 0.003,
+          "collection_ms": 13.652
+        }
+      ]
+    },
+    {
+      "pair": 1,
+      "arm": "gc_and_trim",
+      "pid": 4132690,
+      "baseline": {
+        "VmHWM": 40960000,
+        "VmRSS": 40960000,
+        "RssAnon": 24838144
+      },
+      "passes": [
+        {
+          "stored": 300,
+          "changed": 0,
+          "items": 1023,
+          "ingest_ms": 330.92,
+          "before": {
+            "VmHWM": 47480832,
+            "VmRSS": 47480832,
+            "RssAnon": 30318592
+          },
+          "after_gc": {
+            "VmHWM": 47472640,
+            "VmRSS": 47472640,
+            "RssAnon": 30310400
+          },
+          "after": {
+            "VmHWM": 46968832,
+            "VmRSS": 44982272,
+            "RssAnon": 27820032
+          },
+          "quiet": {
+            "VmHWM": 46968832,
+            "VmRSS": 44982272,
+            "RssAnon": 27820032
+          },
+          "trim_result": 1,
+          "trim_ms": 0.358,
+          "collection_ms": 15.394
+        },
+        {
+          "stored": 300,
+          "changed": 0,
+          "items": 1023,
+          "ingest_ms": 288.76,
+          "before": {
+            "VmHWM": 48955392,
+            "VmRSS": 48173056,
+            "RssAnon": 31010816
+          },
+          "after_gc": {
+            "VmHWM": 48955392,
+            "VmRSS": 48173056,
+            "RssAnon": 31010816
+          },
+          "after": {
+            "VmHWM": 48955392,
+            "VmRSS": 45088768,
+            "RssAnon": 27926528
+          },
+          "quiet": {
+            "VmHWM": 48955392,
+            "VmRSS": 45088768,
+            "RssAnon": 27926528
+          },
+          "trim_result": 1,
+          "trim_ms": 0.428,
+          "collection_ms": 11.597
+        }
+      ]
+    },
+    {
+      "pair": 2,
+      "arm": "gc_and_trim",
+      "pid": 4132741,
+      "baseline": {
+        "VmHWM": 40960000,
+        "VmRSS": 40960000,
+        "RssAnon": 24842240
+      },
+      "passes": [
+        {
+          "stored": 300,
+          "changed": 0,
+          "items": 1023,
+          "ingest_ms": 334.85,
+          "before": {
+            "VmHWM": 47423488,
+            "VmRSS": 47423488,
+            "RssAnon": 30326784
+          },
+          "after_gc": {
+            "VmHWM": 47415296,
+            "VmRSS": 47415296,
+            "RssAnon": 30318592
+          },
+          "after": {
+            "VmHWM": 47001600,
+            "VmRSS": 44929024,
+            "RssAnon": 27832320
+          },
+          "quiet": {
+            "VmHWM": 47001600,
+            "VmRSS": 44929024,
+            "RssAnon": 27832320
+          },
+          "trim_result": 1,
+          "trim_ms": 0.331,
+          "collection_ms": 10.22
+        },
+        {
+          "stored": 300,
+          "changed": 0,
+          "items": 1023,
+          "ingest_ms": 297.45,
+          "before": {
+            "VmHWM": 48959488,
+            "VmRSS": 48123904,
+            "RssAnon": 31027200
+          },
+          "after_gc": {
+            "VmHWM": 48959488,
+            "VmRSS": 48123904,
+            "RssAnon": 31027200
+          },
+          "after": {
+            "VmHWM": 48959488,
+            "VmRSS": 45031424,
+            "RssAnon": 27934720
+          },
+          "quiet": {
+            "VmHWM": 48959488,
+            "VmRSS": 45031424,
+            "RssAnon": 27934720
+          },
+          "trim_result": 1,
+          "trim_ms": 0.401,
+          "collection_ms": 11.415
+        }
+      ]
+    },
+    {
+      "pair": 2,
+      "arm": "gc_only",
+      "pid": 4132787,
+      "baseline": {
+        "VmHWM": 40964096,
+        "VmRSS": 40964096,
+        "RssAnon": 24842240
+      },
+      "passes": [
+        {
+          "stored": 300,
+          "changed": 0,
+          "items": 1023,
+          "ingest_ms": 346.81,
+          "before": {
+            "VmHWM": 47480832,
+            "VmRSS": 47480832,
+            "RssAnon": 30318592
+          },
+          "after_gc": {
+            "VmHWM": 47472640,
+            "VmRSS": 47472640,
+            "RssAnon": 30310400
+          },
+          "after": {
+            "VmHWM": 47472640,
+            "VmRSS": 47472640,
+            "RssAnon": 30310400
+          },
+          "quiet": {
+            "VmHWM": 47472640,
+            "VmRSS": 47472640,
+            "RssAnon": 30310400
+          },
+          "trim_result": null,
+          "trim_ms": 0.002,
+          "collection_ms": 10.251
+        },
+        {
+          "stored": 300,
+          "changed": 0,
+          "items": 1023,
+          "ingest_ms": 289.14,
+          "before": {
+            "VmHWM": 51458048,
+            "VmRSS": 50552832,
+            "RssAnon": 33390592
+          },
+          "after_gc": {
+            "VmHWM": 51458048,
+            "VmRSS": 50552832,
+            "RssAnon": 33390592
+          },
+          "after": {
+            "VmHWM": 51458048,
+            "VmRSS": 50552832,
+            "RssAnon": 33390592
+          },
+          "quiet": {
+            "VmHWM": 51458048,
+            "VmRSS": 50544640,
+            "RssAnon": 33382400
+          },
+          "trim_result": null,
+          "trim_ms": 0.002,
+          "collection_ms": 18.145
+        }
+      ]
+    },
+    {
+      "pair": 3,
+      "arm": "gc_only",
+      "pid": 4132838,
+      "baseline": {
+        "VmHWM": 40996864,
+        "VmRSS": 40996864,
+        "RssAnon": 24842240
+      },
+      "passes": [
+        {
+          "stored": 300,
+          "changed": 0,
+          "items": 1023,
+          "ingest_ms": 322.37,
+          "before": {
+            "VmHWM": 47484928,
+            "VmRSS": 47484928,
+            "RssAnon": 30326784
+          },
+          "after_gc": {
+            "VmHWM": 47476736,
+            "VmRSS": 47476736,
+            "RssAnon": 30318592
+          },
+          "after": {
+            "VmHWM": 47476736,
+            "VmRSS": 47476736,
+            "RssAnon": 30318592
+          },
+          "quiet": {
+            "VmHWM": 47476736,
+            "VmRSS": 47476736,
+            "RssAnon": 30318592
+          },
+          "trim_result": null,
+          "trim_ms": 0.002,
+          "collection_ms": 9.873
+        },
+        {
+          "stored": 300,
+          "changed": 0,
+          "items": 1023,
+          "ingest_ms": 290.28,
+          "before": {
+            "VmHWM": 51261440,
+            "VmRSS": 50552832,
+            "RssAnon": 33394688
+          },
+          "after_gc": {
+            "VmHWM": 51261440,
+            "VmRSS": 50544640,
+            "RssAnon": 33386496
+          },
+          "after": {
+            "VmHWM": 51261440,
+            "VmRSS": 50544640,
+            "RssAnon": 33386496
+          },
+          "quiet": {
+            "VmHWM": 51261440,
+            "VmRSS": 50544640,
+            "RssAnon": 33386496
+          },
+          "trim_result": null,
+          "trim_ms": 0.002,
+          "collection_ms": 25.875
+        }
+      ]
+    },
+    {
+      "pair": 3,
+      "arm": "gc_and_trim",
+      "pid": 4132888,
+      "baseline": {
+        "VmHWM": 41046016,
+        "VmRSS": 41046016,
+        "RssAnon": 24838144
+      },
+      "passes": [
+        {
+          "stored": 300,
+          "changed": 0,
+          "items": 1023,
+          "ingest_ms": 352.14,
+          "before": {
+            "VmHWM": 47538176,
+            "VmRSS": 47538176,
+            "RssAnon": 30326784
+          },
+          "after_gc": {
+            "VmHWM": 47529984,
+            "VmRSS": 47529984,
+            "RssAnon": 30318592
+          },
+          "after": {
+            "VmHWM": 47071232,
+            "VmRSS": 45039616,
+            "RssAnon": 27828224
+          },
+          "quiet": {
+            "VmHWM": 47071232,
+            "VmRSS": 45039616,
+            "RssAnon": 27828224
+          },
+          "trim_result": 1,
+          "trim_ms": 0.281,
+          "collection_ms": 10.861
+        },
+        {
+          "stored": 300,
+          "changed": 0,
+          "items": 1023,
+          "ingest_ms": 318.22,
+          "before": {
+            "VmHWM": 49000448,
+            "VmRSS": 48242688,
+            "RssAnon": 31031296
+          },
+          "after_gc": {
+            "VmHWM": 49000448,
+            "VmRSS": 48234496,
+            "RssAnon": 31023104
+          },
+          "after": {
+            "VmHWM": 49000448,
+            "VmRSS": 45146112,
+            "RssAnon": 27934720
+          },
+          "quiet": {
+            "VmHWM": 49000448,
+            "VmRSS": 45146112,
+            "RssAnon": 27934720
+          },
+          "trim_result": 1,
+          "trim_ms": 0.413,
+          "collection_ms": 11.605
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "gc_only": {
+      "repeat_quiet_rss_bytes_median": 50544640,
+      "repeat_kernel_peak_bytes_max": 51486720,
+      "repeat_trim_ms_median": 0.002
+    },
+    "gc_and_trim": {
+      "repeat_quiet_rss_bytes_median": 45088768,
+      "repeat_kernel_peak_bytes_max": 49000448,
+      "repeat_trim_ms_median": 0.413
+    }
+  },
+  "release": "sha256:962efbbc09a12750cb1d894e0bb1133dfc850155679463e8e9438e97d15c3b4d",
+  "verified_utc": "2026-11-27T07:16:59.457406+00:00",
+  "guard": {
+    "request_id": "ea88b9463d084c6b9f5d8b535575d6c3",
+    "attempt_id": "643fcaae970943b49b6979298eb90d64",
+    "ssh_route": "phantom_ssh",
+    "admission": {
+      "accepted": true,
+      "decision": "accept",
+      "reason": "capacity",
+      "limits_verified": true,
+      "health": {
+        "available_ram_mib": 8153.65234375,
+        "available_disk_mib": 31560.6015625,
+        "load1": 0.25732421875,
+        "temp_c": 52.0,
+        "psi_some_avg10": {
+          "cpu": 0.0,
+          "memory": 0.0,
+          "io": 0.0
+        },
+        "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/chimera-peer-guest.service",
+        "limits": {
+          "memory_high": 429494272,
+          "memory_max": 536870912,
+          "swap_max": 0,
+          "tasks_max": 128,
+          "cpu_quota_pct": 95.0,
+          "io_write_bps": 8388608,
+          "io_devices": [
+            "8:0",
+            "8:2"
+          ]
+        },
+        "user_controllers": [
+          "cpu",
+          "io",
+          "memory",
+          "pids"
+        ],
+        "service_p95_ms": {
+          "http://127.0.0.1:9780/.well-known/chimera.json": 3.3505200408399105
+        },
+        "samples_per_service": 5,
+        "sample_age_s": 0.014628803823143244,
+        "measured_at": 1795763802.5727618
+      },
+      "effective_policy": {
+        "ram_reserve_mib": 2560,
+        "job_memory_mib": 512,
+        "disk_reserve_mib": 14306,
+        "job_disk_mib": 75,
+        "cpu_quota_pct": 95,
+        "max_tasks": 128,
+        "runtime_seconds": 180,
+        "psi_cpu_pct": 25.0,
+        "psi_memory_pct": 1.0,
+        "psi_io_pct": 5.0,
+        "max_load1": 1.8,
+        "max_temp_c": 70.0,
+        "service_urls": [
+          "http://127.0.0.1:9780/.well-known/chimera.json"
+        ],
+        "service_p95_ms": 150.0,
+        "service_samples": 5,
+        "service_timeout_s": 0.5,
+        "max_sample_age_s": 5.0,
+        "require_io_cap": true,
+        "io_write_bps": 8388608,
+        "disk_path": "/home/svhome"
+      }
+    },
+    "snapshot": "353d8c7a27d86657c112e0970c3eed1538111a3bf9eb6c96e724119711f7b07f",
+    "elapsed_end_to_end_ms": 18406.0
+  },
+  "artifact_sha256": "37dc5cbf69c30fe0d10848d449818abb0c15580b1acdcd0543dcb7c7187fc9ae"
+}
