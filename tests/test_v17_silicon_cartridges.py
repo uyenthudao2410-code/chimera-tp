@@ -146,10 +146,14 @@ class TestV17SiliconCartridges(unittest.TestCase):
         self.assertTrue(dup["already_completed"])
         self.assertEqual(dup["cached_result"]["items"], 12)
 
-        # Finish steps 2 & 3 -> job marks completed
-        self._post("/v1/jobs/step", {"job_id": "wf-radar-01", "step_key": "rank", "step_index": 2, "result": {"top": 3}})
-        _, fin = self._post("/v1/jobs/step", {"job_id": "wf-radar-01", "step_key": "notify", "step_index": 3, "result": {"sent": True}})
+        # A later checkpoint must not make resume skip an unfinished earlier step.
+        self._post("/v1/jobs/step", {"job_id": "wf-radar-01", "step_key": "notify", "step_index": 3, "result": {"sent": True}})
+        resumed = self._get("/v1/jobs/resume?job_id=wf-radar-01")
+        self.assertEqual(resumed["next_step_index"], 2)
+        self.assertEqual(resumed["completed_count"], 3)
+        _, fin = self._post("/v1/jobs/step", {"job_id": "wf-radar-01", "step_key": "rank", "step_index": 2, "result": {"top": 3}})
         self.assertEqual(fin["job_status"], "completed")
+        self.assertEqual(self._get("/v1/jobs/resume?job_id=wf-radar-01")["next_step_index"], 4)
 
     def test_03_browser_grid_lazy_zero_ram_and_cartridge_toggle(self) -> None:
         # Must consume 0 MB when idle (lazy launch)

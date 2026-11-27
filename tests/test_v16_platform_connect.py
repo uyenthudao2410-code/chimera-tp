@@ -12,7 +12,9 @@ import unittest
 import urllib.error
 import urllib.request
 from pathlib import Path
+from unittest.mock import patch
 
+from chimera_tp import __version__
 from chimera_tp.autopilot import OpsConfig
 from chimera_tp.dashboard import ChimeraDaemon
 from chimera_tp.platform import (
@@ -175,15 +177,34 @@ class TestV16PlatformConnect(unittest.TestCase):
         caps = self._get_json("/.well-known/chimera.json")
         self.assertTrue(caps["ok"])
         self.assertEqual(caps["schema"], "chimera.capabilities.v1")
+        self.assertEqual(caps["cartridge_status_basis"], "config_plus_live_evidence")
+        self.assertEqual(caps["cartridges"]["connect"]["evidence"]["verification_status"], "verified")
+        self.assertEqual(caps["cartridges"]["egress_membrane"]["evidence"]["verification_status"], "verified")
+        self.assertEqual(caps["cartridges"]["browser_grid"]["evidence"]["verification_status"], "unverified")
+        self.assertTrue(caps["cartridges"]["connect"]["enabled"])
         self.assertEqual(caps["anchor_url"], self.anchor)
         self.assertEqual(caps["egress_proxy_url"], self.proxy)
         self.assertIn("egress_membrane", caps["cartridges"])
         self.assertIn("pulse", caps["cartridges"])
         self.assertIn("hybrid_search", caps["cartridges"])
         self.assertIn("blackbox", caps["cartridges"])
+        self.assertEqual(caps["package_version"], __version__)
+        self.assertEqual(caps["version"], __version__)
+        health = self._get_json("/api/health")
+        self.assertEqual(health["package_version"], __version__)
+        self.assertEqual(health["version"], __version__)
+        self.assertEqual(health["api_version"], "12.0.0")
         self.assertTrue((self.ops_dir / "runtime.json").is_file())
 
-        smi = self._get_json("/v1/smi")
+        with urllib.request.urlopen(caps["cartridges"]["pulse"]["endpoint"], timeout=4) as response:
+            advertised = json.load(response)
+        self.assertTrue(advertised["ok"])
+        self.assertIn("latest_seq", advertised["pulse"])
+        self.assertEqual(advertised["pulse"].keys(), self._get_json("/v1/pulse/stats")["pulse"].keys())
+
+        with patch.object(self.daemon.platform.colab, "status", return_value={}) as remote_status:
+            smi = self._get_json("/v1/smi")
+        remote_status.assert_not_called()
         self.assertTrue(smi["ok"])
         rendered = render_smi(smi)
         self.assertIn("CHIMERA-SMI", rendered)

@@ -38,7 +38,16 @@ class TestV18Unify(unittest.TestCase):
             )
             (fake_home / ".codex").mkdir()
             (fake_home / ".codex" / "config.toml").write_text('model = "gpt-5"\n', encoding="utf-8")
-            (fake_home / ".gemini").mkdir()
+            (fake_home / ".codex" / "AGENTS.md").write_text("# Codex Global\n", encoding="utf-8")
+            (fake_home / ".gemini" / "config").mkdir(parents=True)
+            (fake_home / ".gemini" / "config" / "mcp_config.json").write_text(
+                json.dumps({"mcpServers": {"stitch": {"serverUrl": "https://example.invalid/mcp"}}}),
+                encoding="utf-8",
+            )
+            # Simulate T3 Code isolated Antigravity profile with a 0-byte config/mcp_config.json
+            t3_prof = fake_home / ".t3" / "userdata" / "providers" / "antigravity" / "abc1234567890" / "config"
+            t3_prof.mkdir(parents=True)
+            (t3_prof / "mcp_config.json").write_text("", encoding="utf-8")
 
             # Write fake runtime.json into fake_home/.chimera/
             rt_dir = fake_home / ".chimera"
@@ -79,11 +88,49 @@ class TestV18Unify(unittest.TestCase):
             codex_txt = (fake_home / ".codex" / "config.toml").read_text(encoding="utf-8")
             self.assertIn('model = "gpt-5"', codex_txt)
             self.assertIn("[mcp_servers.chimera]", codex_txt)
+            # Re-run unify_install with Windows backslashes to guard against re.sub backslash-halving in TOML!
+            res2 = unify_install(
+                dev_roots=[str(dev_root)],
+                anchor_url="http://127.0.0.1:9780",
+                proxy_url="http://127.0.0.1:9781",
+                install_env=True,
+                install_mcp=True,
+                install_beacons=True,
+                home_dir=fake_home,
+                site_target_dir=site_dir,
+                python_exe=r"C:\Program Files\Python311\python.exe",
+            )
+            self.assertTrue(res2["ok"])
+            import tomllib
+
+            parsed_toml = tomllib.loads((fake_home / ".codex" / "config.toml").read_text(encoding="utf-8"))
+            self.assertEqual(parsed_toml["mcp_servers"]["chimera"]["command"], r"C:\Program Files\Python311\python.exe")
+            # Restore original python_exe for subsequent assertions
+            unify_install(
+                dev_roots=[str(dev_root)],
+                anchor_url="http://127.0.0.1:9780",
+                proxy_url="http://127.0.0.1:9781",
+                install_env=True,
+                install_mcp=True,
+                install_beacons=True,
+                home_dir=fake_home,
+                site_target_dir=site_dir,
+            )
             self.assertTrue((fake_home / ".gemini" / "antigravity" / "mcp_config.json").is_file())
+            cli_mcp = json.loads((fake_home / ".gemini" / "config" / "mcp_config.json").read_text(encoding="utf-8"))
+            self.assertIn("stitch", cli_mcp["mcpServers"])
+            self.assertIn("chimera", cli_mcp["mcpServers"])
+            t3_mcp = json.loads((t3_prof / "mcp_config.json").read_text(encoding="utf-8"))
+            self.assertIn("chimera", t3_mcp["mcpServers"])
+            self.assertIn("chimera_xray_batch", (fake_home / ".codex" / "AGENTS.md").read_text(encoding="utf-8"))
+            self.assertIn("chimera_xray_batch", (fake_home / ".gemini" / "AGENTS.md").read_text(encoding="utf-8"))
 
             st = unify_status(home_dir=fake_home)
             self.assertTrue(st["unified"])
-            self.assertEqual(set(st["mcp_registered_agents"]), {"claude_code", "antigravity", "codex"})
+            self.assertEqual(
+                set(st["mcp_registered_agents"]),
+                {"claude_code", "antigravity", "antigravity_cli", "t3_antigravity:abc1234567", "codex"},
+            )
 
             # Simulate a BRAND-NEW project inside dev_root (NEVER ran `chimera-tp link`!) running Python with PYTHONPATH=autoload
             env = dict(os.environ)
@@ -118,6 +165,10 @@ class TestV18Unify(unittest.TestCase):
             self.assertIn("other_tool", claude_after["mcpServers"])
             self.assertNotIn("chimera", claude_after["mcpServers"])
             self.assertNotIn("[mcp_servers.chimera]", (fake_home / ".codex" / "config.toml").read_text(encoding="utf-8"))
+            t3_after = json.loads((t3_prof / "mcp_config.json").read_text(encoding="utf-8"))
+            self.assertNotIn("chimera", t3_after["mcpServers"])
+            self.assertEqual((fake_home / ".codex" / "AGENTS.md").read_text(encoding="utf-8").strip(), "# Codex Global")
+            self.assertFalse((fake_home / ".gemini" / "AGENTS.md").exists())
 
     def test_02_unified_openai_gateway_models_embeddings_and_chat_passthrough(self) -> None:
         # Mock local tquota LLM relay
