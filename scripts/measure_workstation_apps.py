@@ -108,7 +108,11 @@ def fold(current, previous):
     return {name: {k: round(n, 4) for k, n in v.items()} for name, v in totals.items()}
 
 
-def sample(seconds, interval):
+def sample(seconds, interval, *, webview_hosts=False):
+    observer = None
+    if webview_hosts:
+        from workstation_webviews import WebViewObservation, summarize
+        observer = WebViewObservation()
     start_utc = datetime.now(timezone.utc).isoformat()
     started = time.monotonic()
     rows = []
@@ -130,6 +134,8 @@ def sample(seconds, interval):
             "readable_processes": len(current), "unavailable_or_exited": denied, "machine": machine,
             "families": fold(current, previous),
         })
+        if observer is not None:
+            rows[-1]["webview2"] = observer.collect(current)
         previous = current
     summary = []
     for name in sorted({k for row in rows for k in row["families"]}):
@@ -147,6 +153,8 @@ def sample(seconds, interval):
         "observation_seconds": rows[-1]["elapsed_s"], "recorder_wall_seconds": round(time.monotonic() - started, 3),
         "samples": rows, "summary": sorted(summary, key=lambda r: -r["private_mib_median"]),
         "script_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        **({"webview2": summarize(rows), "webview_module_sha256": hashlib.sha256(
+            Path(__file__).with_name("workstation_webviews.py").read_bytes()).hexdigest()} if observer else {}),
         "scope": [
             "Live workstation. Group by the highest recorded ancestor below a Windows shell or service manager.",
             "Identically named executable families combine. A missing or recycled parent creates a new root.",
@@ -162,11 +170,13 @@ def main():
     parser.add_argument("--seconds", type=float, default=60)
     parser.add_argument("--interval", type=float, default=5)
     parser.add_argument("--out", type=Path, required=True)
+    parser.add_argument("--webview-hosts", action="store_true",
+                        help="Measure WebView2 private commit for each verified host application")
     args = parser.parse_args()
     if (os.name != "nt" or not 1 <= args.seconds <= 86400 or not 0.5 <= args.interval <= args.seconds
             or args.seconds / args.interval > 1440):
         parser.error("requires Windows, 1 s to 24 h duration and at most 1441 snapshots")
-    report = sample(args.seconds, args.interval)
+    report = sample(args.seconds, args.interval, webview_hosts=args.webview_hosts)
     args.out.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     print(json.dumps({"samples": len(report["samples"]), "top": report["summary"][:8]}, indent=2))
 

@@ -24,9 +24,22 @@ Hai tiến trình thực tế đã gọi cùng một build qua CLI `swarm` và M
 
 Để đối chiếu kết quả 24 giờ từ thư mục dự án, chạy `python -I -B -S scripts/check_daemon_soak.py tasks/live_daemon_soak_3bb6a24fb27c_win33212.json`. Lệnh đọc từng mẫu JSONL, đối chiếu PID, đỉnh kernel, thời lượng, hash biên nhận triển khai và các mốc kiểm nguồn. Mã thoát 0 xác nhận `passed`, 1 là đang đo, 2 là thất bại, mẫu đã cũ hoặc bằng chứng chưa đủ. Phép kiểm chỉ đọc tệp. [Mã đối chiếu](../scripts/check_daemon_soak.py) · [Nhật ký từng mẫu](../tasks/live_daemon_soak_3bb6a24fb27c_win33212.jsonl)
 
+## Mức dùng WebView2 của Teams và Outlook
+
+Sáng 27/11, Teams và Outlook đều mở trong 25/25 mẫu Windows, cách nhau khoảng 5 giây trong 121,375 giây. Cột toàn cây gồm cả phần WebView2. Cả hai cột đều là trung vị của bộ nhớ cam kết riêng (private commit), đơn vị MiB. [25 mẫu gốc](../tasks/workstation_webview_hosts_20261127T031023.json)
+
+| Ứng dụng | Toàn cây tiến trình | Riêng WebView2 | Số mẫu có ứng dụng |
+| --- | ---: | ---: | ---: |
+| Teams (`ms-teams.exe`) | 1.982,93 | 1.739,89 | 25/25 |
+| Outlook mới (`olk.exe`) | 877,46 | 860,85 | 25/25 |
+
+WebView2 trên toàn máy dùng trung vị 4.188,21 MiB. Tỷ lệ dành cho Teams và Outlook có trung vị 62,09% khi tính trên từng mẫu. Mỗi mẫu có 48–49 tiến trình WebView2 đọc được, tất cả đều quy được cho ứng dụng chủ. Một tiến trình trong kiểm kê toàn máy bị từ chối đọc hoặc đã thoát ở mỗi mẫu. Phép đo xác định chi phí của phiên desktop hiện tại. Mức thu hồi và khả năng thay thế bằng bản web vẫn chưa được đo.
+
+Bộ đếm Windows `Get-Process` lúc 10:13:56 UTC+7 ghi 48 tiến trình WebView2, tổng 4.437.155.840 byte, nằm giữa kết quả của hai lần quét kế cận. Trong một ảnh chụp đối chứng lúc 10:17, tổng theo tên image bằng đúng tổng theo ứng dụng chủ cộng phần chưa quy chủ, **4.634.341.376 byte cho 48 tiến trình**. [Bộ đo](../scripts/measure_workstation_apps.py) · [Kiểm thử nhận diện ứng dụng chủ](../tests/test_workstation_webviews.py)
+
 ## Mã phát triển và bản đang phục vụ
 
-Trên nhánh cục bộ `codex/workstation-integration-20261127`, bản `d3861f6` chuyển 11 module v9–v12 vào `chimera_tp.legacy`. Hai đường import trả cùng đối tượng module. Wheel Windows nạp đúng DLL và đọc được pickle cũ. Job Linux kiểm tra hai thứ tự import bằng thư viện native của release. Theo Ä‘á»‘i chiáº¿u trÆ°á»›c 10:00, hai daemon tiếp tục chạy `5e25fafe4a8f`. [Biên bản mã và wheel](../tasks/workstation_followup_20261127_legacy.json)
+Trên nhánh cục bộ `codex/workstation-integration-20261127`, bản `d3861f6` chuyển 11 module v9–v12 vào `chimera_tp.legacy`. Hai đường import trả cùng đối tượng module. Wheel Windows nạp đúng DLL và đọc được pickle cũ. Job Linux kiểm tra hai thứ tự import bằng thư viện native của release. Theo đối chiếu trước 10:00, hai daemon tiếp tục chạy `5e25fafe4a8f`. [Biên bản mã và wheel](../tasks/workstation_followup_20261127_legacy.json)
 
 Ba cặp tiến trình Linux cho RSS nghỉ trung vị 40,25 MiB với allocator mặc định và 40,11 MiB khi giới hạn hai arena. Sau khi gọi đồng thời các API tùy chọn, RSS lớn nhất trong các mẫu tương ứng là 48,48 và 46,64 MiB. Lượt thử có truyền dữ liệu bị guard ngắt do áp lực I/O. Cấu hình allocator thật được giữ nguyên. [Dữ liệu từng tiến trình](../tasks/svhome_allocator_startup_ab_5e25fafe4a8f.json)
 
