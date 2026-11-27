@@ -1,0 +1,171 @@
+{
+  "schema": "chimera.cad.workspace-dependencies/1",
+  "verified_utc": "2026-11-26T14:09:37.619Z",
+  "template": "C:\\Program Files\\Autodesk\\AutoCAD 2027\\Sample\\Database Connectivity\\Floor Plan Sample.dwg",
+  "template_sha256": "19270c23e56e407aab2ade3644e8f301c34e390638d99c3f0cc4f2d3a6516792",
+  "console": "C:\\Program Files\\Autodesk\\AutoCAD 2027\\accoreconsole.exe",
+  "native_mode": "AutoCAD Core Console read-only open of the restored host, queried through its loaded nested block",
+  "original_and_sender_unavailable_before_restore": true,
+  "receiver_stores": 2,
+  "measurements": [
+    {
+      "sequence": 1,
+      "capsule_sha256": "8934ff7cb2cac9fb5fba1e898a97f3cdd69cb593c9b95b14be3946334028467e",
+      "archive_bytes": 769387,
+      "capsule_objects_checked_offline": 3,
+      "restored_files": 3,
+      "members": [
+        {
+          "path": "Host.dwg",
+          "sha256": "351b613099053ba66f76279e696112e9f5503f91d4f975e31a76cdabc7dae3ca",
+          "bytes": 252992,
+          "links": [
+            "refs/Assembly.dwg",
+            "refs/parts/Valve.dwg"
+          ]
+        },
+        {
+          "path": "refs/Assembly.dwg",
+          "sha256": "ed35d2e2b02f2f139cad3adf162a44734b956ac747accd7fd9f5cf1112f919e8",
+          "bytes": 252480,
+          "links": [
+            "refs/parts/Valve.dwg"
+          ]
+        },
+        {
+          "path": "refs/parts/Valve.dwg",
+          "sha256": "0da96dbccb891efd4083442703450689c4287c843f6d0925ce852cfc381cf950",
+          "bytes": 254240,
+          "links": []
+        }
+      ],
+      "xrefs": [
+        {
+          "source": "Host.dwg",
+          "block": "Assembly",
+          "saved_path": ".\\refs\\Assembly.dwg",
+          "native_flags": 36,
+          "destination": "refs/Assembly.dwg"
+        },
+        {
+          "source": "Host.dwg",
+          "block": "Valve",
+          "saved_path": ".\\refs\\parts\\Valve.dwg",
+          "native_flags": 36,
+          "destination": "refs/parts/Valve.dwg"
+        },
+        {
+          "source": "refs/Assembly.dwg",
+          "block": "Valve",
+          "saved_path": ".\\parts\\Valve.dwg",
+          "native_flags": 36,
+          "destination": "refs/parts/Valve.dwg"
+        }
+      ],
+      "native_host": {
+        "direct_native_flags": 36,
+        "nested_native_flags": 36,
+        "inserted_top_blocks": 1,
+        "inserted_leaf_blocks_in_assembly": 1,
+        "handle": "B4B8",
+        "qualified_layer": "Valve|CHIMERA_CAPSULE_FEATURE",
+        "radius": 17,
+        "center": [
+          901.25,
+          912.75,
+          0
+        ],
+        "open_ms": 3290.4
+      }
+    },
+    {
+      "sequence": 2,
+      "capsule_sha256": "c43556e0e33eeea9516519fb58610208ee64b7deee93fb2ce3dcba9f720e667b",
+      "archive_bytes": 769130,
+      "capsule_objects_checked_offline": 3,
+      "restored_files": 3,
+      "members": [
+        {
+          "path": "Host.dwg",
+          "sha256": "351b613099053ba66f76279e696112e9f5503f91d4f975e31a76cdabc7dae3ca",
+          "bytes": 252992,
+          "links": [
+            "refs/Assembly.dwg",
+            "refs/parts/Valve.dwg"
+          ]
+        },
+        {
+          "path": "refs/Assembly.dwg",
+          "sha256": "ed35d2e2b02f2f139cad3adf162a44734b956ac747accd7fd9f5cf1112f919e8",
+          "bytes": 252480,
+          "links": [
+            "refs/parts/Valve.dwg"
+          ]
+        },
+        {
+          "path": "refs/parts/Valve.dwg",
+          "sha256": "81960945e54310e3a19c4cde9fb179f4fff2c76a9d2e570fe7e9564e9ede34b7",
+          "bytes": 253984,
+          "links": []
+        }
+      ],
+      "xrefs": [
+        {
+          "source": "Host.dwg",
+          "block": "Assembly",
+          "saved_path": ".\\refs\\Assembly.dwg",
+          "native_flags": 36,
+          "destination": "refs/Assembly.dwg"
+        },
+        {
+          "source": "Host.dwg",
+          "block": "Valve",
+          "saved_path": ".\\refs\\parts\\Valve.dwg",
+          "native_flags": 36,
+          "destination": "refs/parts/Valve.dwg"
+        },
+        {
+          "source": "refs/Assembly.dwg",
+          "block": "Valve",
+          "saved_path": ".\\parts\\Valve.dwg",
+          "native_flags": 36,
+          "destination": "refs/parts/Valve.dwg"
+        }
+      ],
+      "native_host": {
+        "direct_native_flags": 36,
+        "nested_native_flags": 36,
+        "inserted_top_blocks": 1,
+        "inserted_leaf_blocks_in_assembly": 1,
+        "handle": "B4B8",
+        "qualified_layer": "Valve|CHIMERA_CAPSULE_FEATURE",
+        "radius": 29.5,
+        "center": [
+          901.25,
+          912.75,
+          0
+        ],
+        "open_ms": 3370
+      }
+    }
+  ],
+  "stale_graph_capture": "stale_workspace_member:refs/parts/Valve.dwg",
+  "missing_file": {
+    "path": "refs/parts/Valve.dwg",
+    "reason": "missing"
+  },
+  "native_missing_xref": "refs/parts/Valve.dwg",
+  "outside_selection": "external_workspace_path",
+  "partial_archives_or_destination_after_rejection": false,
+  "scope": "Selected saved DWG XREF tree. Native fonts, images, PDF underlays, plot styles, unsaved GUI state and first interactive frame are outside this measurement.",
+  "temporary_fixtures_removed": true,
+  "template_unchanged": true,
+  "source_sha256": {
+    "chimera_tp/platform/workspace_capsule.py": "ade68a5bf01b92e0e66be2273e104cb9b1e67229289b616aadfc55f4e5b4c918",
+    "chimera_tp/platform/file_revisions.py": "b14e7068ad2fcb153d1b3b99a15d4ca3a763e2c75d9cffe50dd678f4dfef2f53",
+    "scripts/cad_xref_console.mjs": "860abb0579f1e7b70137a70a3f7ce7fcf0f961c149c1734c02e68182c8340ccc",
+    "scripts/cad_workspace_capsule.mjs": "b1f1b76c8ca21ad6f421e5026ec26aed249ca8026e49668196f09aabf2c981ad",
+    "scripts/verify_cad_workspace_dependencies.mjs": "b62904f0e1df2848d00fe7b13f64db20ba6d2d3fa3046c493b5cf9602d82d359",
+    "tests/test_workspace_capsule.py": "d5c020088df48a93be008a3a010d063d6b7f68f1c9ac5ad52acf38bad492556a"
+  }
+}

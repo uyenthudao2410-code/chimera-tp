@@ -1,0 +1,120 @@
+{
+  "date_utc": "2026-11-26T13:30:57.793Z",
+  "synthetic": true,
+  "reproduce": "node scripts/verify_source_recall.mjs --out tasks/source_recall_verification.json",
+  "fixture_dependencies": [
+    "reportlab",
+    "psutil",
+    "pypdfium2",
+    "playwright",
+    "Google Chrome"
+  ],
+  "environment": {
+    "platform": "Windows-10-10.0.29683-SP0",
+    "python": "3.11.7",
+    "sqlite": "3.43.1",
+    "node": "24.19.0",
+    "pypdfium2": "4.30.0",
+    "chrome": "157.0.8103.81"
+  },
+  "corpus": {
+    "passages": 1031,
+    "distinct_sources": 36,
+    "scopes": 2,
+    "queries": 28,
+    "includes": [
+      "Vietnamese with and without accents",
+      "local files with equal names",
+      "two PDF pages",
+      "two quotes in one HTTPS section",
+      "overlapping text in different scopes",
+      "1024 recurring maintenance records across 32 source URLs",
+      "no-match queries"
+    ]
+  },
+  "accuracy": {
+    "single_target_top1_correct": 23,
+    "single_target_queries": 23,
+    "complete_multi_hit_sets": 3,
+    "multi_hit_queries": 3,
+    "expected_hits_recovered": 29,
+    "expected_hits_total": 29,
+    "correct_empty_queries": 2,
+    "exact_id_and_context_on_positive_show": 26
+  },
+  "continuity": {
+    "same_size_replacement": "changed",
+    "deleted_source": "missing",
+    "original_passage_retained": true,
+    "repeat_save_same_id": true,
+    "web_rechecked_over_network": false
+  },
+  "latency": {
+    "warm_in_process_find": {
+      "n": 560,
+      "p50_ms": 1.087,
+      "p95_ms": 1.65
+    },
+    "cold_cli_find": {
+      "n": 28,
+      "p50_ms": 435.014,
+      "p95_ms": 617.285
+    },
+    "two_fresh_cli_find_then_show": {
+      "n": 26,
+      "p50_ms": 880.281,
+      "p95_ms": 1381.943
+    },
+    "fresh_find_to_pdfium_render": {
+      "n": 6,
+      "p50_ms": 1219.152,
+      "p95_ms": 1447.88
+    },
+    "fresh_find_to_offline_chrome_visible_excerpt": {
+      "n": 4,
+      "p50_ms": 2289.191,
+      "p95_ms": 2485.431
+    },
+    "method": "Wall clock, median and nearest-rank p95. Warm uses 1 discarded plus 20 measured rounds, a fresh read-only SQLite connection per find, OS cache warm. Cold denotes a new Python process per command, no OS-cache flush. Viewer timings include search, open command, rendering/viewport acknowledgement, process cleanup and the verification harness."
+  },
+  "storage": {
+    "recall.sqlite": 503808
+  },
+  "rss_bytes": {
+    "before_recall_import": 32976896,
+    "after": 43712512,
+    "max_sampled_after_each_round": 43712512,
+    "process_peak_working_set": 43720704
+  },
+  "rss_method": "Fresh query worker separate from corpus seeding. psutil RSS before importing recall, after 21 rounds, maximum sampled at round boundaries and OS peak working set where available. Includes Python and measurement harness.",
+  "rendered_pages": [
+    {
+      "page": 2,
+      "text": "Seal opening pressure 18 bar",
+      "width": 420,
+      "height": 300,
+      "pixel_sha256": "411f8dcefb303f851426aebb04ac8f0f7838fea502261c091a6baffd5b10a29d"
+    },
+    {
+      "page": 4,
+      "text": "Seal closing pressure 11 bar",
+      "width": 420,
+      "height": 300,
+      "pixel_sha256": "7646f73304e83071918f4707fe0d814ecdefd93b947212b19471a552871c9b08"
+    }
+  ],
+  "isolated_chrome_visible_quotes": [
+    {
+      "text": "Tăng điện áp nhánh tải A",
+      "scroll_y": 1246
+    },
+    {
+      "text": "Giảm điện áp nhánh tải B",
+      "scroll_y": 2764
+    }
+  ],
+  "limits": [
+    "Labeled synthetic corpus on one workstation; no personal history or search logs.",
+    "At desktop dispatch the harness uses PDFium or a fresh headless Chrome, offline with intercepted authored HTML. Exact PDF pages and viewport text verified. Foreground desktop interaction and live websites are unmeasured."
+  ]
+}

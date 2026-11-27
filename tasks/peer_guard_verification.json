@@ -1,0 +1,139 @@
+{
+  "schema": "chimera.peer_guard_verification.v1",
+  "time_local": "2026-11-26T19:26:09.196349+07:00",
+  "node": "svhome",
+  "source_sha256": {
+    "peer_guard.py": "608c295369292294fa6959885070bf46978c223b6a9bc0cedcec586b3e7a2c4c",
+    "work_admission.py": "d9a2dbf91e20001e4cb4258102f491e0546e26c8344411cfba51c340cdf8e9dc",
+    "test_peer_guard.py": "9ce9df507d38b9bec802ff717037c7a8b6add78a1ca116594627394262810513"
+  },
+  "healthy": {
+    "accepted": true,
+    "reason": "capacity",
+    "health": {
+      "available_ram_mib": 6536.01171875,
+      "available_disk_mib": 34445.49609375,
+      "temp_c": 46,
+      "psi_some_avg10": {
+        "cpu": 0.13,
+        "memory": 0,
+        "io": 0.05
+      },
+      "cgroup": "/user.slice/user-1000.slice/session-18564.scope",
+      "limits": {
+        "memory_high": null,
+        "memory_max": null,
+        "swap_max": null,
+        "tasks_max": 28575,
+        "cpu_quota_pct": null,
+        "io_write_bps": null,
+        "io_devices": [
+          "8:0",
+          "8:2"
+        ]
+      },
+      "user_controllers": [
+        "cpu",
+        "memory",
+        "pids"
+      ],
+      "service_p95_ms": {
+        "http://127.0.0.1:9780/.well-known/chimera.json": 4.061399959027767
+      },
+      "samples_per_service": 5,
+      "sample_age_s": 0.013883193023502827,
+      "measured_at": 1795695963.0766642
+    }
+  },
+  "required_io_cap": {
+    "accepted": false,
+    "reason": "io_cap_unavailable"
+  },
+  "unavailable_protected_service": {
+    "accepted": false,
+    "reason": "service_unavailable",
+    "details": {
+      "endpoint": "http://127.0.0.1:1/health",
+      "error": "ConnectionRefusedError"
+    }
+  },
+  "memory_over_receiver_max": {
+    "accepted": false,
+    "reason": "job_budget_exceeds_receiver_policy",
+    "details": {
+      "field": "job_memory_mib",
+      "requested": 2049,
+      "maximum": 2048
+    }
+  },
+  "aether_cli": {
+    "command": "python -m chimera_tp aether --state <temporary-directory> batch --remote-root /home/svhome/DEV/chimera-tp/tests",
+    "observed": {
+      "target": "peer",
+      "peer_online": true,
+      "preview": "capacity",
+      "job_state": "finished",
+      "files": 27,
+      "error_count": 0,
+      "actual_limits": {
+        "memory_high": 214745088,
+        "memory_max": 268435456,
+        "swap_max": 0,
+        "tasks_max": 128,
+        "cpu_quota_pct": 100,
+        "io_write_bps": null,
+        "io_devices": [
+          "8:0",
+          "8:2"
+        ]
+      },
+      "actual_p95_ms": {
+        "http://127.0.0.1:9780/.well-known/chimera.json": 3.461084794253111
+      },
+      "reason": null
+    }
+  },
+  "concurrent_ssh_processes": {
+    "first_and_second": {
+      "holder": {
+        "ready": true,
+        "limits": {
+          "memory_high": 214745088,
+          "memory_max": 268435456,
+          "swap_max": 0,
+          "tasks_max": 128,
+          "cpu_quota_pct": 100,
+          "io_write_bps": null,
+          "io_devices": [
+            "8:0",
+            "8:2"
+          ]
+        }
+      },
+      "contender": {
+        "state": "deferred",
+        "reason": "guest_slot_busy",
+        "detail": null
+      }
+    },
+    "after_release": {
+      "holder_exit": 0,
+      "next_job": "finished",
+      "files": 27,
+      "errors": [],
+      "limits_verified": true
+    }
+  },
+  "tests": {
+    "windows": {
+      "command": "python -B -m pytest -p no:cacheprovider -q tests/test_peer_guard.py tests/test_aether_workstation.py",
+      "outcome": "15 passed, 2 skipped, 18 subtests passed in 4.75s"
+    },
+    "linux": {
+      "target": "svhome",
+      "scope": "tests/test_peer_guard.py using the workspace source over SSH stdin, including SIGKILL of a lock holder",
+      "outcome": "........\r\n----------------------------------------------------------------------\r\nRan 8 tests in 0.032s\r\n\r\nOK"
+    }
+  },
+  "measurement_scope": "The latency sample used five HTTP GETs to the CHIMERA beacon on the receiver. It measures this health endpoint during admission; it is not a sustained workload or an AutoCAD frame capture."
+}

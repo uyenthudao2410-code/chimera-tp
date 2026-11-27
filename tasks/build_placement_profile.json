@@ -1,0 +1,292 @@
+{
+  "schema": "chimera.verified-placement-trial/1",
+  "verified_utc": "2026-11-26T14:12:20.683105+00:00",
+  "scope": "Opt-in measurement of deadline for a fresh reproducible ZIP, not interactive CAD.",
+  "module_sha256": {
+    "build_snapshot.py": "5eb849c4348792fe33cb2d42aba754ee191f1291e7f2d18cdd2cd2bfc8d61ca3",
+    "build_registry.py": "272482b8ea92f53f1eaf0c206de416aba4490c4026dec56f936ac4f84ebb2088",
+    "peer_guard.py": "3aa6c68a9572a294b7bf1af3c402ef2dc521bc69ce31056a67172203059b94f8",
+    "result_reuse.py": "37d8136856487666a1fad1fa9cbfc082d62345709849c0433d627bb4e8b8fd5f"
+  },
+  "artifact_bytes": 34731,
+  "artifact_sha256": "c5a3a086445281cc45fc01e414aeb2225087befc99c1ac583864e1e855603778",
+  "oracle": "ZIP entries equal original bytes",
+  "snapshot": "34922c7d0a004657d2d0d94c26b40f2171dfbd5eb6828485eb04b17e7f9425af",
+  "runtime_sha256": "81fbc3a5e4f5565420bde431fb95bc15d59784e364eb00e2516b35383ae4295a",
+  "trials": [
+    {
+      "pair": 1,
+      "site": "local",
+      "wall_ms": 265.00000001396984,
+      "state": "completed",
+      "delivery": "executed",
+      "attempt_id": "cf7f4955c4174d16a322702e80d9b693",
+      "artifacts": {
+        "sources.zip": [
+          "c5a3a086445281cc45fc01e414aeb2225087befc99c1ac583864e1e855603778",
+          34731
+        ]
+      },
+      "client_timing_ms": {
+        "setup": 0.0,
+        "snapshot": 62.0,
+        "dispatch_or_join": 203.0
+      }
+    },
+    {
+      "pair": 1,
+      "site": "svhome",
+      "wall_ms": 2297.000000020489,
+      "state": "completed",
+      "delivery": "executed",
+      "attempt_id": "49348d04555a4616ad18d76643d51750",
+      "artifacts": {
+        "sources.zip": [
+          "c5a3a086445281cc45fc01e414aeb2225087befc99c1ac583864e1e855603778",
+          34731
+        ]
+      },
+      "client_timing_ms": {
+        "setup": 0.0,
+        "snapshot": 47.0,
+        "dispatch_or_join": 2250.0
+      },
+      "attempt_timing_ms": {
+        "admission_ms": 15.248,
+        "workspace_ms": 2.277,
+        "command_ms": 64.995,
+        "outputs_ms": 0.463,
+        "cleanup_ms": 0.313,
+        "total_ms": 83.296
+      },
+      "ssh_exchange_ms": 2250.0,
+      "ssh_request_bytes": 32794,
+      "reaped_child_cpu_ms": 56.221,
+      "process_wall_ms": 64.691
+    },
+    {
+      "pair": 2,
+      "site": "svhome",
+      "wall_ms": 2234.000000025844,
+      "state": "completed",
+      "delivery": "executed",
+      "attempt_id": "1d3b47e7b6024687941efb3139cbc0b9",
+      "artifacts": {
+        "sources.zip": [
+          "c5a3a086445281cc45fc01e414aeb2225087befc99c1ac583864e1e855603778",
+          34731
+        ]
+      },
+      "client_timing_ms": {
+        "setup": 0.0,
+        "snapshot": 78.0,
+        "dispatch_or_join": 2156.0
+      },
+      "attempt_timing_ms": {
+        "admission_ms": 13.898,
+        "workspace_ms": 2.3,
+        "command_ms": 65.092,
+        "outputs_ms": 0.451,
+        "cleanup_ms": 0.354,
+        "total_ms": 82.095
+      },
+      "ssh_exchange_ms": 2156.0,
+      "ssh_request_bytes": 32794,
+      "reaped_child_cpu_ms": 54.763,
+      "process_wall_ms": 64.769
+    },
+    {
+      "pair": 2,
+      "site": "local",
+      "wall_ms": 234.0000000258442,
+      "state": "completed",
+      "delivery": "executed",
+      "attempt_id": "bc2fd841582e49f4a2baf1c76d6bded4",
+      "artifacts": {
+        "sources.zip": [
+          "c5a3a086445281cc45fc01e414aeb2225087befc99c1ac583864e1e855603778",
+          34731
+        ]
+      },
+      "client_timing_ms": {
+        "setup": 0.0,
+        "snapshot": 31.0,
+        "dispatch_or_join": 203.0
+      }
+    },
+    {
+      "pair": 3,
+      "site": "local",
+      "wall_ms": 202.9999999795109,
+      "state": "completed",
+      "delivery": "executed",
+      "attempt_id": "a5bec66d4c7444d5ace5ccb5c0f0a92a",
+      "artifacts": {
+        "sources.zip": [
+          "c5a3a086445281cc45fc01e414aeb2225087befc99c1ac583864e1e855603778",
+          34731
+        ]
+      },
+      "client_timing_ms": {
+        "setup": 0.0,
+        "snapshot": 47.0,
+        "dispatch_or_join": 156.0
+      }
+    },
+    {
+      "pair": 3,
+      "site": "svhome",
+      "wall_ms": 2312.000000005355,
+      "state": "completed",
+      "delivery": "executed",
+      "attempt_id": "e748545cce5c4454acc8d6012466dfef",
+      "artifacts": {
+        "sources.zip": [
+          "c5a3a086445281cc45fc01e414aeb2225087befc99c1ac583864e1e855603778",
+          34731
+        ]
+      },
+      "client_timing_ms": {
+        "setup": 0.0,
+        "snapshot": 47.0,
+        "dispatch_or_join": 2265.0
+      },
+      "attempt_timing_ms": {
+        "admission_ms": 13.576,
+        "workspace_ms": 2.234,
+        "command_ms": 65.018,
+        "outputs_ms": 0.481,
+        "cleanup_ms": 0.347,
+        "total_ms": 81.655
+      },
+      "ssh_exchange_ms": 2265.0,
+      "ssh_request_bytes": 32794,
+      "reaped_child_cpu_ms": 56.777,
+      "process_wall_ms": 64.701
+    },
+    {
+      "pair": 4,
+      "site": "svhome",
+      "wall_ms": 2405.9999999881256,
+      "state": "completed",
+      "delivery": "executed",
+      "attempt_id": "5fc2d646f6ca45eeb52850d05622a2c3",
+      "artifacts": {
+        "sources.zip": [
+          "c5a3a086445281cc45fc01e414aeb2225087befc99c1ac583864e1e855603778",
+          34731
+        ]
+      },
+      "client_timing_ms": {
+        "setup": 0.0,
+        "snapshot": 31.0,
+        "dispatch_or_join": 2375.0
+      },
+      "attempt_timing_ms": {
+        "admission_ms": 13.607,
+        "workspace_ms": 2.286,
+        "command_ms": 65.125,
+        "outputs_ms": 0.47,
+        "cleanup_ms": 0.368,
+        "total_ms": 81.856
+      },
+      "ssh_exchange_ms": 2375.0,
+      "ssh_request_bytes": 32794,
+      "reaped_child_cpu_ms": 54.788,
+      "process_wall_ms": 64.789
+    },
+    {
+      "pair": 4,
+      "site": "local",
+      "wall_ms": 233.99999999674037,
+      "state": "completed",
+      "delivery": "executed",
+      "attempt_id": "20985cf7aa7848abacf65fbb9d001b34",
+      "artifacts": {
+        "sources.zip": [
+          "c5a3a086445281cc45fc01e414aeb2225087befc99c1ac583864e1e855603778",
+          34731
+        ]
+      },
+      "client_timing_ms": {
+        "setup": 0.0,
+        "snapshot": 47.0,
+        "dispatch_or_join": 187.0
+      }
+    },
+    {
+      "pair": 5,
+      "site": "local",
+      "wall_ms": 203.00000000861473,
+      "state": "completed",
+      "delivery": "executed",
+      "attempt_id": "d1abd3ad4a1246bd9c2d0d935995fc8c",
+      "artifacts": {
+        "sources.zip": [
+          "c5a3a086445281cc45fc01e414aeb2225087befc99c1ac583864e1e855603778",
+          34731
+        ]
+      },
+      "client_timing_ms": {
+        "setup": 0.0,
+        "snapshot": 47.0,
+        "dispatch_or_join": 156.0
+      }
+    },
+    {
+      "pair": 5,
+      "site": "svhome",
+      "wall_ms": 2218.9999999827705,
+      "state": "completed",
+      "delivery": "executed",
+      "attempt_id": "13d1c4b9a0284ac78e281f206e367ad5",
+      "artifacts": {
+        "sources.zip": [
+          "c5a3a086445281cc45fc01e414aeb2225087befc99c1ac583864e1e855603778",
+          34731
+        ]
+      },
+      "client_timing_ms": {
+        "setup": 0.0,
+        "snapshot": 63.0,
+        "dispatch_or_join": 2156.0
+      },
+      "attempt_timing_ms": {
+        "admission_ms": 14.046,
+        "workspace_ms": 2.213,
+        "command_ms": 65.208,
+        "outputs_ms": 0.446,
+        "cleanup_ms": 0.315,
+        "total_ms": 82.228
+      },
+      "ssh_exchange_ms": 2156.0,
+      "ssh_request_bytes": 32794,
+      "reaped_child_cpu_ms": 54.744,
+      "process_wall_ms": 64.785
+    }
+  ],
+  "comparison": {
+    "selected": "local",
+    "median_paired_peer_to_local": 10.282051282143767,
+    "median_ms": {
+      "local": 233.99999999674037,
+      "svhome": 2297.000000020489
+    },
+    "peer_faster_pairs": 0,
+    "pairs": 5,
+    "paired_ratio_range": [
+      8.667924527922263,
+      11.38916256275226
+    ]
+  },
+  "selected_cli_receipt": {
+    "target": "local",
+    "delivery": "executed",
+    "attempt_id": "f5eda326915c482a9c400798cc345e4e",
+    "wall_ms": 282.0
+  },
+  "repeat_delivery": "cached",
+  "edited_input": "placement_inputs_changed",
+  "different_dependencies": "placement_profile_or_environment_changed",
+  "fixture_removed": true
+}

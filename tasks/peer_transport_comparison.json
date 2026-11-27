@@ -1,0 +1,1290 @@
+{
+  "schema": "chimera.peer-transport-comparison/1",
+  "recorded_utc": "2026-11-26T16:01:35.259Z",
+  "scope": "Fixed 400-byte SHA-256 over authenticated stdio. One measured remote reservation per process and a full peer_guard recheck for each frame. Diagnostic only.",
+  "definitions": {
+    "cold": "From spawning Python/SSH to first verified digest. Includes strict host authentication, module transfer, systemd, admission and first guard check on the peer.",
+    "warm": "From writing the second digest request to receiving its full line on an already admitted process; each request still probes actual loopback services.",
+    "remaining": "Entire warm round trip minus worker guard and SHA time; includes framing, queues, scheduling, pipes, network and client parsing.",
+    "tail_rss": "Current resident bytes of the hash worker read after stdin EOF, before teardown. Peak from VmHWM or PeakWorkingSetSize. Excludes SSH and daemon."
+  },
+  "content": {
+    "operation": "sha256",
+    "bytes_per_payload": 400,
+    "independent_oracle": "Node.js SHA-256 against CPython hashlib",
+    "worker_package_sha256": "af5bcc8e3c78cd26d8a1fe5342b557e7f41f05eb4fc8c13a3bbcb9b62b34b46b",
+    "package_bytes": 9308,
+    "module_sha256": {
+      "__main__.py": "f51723f6f23e707f21e0698d0c47e8e3f4fc2b1f44a1908d04c41a62bf5ef3e2",
+      "peer_guard.py": "3708ac05c63712bf0c248a3ab14e06c3208dba9e191b9f3e174b7dee668316d2"
+    },
+    "harness_sha256": "4d287797d4acc78b57f746620281d354fef6754e95965a2b35f938e2ea96d895"
+  },
+  "before": {
+    "measured_utc": "2026-11-26T16:01:05.059Z",
+    "ssh_alias": "svhome",
+    "peer_ip": "100.116.112.22",
+    "phantom": {
+      "connected": true,
+      "mode": "PHANTOM_5MS_DIRECT",
+      "rtt_ms": 5.25,
+      "pong_age_s": 6.9,
+      "pong_stale": false,
+      "listeners": {
+        "22": 2222,
+        "9780": 9789,
+        "12500": 12550
+      },
+      "reconnects": 2,
+      "rx_bytes": 77512363,
+      "tx_bytes": 87086608
+    },
+    "tunnelled_peer": {
+      "node_name": "svhome",
+      "pid": 3871360,
+      "version": "21.0.0",
+      "os": "linux"
+    },
+    "tailscale": [
+      {
+        "route": "DERP(hkg)",
+        "rtt_ms": 80
+      },
+      {
+        "route": "DERP(hkg)",
+        "rtt_ms": 78
+      },
+      {
+        "route": "DERP(hkg)",
+        "rtt_ms": 78
+      }
+    ]
+  },
+  "rows": [
+    {
+      "round": 1,
+      "order": [
+        "windows",
+        "alias",
+        "phantom"
+      ],
+      "expected_sha256": [
+        "96860c7f4b009bbb5ec14274b82e0765389ca722aa8dde23bd33f505fc017836",
+        "ec43275d3414fcce9d5ea8d184533781e113cea34c258a9c6a7f7940cafcbce8"
+      ],
+      "arms": {
+        "windows": {
+          "setup_ms": 96.978,
+          "closed_ms": 107.785,
+          "deferrals": 0,
+          "host": "DESKTOP-63643J4",
+          "receiver_pid": 32188,
+          "python": "3.11.7",
+          "admission": null,
+          "frames": [
+            {
+              "warm_ms": 0.30979999899864197,
+              "elapsed_from_start_ms": 97.41050001978874,
+              "worker_check_ms": 0.0004,
+              "worker_sha_ms": 0.048,
+              "all_other_ms": 0.26139999899864197,
+              "request_bytes": 583,
+              "sha256": "96860c7f4b009bbb5ec14274b82e0765389ca722aa8dde23bd33f505fc017836",
+              "service_p95_ms": {}
+            },
+            {
+              "warm_ms": 0.1727999746799469,
+              "elapsed_from_start_ms": 97.63879999518394,
+              "worker_check_ms": 0.0004,
+              "worker_sha_ms": 0.0044,
+              "all_other_ms": 0.1679999746799469,
+              "request_bytes": 583,
+              "sha256": "ec43275d3414fcce9d5ea8d184533781e113cea34c258a9c6a7f7940cafcbce8",
+              "service_p95_ms": {}
+            }
+          ],
+          "rss_at_ready": {
+            "current": 20639744,
+            "peak": 20652032
+          },
+          "rss_at_tail": {
+            "current": 20738048,
+            "peak": 20738048
+          }
+        },
+        "alias": {
+          "setup_ms": 2067.592,
+          "closed_ms": 2426.648,
+          "deferrals": 0,
+          "host": "svhome",
+          "receiver_pid": 3920302,
+          "python": "3.14.4",
+          "admission": {
+            "limits_verified": true,
+            "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/chimera-peer-guest.service",
+            "memory_max": 134217728,
+            "ram_reserve_mib": 2560,
+            "disk_reserve_mib": 14306,
+            "services": [
+              "http://127.0.0.1:8787/api/health",
+              "http://127.0.0.1:9780/.well-known/chimera.json"
+            ]
+          },
+          "frames": [
+            {
+              "warm_ms": 95.09020000696182,
+              "elapsed_from_start_ms": 2162.7718000113964,
+              "worker_check_ms": 15.904461,
+              "worker_sha_ms": 0.033948,
+              "all_other_ms": 79.15179100696182,
+              "request_bytes": 583,
+              "sha256": "96860c7f4b009bbb5ec14274b82e0765389ca722aa8dde23bd33f505fc017836",
+              "service_p95_ms": {
+                "http://127.0.0.1:9780/.well-known/chimera.json": 1.9404273480176926,
+                "http://127.0.0.1:8787/api/health": 0.894246157258749
+              }
+            },
+            {
+              "warm_ms": 99.07570001482964,
+              "elapsed_from_start_ms": 2261.9459000229836,
+              "worker_check_ms": 20.080049,
+              "worker_sha_ms": 0.015684,
+              "all_other_ms": 78.97996701482964,
+              "request_bytes": 583,
+              "sha256": "ec43275d3414fcce9d5ea8d184533781e113cea34c258a9c6a7f7940cafcbce8",
+              "service_p95_ms": {
+                "http://127.0.0.1:9780/.well-known/chimera.json": 2.4300958029925823,
+                "http://127.0.0.1:8787/api/health": 0.9648147970438004
+              }
+            }
+          ],
+          "rss_at_ready": {
+            "current": 26202112,
+            "peak": 26202112
+          },
+          "rss_at_tail": {
+            "current": 26292224,
+            "peak": 26292224
+          }
+        },
+        "phantom": {
+          "setup_ms": 481.395,
+          "closed_ms": 595.049,
+          "deferrals": 0,
+          "host": "svhome",
+          "receiver_pid": 3920379,
+          "python": "3.14.4",
+          "admission": {
+            "limits_verified": true,
+            "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/chimera-peer-guest.service",
+            "memory_max": 134217728,
+            "ram_reserve_mib": 2560,
+            "disk_reserve_mib": 14306,
+            "services": [
+              "http://127.0.0.1:8787/api/health",
+              "http://127.0.0.1:9780/.well-known/chimera.json"
+            ]
+          },
+          "frames": [
+            {
+              "warm_ms": 24.391699999570847,
+              "elapsed_from_start_ms": 505.86309999227524,
+              "worker_check_ms": 15.593806,
+              "worker_sha_ms": 0.033688,
+              "all_other_ms": 8.764205999570846,
+              "request_bytes": 583,
+              "sha256": "96860c7f4b009bbb5ec14274b82e0765389ca722aa8dde23bd33f505fc017836",
+              "service_p95_ms": {
+                "http://127.0.0.1:9780/.well-known/chimera.json": 1.7697461880743504,
+                "http://127.0.0.1:8787/api/health": 0.9690187871456146
+              }
+            },
+            {
+              "warm_ms": 21.925300002098083,
+              "elapsed_from_start_ms": 527.9002999961376,
+              "worker_check_ms": 15.402801,
+              "worker_sha_ms": 0.015677,
+              "all_other_ms": 6.506822002098085,
+              "request_bytes": 583,
+              "sha256": "ec43275d3414fcce9d5ea8d184533781e113cea34c258a9c6a7f7940cafcbce8",
+              "service_p95_ms": {
+                "http://127.0.0.1:9780/.well-known/chimera.json": 1.8138890154659748,
+                "http://127.0.0.1:8787/api/health": 0.8838046342134476
+              }
+            }
+          ],
+          "rss_at_ready": {
+            "current": 26161152,
+            "peak": 26161152
+          },
+          "rss_at_tail": {
+            "current": 26255360,
+            "peak": 26255360
+          }
+        }
+      }
+    },
+    {
+      "round": 2,
+      "order": [
+        "alias",
+        "phantom",
+        "windows"
+      ],
+      "expected_sha256": [
+        "cab8f682b0ab9b491d85379cbdb804e4569a15353b65428dbcf2990e024c29d2",
+        "eeb7957eebf0b8ce87cb9171eb7513e16632d31c56d505cdd7eca0ee4543cc90"
+      ],
+      "arms": {
+        "alias": {
+          "setup_ms": 2042.086,
+          "closed_ms": 2765.92,
+          "deferrals": 0,
+          "host": "svhome",
+          "receiver_pid": 3920458,
+          "python": "3.14.4",
+          "admission": {
+            "limits_verified": true,
+            "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/chimera-peer-guest.service",
+            "memory_max": 134217728,
+            "ram_reserve_mib": 2560,
+            "disk_reserve_mib": 14306,
+            "services": [
+              "http://127.0.0.1:8787/api/health",
+              "http://127.0.0.1:9780/.well-known/chimera.json"
+            ]
+          },
+          "frames": [
+            {
+              "warm_ms": 96.46619999408722,
+              "elapsed_from_start_ms": 2138.6236000061035,
+              "worker_check_ms": 15.759985,
+              "worker_sha_ms": 0.032444,
+              "all_other_ms": 80.67377099408722,
+              "request_bytes": 583,
+              "sha256": "cab8f682b0ab9b491d85379cbdb804e4569a15353b65428dbcf2990e024c29d2",
+              "service_p95_ms": {
+                "http://127.0.0.1:9780/.well-known/chimera.json": 1.7995466478168964,
+                "http://127.0.0.1:8787/api/health": 0.8851350285112858
+              }
+            },
+            {
+              "warm_ms": 466.02149999141693,
+              "elapsed_from_start_ms": 2604.732600003481,
+              "worker_check_ms": 100.973557,
+              "worker_sha_ms": 0.020264,
+              "all_other_ms": 365.0276789914169,
+              "request_bytes": 583,
+              "sha256": "eeb7957eebf0b8ce87cb9171eb7513e16632d31c56d505cdd7eca0ee4543cc90",
+              "service_p95_ms": {
+                "http://127.0.0.1:9780/.well-known/chimera.json": 2.274263184517622,
+                "http://127.0.0.1:8787/api/health": 26.449937839061022
+              }
+            }
+          ],
+          "rss_at_ready": {
+            "current": 26198016,
+            "peak": 26198016
+          },
+          "rss_at_tail": {
+            "current": 26292224,
+            "peak": 26292224
+          }
+        },
+        "phantom": {
+          "setup_ms": 481.292,
+          "closed_ms": 592.732,
+          "deferrals": 0,
+          "host": "svhome",
+          "receiver_pid": 3920533,
+          "python": "3.14.4",
+          "admission": {
+            "limits_verified": true,
+            "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/chimera-peer-guest.service",
+            "memory_max": 134217728,
+            "ram_reserve_mib": 2560,
+            "disk_reserve_mib": 14306,
+            "services": [
+              "http://127.0.0.1:8787/api/health",
+              "http://127.0.0.1:9780/.well-known/chimera.json"
+            ]
+          },
+          "frames": [
+            {
+              "warm_ms": 27.648499995470047,
+              "elapsed_from_start_ms": 509.03669998049736,
+              "worker_check_ms": 18.384697,
+              "worker_sha_ms": 0.044082,
+              "all_other_ms": 9.219720995470048,
+              "request_bytes": 583,
+              "sha256": "cab8f682b0ab9b491d85379cbdb804e4569a15353b65428dbcf2990e024c29d2",
+              "service_p95_ms": {
+                "http://127.0.0.1:9780/.well-known/chimera.json": 2.0196931436657906,
+                "http://127.0.0.1:8787/api/health": 1.010769046843052
+              }
+            },
+            {
+              "warm_ms": 27.33779999613762,
+              "elapsed_from_start_ms": 536.5248999893665,
+              "worker_check_ms": 19.829759,
+              "worker_sha_ms": 0.020207999999999997,
+              "all_other_ms": 7.487832996137623,
+              "request_bytes": 583,
+              "sha256": "eeb7957eebf0b8ce87cb9171eb7513e16632d31c56d505cdd7eca0ee4543cc90",
+              "service_p95_ms": {
+                "http://127.0.0.1:9780/.well-known/chimera.json": 2.453576773405075,
+                "http://127.0.0.1:8787/api/health": 1.1140969581902027
+              }
+            }
+          ],
+          "rss_at_ready": {
+            "current": 26259456,
+            "peak": 26259456
+          },
+          "rss_at_tail": {
+            "current": 26357760,
+            "peak": 26357760
+          }
+        },
+        "windows": {
+          "setup_ms": 101.54,
+          "closed_ms": 111.441,
+          "deferrals": 0,
+          "host": "DESKTOP-63643J4",
+          "receiver_pid": 36972,
+          "python": "3.11.7",
+          "admission": null,
+          "frames": [
+            {
+              "warm_ms": 0.2063000202178955,
+              "elapsed_from_start_ms": 101.79399999976158,
+              "worker_check_ms": 0.0004,
+              "worker_sha_ms": 0.0367,
+              "all_other_ms": 0.1692000202178955,
+              "request_bytes": 583,
+              "sha256": "cab8f682b0ab9b491d85379cbdb804e4569a15353b65428dbcf2990e024c29d2",
+              "service_p95_ms": {}
+            },
+            {
+              "warm_ms": 0.13650000095367432,
+              "elapsed_from_start_ms": 101.95699998736382,
+              "worker_check_ms": 0.0003,
+              "worker_sha_ms": 0.004,
+              "all_other_ms": 0.13220000095367432,
+              "request_bytes": 583,
+              "sha256": "eeb7957eebf0b8ce87cb9171eb7513e16632d31c56d505cdd7eca0ee4543cc90",
+              "service_p95_ms": {}
+            }
+          ],
+          "rss_at_ready": {
+            "current": 20705280,
+            "peak": 20717568
+          },
+          "rss_at_tail": {
+            "current": 20803584,
+            "peak": 20803584
+          }
+        }
+      }
+    },
+    {
+      "round": 3,
+      "order": [
+        "phantom",
+        "windows",
+        "alias"
+      ],
+      "expected_sha256": [
+        "2c1b0ed3edb6d688cec3262847e1402358cbc17b6fbaf8e6c9381dcd128cc38f",
+        "d4f0241cdf2917fcd65cd90424969faec200e5fb1d023f26d42282a977a5d753"
+      ],
+      "arms": {
+        "phantom": {
+          "setup_ms": 479.243,
+          "closed_ms": 593.526,
+          "deferrals": 0,
+          "host": "svhome",
+          "receiver_pid": 3920609,
+          "python": "3.14.4",
+          "admission": {
+            "limits_verified": true,
+            "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/chimera-peer-guest.service",
+            "memory_max": 134217728,
+            "ram_reserve_mib": 2560,
+            "disk_reserve_mib": 14306,
+            "services": [
+              "http://127.0.0.1:8787/api/health",
+              "http://127.0.0.1:9780/.well-known/chimera.json"
+            ]
+          },
+          "frames": [
+            {
+              "warm_ms": 22.80060002207756,
+              "elapsed_from_start_ms": 502.11130002141,
+              "worker_check_ms": 15.657847,
+              "worker_sha_ms": 0.033847,
+              "all_other_ms": 7.10890602207756,
+              "request_bytes": 583,
+              "sha256": "2c1b0ed3edb6d688cec3262847e1402358cbc17b6fbaf8e6c9381dcd128cc38f",
+              "service_p95_ms": {
+                "http://127.0.0.1:9780/.well-known/chimera.json": 1.8092719838023186,
+                "http://127.0.0.1:8787/api/health": 0.9232340380549431
+              }
+            },
+            {
+              "warm_ms": 38.170300006866455,
+              "elapsed_from_start_ms": 540.3473000228405,
+              "worker_check_ms": 31.626927,
+              "worker_sha_ms": 0.017285000000000002,
+              "all_other_ms": 6.5260880068664555,
+              "request_bytes": 583,
+              "sha256": "d4f0241cdf2917fcd65cd90424969faec200e5fb1d023f26d42282a977a5d753",
+              "service_p95_ms": {
+                "http://127.0.0.1:9780/.well-known/chimera.json": 17.860037740319967,
+                "http://127.0.0.1:8787/api/health": 0.9297970682382584
+              }
+            }
+          ],
+          "rss_at_ready": {
+            "current": 26263552,
+            "peak": 26263552
+          },
+          "rss_at_tail": {
+            "current": 26357760,
+            "peak": 26357760
+          }
+        },
+        "windows": {
+          "setup_ms": 127.52,
+          "closed_ms": 145.066,
+          "deferrals": 0,
+          "host": "DESKTOP-63643J4",
+          "receiver_pid": 30364,
+          "python": "3.11.7",
+          "admission": null,
+          "frames": [
+            {
+              "warm_ms": 0.8565999865531921,
+              "elapsed_from_start_ms": 128.47020000219345,
+              "worker_check_ms": 0.0007,
+              "worker_sha_ms": 0.4064,
+              "all_other_ms": 0.4494999865531922,
+              "request_bytes": 583,
+              "sha256": "2c1b0ed3edb6d688cec3262847e1402358cbc17b6fbaf8e6c9381dcd128cc38f",
+              "service_p95_ms": {}
+            },
+            {
+              "warm_ms": 0.3052999973297119,
+              "elapsed_from_start_ms": 128.8430000245571,
+              "worker_check_ms": 0.0007,
+              "worker_sha_ms": 0.008400000000000001,
+              "all_other_ms": 0.2961999973297119,
+              "request_bytes": 583,
+              "sha256": "d4f0241cdf2917fcd65cd90424969faec200e5fb1d023f26d42282a977a5d753",
+              "service_p95_ms": {}
+            }
+          ],
+          "rss_at_ready": {
+            "current": 20627456,
+            "peak": 20639744
+          },
+          "rss_at_tail": {
+            "current": 20725760,
+            "peak": 20725760
+          }
+        },
+        "alias": {
+          "setup_ms": 1524.165,
+          "closed_ms": 2152.276,
+          "deferrals": 0,
+          "host": "svhome",
+          "receiver_pid": 3920685,
+          "python": "3.14.4",
+          "admission": {
+            "limits_verified": true,
+            "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/chimera-peer-guest.service",
+            "memory_max": 134217728,
+            "ram_reserve_mib": 2560,
+            "disk_reserve_mib": 14306,
+            "services": [
+              "http://127.0.0.1:8787/api/health",
+              "http://127.0.0.1:9780/.well-known/chimera.json"
+            ]
+          },
+          "frames": [
+            {
+              "warm_ms": 95.12009999155998,
+              "elapsed_from_start_ms": 1619.3443999886513,
+              "worker_check_ms": 15.646848,
+              "worker_sha_ms": 0.032602,
+              "all_other_ms": 79.44064999155998,
+              "request_bytes": 583,
+              "sha256": "2c1b0ed3edb6d688cec3262847e1402358cbc17b6fbaf8e6c9381dcd128cc38f",
+              "service_p95_ms": {
+                "http://127.0.0.1:9780/.well-known/chimera.json": 1.8373369239270687,
+                "http://127.0.0.1:8787/api/health": 0.9007398039102554
+              }
+            },
+            {
+              "warm_ms": 373.46430000662804,
+              "elapsed_from_start_ms": 1992.8995000123978,
+              "worker_check_ms": 20.335732,
+              "worker_sha_ms": 0.016161000000000002,
+              "all_other_ms": 353.112407006628,
+              "request_bytes": 583,
+              "sha256": "d4f0241cdf2917fcd65cd90424969faec200e5fb1d023f26d42282a977a5d753",
+              "service_p95_ms": {
+                "http://127.0.0.1:9780/.well-known/chimera.json": 2.7259550988674164,
+                "http://127.0.0.1:8787/api/health": 0.9348890744149685
+              }
+            }
+          ],
+          "rss_at_ready": {
+            "current": 26202112,
+            "peak": 26202112
+          },
+          "rss_at_tail": {
+            "current": 26296320,
+            "peak": 26296320
+          }
+        }
+      }
+    },
+    {
+      "round": 4,
+      "order": [
+        "phantom",
+        "alias",
+        "windows"
+      ],
+      "expected_sha256": [
+        "f37f1614b66e20931dc641d3bc3463b7e0b0239c97d53a8695d6b63336581706",
+        "430f9fb97241769af9b85aa42e65df39b37338eccccff6fd7b95126095b84b7a"
+      ],
+      "arms": {
+        "phantom": {
+          "setup_ms": 485.518,
+          "closed_ms": 589.227,
+          "deferrals": 0,
+          "host": "svhome",
+          "receiver_pid": 3920761,
+          "python": "3.14.4",
+          "admission": {
+            "limits_verified": true,
+            "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/chimera-peer-guest.service",
+            "memory_max": 134217728,
+            "ram_reserve_mib": 2560,
+            "disk_reserve_mib": 14306,
+            "services": [
+              "http://127.0.0.1:8787/api/health",
+              "http://127.0.0.1:9780/.well-known/chimera.json"
+            ]
+          },
+          "frames": [
+            {
+              "warm_ms": 21.696700006723404,
+              "elapsed_from_start_ms": 507.2680000066757,
+              "worker_check_ms": 15.190460999999999,
+              "worker_sha_ms": 0.03349,
+              "all_other_ms": 6.472749006723404,
+              "request_bytes": 583,
+              "sha256": "f37f1614b66e20931dc641d3bc3463b7e0b0239c97d53a8695d6b63336581706",
+              "service_p95_ms": {
+                "http://127.0.0.1:9780/.well-known/chimera.json": 1.8695169128477573,
+                "http://127.0.0.1:8787/api/health": 0.8733137510716915
+              }
+            },
+            {
+              "warm_ms": 21.737300008535385,
+              "elapsed_from_start_ms": 529.0673000216484,
+              "worker_check_ms": 15.484731,
+              "worker_sha_ms": 0.015712999999999998,
+              "all_other_ms": 6.236856008535385,
+              "request_bytes": 583,
+              "sha256": "430f9fb97241769af9b85aa42e65df39b37338eccccff6fd7b95126095b84b7a",
+              "service_p95_ms": {
+                "http://127.0.0.1:9780/.well-known/chimera.json": 1.8856627866625786,
+                "http://127.0.0.1:8787/api/health": 0.8949311450123787
+              }
+            }
+          ],
+          "rss_at_ready": {
+            "current": 26226688,
+            "peak": 26226688
+          },
+          "rss_at_tail": {
+            "current": 26320896,
+            "peak": 26320896
+          }
+        },
+        "alias": {
+          "setup_ms": 1730.216,
+          "closed_ms": 2083.846,
+          "deferrals": 0,
+          "host": "svhome",
+          "receiver_pid": 3920835,
+          "python": "3.14.4",
+          "admission": {
+            "limits_verified": true,
+            "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/chimera-peer-guest.service",
+            "memory_max": 134217728,
+            "ram_reserve_mib": 2560,
+            "disk_reserve_mib": 14306,
+            "services": [
+              "http://127.0.0.1:8787/api/health",
+              "http://127.0.0.1:9780/.well-known/chimera.json"
+            ]
+          },
+          "frames": [
+            {
+              "warm_ms": 94.67930001020432,
+              "elapsed_from_start_ms": 1825.0060000121593,
+              "worker_check_ms": 15.299176,
+              "worker_sha_ms": 0.032836,
+              "all_other_ms": 79.34728801020432,
+              "request_bytes": 583,
+              "sha256": "f37f1614b66e20931dc641d3bc3463b7e0b0239c97d53a8695d6b63336581706",
+              "service_p95_ms": {
+                "http://127.0.0.1:9780/.well-known/chimera.json": 1.9598021171987057,
+                "http://127.0.0.1:8787/api/health": 0.9023011662065983
+              }
+            },
+            {
+              "warm_ms": 101.63339999318123,
+              "elapsed_from_start_ms": 1926.7150000035763,
+              "worker_check_ms": 23.039866999999997,
+              "worker_sha_ms": 0.016001,
+              "all_other_ms": 78.57753199318122,
+              "request_bytes": 583,
+              "sha256": "430f9fb97241769af9b85aa42e65df39b37338eccccff6fd7b95126095b84b7a",
+              "service_p95_ms": {
+                "http://127.0.0.1:9780/.well-known/chimera.json": 2.9466571286320686,
+                "http://127.0.0.1:8787/api/health": 0.946050975471735
+              }
+            }
+          ],
+          "rss_at_ready": {
+            "current": 26165248,
+            "peak": 26165248
+          },
+          "rss_at_tail": {
+            "current": 26255360,
+            "peak": 26255360
+          }
+        },
+        "windows": {
+          "setup_ms": 110.937,
+          "closed_ms": 121.591,
+          "deferrals": 0,
+          "host": "DESKTOP-63643J4",
+          "receiver_pid": 21608,
+          "python": "3.11.7",
+          "admission": null,
+          "frames": [
+            {
+              "warm_ms": 0.2655999958515167,
+              "elapsed_from_start_ms": 111.26129999756813,
+              "worker_check_ms": 0.0005,
+              "worker_sha_ms": 0.04,
+              "all_other_ms": 0.22509999585151672,
+              "request_bytes": 583,
+              "sha256": "f37f1614b66e20931dc641d3bc3463b7e0b0239c97d53a8695d6b63336581706",
+              "service_p95_ms": {}
+            },
+            {
+              "warm_ms": 0.17739999294281006,
+              "elapsed_from_start_ms": 111.46439999341965,
+              "worker_check_ms": 0.0005,
+              "worker_sha_ms": 0.007,
+              "all_other_ms": 0.16989999294281005,
+              "request_bytes": 583,
+              "sha256": "430f9fb97241769af9b85aa42e65df39b37338eccccff6fd7b95126095b84b7a",
+              "service_p95_ms": {}
+            }
+          ],
+          "rss_at_ready": {
+            "current": 20770816,
+            "peak": 20783104
+          },
+          "rss_at_tail": {
+            "current": 20869120,
+            "peak": 20869120
+          }
+        }
+      }
+    },
+    {
+      "round": 5,
+      "order": [
+        "alias",
+        "windows",
+        "phantom"
+      ],
+      "expected_sha256": [
+        "07c8a002021a3b5bb8d932b06b2bc64e204bcc7a0a498e5399fcdf1890ad6213",
+        "1291afd79220bacad4d85355365d72b75de20ce9b19892ee76e2a122e9775c30"
+      ],
+      "arms": {
+        "alias": {
+          "setup_ms": 1779.818,
+          "closed_ms": 2429.131,
+          "deferrals": 0,
+          "host": "svhome",
+          "receiver_pid": 3920910,
+          "python": "3.14.4",
+          "admission": {
+            "limits_verified": true,
+            "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/chimera-peer-guest.service",
+            "memory_max": 134217728,
+            "ram_reserve_mib": 2560,
+            "disk_reserve_mib": 14306,
+            "services": [
+              "http://127.0.0.1:8787/api/health",
+              "http://127.0.0.1:9780/.well-known/chimera.json"
+            ]
+          },
+          "frames": [
+            {
+              "warm_ms": 387.72020000219345,
+              "elapsed_from_start_ms": 2167.5922999978065,
+              "worker_check_ms": 18.712778,
+              "worker_sha_ms": 0.035006,
+              "all_other_ms": 368.9724160021934,
+              "request_bytes": 583,
+              "sha256": "07c8a002021a3b5bb8d932b06b2bc64e204bcc7a0a498e5399fcdf1890ad6213",
+              "service_p95_ms": {
+                "http://127.0.0.1:9780/.well-known/chimera.json": 2.1811719052493572,
+                "http://127.0.0.1:8787/api/health": 1.1589019559323788
+              }
+            },
+            {
+              "warm_ms": 104.3038999736309,
+              "elapsed_from_start_ms": 2271.9484999775887,
+              "worker_check_ms": 23.23516,
+              "worker_sha_ms": 0.016238,
+              "all_other_ms": 81.05250197363091,
+              "request_bytes": 583,
+              "sha256": "1291afd79220bacad4d85355365d72b75de20ce9b19892ee76e2a122e9775c30",
+              "service_p95_ms": {
+                "http://127.0.0.1:9780/.well-known/chimera.json": 2.9531591571867466,
+                "http://127.0.0.1:8787/api/health": 0.966360792517662
+              }
+            }
+          ],
+          "rss_at_ready": {
+            "current": 26206208,
+            "peak": 26206208
+          },
+          "rss_at_tail": {
+            "current": 26296320,
+            "peak": 26296320
+          }
+        },
+        "windows": {
+          "setup_ms": 112.177,
+          "closed_ms": 123.567,
+          "deferrals": 0,
+          "host": "DESKTOP-63643J4",
+          "receiver_pid": 13888,
+          "python": "3.11.7",
+          "admission": null,
+          "frames": [
+            {
+              "warm_ms": 0.2510000169277191,
+              "elapsed_from_start_ms": 112.4699000120163,
+              "worker_check_ms": 0.0096,
+              "worker_sha_ms": 0.038700000000000005,
+              "all_other_ms": 0.2027000169277191,
+              "request_bytes": 583,
+              "sha256": "07c8a002021a3b5bb8d932b06b2bc64e204bcc7a0a498e5399fcdf1890ad6213",
+              "service_p95_ms": {}
+            },
+            {
+              "warm_ms": 0.45570001006126404,
+              "elapsed_from_start_ms": 112.95800000429153,
+              "worker_check_ms": 0.0003,
+              "worker_sha_ms": 0.0058,
+              "all_other_ms": 0.44960001006126404,
+              "request_bytes": 583,
+              "sha256": "1291afd79220bacad4d85355365d72b75de20ce9b19892ee76e2a122e9775c30",
+              "service_p95_ms": {}
+            }
+          ],
+          "rss_at_ready": {
+            "current": 20688896,
+            "peak": 20701184
+          },
+          "rss_at_tail": {
+            "current": 20787200,
+            "peak": 20787200
+          }
+        },
+        "phantom": {
+          "setup_ms": 529.637,
+          "closed_ms": 627.879,
+          "deferrals": 0,
+          "host": "svhome",
+          "receiver_pid": 3920985,
+          "python": "3.14.4",
+          "admission": {
+            "limits_verified": true,
+            "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/chimera-peer-guest.service",
+            "memory_max": 134217728,
+            "ram_reserve_mib": 2560,
+            "disk_reserve_mib": 14306,
+            "services": [
+              "http://127.0.0.1:8787/api/health",
+              "http://127.0.0.1:9780/.well-known/chimera.json"
+            ]
+          },
+          "frames": [
+            {
+              "warm_ms": 21.891099989414215,
+              "elapsed_from_start_ms": 551.574599981308,
+              "worker_check_ms": 15.463783,
+              "worker_sha_ms": 0.031933,
+              "all_other_ms": 6.395383989414215,
+              "request_bytes": 583,
+              "sha256": "07c8a002021a3b5bb8d932b06b2bc64e204bcc7a0a498e5399fcdf1890ad6213",
+              "service_p95_ms": {
+                "http://127.0.0.1:9780/.well-known/chimera.json": 1.7420100048184395,
+                "http://127.0.0.1:8787/api/health": 0.8677951991558075
+              }
+            },
+            {
+              "warm_ms": 22.64640000462532,
+              "elapsed_from_start_ms": 574.2800999879837,
+              "worker_check_ms": 15.6703,
+              "worker_sha_ms": 0.01583,
+              "all_other_ms": 6.960270004625322,
+              "request_bytes": 583,
+              "sha256": "1291afd79220bacad4d85355365d72b75de20ce9b19892ee76e2a122e9775c30",
+              "service_p95_ms": {
+                "http://127.0.0.1:9780/.well-known/chimera.json": 1.8522059544920921,
+                "http://127.0.0.1:8787/api/health": 0.91211823746562
+              }
+            }
+          ],
+          "rss_at_ready": {
+            "current": 26271744,
+            "peak": 26271744
+          },
+          "rss_at_tail": {
+            "current": 26361856,
+            "peak": 26361856
+          }
+        }
+      }
+    },
+    {
+      "round": 6,
+      "order": [
+        "windows",
+        "phantom",
+        "alias"
+      ],
+      "expected_sha256": [
+        "0a3e9b72d776edebe728768fa47e9de94fecc8441ba802420f0b81fcff68fb50",
+        "eacea9007382a9283c11fe68b8deb4fbeee18becfb0491ce3678bf1d843df19f"
+      ],
+      "arms": {
+        "windows": {
+          "setup_ms": 138.769,
+          "closed_ms": 151.059,
+          "deferrals": 0,
+          "host": "DESKTOP-63643J4",
+          "receiver_pid": 11504,
+          "python": "3.11.7",
+          "admission": null,
+          "frames": [
+            {
+              "warm_ms": 0.31139999628067017,
+              "elapsed_from_start_ms": 139.13439998030663,
+              "worker_check_ms": 0.0005,
+              "worker_sha_ms": 0.045,
+              "all_other_ms": 0.2658999962806702,
+              "request_bytes": 583,
+              "sha256": "0a3e9b72d776edebe728768fa47e9de94fecc8441ba802420f0b81fcff68fb50",
+              "service_p95_ms": {}
+            },
+            {
+              "warm_ms": 0.21880000829696655,
+              "elapsed_from_start_ms": 139.38740000128746,
+              "worker_check_ms": 0.0005,
+              "worker_sha_ms": 0.006900000000000001,
+              "all_other_ms": 0.21140000829696656,
+              "request_bytes": 583,
+              "sha256": "eacea9007382a9283c11fe68b8deb4fbeee18becfb0491ce3678bf1d843df19f",
+              "service_p95_ms": {}
+            }
+          ],
+          "rss_at_ready": {
+            "current": 20676608,
+            "peak": 20688896
+          },
+          "rss_at_tail": {
+            "current": 20774912,
+            "peak": 20774912
+          }
+        },
+        "phantom": {
+          "setup_ms": 499.527,
+          "closed_ms": 633.619,
+          "deferrals": 0,
+          "host": "svhome",
+          "receiver_pid": 3921060,
+          "python": "3.14.4",
+          "admission": {
+            "limits_verified": true,
+            "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/chimera-peer-guest.service",
+            "memory_max": 134217728,
+            "ram_reserve_mib": 2560,
+            "disk_reserve_mib": 14306,
+            "services": [
+              "http://127.0.0.1:8787/api/health",
+              "http://127.0.0.1:9780/.well-known/chimera.json"
+            ]
+          },
+          "frames": [
+            {
+              "warm_ms": 55.521799981594086,
+              "elapsed_from_start_ms": 555.0956999957561,
+              "worker_check_ms": 49.118531000000004,
+              "worker_sha_ms": 0.032211,
+              "all_other_ms": 6.3710579815940775,
+              "request_bytes": 583,
+              "sha256": "0a3e9b72d776edebe728768fa47e9de94fecc8441ba802420f0b81fcff68fb50",
+              "service_p95_ms": {
+                "http://127.0.0.1:9780/.well-known/chimera.json": 35.00947682186961,
+                "http://127.0.0.1:8787/api/health": 0.9286599233746529
+              }
+            },
+            {
+              "warm_ms": 21.594399988651276,
+              "elapsed_from_start_ms": 576.7493000030518,
+              "worker_check_ms": 15.368696,
+              "worker_sha_ms": 0.016083,
+              "all_other_ms": 6.209620988651276,
+              "request_bytes": 583,
+              "sha256": "eacea9007382a9283c11fe68b8deb4fbeee18becfb0491ce3678bf1d843df19f",
+              "service_p95_ms": {
+                "http://127.0.0.1:9780/.well-known/chimera.json": 1.8566702492535114,
+                "http://127.0.0.1:8787/api/health": 0.8745696395635605
+              }
+            }
+          ],
+          "rss_at_ready": {
+            "current": 26214400,
+            "peak": 26214400
+          },
+          "rss_at_tail": {
+            "current": 26312704,
+            "peak": 26312704
+          }
+        },
+        "alias": {
+          "setup_ms": 2532.561,
+          "closed_ms": 3055.222,
+          "deferrals": 0,
+          "host": "svhome",
+          "receiver_pid": 3921134,
+          "python": "3.14.4",
+          "admission": {
+            "limits_verified": true,
+            "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/chimera-peer-guest.service",
+            "memory_max": 134217728,
+            "ram_reserve_mib": 2560,
+            "disk_reserve_mib": 14306,
+            "services": [
+              "http://127.0.0.1:8787/api/health",
+              "http://127.0.0.1:9780/.well-known/chimera.json"
+            ]
+          },
+          "frames": [
+            {
+              "warm_ms": 251.84169998764992,
+              "elapsed_from_start_ms": 2784.461899995804,
+              "worker_check_ms": 171.23227,
+              "worker_sha_ms": 0.031504000000000004,
+              "all_other_ms": 80.57792598764993,
+              "request_bytes": 583,
+              "sha256": "0a3e9b72d776edebe728768fa47e9de94fecc8441ba802420f0b81fcff68fb50",
+              "service_p95_ms": {
+                "http://127.0.0.1:9780/.well-known/chimera.json": 86.19396202266216,
+                "http://127.0.0.1:8787/api/health": 0.8589266799390316
+              }
+            },
+            {
+              "warm_ms": 104.28119999170303,
+              "elapsed_from_start_ms": 2888.8025999963284,
+              "worker_check_ms": 22.800366,
+              "worker_sha_ms": 0.014129,
+              "all_other_ms": 81.46670499170304,
+              "request_bytes": 583,
+              "sha256": "eacea9007382a9283c11fe68b8deb4fbeee18becfb0491ce3678bf1d843df19f",
+              "service_p95_ms": {
+                "http://127.0.0.1:9780/.well-known/chimera.json": 2.849903889000416,
+                "http://127.0.0.1:8787/api/health": 0.8708578534424305
+              }
+            }
+          ],
+          "rss_at_ready": {
+            "current": 26157056,
+            "peak": 26157056
+          },
+          "rss_at_tail": {
+            "current": 26247168,
+            "peak": 26247168
+          }
+        }
+      }
+    }
+  ],
+  "summary": {
+    "windows": {
+      "setup_ms": {
+        "n": 6,
+        "median": 111.557,
+        "p95": 138.769,
+        "min": 96.978,
+        "max": 138.769
+      },
+      "fresh_first_receipt_ms": {
+        "n": 6,
+        "median": 111.86560000479221,
+        "p95": 139.13439998030663,
+        "min": 97.41050001978874,
+        "max": 139.13439998030663
+      },
+      "warm_receipt_ms": {
+        "n": 6,
+        "median": 0.1981000006198883,
+        "p95": 0.45570001006126404,
+        "min": 0.13650000095367432,
+        "max": 0.45570001006126404
+      },
+      "warm_guard_ms": {
+        "n": 6,
+        "median": 0.00045,
+        "p95": 0.0007,
+        "min": 0.0003,
+        "max": 0.0007
+      },
+      "warm_sha_ms": {
+        "n": 6,
+        "median": 0.00635,
+        "p95": 0.008400000000000001,
+        "min": 0.004,
+        "max": 0.008400000000000001
+      },
+      "warm_remaining_ms": {
+        "n": 6,
+        "median": 0.1906500006198883,
+        "p95": 0.44960001006126404,
+        "min": 0.13220000095367432,
+        "max": 0.44960001006126404
+      },
+      "worker_tail_rss_mib": {
+        "n": 6,
+        "median": 19.818359375,
+        "p95": 19.90234375,
+        "min": 19.765625,
+        "max": 19.90234375
+      },
+      "worker_peak_rss_mib": {
+        "n": 6,
+        "median": 19.818359375,
+        "p95": 19.90234375,
+        "min": 19.765625,
+        "max": 19.90234375
+      }
+    },
+    "alias": {
+      "setup_ms": {
+        "n": 6,
+        "median": 1910.952,
+        "p95": 2532.561,
+        "min": 1524.165,
+        "max": 2532.561
+      },
+      "fresh_first_receipt_ms": {
+        "n": 6,
+        "median": 2150.69770000875,
+        "p95": 2784.461899995804,
+        "min": 1619.3443999886513,
+        "max": 2784.461899995804
+      },
+      "warm_receipt_ms": {
+        "n": 6,
+        "median": 104.29254998266697,
+        "p95": 466.02149999141693,
+        "min": 99.07570001482964,
+        "max": 466.02149999141693
+      },
+      "warm_guard_ms": {
+        "n": 6,
+        "median": 22.9201165,
+        "p95": 100.973557,
+        "min": 20.080049,
+        "max": 100.973557
+      },
+      "warm_sha_ms": {
+        "n": 6,
+        "median": 0.016081,
+        "p95": 0.020264,
+        "min": 0.014129,
+        "max": 0.020264
+      },
+      "warm_remaining_ms": {
+        "n": 6,
+        "median": 81.25960348266698,
+        "p95": 365.0276789914169,
+        "min": 78.57753199318122,
+        "max": 365.0276789914169
+      },
+      "worker_tail_rss_mib": {
+        "n": 6,
+        "median": 25.07421875,
+        "p95": 25.078125,
+        "min": 25.03125,
+        "max": 25.078125
+      },
+      "worker_peak_rss_mib": {
+        "n": 6,
+        "median": 25.07421875,
+        "p95": 25.078125,
+        "min": 25.03125,
+        "max": 25.078125
+      }
+    },
+    "phantom": {
+      "setup_ms": {
+        "n": 6,
+        "median": 483.4565,
+        "p95": 529.637,
+        "min": 479.243,
+        "max": 529.637
+      },
+      "fresh_first_receipt_ms": {
+        "n": 6,
+        "median": 508.15234999358654,
+        "p95": 555.0956999957561,
+        "min": 502.11130002141,
+        "max": 555.0956999957561
+      },
+      "warm_receipt_ms": {
+        "n": 6,
+        "median": 22.285850003361702,
+        "p95": 38.170300006866455,
+        "min": 21.594399988651276,
+        "max": 38.170300006866455
+      },
+      "warm_guard_ms": {
+        "n": 6,
+        "median": 15.5775155,
+        "p95": 31.626927,
+        "min": 15.368696,
+        "max": 31.626927
+      },
+      "warm_sha_ms": {
+        "n": 6,
+        "median": 0.0159565,
+        "p95": 0.020207999999999997,
+        "min": 0.015677,
+        "max": 0.020207999999999997
+      },
+      "warm_remaining_ms": {
+        "n": 6,
+        "median": 6.51645500448227,
+        "p95": 7.487832996137623,
+        "min": 6.209620988651276,
+        "max": 7.487832996137623
+      },
+      "worker_tail_rss_mib": {
+        "n": 6,
+        "median": 25.119140625,
+        "p95": 25.140625,
+        "min": 25.0390625,
+        "max": 25.140625
+      },
+      "worker_peak_rss_mib": {
+        "n": 6,
+        "median": 25.119140625,
+        "p95": 25.140625,
+        "min": 25.0390625,
+        "max": 25.140625
+      }
+    }
+  },
+  "after": {
+    "measured_utc": "2026-11-26T16:01:30.757Z",
+    "ssh_alias": "svhome",
+    "peer_ip": "100.116.112.22",
+    "phantom": {
+      "connected": true,
+      "mode": "PHANTOM_5MS_DIRECT",
+      "rtt_ms": 8.04,
+      "pong_age_s": 2.7,
+      "pong_stale": false,
+      "listeners": {
+        "22": 2222,
+        "9780": 9789,
+        "12500": 12550
+      },
+      "reconnects": 2,
+      "rx_bytes": 77558088,
+      "tx_bytes": 87225578
+    },
+    "tunnelled_peer": {
+      "node_name": "svhome",
+      "pid": 3871360,
+      "version": "21.0.0",
+      "os": "linux"
+    },
+    "tailscale": [
+      {
+        "route": "DERP(hkg)",
+        "rtt_ms": 138
+      },
+      {
+        "route": "DERP(hkg)",
+        "rtt_ms": 83
+      },
+      {
+        "route": "DERP(hkg)",
+        "rtt_ms": 123
+      }
+    ]
+  },
+  "disconnect_recovery": {
+    "explicit_pure_retry": true,
+    "fault": "killed only the benchmark SSH client",
+    "digest_matched": true,
+    "sha256": "649e0a8201e74061ad3e86f8c37894bababc3ec4470437ce4529722061b11497",
+    "interrupted_session_exited": true,
+    "fresh_receiver_pid": 3921280,
+    "warm_session_reused_after_disconnect": false,
+    "retry_ms": 2219.313400000334
+  },
+  "guest_unit_at_end": {
+    "ActiveState": "inactive",
+    "SubState": "dead",
+    "MainPID": "0"
+  },
+  "limitations": [
+    "No CAS lookup, build execution, durable queue, daemon activation, or production traffic promotion in this fixture.",
+    "A retained short-lived session occupies the one guest slot until closed. RSS belongs to workers and service probes only as specified.",
+    "The two frame payloads in a session are different random 400-byte messages, matched exactly across routes. No compression or cache hit is credited."
+  ],
+  "paired": {
+    "cold_alias_to_warm_direct_speedup": {
+      "n": 6,
+      "median": 89.83599868743381,
+      "p95": 128.9437030646441,
+      "min": 42.42419891112586,
+      "max": 128.9437030646441
+    },
+    "warm_direct_under_25_ms": 4,
+    "cold_alias_to_warm_direct_at_least_180x": 0
+  }
+}

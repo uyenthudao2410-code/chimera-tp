@@ -1,0 +1,224 @@
+{
+  "ab1_network_workbuddy_20x": {
+    "baseline_os_dns": {
+      "ok": 11,
+      "total": 20,
+      "success_pct": 55.0,
+      "p50_ms": 100.87,
+      "p95_ms": 2515.74,
+      "p99_ms": 2538.87
+    },
+    "chimera_hedged_connect": {
+      "ok": 20,
+      "total": 20,
+      "success_pct": 100.0,
+      "p50_ms": 73.13,
+      "p95_ms": 95.54,
+      "p99_ms": 272.84,
+      "routes": {
+        "hedged": 1,
+        "direct": 1,
+        "standby": 18
+      },
+      "pops_used": {
+        "43.174.162.158": 20
+      },
+      "hedged_rescues": 1,
+      "standby_hits": 18,
+      "pop_bandit_table": [
+        {
+          "host": "www.workbuddy.ai",
+          "ip": "43.174.162.158",
+          "route": "direct",
+          "attempts": 21,
+          "ok": 21,
+          "fails": 0,
+          "success_pct": 100.0,
+          "ewma_ms": 30.8,
+          "last_ms": 25.21,
+          "cooldown_rem_s": 0.0,
+          "circuit": "CLOSED"
+        },
+        {
+          "host": "www.workbuddy.ai",
+          "ip": "43.169.32.91",
+          "route": "direct",
+          "attempts": 1,
+          "ok": 0,
+          "fails": 1,
+          "success_pct": 0.0,
+          "ewma_ms": 2510.83,
+          "last_ms": 2510.83,
+          "cooldown_rem_s": 14.9,
+          "circuit": "OPEN"
+        }
+      ]
+    }
+  },
+  "ab2_kernel_socket_immunity": {
+    "scan_ms": 1.893,
+    "total_listening_pids": 38,
+    "dsh_vip_pids": [
+      25440
+    ],
+    "vip_peer_pids": [
+      17340,
+      28508
+    ],
+    "wb_proxy_8788_pids": [
+      5740
+    ],
+    "wb_proxy_immune_as_listener": true,
+    "wb_proxy_immune_as_vip_peer": false,
+    "chimera_9780_9781_pids": [
+      34860
+    ],
+    "subprocesses_spawned": 0
+  },
+  "live_deployment_and_ab3": {
+    "live_daemon": {
+      "pid": 34396,
+      "in_job": false,
+      "daemon_ram_mb": 60.18,
+      "zero_weight_ok": true
+    },
+    "federated_models_count": 30,
+    "has_deepseek_v4_1_flash": true,
+    "sample_models": [
+      "chimera-vsa-embed-256",
+      "chimera-cuda-embed",
+      "chimera-colab-elastic",
+      "deepseek-v4.1-flash",
+      "deepseek-v4.1-flash-sg",
+      "hy4-preview",
+      "hy3",
+      "gpt-6-astra"
+    ],
+    "live_9781_connect_5x": [
+      {
+        "pop": "43.169.32.91",
+        "route": "direct",
+        "tls_total_ms": 127.9
+      },
+      {
+        "pop": "43.175.196.69",
+        "route": "hedged",
+        "tls_total_ms": 204.09
+      },
+      {
+        "pop": "43.175.196.69",
+        "route": "standby",
+        "tls_total_ms": 88.17
+      },
+      {
+        "pop": "43.175.196.69",
+        "route": "standby",
+        "tls_total_ms": 82.05
+      },
+      {
+        "pop": "43.175.196.69",
+        "route": "standby",
+        "tls_total_ms": 82.17
+      }
+    ],
+    "live_pops_endpoint": [
+      {
+        "host": "www.workbuddy.ai",
+        "ip": "43.169.32.91",
+        "route": "direct",
+        "attempts": 1,
+        "ok": 1,
+        "fails": 0,
+        "success_pct": 100.0,
+        "ewma_ms": 4.95,
+        "last_ms": 4.95,
+        "cooldown_rem_s": 0.0,
+        "circuit": "CLOSED"
+      },
+      {
+        "host": "www.workbuddy.ai",
+        "ip": "43.175.196.69",
+        "route": "direct",
+        "attempts": 5,
+        "ok": 5,
+        "fails": 0,
+        "success_pct": 100.0,
+        "ewma_ms": 7.03,
+        "last_ms": 4.37,
+        "cooldown_rem_s": 0.0,
+        "circuit": "CLOSED"
+      },
+      {
+        "host": "models.dev",
+        "ip": "104.21.51.36",
+        "route": "direct",
+        "attempts": 1,
+        "ok": 1,
+        "fails": 0,
+        "success_pct": 100.0,
+        "ewma_ms": 56.65,
+        "last_ms": 56.65,
+        "cooldown_rem_s": 0.0,
+        "circuit": "CLOSED"
+      }
+    ],
+    "ab3_sse_coalescing_120_tokens": {
+      "raw_0ms": {
+        "chunks_in": 121,
+        "flushes_out": 121,
+        "flush_reduction_x": 1.0,
+        "ttft_ms": 8.75,
+        "total_ms": 371.68,
+        "bytes": 6024
+      },
+      "coalesced_16ms": {
+        "chunks_in": 121,
+        "flushes_out": 17,
+        "flush_reduction_x": 7.12,
+        "ttft_ms": 4.49,
+        "total_ms": 356.38,
+        "bytes": 6024
+      }
+    },
+    "live_hyperdesk_immune_gateways": {
+      "listening_count": 38,
+      "vip_peer_count": 0,
+      "total_immune": 38,
+      "scan_ms": 1.736,
+      "pids": [
+        1292,
+        1372,
+        1448,
+        2104,
+        2420,
+        3056,
+        3568,
+        3928,
+        4036,
+        4712,
+        4784,
+        5388,
+        5420,
+        5740,
+        5924,
+        6740,
+        6860,
+        7112,
+        8180,
+        8612,
+        8844,
+        10908,
+        14904,
+        17476,
+        23816,
+        25440,
+        28024,
+        28292,
+        32140,
+        32164,
+        32292,
+        32360
+      ]
+    }
+  }
+}

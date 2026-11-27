@@ -1,0 +1,48 @@
+{
+  "schema": "chimera.local-swarm.acceptance/1",
+  "verified_utc": "2026-11-26T13:54:57.173Z",
+  "clients": [
+    {
+      "pid": 24420,
+      "wall_ms": 1849,
+      "delivery": "executed",
+      "attempt_id": "bad8c08e00cf49ec90ec2029a22c3c1f",
+      "snapshot": "62f3feec303a1e2efe42d1d2d1f38134ec16244c9d817a3550dd5bc2045ea1a8",
+      "key": "42bc5d1f4ce049005402478c95e4fac15130029d4cf734842bbd80da0f12605b"
+    },
+    {
+      "pid": 24432,
+      "wall_ms": 1845,
+      "delivery": "joined",
+      "attempt_id": "bad8c08e00cf49ec90ec2029a22c3c1f",
+      "snapshot": "62f3feec303a1e2efe42d1d2d1f38134ec16244c9d817a3550dd5bc2045ea1a8",
+      "key": "42bc5d1f4ce049005402478c95e4fac15130029d4cf734842bbd80da0f12605b"
+    }
+  ],
+  "result_sha256": "d9aacb35d047568bade0fd8553e5a8d9952537c778688f57121ca160e6335481",
+  "independent_invocations_first_pair": 1,
+  "cached_wall_ms": 475,
+  "independent_invocations_after_source_and_env_changes": 4,
+  "dirty_bytes_match": true,
+  "separate_environment_keys": true,
+  "workspace_output_untouched": true,
+  "caps": {
+    "hard_io": "io_cap_unavailable",
+    "stdout_bytes": 12000,
+    "stderr_bytes": 4000,
+    "oversized_artifact": "artifact_return_limit"
+  },
+  "timeout": {
+    "state": "failed",
+    "error": "timeout",
+    "confirmed_grandchild_exited_on_return": true
+  },
+  "command_error_preserved": 29,
+  "fixture_removed": true,
+  "source_sha256": {
+    "chimera_tp/platform/local_build.py": "bb888d1d12a9dc490dc61a00e7efdd18a2894c569c6d18182a69f54c39c5ac67",
+    "chimera_tp/platform/windows_build_job.py": "2facd8d35e2aa636fac98cf359165a4e77e6f3afdc6b2ca133e4725578c509c0",
+    "chimera_tp/platform/guarded_build.py": "e4d43b20761b6ecad2a38aa29c3ec09308face2d1710b3b9dacbba8a1f171a17",
+    "tests/test_local_swarm.mjs": "6430ee9c3f635ccd851f77cb08e5496a822eea199a2bf32e68b66598512fc732"
+  }
+}

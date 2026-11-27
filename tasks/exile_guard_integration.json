@@ -1,0 +1,163 @@
+{
+  "schema": "chimera.guarded-exile-integration/1",
+  "ok": true,
+  "measured_utc": "2026-11-26T17:32:11.755636+00:00",
+  "scope": "Windows SDK, ephemeral HTTP anchor, actual SSH, Linux peer admission and CAS worker. Byte counters measure framed SSH stdin and exclude SSH/TCP overhead and responses.",
+  "local_fault_trials": {
+    "report": "exile_guard_fault_trials.json",
+    "sha256": "2bc09eb8bc98e63d96eea3194e894bbb5d85c0c5ddc1a338835856926189bb03",
+    "passed": 100,
+    "stale_receipts_rejected": 25,
+    "scope": "Windows child-process workers and SQLite, with SSH and Linux admission supplied by a fixture."
+  },
+  "peer": {
+    "root": "/var/tmp/chimera-exile-check-w4w4t_a_",
+    "node": "svhome",
+    "beacon_node": "svhome",
+    "pid": 3930019,
+    "removed": true
+  },
+  "jobs": [
+    {
+      "job_id": "cas-0-025689c58f894f748a9e519186b4c6ed",
+      "generation": 1,
+      "execution_node": "svhome",
+      "input_digest": "d189ffe98df7781878d0bb2a9cea7b5a0b371fedbf8a663f0a6242aae9b800ac",
+      "output_sha256": "35811e8520aa54ce7ba0bc76969f7f1c5084d45e130b658242ba1050a5a5963d",
+      "output_cas_hash": "6d971d010446181083b0edf6c820d5cc",
+      "output_bytes": 73728,
+      "raw_input_bytes": 73728,
+      "raw_pushed_bytes": 73728,
+      "elapsed_ms": 6722.561,
+      "phases": [
+        {
+          "action": "query",
+          "ok": true,
+          "state": "completed",
+          "error": null,
+          "delivery": "executed",
+          "attempt_id": "65a0986c4cb54d2d81d4a43a3fa7c8c1",
+          "node": "svhome",
+          "snapshot": "61ff2510101a0049249b17852a9b190ad9483fab4c69c645abda2a28c40080d1",
+          "ssh_stdin_bytes": 23941,
+          "elapsed_ms": 1985.0,
+          "limits_verified": true
+        },
+        {
+          "action": "push",
+          "ok": true,
+          "state": "completed",
+          "error": null,
+          "delivery": "executed",
+          "attempt_id": "63acb8ca1c3b4be494b242576a340910",
+          "node": "svhome",
+          "snapshot": "9a1e8d80a9d3d37c190f4f5b0b03b36a2d9768086d6db38339f507e1275527c2",
+          "ssh_stdin_bytes": 98159,
+          "elapsed_ms": 2078.0,
+          "limits_verified": true,
+          "block_count": 2,
+          "block_payload_bytes": 73728
+        },
+        {
+          "action": "execute",
+          "ok": true,
+          "state": "completed",
+          "error": null,
+          "delivery": "executed",
+          "attempt_id": "713c9c9c8f4b4e68add4f7cae884c0a0",
+          "node": "svhome",
+          "snapshot": "e1ef0915b609ee76d61e3fd3f4bc14f034b12ad13750124335f4a7aa4192dbb0",
+          "ssh_stdin_bytes": 24161,
+          "elapsed_ms": 2234.0,
+          "limits_verified": true
+        }
+      ],
+      "total_ssh_stdin_bytes": 146261,
+      "push_ssh_stdin_bytes": 98159,
+      "missing_blocks": 2
+    },
+    {
+      "job_id": "cas-1-d55e74a624a74d29a3bd7ba46562c887",
+      "generation": 1,
+      "execution_node": "svhome",
+      "input_digest": "d447035b23261ae15e1d53b4847c6ffae5a9c61582226332062d1ca4cbe44205",
+      "output_sha256": "50e7aa2b63df408aeb1386894caf116dee88b57bb96d3c90b7360d1657c51e53",
+      "output_cas_hash": "b45f37826e743333346949f49d6efbae",
+      "output_bytes": 73728,
+      "raw_input_bytes": 73728,
+      "raw_pushed_bytes": 8192,
+      "elapsed_ms": 6602.535,
+      "phases": [
+        {
+          "action": "query",
+          "ok": true,
+          "state": "completed",
+          "error": null,
+          "delivery": "executed",
+          "attempt_id": "53fa098ac4964bdfa975c799c23f5199",
+          "node": "svhome",
+          "snapshot": "2fe46f7bb1366945b1c1b9b55b83585f2c67fd4794db01034315bcd112a7182e",
+          "ssh_stdin_bytes": 23941,
+          "elapsed_ms": 1937.0,
+          "limits_verified": true
+        },
+        {
+          "action": "push",
+          "ok": true,
+          "state": "completed",
+          "error": null,
+          "delivery": "executed",
+          "attempt_id": "1e6e5c4397ac4d08911386de556334a9",
+          "node": "svhome",
+          "snapshot": "4733af1ac8726093d4344166cd9c90b82b0907bd18bb9aa9284cc767d4829f74",
+          "ssh_stdin_bytes": 32351,
+          "elapsed_ms": 1954.0,
+          "limits_verified": true,
+          "block_count": 1,
+          "block_payload_bytes": 8192
+        },
+        {
+          "action": "execute",
+          "ok": true,
+          "state": "completed",
+          "error": null,
+          "delivery": "executed",
+          "attempt_id": "ce2c529a2bcd4f449a58bc872bc86012",
+          "node": "svhome",
+          "snapshot": "89aca44db4a114089804f25c00ab812106a19ecfd007f34bd0c35f6b158fc0dd",
+          "ssh_stdin_bytes": 24161,
+          "elapsed_ms": 2250.0,
+          "limits_verified": true
+        }
+      ],
+      "total_ssh_stdin_bytes": 80453,
+      "push_ssh_stdin_bytes": 32351,
+      "missing_blocks": 1
+    }
+  ],
+  "replay": {
+    "job_id": "cas-1-d55e74a624a74d29a3bd7ba46562c887",
+    "committed_receipts": 1,
+    "generation": 1,
+    "new_ssh_requests": 0
+  },
+  "guarded_queue_recovery": {
+    "job_id": "cas-queue-bc7ae609e4e3484ca3e03a3e21c9cab8",
+    "ticket_id": "3a4b5b4f8a7050ebda677a5e6c5e9f5a5d41d6c7b73bcc30533c153f9fbf7ca7",
+    "reason": "service_unhealthy",
+    "retained_bytes": 11182,
+    "steps": 2,
+    "queue_after_retry": 0,
+    "generations": {
+      "xor-1": 1,
+      "xor-0": 3
+    },
+    "output_sha256": {
+      "xor-1": "3116f9b6fbc3c9705f85d91c104d938dae5e4764e978ba792394966fbd04a218",
+      "xor-0": "5cd8e7ab69d16df90ddd4207e6394c45366c7c32cb73796b07c8ca1c2e8e0f34"
+    },
+    "http_503_at_receiver_before_recovery": 2,
+    "http_200_at_receiver_after_recovery": 30
+  },
+  "local_fixture_removed": true
+}

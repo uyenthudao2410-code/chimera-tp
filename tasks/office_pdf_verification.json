@@ -1,0 +1,159 @@
+{
+  "schema": "office-pdf-verification/1",
+  "captured_utc": "2026-11-26T12:39:06.122782+00:00",
+  "environment": {
+    "os": "Windows 11 Pro Insider Preview build 29683",
+    "python": "3.11.7",
+    "pdfium_python": "4.30.0",
+    "tesseract": "5.3.3.20231005",
+    "office_source": "C:/Users/Admin/.t3/projects/windown"
+  },
+  "production_observed": {
+    "sample_utc": "2026-11-26T12:32:26.5443694Z",
+    "production_worker_parents": 1,
+    "prewarmed_children": 6,
+    "tree_private_mib": 2703.45,
+    "task": "RicohMP3352_OfficeDispatch",
+    "state": "Running",
+    "launcher_installed": false
+  },
+  "office_test": {
+    "sink": "local_pcl_file",
+    "physical_printer_jobs": 0,
+    "windows_gdi": {
+      "port": "FILE:",
+      "driver": "PCL6 V4 Driver for Universal Print",
+      "spool_id": 12,
+      "request_to_spooler_ms": 992.09,
+      "driver_file_bytes": 740783,
+      "driver_file_sha256": "37d971f6d3f8d36411baf433675008a1235a8cb771d60393f6821b5674bd3f97",
+      "request_to_complete_driver_file_ms": 2215.72
+    },
+    "request_to_first_pcl_page_ms": 544.46,
+    "raster_children_seen": 2,
+    "raster_private_mib": 788.95,
+    "pcl_sha256": "9e2e835925e79411071f98321912689f33b32fe05d742b0a8548dbbda31395a8",
+    "pcl_bytes": 9761,
+    "request_to_queue_receipt_ms": 590.03,
+    "concurrent_submits": 2,
+    "queued_copies": 1,
+    "sink_verified": true,
+    "interrupted_send_state": "uncertain",
+    "children_after_idle": 0
+  },
+  "office_scope": "Two PCL render subprocesses, one-second idle timeout for the isolated replay, thirty-second default. A separate transaction measured the GDI spooler and completed driver output.",
+  "pdf_mixed": {
+    "fixture": "mixed",
+    "fixture_sha256": "4729265ecb22c4f8bf5984e6eb0f7a236964e17744d01d55984b0997f14927e8",
+    "dpi": 180,
+    "cold": {
+      "pages": 500,
+      "ocr_calls": 14,
+      "reused_scans": 86,
+      "reused_documents": 0,
+      "elapsed_ms": 10845.84,
+      "methods": {
+        "native": 400,
+        "ocr": 90,
+        "mixed": 10
+      },
+      "fields_correct": 1000,
+      "fields_expected": 1000,
+      "fields_missing": 0,
+      "fields_wrong": 0,
+      "sample_mismatches": [],
+      "cli_wall_ms": 11151.97
+    },
+    "cached": {
+      "pages": 500,
+      "ocr_calls": 0,
+      "reused_scans": 0,
+      "reused_documents": 1,
+      "elapsed_ms": 49.87,
+      "methods": {
+        "native": 400,
+        "ocr": 90,
+        "mixed": 10
+      },
+      "fields_correct": 1000,
+      "fields_expected": 1000,
+      "fields_missing": 0,
+      "fields_wrong": 0,
+      "sample_mismatches": [],
+      "cli_wall_ms": 329.56
+    }
+  },
+  "pdf_distinct": {
+    "fixture_sha256": "54b03a8d78b9b30c389df081ed6635df5be3592eb2c242360ba639e15a4be410",
+    "dpi": 180,
+    "documents": 1,
+    "pages": 500,
+    "method": "ocr",
+    "unique_ocr_pages": 500,
+    "fields_expected": 1000,
+    "fields_correct": 1000,
+    "fields_missing": 0,
+    "fields_wrong": 0,
+    "source": "Independent comparison of the committed page text with all labels in the generated fixture.",
+    "stable_cli_trial": {
+      "exit_code": 0,
+      "cold_cli_wall_ms": 303022.72,
+      "cold_pipeline_ms": 302733.23,
+      "cold_ocr_calls": 500,
+      "cold_page_cache_hits": 0,
+      "cold_fields_correct": 1000,
+      "warm_cli_wall_ms": 354.11,
+      "warm_pipeline_ms": 68.29,
+      "warm_document_cache_hits": 1,
+      "warm_ocr_calls": 0,
+      "warm_fields_correct": 1000
+    },
+    "current_cache_check": {
+      "engine_cache": "pdf-text-v2",
+      "cache_hit": true,
+      "pages": 500,
+      "ocr_calls": 0,
+      "correct_fields": 1000,
+      "expected_fields": 1000,
+      "in_process_cached_extraction_and_scoring_ms": 16.49
+    }
+  },
+  "vietnamese_smoke": {
+    "input_sha256": "f9b01031492f3332b31d88764853b1fc650a2eff29cae5dfc8c60cd4a45af967",
+    "languages": "vie+eng",
+    "dpi": 210,
+    "method": "ocr",
+    "expected_lines": ["Mã phiếu 7362", "Số lượng 18"],
+    "exact_lines_recovered": 2,
+    "elapsed_ms": 989.45
+  },
+  "coverage": {
+    "synthetic_fields": [
+      "code",
+      "units"
+    ],
+    "fixtures": "Generated A4 English documents.",
+    "pdf_visual_check": "Rendered and inspected page 50 of the mixed fixture using Poppler.",
+    "regression_tests_passed": 7,
+    "isolated_FILE_queues_remaining": 0
+  },
+  "limitations": [
+    "Physical delivery and live fleet performance are outside these measurements.",
+    "The generated documents measure two fields, and do not establish accuracy for customer scans or arbitrary tables.",
+    "The V4 driver accepted RAW spool jobs but did not produce a complete file. A GDI job on a private FILE: port produced the verified driver stream."
+  ],
+  "reproduction": {
+    "mixed_pdf": "python -B -m scripts.measure_pdf_batch --pages 500 --profile mixed --progress",
+    "all_scan_pdf": "python -B -m scripts.measure_pdf_batch --pages 500 --profile distinct-scans --progress",
+    "office_software_queue": "python -B -m scripts.measure_office_idle --app-dir <office_print_directory>",
+    "office_spool": "Use --file-queue with a private local FILE: queue and a supported PCL driver."
+  },
+  "source_sha256": {
+    "examples/office_print_on_demand.py": "b96887f31cb9ea6ba17b0ab318dae03b691f868e615fdb5818697bf393257d63",
+    "examples/pdf_text_batch.py": "b20ab5ce51fe8fc2fc2ceea0f271e5d9810954ba885aab713eecd885cd66d8c8",
+    "examples/pdf_fields.py": "9173d7b267ce72447defa31a5d808a36d79914f08a947dbdc583321f9267d47f",
+    "scripts/measure_office_idle.py": "74d734c3f655ca1766596affec568c52d793e9f76fad3d436ef0dafe4c7721ad",
+    "scripts/measure_pdf_batch.py": "d6352b5a3b9c6736adcd19b453f3dfbfc7531f9b4c2f76f758bea3db0e7a2855",
+    "tests/test_office_document_workflows.py": "6b885396bf68a49231582339af39ec97fb9a2f1169563f4141e8730e73490442"
+  }
+}

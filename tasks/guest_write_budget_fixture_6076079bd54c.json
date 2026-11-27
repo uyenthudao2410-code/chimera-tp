@@ -1,0 +1,142 @@
+{
+  "schema": "chimera.guest-io-system-fixture/1",
+  "started_utc": "2026-11-27T00:56:29.463671+00:00",
+  "finished_utc": "2026-11-27T00:58:17.156310+00:00",
+  "release": "6076079bd54ccc2de7769f07dab88949efc9495d",
+  "probe_sha256": "0a4841f33b5be522da3b7244046c956eca0dba13b974fb1c9ecc8947853cca9e",
+  "scope": "Temporary system units with User=svhome, on the home filesystem. Production build delegation is tested separately.",
+  "guard_sha256": "73a007c9ae7a403cff78a662a795ca2917b67d0aec1cd191284e5ad3c000e800",
+  "pids_before": {
+    "user_manager": 5331,
+    "daemon": 4011700
+  },
+  "pids_after": {
+    "user_manager": 5331,
+    "daemon": 4011700
+  },
+  "rows": [
+    {
+      "schema": "chimera.guest-write-budget/1",
+      "uid": 1000,
+      "cgroup": "/sys/fs/cgroup/system.slice/chimera-io-proof-af1225aadc1d.service",
+      "lane": "isolated_system_fixture",
+      "guard_in_trial": {
+        "limits_verified": true,
+        "rechecks": 1,
+        "max_recheck_temp_c": 44.0
+      },
+      "file_device": "8:2",
+      "capped_device": "8:0",
+      "kernel_wbps": 1048576,
+      "fixture_bytes": 1048576,
+      "sha256": "97b7c665a24c88a21fec3678aaebb129fccb0d0160a8f2510bf39f2d7e5b2de2",
+      "flushed_throughput_bps": 1031353,
+      "elapsed_s": 1.0167,
+      "bytes_per_flush": 262144,
+      "seconds_after_each_flush": [
+        0.27718,
+        0.51948,
+        0.76531,
+        1.01666
+      ],
+      "io_stat_delta": {
+        "wbytes": 1048576,
+        "wios": 4
+      },
+      "host_io_psi_before": 0.31
+    },
+    {
+      "schema": "chimera.guest-write-budget/1",
+      "uid": 1000,
+      "cgroup": "/sys/fs/cgroup/system.slice/chimera-io-proof-7d0143f8b611.service",
+      "lane": "isolated_system_fixture",
+      "guard_in_trial": {
+        "limits_verified": true,
+        "rechecks": 1,
+        "max_recheck_temp_c": 47.0
+      },
+      "file_device": "8:2",
+      "capped_device": "8:0",
+      "kernel_wbps": 4194304,
+      "fixture_bytes": 1048576,
+      "sha256": "97b7c665a24c88a21fec3678aaebb129fccb0d0160a8f2510bf39f2d7e5b2de2",
+      "flushed_throughput_bps": 3841007,
+      "elapsed_s": 0.273,
+      "bytes_per_flush": 262144,
+      "seconds_after_each_flush": [
+        0.01845,
+        0.1441,
+        0.15655,
+        0.27296
+      ],
+      "io_stat_delta": {
+        "wbytes": 1048576,
+        "wios": 4
+      },
+      "host_io_psi_before": 0.35
+    },
+    {
+      "schema": "chimera.guest-write-budget/1",
+      "uid": 1000,
+      "cgroup": "/sys/fs/cgroup/system.slice/chimera-io-proof-24619c3e9836.service",
+      "lane": "isolated_system_fixture",
+      "guard_in_trial": {
+        "limits_verified": true,
+        "rechecks": 1,
+        "max_recheck_temp_c": 50.0
+      },
+      "file_device": "8:2",
+      "capped_device": "8:0",
+      "kernel_wbps": 4194304,
+      "fixture_bytes": 1048576,
+      "sha256": "97b7c665a24c88a21fec3678aaebb129fccb0d0160a8f2510bf39f2d7e5b2de2",
+      "flushed_throughput_bps": 4002099,
+      "elapsed_s": 0.26201,
+      "bytes_per_flush": 262144,
+      "seconds_after_each_flush": [
+        0.00901,
+        0.14171,
+        0.15417,
+        0.26198
+      ],
+      "io_stat_delta": {
+        "wbytes": 1048576,
+        "wios": 4
+      },
+      "host_io_psi_before": 0.14
+    },
+    {
+      "schema": "chimera.guest-write-budget/1",
+      "uid": 1000,
+      "cgroup": "/sys/fs/cgroup/system.slice/chimera-io-proof-c724cdb52a97.service",
+      "lane": "isolated_system_fixture",
+      "guard_in_trial": {
+        "limits_verified": true,
+        "rechecks": 1,
+        "max_recheck_temp_c": 45.0
+      },
+      "file_device": "8:2",
+      "capped_device": "8:0",
+      "kernel_wbps": 1048576,
+      "fixture_bytes": 1048576,
+      "sha256": "97b7c665a24c88a21fec3678aaebb129fccb0d0160a8f2510bf39f2d7e5b2de2",
+      "flushed_throughput_bps": 1038175,
+      "elapsed_s": 1.01002,
+      "bytes_per_flush": 262144,
+      "seconds_after_each_flush": [
+        0.26967,
+        0.51839,
+        0.77102,
+        1.00998
+      ],
+      "io_stat_delta": {
+        "wbytes": 1048576,
+        "wios": 4
+      },
+      "host_io_psi_before": 0.1
+    }
+  ],
+  "high_low_throughput_ratio": 3.79,
+  "deferrals": [],
+  "separation_confirmed": true
+}

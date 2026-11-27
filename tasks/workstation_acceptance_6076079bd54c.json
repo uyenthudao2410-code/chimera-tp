@@ -1,0 +1,277 @@
+{
+  "schema": "chimera.workstation-acceptance/2",
+  "release": "6076079bd54ccc2de7769f07dab88949efc9495d",
+  "captured_utc": "2026-11-27T00:46:43.061023+00:00",
+  "date_timezone": "Asia/Ho_Chi_Minh",
+  "rollout": "tasks/workstation_rollout_6076079bd54c.json",
+  "soak": {
+    "report": "tasks/live_daemon_soak_6076079bd54c.json",
+    "journal": "tasks/live_daemon_soak_6076079bd54c.jsonl",
+    "state_at_capture": "running",
+    "samples_at_capture": 17,
+    "seconds_at_capture": 1920.015,
+    "observer_pid": 5980,
+    "required_s": 86400,
+    "exclusive_bytes": 83886080,
+    "earliest_end_utc": "2026-11-28T00:14:43.008329+00:00",
+    "source_checks_at_capture": 1,
+    "missed_at_capture": 0,
+    "kernel_peaks_bytes_at_capture": {
+      "win-desktop": 65474560,
+      "svhome": 73392128
+    },
+    "receipt_verifier": "scripts/check_daemon_soak.py",
+    "receipt_verifier_tests": "tests/test_soak_receipt.py"
+  },
+  "previous_soaks": [
+    {
+      "report": "live_daemon_soak_2ef6fcb8ca0c.json",
+      "state": "failed",
+      "reason": "win-desktop: PID or start time changed",
+      "samples": 4
+    },
+    {
+      "report": "live_daemon_soak_6280c704d2e4.json",
+      "state": "failed",
+      "reason": "win-desktop: PID or start time changed",
+      "samples": 4
+    },
+    {
+      "report": "live_daemon_soak_6d14499db454.json",
+      "state": "failed",
+      "reason": "win-desktop: PID or start time changed",
+      "samples": 1
+    },
+    {
+      "report": "live_daemon_soak_94c21bfff98b.json",
+      "state": "failed",
+      "reason": "svhome: PID or start time changed",
+      "samples": 8
+    },
+    {
+      "report": "live_daemon_soak_b75a1438f924.json",
+      "state": "failed",
+      "reason": "kernel_peak_reached_budget",
+      "samples": 1
+    }
+  ],
+  "live_at_capture": {
+    "win-desktop": {
+      "pid": 37972,
+      "started_at": "2026-11-27T07:13:16+07:00",
+      "version": "18.0.0",
+      "rss_bytes": 27910144,
+      "peak_bytes": 65474560,
+      "verified": 0
+    },
+    "svhome": {
+      "pid": 4011700,
+      "started_at": "2026-11-27T07:13:55+07:00",
+      "version": "18.0.0",
+      "rss_bytes": 69279744,
+      "peak_bytes": 73392128,
+      "verified": 0
+    }
+  },
+  "route": "phantom",
+  "python_file_count": 115,
+  "source_set_sha256": "0c16494c7495d7d1989e81b8318be3adb4c492236de9634f37e54149ca18fa00",
+  "tests": {
+    "windows": {
+      "executed": 75,
+      "passed": 71,
+      "skipped": 4
+    },
+    "linux_run_and_passed": 14,
+    "artifacts": [
+      "E:\\DEV\\chimera-tp\\.git\\chimera-rollbacks\\20261126T180248Z\\preflight-6076079bd54c.json",
+      "E:\\DEV\\chimera-tp\\.git\\chimera-rollbacks\\20261126T180248Z\\linux-guard-6076079bd54c.json"
+    ]
+  },
+  "daemon_budget": {
+    "gate": "E:/DEV/chimera-tp/.git/chimera-rollbacks/20261126T180248Z/gate-6076079bd54c-raw.json",
+    "native_verified": true,
+    "short_trial_peak_mib": {
+      "windows": 66.21875,
+      "linux": 59.09765625
+    },
+    "legacy_rows": 6144,
+    "previous_windows_peak_mib": 95.95703125,
+    "old_vsa_fixture": "E:\\DEV\\chimera-tp\\.git\\chimera-rollbacks\\20261126T180248Z\\vsa-6144-before.json",
+    "populated_cli_peak_mib": {
+      "windows": 65.40234375,
+      "linux": 52.50390625
+    }
+  },
+  "sampler_scope": "Same PID and start time plus cumulative kernel peaks on both OSes, source/native checks at start, hourly and end.",
+  "subprocess": {
+    "audit": "tasks/windows_child_process_audit_6076079bd54c.json",
+    "counts": {
+      "windows_no_console": 50,
+      "foreground": 5,
+      "posix_only": 7,
+      "user_requested_terminal": 1
+    },
+    "scope": "Static Python AST of direct subprocess API calls in the committed package. Includes aliases. Excludes processes inside external applications, child scripts in strings and native code. No claim of observing every GUI path."
+  },
+  "build": {
+    "guarded_route": "phantom_ssh",
+    "profile_pins_actual_ssh_route": true,
+    "fresh_jobs_in_warm_trial": 16,
+    "shared_ssh_fixture": "tasks/guarded_build_session_6076079bd54c.json",
+    "median_two_builds_ms": {
+      "fresh": 1820.499999987078,
+      "shared": 1359.5000000059372
+    },
+    "placement_fixture": "tasks/placement_ssh_route_regression_20261127.json",
+    "all_clients_share_one_connection_by_default": false,
+    "exile_guard_integration": "E:\\DEV\\chimera-tp\\.git\\chimera-rollbacks\\20261126T180248Z\\exile-guard-6076079bd54c.json",
+    "exile_retry": {
+      "job_id": "cas-queue-c0e8e3e8c1d44ad5ae924e02ae08803b",
+      "ticket_id": "ab896a7f754923f65302ece42eacc875016ebf212549848c3fcf05fc126f569f",
+      "reason": "service_unhealthy",
+      "retained_bytes": 11182,
+      "steps": 2,
+      "queue_after_retry": 0,
+      "generations": {
+        "xor-1": 1,
+        "xor-0": 3
+      },
+      "output_sha256": {
+        "xor-1": "bcadd6815b4043fe588e9ffd5ad301f3b2c7bd5c0b05d8f7c758da56aeec3755",
+        "xor-0": "c4e5f4eb73f48c7069ef264bacdfa387cb32fadb087f63fe81efd216cd1643fa"
+      },
+      "http_503_at_receiver_before_recovery": 2,
+      "http_200_at_receiver_after_recovery": 30
+    },
+    "workstation_controlmaster": {
+      "tested_over": "phantom_ssh to svhome with strict host-key checking; temporary private ControlPath",
+      "native": {
+        "version": "OpenSSH_for_Windows_9.5p2",
+        "session_opened": false,
+        "diagnostic": "getsockname failed: Not a socket"
+      },
+      "git_for_windows": {
+        "version": "OpenSSH_9.9p2",
+        "session_opened": false,
+        "diagnostic": "Failed to connect to new control master"
+      },
+      "system_ssh_config_changed": false
+    },
+    "default_cli_mcp_pair": {
+      "artifact": "tasks/guarded_client_pair_6076079bd54c.json",
+      "sha256": "3d6446639ee332ca09511bb6afd2aa84bf83c903ca0335686f6c9df8deffb0c5",
+      "paired_clients": [
+        "swarm",
+        "mcp"
+      ],
+      "client_dispatch": [
+        "executed",
+        "joined"
+      ],
+      "unique_receiver_executions_for_initial_pair": 1,
+      "shared_attempt": "25881d6f36904f4b8a0bbd736b61c4a9",
+      "returned_zip_bytes": 151,
+      "uncommitted_edit_returned_zip_bytes": 165,
+      "separate_keys_after_toolchain_change": true,
+      "failed_attempt_retried": true,
+      "requested_hard_io": "io_cap_unavailable",
+      "test_ticket_cleaned": true
+    }
+  },
+  "service_slo": {
+    "artifact": "tasks/peer_service_slo_6076079bd54c.json",
+    "policy": {
+      "type": "experimental_only",
+      "linux_absolute_ms": 20,
+      "linux_added_ms": 5,
+      "required_http_error_count": 0,
+      "production_slo": null
+    },
+    "completed_pairs": 10,
+    "balanced_n": 50,
+    "p95": {
+      "idle": {
+        "linux_health_ms": 2.8357,
+        "linux_asset_ms": 1.4262,
+        "windows_health_ms": 198.3955
+      },
+      "build": {
+        "linux_health_ms": 1.2943,
+        "linux_asset_ms": 1.3472,
+        "windows_health_ms": 201.3305
+      }
+    },
+    "experimental_gate_pass": true
+  },
+  "storage": {
+    "artifact": "tasks/refs_compile_ab_20261127.json",
+    "summary": {
+      "pairs": 8,
+      "c_ntfs_median_ms": 885.185,
+      "v_refs_median_ms": 770.832,
+      "median_paired_reduction_pct": 20.01,
+      "paired_reduction_range_pct": [
+        -0.37,
+        25.22
+      ],
+      "v_refs_faster_pairs": 7,
+      "identical_verified_products": 16
+    },
+    "fixture_file_count": 115,
+    "fixture_manifest": "e53ec7dd3dd616f2dc7bac24c77a6b1a8fea261331234de92ad59585f68c5f3f",
+    "scope": "Working package *.py including tracked changes and nonignored untracked files"
+  },
+  "display": {
+    "artifact": "tasks/display_paths_20261127.json",
+    "cad_total_pairs": 0,
+    "cad_required_pairs": 10,
+    "cad_measurement": "deferred_by_operator",
+    "ai_generated_frames_or_dwm_as_cad_pairs": 0,
+    "active_build_routing_during_cad": false
+  },
+  "operator_options": {
+    "live_ricoh_queue": "preserved",
+    "autocad_screen": "deferred",
+    "colab_cu_used": 0
+  },
+  "open_items": [
+    "24h uninterrupted RSS / working set on both nodes",
+    "Real CAD A/B and display variants deferred",
+    "One physical SSH connection is confirmed only inside a finite real-compiler pair; default independent clients still establish separate connections",
+    "Hard SSD write cap depends on user cgroup io delegation",
+    "Native Electron/WebView2 applications have not been consolidated or closed"
+  ],
+  "vault_sql": {
+    "artifact": "tasks/vault_sql_live_route_6076079bd54c.json",
+    "artifact_sha256": "def236472581bf57aa1c16f2c438f6e09aaeda87d2c7094350e85afa98828247",
+    "method": "ChimeraClient.vault_sql_sync(name)",
+    "peer_base_override": false,
+    "route": "existing PHANTOM HTTP listener",
+    "direction": "svhome to win-desktop",
+    "same_session": true,
+    "encoded_page_bytes": [
+      17812,
+      0
+    ],
+    "verified_generation": [
+      "b94170cafdfe1edfa0e05a8858d753f4b2176be56d7816fe428796a67cfa0a5c",
+      "b94170cafdfe1edfa0e05a8858d753f4b2176be56d7816fe428796a67cfa0a5c"
+    ],
+    "sdk_wall_ms": [
+      76.516,
+      45.931
+    ]
+  },
+  "io_delegation_observed": {
+    "user_service": "user@1000.service",
+    "delegate_controllers": [
+      "cpu",
+      "memory",
+      "pids"
+    ],
+    "user_slice_io_available": true,
+    "user_slice_io_enabled_for_children": false,
+    "guest_hard_write_cap_verified": false
+  }
+}

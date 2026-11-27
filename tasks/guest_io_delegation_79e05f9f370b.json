@@ -1,0 +1,94 @@
+{
+  "node": "svhome",
+  "utc": "2026-11-27T01:50:43.336440+00:00",
+  "manager_pid": "5331",
+  "delegate_controllers": [
+    "cpu",
+    "io",
+    "memory",
+    "pids"
+  ],
+  "manager_available": [
+    "cpu",
+    "io",
+    "memory",
+    "pids"
+  ],
+  "manager_enabled": [
+    "cpu",
+    "memory",
+    "pids"
+  ],
+  "app_available": [
+    "cpu",
+    "memory",
+    "pids"
+  ],
+  "runtime_drop_in": "/run/systemd/system/user@1000.service.d/80-chimera-guest-io.conf",
+  "runtime_drop_in_sha256": "9690213e48af615f42210c7d649a6f346e9cc84bed22a74468878755a6c529ea",
+  "runtime_drop_in_content": "[Service]\nDelegate=cpu io memory pids\n",
+  "active_user_service_count": 36,
+  "daemon_pid": 4030060,
+  "daemon_root": "/home/svhome/.local/share/chimera/releases/79e05f9f370b",
+  "next_daily": "Sat 2026-11-28 08:00:00 +07",
+  "daily_root": "/home/svhome/.local/share/chimera/releases/79e05f9f370b",
+  "advisory_samples": [
+    {
+      "accepted": true,
+      "reason": "capacity",
+      "available_ram_mib": 7694.48046875,
+      "temp_c": 49.0,
+      "load1": 0.1865234375,
+      "psi_some_avg10": {
+        "cpu": 0.0,
+        "memory": 0.0,
+        "io": 0.0
+      },
+      "service_p95_ms": {
+        "http://127.0.0.1:9780/.well-known/chimera.json": 4.7474028542637825,
+        "http://127.0.0.1:8787/api/health": 1.015777699649334
+      }
+    },
+    {
+      "accepted": true,
+      "reason": "capacity",
+      "available_ram_mib": 7666.68359375,
+      "temp_c": 45.0,
+      "load1": 0.17138671875,
+      "psi_some_avg10": {
+        "cpu": 0.0,
+        "memory": 0.0,
+        "io": 0.0
+      },
+      "service_p95_ms": {
+        "http://127.0.0.1:9780/.well-known/chimera.json": 2.7271979488432407,
+        "http://127.0.0.1:8787/api/health": 0.9708283469080925
+      }
+    },
+    {
+      "accepted": true,
+      "reason": "capacity",
+      "available_ram_mib": 7666.20703125,
+      "temp_c": 45.0,
+      "load1": 0.1572265625,
+      "psi_some_avg10": {
+        "cpu": 0.0,
+        "memory": 0.0,
+        "io": 0.0
+      },
+      "service_p95_ms": {
+        "http://127.0.0.1:9780/.well-known/chimera.json": 3.15093994140625,
+        "http://127.0.0.1:8787/api/health": 0.9877840057015419
+      }
+    }
+  ],
+  "schema": "chimera.workstation-io-observation/1",
+  "release": "79e05f9f370b19427850828b4f8a545797efd8d3",
+  "build_entry_receipt": {
+    "state": "deferred",
+    "error": "io_cap_unavailable",
+    "outbox_round_trip_verified": true,
+    "request_id": "0d53b33156124c09a8e603c4d41c24c0"
+  },
+  "build_evidence": "tasks/guarded_client_pair_79e05f9f370b.json"
+}

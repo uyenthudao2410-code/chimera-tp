@@ -1,0 +1,280 @@
+{
+  "finished_utc": "2026-11-26T13:57:02.657773+00:00",
+  "input_rejections": [
+    {
+      "case": "same_size_content_tamper",
+      "error": "snapshot_digest_mismatch"
+    },
+    {
+      "case": "oversize_workspace",
+      "error": "snapshot_byte_limit"
+    }
+  ],
+  "node": "svhome",
+  "ok": true,
+  "receipts": [
+    {
+      "artifact_bytes": 151,
+      "artifact_sha256": "af45fd287ac63e7b28c81bf6f274406dfb63ab813170404862996f31fdffbc5f",
+      "attempt_id": "8e4f8c27bacb4d3a879bcc9a45a34231",
+      "client_ms": 4157.0,
+      "client_timing_ms": {
+        "dispatch_or_join": 3469.0,
+        "setup": 0.0,
+        "snapshot": 250.0
+      },
+      "delivery": "executed",
+      "entry": "swarm",
+      "exit_code": 0,
+      "input_file_sha256": "0bc466c1ba211f5fcd29f0e25ccb7c66648aa6cdae0b2c154d89ff30f76b3d85",
+      "instance": "898a0c30fb8c4a3ebd4ec63abda27169",
+      "key": "b4bbb99e14466e71f9b0c6794d195c35a1c643e6a0536d8277302d6055d18387",
+      "max_protected_service_p95_ms": 3.3208969980478287,
+      "ok": true,
+      "origin_attempt_child_cpu_ms": 58.802,
+      "origin_attempt_timing_ms": {
+        "admission_ms": 14.646,
+        "cleanup_ms": 0.299,
+        "command_ms": 1562.029,
+        "outputs_ms": 0.247,
+        "total_ms": 1578.782,
+        "workspace_ms": 1.562
+      },
+      "origin_ssh_exchange_ms": 3437.0,
+      "request_id": "0cad4d3911ac4f13bcac98d4bd932cde",
+      "runtime_health_samples": 3,
+      "snapshot": "c4c8435fb04d5b625478ac376dda2f5f8b7ab24a2cc36645f92dba9027255c25",
+      "source_delivery": "executed",
+      "ssh_request_bytes": 19724,
+      "state": "completed",
+      "target": "svhome"
+    },
+    {
+      "artifact_bytes": 151,
+      "artifact_sha256": "af45fd287ac63e7b28c81bf6f274406dfb63ab813170404862996f31fdffbc5f",
+      "attempt_id": "8e4f8c27bacb4d3a879bcc9a45a34231",
+      "client_ms": 4157.0,
+      "client_timing_ms": {
+        "dispatch_or_join": 3312.0,
+        "setup": 0.0,
+        "snapshot": 250.0
+      },
+      "delivery": "executed",
+      "entry": "mcp",
+      "exit_code": 0,
+      "input_file_sha256": "0bc466c1ba211f5fcd29f0e25ccb7c66648aa6cdae0b2c154d89ff30f76b3d85",
+      "instance": "898a0c30fb8c4a3ebd4ec63abda27169",
+      "key": "b4bbb99e14466e71f9b0c6794d195c35a1c643e6a0536d8277302d6055d18387",
+      "max_protected_service_p95_ms": 3.3208969980478287,
+      "ok": true,
+      "origin_attempt_child_cpu_ms": 58.802,
+      "origin_attempt_timing_ms": {
+        "admission_ms": 14.646,
+        "cleanup_ms": 0.299,
+        "command_ms": 1562.029,
+        "outputs_ms": 0.247,
+        "total_ms": 1578.782,
+        "workspace_ms": 1.562
+      },
+      "origin_ssh_exchange_ms": 3437.0,
+      "request_id": "4be3ed61a756491a82d06313e4b62cc7",
+      "runtime_health_samples": 3,
+      "snapshot": "c4c8435fb04d5b625478ac376dda2f5f8b7ab24a2cc36645f92dba9027255c25",
+      "source_delivery": "joined",
+      "ssh_request_bytes": 19724,
+      "state": "completed",
+      "target": "svhome",
+      "via": "local_client_ssh"
+    },
+    {
+      "artifact_bytes": 151,
+      "artifact_sha256": "af45fd287ac63e7b28c81bf6f274406dfb63ab813170404862996f31fdffbc5f",
+      "attempt_id": "8e4f8c27bacb4d3a879bcc9a45a34231",
+      "client_ms": 2531.0,
+      "client_timing_ms": {
+        "dispatch_or_join": 1797.0,
+        "setup": 0.0,
+        "snapshot": 250.0
+      },
+      "delivery": "cached",
+      "entry": "swarm",
+      "exit_code": 0,
+      "input_file_sha256": "0bc466c1ba211f5fcd29f0e25ccb7c66648aa6cdae0b2c154d89ff30f76b3d85",
+      "instance": "898a0c30fb8c4a3ebd4ec63abda27169",
+      "key": "b4bbb99e14466e71f9b0c6794d195c35a1c643e6a0536d8277302d6055d18387",
+      "max_protected_service_p95_ms": 3.3208969980478287,
+      "ok": true,
+      "origin_attempt_child_cpu_ms": 58.802,
+      "origin_attempt_timing_ms": {
+        "admission_ms": 14.646,
+        "cleanup_ms": 0.299,
+        "command_ms": 1562.029,
+        "outputs_ms": 0.247,
+        "total_ms": 1578.782,
+        "workspace_ms": 1.562
+      },
+      "origin_ssh_exchange_ms": 1782.0,
+      "request_id": "a7f423eb7e5e485a875b74b7c098bdd7",
+      "runtime_health_samples": 3,
+      "snapshot": "c4c8435fb04d5b625478ac376dda2f5f8b7ab24a2cc36645f92dba9027255c25",
+      "source_delivery": "executed",
+      "ssh_request_bytes": 19724,
+      "state": "completed",
+      "target": "svhome"
+    },
+    {
+      "artifact_bytes": 165,
+      "artifact_sha256": "9b957399ae263cf585e6d5aba3968b0b2d338dff94097d4c6173c510eeb0313d",
+      "attempt_id": "63101189695c468b9c2e9c7f059a71c1",
+      "client_ms": 4141.0,
+      "client_timing_ms": {
+        "dispatch_or_join": 3422.0,
+        "setup": 0.0,
+        "snapshot": 281.0
+      },
+      "delivery": "executed",
+      "entry": "mcp",
+      "exit_code": 0,
+      "input_file_sha256": "1d83f98e5ce03b95b4097c54363a7f20949b4da4f952cd7310991bd6e013d0c3",
+      "instance": "0efb3d21094a46d3a7df3962e1222b8f",
+      "key": "ec6d55043735b7c0588c6d3d9d2ee076b68d21486956339c1d911b86a4570cbd",
+      "max_protected_service_p95_ms": 18.587609753012657,
+      "ok": true,
+      "origin_attempt_child_cpu_ms": 54.394,
+      "origin_attempt_timing_ms": {
+        "admission_ms": 13.435,
+        "cleanup_ms": 0.281,
+        "command_ms": 1571.424,
+        "outputs_ms": 0.226,
+        "total_ms": 1586.929,
+        "workspace_ms": 1.563
+      },
+      "origin_ssh_exchange_ms": 3406.0,
+      "request_id": "ac44b3fad322463ba17b2c5fd1100bdf",
+      "runtime_health_samples": 3,
+      "snapshot": "e2ca3a84c14d9fabc4a44218d024407e1498762e3c843fc13c51621ea862a375",
+      "source_delivery": "executed",
+      "ssh_request_bytes": 19738,
+      "state": "completed",
+      "target": "svhome",
+      "via": "local_client_ssh"
+    },
+    {
+      "artifact_bytes": 165,
+      "artifact_sha256": "9b957399ae263cf585e6d5aba3968b0b2d338dff94097d4c6173c510eeb0313d",
+      "attempt_id": "1da9bd667a6847b6b6d5703fa133ede9",
+      "client_ms": 4156.0,
+      "client_timing_ms": {
+        "dispatch_or_join": 3563.0,
+        "setup": 0.0,
+        "snapshot": 234.0
+      },
+      "delivery": "executed",
+      "entry": "swarm",
+      "exit_code": 0,
+      "input_file_sha256": "1d83f98e5ce03b95b4097c54363a7f20949b4da4f952cd7310991bd6e013d0c3",
+      "instance": "7957952cfa364a60a0ca596d23daa6c4",
+      "key": "7779fce83b2c8e2ff220bb8611f888c10b6098c82935fd2e695793503cee5e14",
+      "max_protected_service_p95_ms": 14.171873219311237,
+      "ok": true,
+      "origin_attempt_child_cpu_ms": 55.151,
+      "origin_attempt_timing_ms": {
+        "admission_ms": 13.892,
+        "cleanup_ms": 0.248,
+        "command_ms": 1562.413,
+        "outputs_ms": 0.236,
+        "total_ms": 1578.357,
+        "workspace_ms": 1.569
+      },
+      "origin_ssh_exchange_ms": 3531.0,
+      "request_id": "c0b18f6214374a5ebb78c6667b2b6cc4",
+      "runtime_health_samples": 3,
+      "snapshot": "e2ca3a84c14d9fabc4a44218d024407e1498762e3c843fc13c51621ea862a375",
+      "source_delivery": "executed",
+      "ssh_request_bytes": 19745,
+      "state": "completed",
+      "target": "svhome"
+    },
+    {
+      "attempt_id": "041e26e87c114fecacd69827bf1a53af",
+      "client_ms": 3344.0,
+      "delivery": "executed",
+      "entry": "swarm",
+      "error": "",
+      "exit_code": 23,
+      "instance": "16f5910949c9413c9c8b114e73e48cfa",
+      "key": "b59c41592742f9aaa135d2d356b9d284bd957102670d4265befa59ed704cf45f",
+      "max_protected_service_p95_ms": null,
+      "ok": false,
+      "request_id": "8b0d1a47ac2e4550be1a84cd3eff30f3",
+      "runtime_health_samples": 0,
+      "snapshot": "e2ca3a84c14d9fabc4a44218d024407e1498762e3c843fc13c51621ea862a375",
+      "source_delivery": "executed",
+      "state": "failed",
+      "target": "svhome"
+    },
+    {
+      "artifact_bytes": 165,
+      "artifact_sha256": "9b957399ae263cf585e6d5aba3968b0b2d338dff94097d4c6173c510eeb0313d",
+      "attempt_id": "27023b0549d149ab8ee1ecee19df924e",
+      "client_ms": 4344.0,
+      "client_timing_ms": {
+        "dispatch_or_join": 3453.0,
+        "setup": 0.0,
+        "snapshot": 297.0
+      },
+      "delivery": "executed",
+      "entry": "mcp",
+      "exit_code": 0,
+      "input_file_sha256": "1d83f98e5ce03b95b4097c54363a7f20949b4da4f952cd7310991bd6e013d0c3",
+      "instance": "2a9ddbc9b1044310a937cdd596f361a6",
+      "key": "b59c41592742f9aaa135d2d356b9d284bd957102670d4265befa59ed704cf45f",
+      "max_protected_service_p95_ms": 3.677736036479473,
+      "ok": true,
+      "origin_attempt_child_cpu_ms": 53.545,
+      "origin_attempt_timing_ms": {
+        "admission_ms": 13.527,
+        "cleanup_ms": 0.228,
+        "command_ms": 1555.074,
+        "outputs_ms": 0.215,
+        "total_ms": 1570.649,
+        "workspace_ms": 1.606
+      },
+      "origin_ssh_exchange_ms": 3438.0,
+      "request_id": "7de206e937944352a110690c9d764af7",
+      "runtime_health_samples": 3,
+      "snapshot": "e2ca3a84c14d9fabc4a44218d024407e1498762e3c843fc13c51621ea862a375",
+      "source_delivery": "executed",
+      "ssh_request_bytes": 19751,
+      "state": "completed",
+      "target": "svhome",
+      "via": "local_client_ssh"
+    },
+    {
+      "client_ms": 2375.0,
+      "entry": "swarm",
+      "error": "io_cap_unavailable",
+      "ok": false,
+      "outbox_round_trip_verified": true,
+      "request_id": "c52efc02679448bd8867880e77f9666a",
+      "source_delivery": "executed",
+      "state": "deferred"
+    }
+  ],
+  "receiver_fixture_cleaned": true,
+  "receiver_invocations": 5,
+  "receiver_user_controllers": [
+    "cpu",
+    "memory",
+    "pids"
+  ],
+  "schema": "chimera.guarded_build.acceptance.v1",
+  "started_utc": "2026-11-26T13:56:29.621318+00:00",
+  "worker_sources_sha256": {
+    "build_registry": "272482b8ea92f53f1eaf0c206de416aba4490c4026dec56f936ac4f84ebb2088",
+    "build_snapshot": "5eb849c4348792fe33cb2d42aba754ee191f1291e7f2d18cdd2cd2bfc8d61ca3",
+    "build_worker": "50fb421532a567eaced3eb83d2d2ce72b4810deaf37032e5129aacf80c7129d3",
+    "guarded_build": "e4d43b20761b6ecad2a38aa29c3ec09308face2d1710b3b9dacbba8a1f171a17",
+    "peer_guard": "3aa6c68a9572a294b7bf1af3c402ef2dc521bc69ce31056a67172203059b94f8"
+  }
+}

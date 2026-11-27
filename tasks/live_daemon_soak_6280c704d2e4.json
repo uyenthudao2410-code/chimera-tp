@@ -1,0 +1,47 @@
+{
+  "schema": "chimera.live-daemon-soak/1",
+  "release": "6280c704d2e4923a3089f9fdce7aceeac7700ff4",
+  "expected_pids": {
+    "win-desktop": 34304,
+    "svhome": 3968113
+  },
+  "monitor_pid": 7412,
+  "started_utc": "2026-11-26T19:42:27.502827+00:00",
+  "required_seconds": 86400,
+  "interval_seconds": 120,
+  "exclusive_limit_bytes": 83886080,
+  "samples": 4,
+  "missed": 0,
+  "state": "failed",
+  "journal": "live_daemon_soak_6280c704d2e4.jsonl",
+  "rollout_receipt": "workstation_rollout_6280c704d2e4.json",
+  "rollout_sha256": "1fb91b602321feb04ae7f9988e62c89a14fa47c369e0b5dbfbd40c3fb80151e6",
+  "source_check_interval_seconds": 3600,
+  "source_checks": 1,
+  "new_window_after_restart": false,
+  "latest": {
+    "win-desktop": {
+      "pid": 34304,
+      "started_at": "2026-11-27T02:40:50+07:00",
+      "version": "18.0.0",
+      "rss_bytes": 64339968,
+      "peak_bytes": 66809856,
+      "verified": 1
+    },
+    "svhome": {
+      "pid": 3968113,
+      "started_at": "2026-11-27T02:41:23+07:00",
+      "version": "18.0.0",
+      "rss_bytes": 73039872,
+      "peak_bytes": 74297344,
+      "verified": 0
+    }
+  },
+  "updated_utc": "2026-11-26T19:50:27.517383+00:00",
+  "observed_seconds": 359.969,
+  "maximum_bytes": {
+    "win-desktop": 66809856,
+    "svhome": 74297344
+  },
+  "reason": "win-desktop: PID or start time changed"
+}

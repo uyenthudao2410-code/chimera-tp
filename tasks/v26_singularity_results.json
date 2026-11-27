@@ -1,0 +1,68 @@
+{
+  "win_daemon": {
+    "pid": 16880,
+    "in_job": false,
+    "ram_mb": 61.1,
+    "zero_weight_ok": true,
+    "peer_egress_proxy": "http://127.0.0.1:9791"
+  },
+  "dual_hemisphere_live": {
+    "peer_url": "http://127.0.0.1:9791",
+    "ok": true,
+    "auth_rejected_403": true,
+    "ssrf_rejected_403": true,
+    "connect_ms": 303.42,
+    "headers": [
+      "HTTP/1.1 200 Connection Established",
+      "Server: BaseHTTP/0.6 Python/3.14.4",
+      "Date: Thu, 26 Nov 2026 18:16:05 GMT",
+      "X-Chimera-Membrane: TUNNEL",
+      "X-Chimera-PoP: 43.169.32.91",
+      "X-Chimera-Route: direct",
+      "X-Chimera-PoP-Pin: SET",
+      "X-Chimera-Connect-Ms: 292.54"
+    ]
+  },
+  "sticky_pop_live": [
+    {
+      "pop": "43.169.32.91",
+      "pin": "SET",
+      "route": "direct"
+    },
+    {
+      "pop": "43.174.162.158",
+      "pin": "FAILOVER",
+      "route": "hedged"
+    }
+  ],
+  "deepseek_e2e_live": {
+    "status": 200,
+    "ttft_ms": 919.1,
+    "total_ms": 1103.7,
+    "bytes": 6347,
+    "conduit": "hydra-sse",
+    "turn_id": "live-v26-e2e-1",
+    "prefix_clean": "1",
+    "prefix_sticky": "8c0f2ef136db05d4"
+  },
+  "timemachine_live": {
+    "checkpoint_ms": 15.597,
+    "rollback_ms": 9.632,
+    "verified": true
+  },
+  "precog_live": {
+    "taps_started": 1,
+    "tool_calls_seen": 0,
+    "hints_emitted": 0,
+    "files_warmed": 0,
+    "bytes_warmed": 0,
+    "hosts_prewarmed": 0,
+    "readonly_checks_run": 0,
+    "readonly_checks_blocked": 0,
+    "queue_drops": 0,
+    "queue_depth": 0,
+    "recent": []
+  },
+  "turns_in_ledger": 1,
+  "sticky_pins_active": 1
+}

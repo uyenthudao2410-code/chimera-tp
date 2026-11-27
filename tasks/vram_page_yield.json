@@ -1,0 +1,152 @@
+{
+  "schema": "chimera.cuda-page-yield/1",
+  "when_utc": "2026-11-26T16:35:56.847813+00:00",
+  "device": "NVIDIA GeForce GTX 1650",
+  "driver": "621.01",
+  "raw_bytes": 2097152,
+  "sha256": "5623320d4c6e4c96fac4031e8b0cd80bc1d0e57e1d9d0335a2c263e60204f3ef",
+  "process_id": 14844,
+  "scope": "Legacy CUDA allocation, real migration and SHA-256, synchronous per-call host timing. Retained bytes count only this allocator's pages. No OS process VRAM or AutoCAD frame measurement.",
+  "rows": [
+    {
+      "run": 1,
+      "gpu_temp_c": 46.0,
+      "gpu_active_pct_before": 9.0,
+      "free_mib_before": 1744,
+      "compressed_bytes": 2105382,
+      "ok": true,
+      "migrated_pages": 1,
+      "dropped_pages": 0,
+      "vram_retained_mb": 0.0,
+      "retained_page_bytes": 0,
+      "context_active": false,
+      "errors": [],
+      "phase_ms": {
+        "activate": 0.5472,
+        "copy_to_host": 0.5532,
+        "verify": 3.5158,
+        "free_pages": 0.5108,
+        "destroy_context": 51.8732
+      },
+      "yield_ms": 58.174
+    },
+    {
+      "run": 2,
+      "gpu_temp_c": 46.0,
+      "gpu_active_pct_before": 9.0,
+      "free_mib_before": 1744,
+      "compressed_bytes": 2105382,
+      "ok": true,
+      "migrated_pages": 1,
+      "dropped_pages": 0,
+      "vram_retained_mb": 0.0,
+      "retained_page_bytes": 0,
+      "context_active": false,
+      "errors": [],
+      "phase_ms": {
+        "activate": 0.0096,
+        "copy_to_host": 0.5213,
+        "verify": 2.4651,
+        "free_pages": 0.3264,
+        "destroy_context": 47.7478
+      },
+      "yield_ms": 51.966
+    },
+    {
+      "run": 3,
+      "gpu_temp_c": 46.0,
+      "gpu_active_pct_before": 8.0,
+      "free_mib_before": 1744,
+      "compressed_bytes": 2105382,
+      "ok": true,
+      "migrated_pages": 1,
+      "dropped_pages": 0,
+      "vram_retained_mb": 0.0,
+      "retained_page_bytes": 0,
+      "context_active": false,
+      "errors": [],
+      "phase_ms": {
+        "activate": 0.0081,
+        "copy_to_host": 0.4878,
+        "verify": 4.564,
+        "free_pages": 0.3489,
+        "destroy_context": 45.0984
+      },
+      "yield_ms": 51.641
+    },
+    {
+      "run": 4,
+      "gpu_temp_c": 46.1,
+      "gpu_active_pct_before": 8.0,
+      "free_mib_before": 1744,
+      "compressed_bytes": 2105382,
+      "ok": true,
+      "migrated_pages": 1,
+      "dropped_pages": 0,
+      "vram_retained_mb": 0.0,
+      "retained_page_bytes": 0,
+      "context_active": false,
+      "errors": [],
+      "phase_ms": {
+        "activate": 0.0067,
+        "copy_to_host": 0.4432,
+        "verify": 3.3591,
+        "free_pages": 0.3201,
+        "destroy_context": 42.4547
+      },
+      "yield_ms": 47.487
+    },
+    {
+      "run": 5,
+      "gpu_temp_c": 46.1,
+      "gpu_active_pct_before": 8.0,
+      "free_mib_before": 1744,
+      "compressed_bytes": 2105382,
+      "ok": true,
+      "migrated_pages": 1,
+      "dropped_pages": 0,
+      "vram_retained_mb": 0.0,
+      "retained_page_bytes": 0,
+      "context_active": false,
+      "errors": [],
+      "phase_ms": {
+        "activate": 0.0072,
+        "copy_to_host": 0.4304,
+        "verify": 4.9895,
+        "free_pages": 0.3353,
+        "destroy_context": 35.8707
+      },
+      "yield_ms": 42.595
+    },
+    {
+      "run": 6,
+      "gpu_temp_c": 46.0,
+      "gpu_active_pct_before": 5.0,
+      "free_mib_before": 1744,
+      "compressed_bytes": 2105382,
+      "ok": true,
+      "migrated_pages": 1,
+      "dropped_pages": 0,
+      "vram_retained_mb": 0.0,
+      "retained_page_bytes": 0,
+      "context_active": false,
+      "errors": [],
+      "phase_ms": {
+        "activate": 0.006,
+        "copy_to_host": 0.4235,
+        "verify": 2.8531,
+        "free_pages": 0.4075,
+        "destroy_context": 43.6942
+      },
+      "yield_ms": 48.268
+    }
+  ],
+  "median_total_ms": 49.954499999999996,
+  "median_phase_ms": {
+    "activate": 0.00765,
+    "copy_to_host": 0.4655,
+    "verify": 3.43745,
+    "free_pages": 0.34209999999999996,
+    "destroy_context": 44.3963
+  }
+}

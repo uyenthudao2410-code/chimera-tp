@@ -1,0 +1,215 @@
+{
+  "schema": 1,
+  "started_utc": "2026-11-26T12:23:43.536Z",
+  "mode": "preflight",
+  "drawing": "C:\\Program Files\\Autodesk\\AutoCAD 2027\\Sample\\Database Connectivity\\Floor Plan Sample.dwg",
+  "drawing_sha256": "19270c23e56e407aab2ade3644e8f301c34e390638d99c3f0cc4f2d3a6516792",
+  "presentmon": "PresentMon-2.6.0-x64.exe",
+  "presentmon_sha256": "b2a706bc6ad475749e3b7e3409263aa1e6906d45bdcf993f6dbc0f660188f1af",
+  "workload": "reference CPython source compile",
+  "output_directory": "C:\\Users\\Admin\\AppData\\Local\\Temp\\chimera-cad-AUNb9X",
+  "state": "preflight",
+  "measured_process": "dwm.exe",
+  "etw_pid": 2012,
+  "frames": {
+    "source": "PresentMon ETW, CPUStartQPCTime + DisplayLatency, DisplayedTime",
+    "qpc_from_ms": 131723002.5667,
+    "qpc_until_ms": 131727504.5529,
+    "overlap_s": 4.501986200004816,
+    "chains": [
+      {
+        "address": "0x0",
+        "count": 161,
+        "covered_ms": 4466.508699999999
+      }
+    ],
+    "selected_chain": "0x0",
+    "displayed_intervals": 161,
+    "non_displayed_rows_all_chains": 0,
+    "coverage": 0.9921195893481907,
+    "p95_ms": 41.6674,
+    "p99_ms": 83.2803,
+    "stalls_over_50_ms": 3,
+    "stalls_per_s": 0.6663725446330313,
+    "issues": []
+  },
+  "service": {
+    "endpoint": "http://100.116.112.22:9780/.well-known/chimera.json",
+    "good": 18,
+    "errors": 0,
+    "p95_ms": 341.2685000002384
+  },
+  "job_checks": {
+    "local": {
+      "started_qpc_ms": 131727743.7907,
+      "ended_qpc_ms": 131731493.8489,
+      "wall_ms": 3750.0582000017166,
+      "identity": "ce0da9dd7a08492a071f7a89231a0529e672865514ac2ca4e0f100660b40379a:3c9afd8a1ac51c9ee021b16349c664d3ffb0df47ce739afb3d8de930170e8207",
+      "receipt": {
+        "input_sha256": "ce0da9dd7a08492a071f7a89231a0529e672865514ac2ca4e0f100660b40379a",
+        "result_sha256": "3c9afd8a1ac51c9ee021b16349c664d3ffb0df47ce739afb3d8de930170e8207",
+        "result_kind": "all_sources_compiled",
+        "digest": "b0671cf8e316c3aad9d2726490f139151258be04b32b9aad01df96ca7331eaba",
+        "units": 300,
+        "cpu_s": 3.59375,
+        "work_s": 3.6107978000072762,
+        "python": "3.11.7"
+      }
+    },
+    "remote": {
+      "started_qpc_ms": 131731498.8733,
+      "ended_qpc_ms": 131739424.5141,
+      "wall_ms": 7925.640799999237,
+      "identity": "ce0da9dd7a08492a071f7a89231a0529e672865514ac2ca4e0f100660b40379a:3c9afd8a1ac51c9ee021b16349c664d3ffb0df47ce739afb3d8de930170e8207",
+      "receipt": {
+        "input_sha256": "ce0da9dd7a08492a071f7a89231a0529e672865514ac2ca4e0f100660b40379a",
+        "result_sha256": "3c9afd8a1ac51c9ee021b16349c664d3ffb0df47ce739afb3d8de930170e8207",
+        "result_kind": "all_sources_compiled",
+        "digest": "b0671cf8e316c3aad9d2726490f139151258be04b32b9aad01df96ca7331eaba",
+        "units": 300,
+        "cpu_s": 5.810873681,
+        "work_s": 5.811780465301126,
+        "python": "3.14.4"
+      }
+    }
+  },
+  "cad_trials": 0,
+  "cad_decision": "not_measured",
+  "canvas_test": {
+    "product": "Autodesk AutoCAD 2027 Core Console",
+    "script_operations": [
+      "switch temporary drawing to model space",
+      "ZOOM Extents",
+      "read EXTMIN and EXTMAX"
+    ],
+    "read_only": true,
+    "exit_code": 0,
+    "elapsed_s": 4.407000000006519,
+    "unchanged_drawing_sha256": "19270c23e56e407aab2ade3644e8f301c34e390638d99c3f0cc4f2d3a6516792",
+    "extents_in_drawing_units": [
+      [
+        843.0,
+        843.0,
+        -4.5402e-08
+      ],
+      [
+        3431.45,
+        3384.0,
+        97.5
+      ]
+    ],
+    "displayed_frames_measured": false
+  },
+  "trace_file": {
+    "path": "C:\\Users\\Admin\\AppData\\Local\\Temp\\chimera-cad-AUNb9X\\compositor.csv",
+    "bytes": 31576,
+    "sha256": "73f3aeed73b8315a58b358d844abd8b4fdefda3e69fba2eda01ac23134f48b11"
+  },
+  "pending": "Visible CAD pairs require exclusive foreground time in the active Windows console.",
+  "presentmon_release": "https://github.com/GameTechDev/PresentMon/releases/tag/v2.6.0",
+  "guarded_build_preflight": {
+    "started_utc": "2026-11-26T12:31:27.216Z",
+    "workload": "two simultaneous Windows builds versus one verified Swarm build",
+    "presentmon_sha256": "b2a706bc6ad475749e3b7e3409263aa1e6906d45bdcf993f6dbc0f660188f1af",
+    "trace_file": {
+      "path": "C:\\Users\\Admin\\AppData\\Local\\Temp\\chimera-cad-WzYvIg\\compositor.csv",
+      "sha256": "7e75af65dc492803fa196ff91ee2d54a6f10f839d4f979365fd3a85073221102"
+    },
+    "frames_process": "dwm.exe",
+    "frames": {
+      "source": "PresentMon ETW, CPUStartQPCTime + DisplayLatency, DisplayedTime",
+      "qpc_from_ms": 132186410.7849,
+      "qpc_until_ms": 132190926.0321,
+      "overlap_s": 4.515247200012207,
+      "chains": [
+        {
+          "address": "0x0",
+          "count": 165,
+          "covered_ms": 4474.790499999999
+        }
+      ],
+      "selected_chain": "0x0",
+      "displayed_intervals": 165,
+      "non_displayed_rows_all_chains": 0,
+      "coverage": 0.9910399811527266,
+      "p95_ms": 41.6941,
+      "p99_ms": 58.3345,
+      "stalls_over_50_ms": 4,
+      "stalls_per_s": 0.8858872665906721,
+      "issues": []
+    },
+    "service": {
+      "endpoint": "http://100.116.112.22:9780/.well-known/chimera.json",
+      "good": 17,
+      "errors": 0,
+      "p95_ms": 429.4843999892473
+    },
+    "jobs": {
+      "local": {
+        "started_qpc_ms": 132191271.637,
+        "ended_qpc_ms": 132193587.6686,
+        "wall_ms": 2316.031599998474,
+        "identity": "e0da7c3167aeb956607db7021e7f6cc8886b398fa8c22b83a0acda9cccad76df:6034f9711f57d61fc2dfce9c4ef6f059b64f86d0566c1bf84c40f9bc09721c4c",
+        "receipt": {
+          "input_sha256": "e0da7c3167aeb956607db7021e7f6cc8886b398fa8c22b83a0acda9cccad76df",
+          "result_sha256": "6034f9711f57d61fc2dfce9c4ef6f059b64f86d0566c1bf84c40f9bc09721c4c",
+          "units_per_agent": 144,
+          "snapshot": null,
+          "requests": 2,
+          "distinct_attempts": 2,
+          "effective_worker_seconds": [
+            2.0960751000093296,
+            2.050507599982666
+          ],
+          "receipts": [
+            {
+              "attempt_id": "3c497150323a4062965241988c5f6f93",
+              "delivery": "executed"
+            },
+            {
+              "attempt_id": "7b340a86db254cbd9cfb620a00b00dff",
+              "delivery": "executed"
+            }
+          ]
+        }
+      },
+      "remote": {
+        "started_qpc_ms": 132193587.9514,
+        "ended_qpc_ms": 132199688.2722,
+        "wall_ms": 6100.32080000639,
+        "identity": "e0da7c3167aeb956607db7021e7f6cc8886b398fa8c22b83a0acda9cccad76df:6034f9711f57d61fc2dfce9c4ef6f059b64f86d0566c1bf84c40f9bc09721c4c",
+        "receipt": {
+          "input_sha256": "e0da7c3167aeb956607db7021e7f6cc8886b398fa8c22b83a0acda9cccad76df",
+          "result_sha256": "6034f9711f57d61fc2dfce9c4ef6f059b64f86d0566c1bf84c40f9bc09721c4c",
+          "units_per_agent": 144,
+          "snapshot": "0f4dc788ace08d2c37b23c4ee40c035ee3b6861ca297c56cc3ec8c7ca242cc29",
+          "requests": 2,
+          "distinct_attempts": 1,
+          "effective_worker_seconds": [
+            2.726156222168356,
+            2.726156222168356
+          ],
+          "receipts": [
+            {
+              "request_id": "dd0a3617de6c47d284dde312882b5a8a",
+              "attempt_id": "9dfbdeada7994934841a21aeb523f851",
+              "source_delivery": "executed",
+              "delivery": "executed",
+              "snapshot": "0f4dc788ace08d2c37b23c4ee40c035ee3b6861ca297c56cc3ec8c7ca242cc29",
+              "target": "svhome"
+            },
+            {
+              "request_id": "70bec4ef0dc74158ab479b540cc707e0",
+              "attempt_id": "9dfbdeada7994934841a21aeb523f851",
+              "source_delivery": "joined",
+              "delivery": "executed",
+              "snapshot": "0f4dc788ace08d2c37b23c4ee40c035ee3b6861ca297c56cc3ec8c7ca242cc29",
+              "target": "svhome"
+            }
+          ]
+        }
+      }
+    },
+    "cad_trials": 0
+  }
+}

@@ -1,0 +1,272 @@
+{
+  "schema": "chimera.vault-sql-cross-host/1",
+  "verified_utc": "2026-11-26T17:05:38.565Z",
+  "source": {
+    "os": "Windows",
+    "host": "DESKTOP-63643J4",
+    "sqlite": "3.43.1"
+  },
+  "receiver": {
+    "os": "Linux",
+    "host": "svhome",
+    "sqlite": "3.46.1"
+  },
+  "transport": "Real HTTP requests from the gated Linux replica across a private reverse SSH stream to the Windows production snapshot handler on isolated loopback ports.",
+  "byte_scope": "Identical HTTP JSON response bodies were measured and SHA-256 checked at both ends. Headers, SSH framing and setup traffic are excluded.",
+  "elapsed_scope": "sync_from_peer on Linux, including snapshot generation on Windows, all HTTP requests, receive verification and publication. The oracle and initial job/SSH setup are measured separately or excluded.",
+  "oracle": {
+    "cold": {
+      "sha256": "4db70384f9a044e207806025eb0d1d6e738c826293f4fbf7d0fc33eea609fb62",
+      "bytes": 1482752,
+      "rows": 360,
+      "selected_rev": 0,
+      "sum_rev": 0,
+      "integrity_check": "ok"
+    },
+    "wal_bytes": 4152,
+    "transaction_open": true,
+    "uncommitted_revision": 2,
+    "committed": {
+      "sha256": "918582724862ac4d165826afca8bcb93b83c13ecabf9fe3f694eb97501a38ae1",
+      "bytes": 1482752,
+      "rows": 360,
+      "selected_rev": 1,
+      "sum_rev": 1,
+      "integrity_check": "ok"
+    }
+  },
+  "phases": {
+    "cold": {
+      "receipt": {
+        "mode": "full",
+        "changed_pages": 362,
+        "parts": 2,
+        "wire_bytes": 1498828,
+        "source_backup_created": true
+      },
+      "before": null,
+      "after": {
+        "sha256": "4db70384f9a044e207806025eb0d1d6e738c826293f4fbf7d0fc33eea609fb62",
+        "bytes": 1482752,
+        "rows": 360,
+        "selected_rev": 0,
+        "sum_rev": 0,
+        "integrity_check": "ok"
+      },
+      "elapsed_ms": 2611.61,
+      "responses": [
+        {
+          "phase": "cold",
+          "mode": "full",
+          "since": "",
+          "start_page": 0,
+          "changed_pages": 255,
+          "body_bytes": 1054674,
+          "body_sha256": "bd52b6e7c84ae8d6062eec7d16cbd2b2218ff15a6bfdb520298a6a2a6244e9f6"
+        },
+        {
+          "phase": "cold",
+          "mode": "full",
+          "since": "",
+          "start_page": 255,
+          "changed_pages": 107,
+          "body_bytes": 444943,
+          "body_sha256": "3da7eb49a8487c862c4480d40752761fa77c4bc384de45392f3b0db18a7e4ee0"
+        }
+      ],
+      "http_json_response_body_bytes": 1499617
+    },
+    "damaged": {
+      "receipt": {
+        "mode": "rejected",
+        "reason": "SQLite replica snapshot digest or page size mismatch"
+      },
+      "before": {
+        "sha256": "4db70384f9a044e207806025eb0d1d6e738c826293f4fbf7d0fc33eea609fb62"
+      },
+      "after": {
+        "sha256": "4db70384f9a044e207806025eb0d1d6e738c826293f4fbf7d0fc33eea609fb62",
+        "bytes": 1482752,
+        "rows": 360,
+        "selected_rev": 0,
+        "sum_rev": 0,
+        "integrity_check": "ok"
+      },
+      "elapsed_ms": 324.868,
+      "responses": [
+        {
+          "phase": "damaged",
+          "mode": "delta",
+          "since": "4db70384f9a044e207806025eb0d1d6e738c826293f4fbf7d0fc33eea609fb62",
+          "start_page": 0,
+          "changed_pages": 1,
+          "body_bytes": 4655,
+          "body_sha256": "f7731725e0217440e82d1437c1e1a2d52bbc645964a1cfd87564753f8fb166a3"
+        }
+      ],
+      "http_json_response_body_bytes": 4655
+    },
+    "delta": {
+      "receipt": {
+        "mode": "delta",
+        "changed_pages": 1,
+        "parts": 1,
+        "wire_bytes": 4236,
+        "source_backup_created": false
+      },
+      "before": {
+        "sha256": "4db70384f9a044e207806025eb0d1d6e738c826293f4fbf7d0fc33eea609fb62"
+      },
+      "after": {
+        "sha256": "918582724862ac4d165826afca8bcb93b83c13ecabf9fe3f694eb97501a38ae1",
+        "bytes": 1482752,
+        "rows": 360,
+        "selected_rev": 1,
+        "sum_rev": 1,
+        "integrity_check": "ok"
+      },
+      "elapsed_ms": 329.939,
+      "responses": [
+        {
+          "phase": "delta",
+          "mode": "delta",
+          "since": "4db70384f9a044e207806025eb0d1d6e738c826293f4fbf7d0fc33eea609fb62",
+          "start_page": 0,
+          "changed_pages": 1,
+          "body_bytes": 4688,
+          "body_sha256": "4aecfd0f48356b483eea9b7ec9920768de9f3642c3efc84a08eb3f80f063ce91"
+        }
+      ],
+      "http_json_response_body_bytes": 4688
+    },
+    "unchanged": {
+      "receipt": {
+        "mode": "unchanged",
+        "changed_pages": 0,
+        "parts": 1,
+        "wire_bytes": 0,
+        "source_backup_created": false
+      },
+      "before": {
+        "sha256": "918582724862ac4d165826afca8bcb93b83c13ecabf9fe3f694eb97501a38ae1"
+      },
+      "after": {
+        "sha256": "918582724862ac4d165826afca8bcb93b83c13ecabf9fe3f694eb97501a38ae1",
+        "bytes": 1482752,
+        "rows": 360,
+        "selected_rev": 1,
+        "sum_rev": 1,
+        "integrity_check": "ok"
+      },
+      "elapsed_ms": 265.5,
+      "responses": [
+        {
+          "phase": "unchanged",
+          "mode": "unchanged",
+          "since": "918582724862ac4d165826afca8bcb93b83c13ecabf9fe3f694eb97501a38ae1",
+          "start_page": 0,
+          "changed_pages": 0,
+          "body_bytes": 432,
+          "body_sha256": "fe9764267e229c5b32253fe98172511b35d7bb965d988b7847b6f31ce8f281b3"
+        }
+      ],
+      "http_json_response_body_bytes": 432
+    },
+    "stale": {
+      "receipt": {
+        "mode": "full",
+        "changed_pages": 362,
+        "parts": 2,
+        "wire_bytes": 1498840,
+        "source_backup_created": false
+      },
+      "before": {
+        "sha256": "6360a3092c690b97d995b899c47b606352818d4ab4f6507d5849b8c1950a2bf3",
+        "bytes": 1482752,
+        "rows": 360,
+        "selected_rev": 77,
+        "sum_rev": 77,
+        "integrity_check": "ok"
+      },
+      "after": {
+        "sha256": "918582724862ac4d165826afca8bcb93b83c13ecabf9fe3f694eb97501a38ae1",
+        "bytes": 1482752,
+        "rows": 360,
+        "selected_rev": 1,
+        "sum_rev": 1,
+        "integrity_check": "ok"
+      },
+      "elapsed_ms": 2136.009,
+      "responses": [
+        {
+          "phase": "stale",
+          "mode": "full",
+          "since": "6360a3092c690b97d995b899c47b606352818d4ab4f6507d5849b8c1950a2bf3",
+          "start_page": 0,
+          "changed_pages": 255,
+          "body_bytes": 1054687,
+          "body_sha256": "5df9c1bb717143a7d6a1d93654f22e4a40039e9271a4692b2d3e62d0b6e29584"
+        },
+        {
+          "phase": "stale",
+          "mode": "full",
+          "since": "",
+          "start_page": 255,
+          "changed_pages": 107,
+          "body_bytes": 444944,
+          "body_sha256": "6cd22e2ff4340b6698aef7094619425c0f7b6a0c92e18d8ce38a9dfaa5d35f42"
+        }
+      ],
+      "http_json_response_body_bytes": 1499631
+    }
+  },
+  "guarded_job": {
+    "attempt_id": "df36ac604eef40e98f18409cb10d3a8c",
+    "target": "svhome",
+    "snapshot": "58a3905c7699e3f23053134578eab163080e5bb275284bf99b6f0c4537478f1e",
+    "client_timing_ms": {
+      "setup": 16,
+      "snapshot": 93,
+      "dispatch_or_join": 9250
+    },
+    "elapsed_end_to_end_ms": 9359,
+    "guard_limits_verified": true,
+    "effective_policy": {
+      "ram_reserve_mib": 2560,
+      "job_memory_mib": 192,
+      "disk_reserve_mib": 14306,
+      "job_disk_mib": 64,
+      "cpu_quota_pct": 100,
+      "max_tasks": 128,
+      "runtime_seconds": 125,
+      "psi_cpu_pct": 25,
+      "psi_memory_pct": 1,
+      "psi_io_pct": 5,
+      "max_load1": 1.8,
+      "max_temp_c": 70,
+      "service_urls": [
+        "http://127.0.0.1:9780/.well-known/chimera.json",
+        "http://127.0.0.1:8787/api/health"
+      ],
+      "service_p95_ms": 150,
+      "service_samples": 5,
+      "service_timeout_s": 0.5,
+      "max_sample_age_s": 5,
+      "require_io_cap": false,
+      "io_write_bps": 8388608,
+      "disk_path": "/home/svhome"
+    }
+  },
+  "socket_private": true,
+  "socket_removed": true,
+  "temporary_source_and_replica_removed": true,
+  "source_sha256": {
+    "chimera_tp/platform/substrate.py": "21ab1ee4f020d18f9abea8bf86f3d78aef2e4fb571ffa6b1c5a4dd563d1c2d19",
+    "chimera_tp/platform/vault_sql.py": "acdac3d4df373f34dfce0d5ef700d55fdc7fd332eea9c35222363b11434bb559",
+    "chimera_tp/platform/vault_sql_pages.py": "ac2753ee95e0f7ff24be8f2c5dcce6f0f85b28ad2243394a46175045f6db032d",
+    "chimera_tp/platform/agent_workspace.py": "441d39887ec7232b9bfb88637825617f56e59d0afd021d4a8cee30228fa818c5",
+    "chimera_tp/platform/peer_guard.py": "3708ac05c63712bf0c248a3ab14e06c3208dba9e191b9f3e174b7dee668316d2",
+    "scripts/vault_sql_cross_host.py": "8ffc41ad3b8c24b6a0dd7f632811a3865b0a3ecfe71d7495083e5e5fc2a791e1",
+    "scripts/verify_vault_sql_cross_host.mjs": "67a4ae929cfba3a5d987fa240e9375dc1319aaf687911aa3a1c6cd5788857945"
+  }
+}

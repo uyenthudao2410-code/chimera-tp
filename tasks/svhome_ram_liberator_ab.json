@@ -1,0 +1,36 @@
+{
+  "before": {
+    "tmp_used_mb": 4347.86,
+    "tmp_total_mb": 5434.82,
+    "tmp_entries": 5497,
+    "mem_available_mb": 5999.62,
+    "mem_free_mb": 1315.79,
+    "swap_used_mb": 5533.51,
+    "shmem_mb": 61.6
+  },
+  "sweep": {
+    "removed": 3985,
+    "freed_mb": 2289.41,
+    "skipped_open": 0,
+    "skipped_young": 35,
+    "skipped_protected": 38,
+    "skipped_owner": 0,
+    "errors": 964,
+    "min_age_sec": 7200,
+    "dry_run": false
+  },
+  "sweep_ms": 2062.71,
+  "after": {
+    "tmp_used_mb": 17.15,
+    "tmp_total_mb": 5434.82,
+    "tmp_entries": 38,
+    "mem_available_mb": 7532.99,
+    "mem_free_mb": 2860.13,
+    "swap_used_mb": 1216.76,
+    "shmem_mb": 47.48
+  },
+  "delta_tmp_freed_mb": 4330.71,
+  "delta_mem_available_mb": 1533.37,
+  "timer_active": "active",
+  "env_conf_exists": true
+}

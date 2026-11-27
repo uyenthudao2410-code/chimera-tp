@@ -1,0 +1,42 @@
+{
+  "schema": "chimera.live-daemon-soak/1",
+  "release": "6d14499db4546da00cd55528aa6343307e8bc8e0",
+  "expected_pids": {
+    "win-desktop": 1368,
+    "svhome": 3951685
+  },
+  "monitor_pid": 31228,
+  "started_utc": "2026-11-26T18:41:09.298533+00:00",
+  "required_seconds": 86400,
+  "interval_seconds": 120,
+  "exclusive_limit_bytes": 83886080,
+  "samples": 1,
+  "missed": 0,
+  "state": "failed",
+  "journal": "live_daemon_soak_6d14499db454.jsonl",
+  "latest": {
+    "win-desktop": {
+      "pid": 1368,
+      "started_at": "2026-11-27T01:39:50+07:00",
+      "version": "18.0.0",
+      "rss_bytes": 28262400,
+      "peak_bytes": 67514368,
+      "verified": 2
+    },
+    "svhome": {
+      "pid": 3951685,
+      "started_at": "2026-11-27T01:38:25+07:00",
+      "version": "18.0.0",
+      "rss_bytes": 70557696,
+      "peak_bytes": 74530816,
+      "verified": 3
+    }
+  },
+  "updated_utc": "2026-11-26T18:43:09.302673+00:00",
+  "observed_seconds": 0.0,
+  "maximum_bytes": {
+    "win-desktop": 67514368,
+    "svhome": 74530816
+  },
+  "reason": "win-desktop: PID or start time changed"
+}

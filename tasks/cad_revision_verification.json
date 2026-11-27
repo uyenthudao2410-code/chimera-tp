@@ -1,0 +1,133 @@
+{
+  "schema": 1,
+  "verified_utc": "2026-11-26T12:44:40.509Z",
+  "template": "C:\\Program Files\\Autodesk\\AutoCAD 2027\\Sample\\Database Connectivity\\Floor Plan Sample.dwg",
+  "template_sha256": "19270c23e56e407aab2ade3644e8f301c34e390638d99c3f0cc4f2d3a6516792",
+  "console": "C:\\Program Files\\Autodesk\\AutoCAD 2027\\accoreconsole.exe",
+  "input_format": "AC1021",
+  "save_as_version": "2007",
+  "geometry_units": "drawing units",
+  "revisions": [
+    {
+      "sequence": 0,
+      "operation": "baseline",
+      "sha256": "19270c23e56e407aab2ade3644e8f301c34e390638d99c3f0cc4f2d3a6516792",
+      "base_sha256": null,
+      "bytes": 231872,
+      "format_header": "AC1021",
+      "chunks": 11,
+      "added_chunk_bytes": 231872,
+      "full_archive_bytes": 234736,
+      "transferred_archive_bytes": 234736,
+      "transferred_chunks": 11,
+      "percent_of_full_archive": 100,
+      "source_and_restored_sha256_match": true,
+      "read_only_reopen": {
+        "elapsed_ms": 4571.38,
+        "autocad_version": "26.0",
+        "count": 0,
+        "handle": null,
+        "layer": null,
+        "radius": null,
+        "center": null,
+        "layer_color": null
+      },
+      "save_elapsed_ms": null
+    },
+    {
+      "sequence": 1,
+      "operation": "add_circle",
+      "sha256": "e327bf9bd025825a27c4ee1a7ff681bd3219fb5cccc0ceae26ba272438051e16",
+      "base_sha256": "19270c23e56e407aab2ade3644e8f301c34e390638d99c3f0cc4f2d3a6516792",
+      "bytes": 253728,
+      "format_header": "AC1021",
+      "chunks": 13,
+      "added_chunk_bytes": 253728,
+      "full_archive_bytes": 257076,
+      "transferred_archive_bytes": 257137,
+      "transferred_chunks": 13,
+      "percent_of_full_archive": 100.02,
+      "source_and_restored_sha256_match": true,
+      "read_only_reopen": {
+        "elapsed_ms": 2641.75,
+        "autocad_version": "26.0",
+        "count": 1,
+        "handle": "B4B8",
+        "layer": "CHIMERA_REVISION_PROBE",
+        "radius": 17,
+        "center": [
+          901.25,
+          912.75,
+          0
+        ],
+        "layer_color": 2
+      },
+      "save_elapsed_ms": 2843.8
+    },
+    {
+      "sequence": 2,
+      "operation": "resize_circle",
+      "sha256": "2a5fc3d7d90e93848003c2dc99d971346dcd2566ab095809c8d7d33f7b5496a1",
+      "base_sha256": "e327bf9bd025825a27c4ee1a7ff681bd3219fb5cccc0ceae26ba272438051e16",
+      "bytes": 253472,
+      "format_header": "AC1021",
+      "chunks": 14,
+      "added_chunk_bytes": 221338,
+      "full_archive_bytes": 257063,
+      "transferred_archive_bytes": 224379,
+      "transferred_chunks": 11,
+      "percent_of_full_archive": 87.29,
+      "source_and_restored_sha256_match": true,
+      "read_only_reopen": {
+        "elapsed_ms": 3170.66,
+        "autocad_version": "26.0",
+        "count": 1,
+        "handle": "B4B8",
+        "layer": "CHIMERA_REVISION_PROBE",
+        "radius": 29.5,
+        "center": [
+          901.25,
+          912.75,
+          0
+        ],
+        "layer_color": 2
+      },
+      "save_elapsed_ms": 2815.64
+    },
+    {
+      "sequence": 3,
+      "operation": "change_layer_color",
+      "sha256": "92bf94c8d345f74b2972962796d624358e0852d1f3efae1988037a67000881e0",
+      "base_sha256": "2a5fc3d7d90e93848003c2dc99d971346dcd2566ab095809c8d7d33f7b5496a1",
+      "bytes": 253728,
+      "format_header": "AC1021",
+      "chunks": 15,
+      "added_chunk_bytes": 211780,
+      "full_archive_bytes": 257559,
+      "transferred_archive_bytes": 214857,
+      "transferred_chunks": 11,
+      "percent_of_full_archive": 83.42,
+      "source_and_restored_sha256_match": true,
+      "read_only_reopen": {
+        "elapsed_ms": 3296.42,
+        "autocad_version": "26.0",
+        "count": 1,
+        "handle": "B4B8",
+        "layer": "CHIMERA_REVISION_PROBE",
+        "radius": 29.5,
+        "center": [
+          901.25,
+          912.75,
+          0
+        ],
+        "layer_color": 4
+      },
+      "save_elapsed_ms": 2838.8
+    }
+  ],
+  "matched_history_entries": 4,
+  "receiver": "Independent local revision store receives only the full baseline plus each successive delta",
+  "timing_scope": "Core Console process wall time for each save or read-only open",
+  "template_unchanged": true,
+  "removed_temporary_working_files": true
+}

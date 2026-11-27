@@ -1,0 +1,50 @@
+{
+  "ok": true,
+  "peer": "svhome",
+  "independent_clients": 2,
+  "executions_after_concurrent_submit": 1,
+  "receiver_delivery": [
+    "executed",
+    "joined"
+  ],
+  "first_artifact_sha256": "af45fd287ac63e7b28c81bf6f274406dfb63ab813170404862996f31fdffbc5f",
+  "first_build_attempt": "b50fc0731cb34dd9bdc5282d691e5c6c",
+  "fault": "one SSH command completed, discarded stdout on the receiver and exited with code 81",
+  "state_after_missing_receipt": "indeterminate",
+  "executions_after_lost_reply": 2,
+  "executions_after_retry": 2,
+  "recovered": {
+    "ok": true,
+    "request_id": "3fab00e08d0e438dafcf79dce1d7f04d",
+    "attempt_id": "b1b9a7d1c13c40f58ec0a0a283ecba8f",
+    "key": "160e99aeac0ab35f6e0124ee2fe7bd4d415ee87e9d3c2d2375bd038ab78003c3",
+    "state": "completed",
+    "target": "svhome",
+    "delivery": "cached",
+    "source_delivery": "executed",
+    "exit_code": 0,
+    "snapshot": "755ada907c211edbc5d92f8b9a3fe0f37edfb56619b3940c4454b694de23ecb3",
+    "entry": "outbox-retry",
+    "runtime_health_samples": 3,
+    "max_protected_service_p95_ms": 3.5822540521621704,
+    "instance": "b0d4383a048e4cbc8b764b97f0af7785",
+    "origin_attempt_timing_ms": {
+      "admission_ms": 13.672,
+      "workspace_ms": 1.611,
+      "command_ms": 1566.625,
+      "outputs_ms": 0.227,
+      "cleanup_ms": 0.231,
+      "total_ms": 1582.366
+    },
+    "origin_attempt_child_cpu_ms": 64.657,
+    "origin_ssh_exchange_ms": 1875.0,
+    "ssh_request_bytes": 19737,
+    "client_timing_ms": null,
+    "artifact_sha256": "9b957399ae263cf585e6d5aba3968b0b2d338dff94097d4c6173c510eeb0313d",
+    "artifact_bytes": 165,
+    "input_file_sha256": "1d83f98e5ce03b95b4097c54363a7f20949b4da4f952cd7310991bd6e013d0c3"
+  },
+  "restored_input_despite_subsequent_edit": true,
+  "outbox_empty": true,
+  "receiver_fixture_removed": true
+}

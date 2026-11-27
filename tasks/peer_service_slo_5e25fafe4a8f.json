@@ -1,0 +1,5557 @@
+{
+  "schema": 1,
+  "started_utc": "2026-11-27T02:02:54+00:00",
+  "peer": "svhome",
+  "target_pairs": 10,
+  "probe_sha256": "0881159a0fa67a307944268e92054ac132575b07d52d7a0b440263c509e4f235",
+  "policy": {
+    "type": "experimental_only",
+    "linux_absolute_ms": 20,
+    "linux_added_ms": 5,
+    "required_http_error_count": 0,
+    "production_slo": null
+  },
+  "method": {
+    "linux": "Fresh loopback TCP GET, through last body byte. Health JSON and homepage-linked CSS digest verified.",
+    "windows": "Fresh workstation TCP GET of health JSON through an existing authenticated SSH forward to the same loopback endpoint. Includes network, forward and response bytes, excludes SSH setup.",
+    "time": "Each three-GET row is enclosed by timestamps from the same Linux monotonic clock as the compiler. Fresh jobs only. Idle rows require an unpopulated receiver guest at both ends.",
+    "percentile": "Nearest rank over equal sample counts within each pair, evenly spaced by index. Source-order A/B, B/A, warm-cache, polling pause 200 ms. First/last host counters define each phase window.",
+    "workload": "Four receiver-installed public CPython modules are compiled each round. Four checked-hash pyc files are produced in the isolated job workspace and hash-checked across all jobs.",
+    "attribution": "Block counters cover the host partition and its containing disk; do not add devices. Host page cache/writeback and other services affect these windows. Process write_bytes is kernel accounting within compiler boundaries. An absent cgroup io.stat is null.",
+    "service_scope": "Radar HTTP handling and one static frontend asset. Long-running dashboard operations, external traffic and user-selected production SLO remain unmeasured."
+  },
+  "pairs": [
+    {
+      "pair": 1,
+      "order": [
+        "idle",
+        "build"
+      ],
+      "idle": [
+        {
+          "start_ns": 2461054880180492,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.18,
+            "asset": 1.5779
+          },
+          "host": {
+            "mem_available_mib": 7703.29,
+            "load1": 0.4560546875,
+            "cpu_temp_c": 46.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.0,
+                "total_us": 194676654342
+              },
+              "io": {
+                "avg10_pct": 0.01,
+                "total_us": 5581371709
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592128151552,
+              "sda": 592128151552
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461055164396239,
+          "windows_http_ms": 185.9878
+        },
+        {
+          "start_ns": 2461055456801327,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 1.7486,
+            "asset": 1.335
+          },
+          "host": {
+            "mem_available_mib": 7703.29,
+            "load1": 0.4560546875,
+            "cpu_temp_c": 46.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.0,
+                "total_us": 194676657344
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581371709
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592128151552,
+              "sda": 592128151552
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461055741258799,
+          "windows_http_ms": 185.9691
+        },
+        {
+          "start_ns": 2461056047611261,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 1.7846,
+            "asset": 1.0281
+          },
+          "host": {
+            "mem_available_mib": 7703.29,
+            "load1": 0.4560546875,
+            "cpu_temp_c": 45.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.0,
+                "total_us": 194676660270
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581371709
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592128151552,
+              "sda": 592128151552
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461056340472962,
+          "windows_http_ms": 192.056
+        },
+        {
+          "start_ns": 2461056635886506,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.5436,
+            "asset": 1.3205
+          },
+          "host": {
+            "mem_available_mib": 7703.29,
+            "load1": 0.4560546875,
+            "cpu_temp_c": 45.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.0,
+                "total_us": 194676662894
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581371709
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592128151552,
+              "sda": 592128151552
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461056923706686,
+          "windows_http_ms": 188.3431
+        },
+        {
+          "start_ns": 2461057220871043,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.3401,
+            "asset": 1.3186
+          },
+          "host": {
+            "mem_available_mib": 7703.29,
+            "load1": 0.4560546875,
+            "cpu_temp_c": 44.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.0,
+                "total_us": 194676666037
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581371709
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592128151552,
+              "sda": 592128151552
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461057510927062,
+          "windows_http_ms": 191.3198
+        },
+        {
+          "start_ns": 2461057804051008,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.1506,
+            "asset": 1.3882
+          },
+          "host": {
+            "mem_available_mib": 7703.05,
+            "load1": 0.41943359375,
+            "cpu_temp_c": 44.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.0,
+                "total_us": 194676668632
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581371709
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592128151552,
+              "sda": 592128151552
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461058101695849,
+          "windows_http_ms": 194.9186
+        },
+        {
+          "start_ns": 2461058409085852,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.1233,
+            "asset": 1.4576
+          },
+          "host": {
+            "mem_available_mib": 7703.05,
+            "load1": 0.41943359375,
+            "cpu_temp_c": 45.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.0,
+                "total_us": 194676671691
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581371709
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592128151552,
+              "sda": 592128151552
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461058705915568,
+          "windows_http_ms": 193.2346
+        },
+        {
+          "start_ns": 2461059002120547,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.1135,
+            "asset": 1.3501
+          },
+          "host": {
+            "mem_available_mib": 7702.33,
+            "load1": 0.41943359375,
+            "cpu_temp_c": 45.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.0,
+                "total_us": 194676676089
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581373746
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592128516096,
+              "sda": 592128516096
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461059293635943,
+          "windows_http_ms": 190.3251
+        }
+      ],
+      "baseline_restarts_busy": 0,
+      "build": [
+        {
+          "start_ns": 2461061572074827,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.0709,
+            "asset": 1.4684
+          },
+          "host": {
+            "mem_available_mib": 7678.27,
+            "load1": 0.41943359375,
+            "cpu_temp_c": 55.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.0,
+                "total_us": 194676696316
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581378642
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592130920448,
+              "sda": 592130920448
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461061861085089,
+          "windows_http_ms": 190.6644
+        },
+        {
+          "start_ns": 2461062159091889,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.3197,
+            "asset": 1.2337
+          },
+          "host": {
+            "mem_available_mib": 7678.46,
+            "load1": 0.41943359375,
+            "cpu_temp_c": 55.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.0,
+                "total_us": 194676704542
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581382377
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592131543040,
+              "sda": 592131543040
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461062448269124,
+          "windows_http_ms": 191.7523
+        },
+        {
+          "start_ns": 2461062742730455,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.2834,
+            "asset": 1.2956
+          },
+          "host": {
+            "mem_available_mib": 7677.73,
+            "load1": 0.46630859375,
+            "cpu_temp_c": 55.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.0,
+                "total_us": 194676710572
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581382377
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592131543040,
+              "sda": 592131543040
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461063026373113,
+          "windows_http_ms": 185.6464
+        },
+        {
+          "start_ns": 2461063322668228,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.1394,
+            "asset": 1.2072
+          },
+          "host": {
+            "mem_available_mib": 7677.56,
+            "load1": 0.46630859375,
+            "cpu_temp_c": 55.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.18,
+                "total_us": 194676718011
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581382377
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592131543040,
+              "sda": 592131543040
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461063612726685,
+          "windows_http_ms": 191.0061
+        },
+        {
+          "start_ns": 2461063912699272,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.197,
+            "asset": 1.2505
+          },
+          "host": {
+            "mem_available_mib": 7677.32,
+            "load1": 0.46630859375,
+            "cpu_temp_c": 57.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.18,
+                "total_us": 194676725287
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581382377
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592131543040,
+              "sda": 592131543040
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461064208772792,
+          "windows_http_ms": 198.7386
+        }
+      ],
+      "guard": {
+        "request_id": "11fe4ed933b241dcb5647bc41d2b07cc",
+        "attempt_id": "70e655ba239148eda8fc12726251a390",
+        "input_snapshot": "2ced304d1a849500f7b63b4fc70e91cd95f7d6acb7bc643614f1ca311f4a4f8a",
+        "delivery": "executed",
+        "admitted": true,
+        "attempts_deferred_busy": [],
+        "limits_verified": true,
+        "policy": {
+          "ram_reserve_mib": 2560,
+          "job_memory_mib": 512,
+          "disk_reserve_mib": 14306,
+          "job_disk_mib": 128,
+          "cpu_quota_pct": 100,
+          "max_tasks": 128,
+          "runtime_seconds": 900,
+          "psi_cpu_pct": 25.0,
+          "psi_memory_pct": 1.0,
+          "psi_io_pct": 5.0,
+          "max_load1": 1.8,
+          "max_temp_c": 70.0,
+          "service_p95_ms": 150.0,
+          "service_samples": 5,
+          "service_timeout_s": 0.5,
+          "max_sample_age_s": 5.0,
+          "require_io_cap": false,
+          "io_write_bps": 8388608,
+          "disk_path": "/home/svhome"
+        },
+        "service_checks": [
+          {
+            "url": "http://127.0.0.1:9780/.well-known/chimera.json",
+            "p95_ms": 11.875825002789497
+          }
+        ],
+        "runtime_health_samples": 6,
+        "cgroup_limits": {
+          "memory_high": 429494272,
+          "memory_max": 536870912,
+          "swap_max": 0,
+          "tasks_max": 128,
+          "cpu_quota_pct": 100.0,
+          "io_write_bps": null,
+          "io_devices": [
+            "8:0",
+            "8:2"
+          ]
+        },
+        "work": {
+          "start_ns": 2461061055435523,
+          "end_ns": 2461064319316739,
+          "cpu_ms": 3216.229,
+          "duration_ms": 3263.881,
+          "rounds": 70,
+          "source_hashes": {
+            "argparse.py": "104e328d7e5e6c04a5cd3052d0b866c16fcd5d5bd67426b6308bcbed061c91cb",
+            "ast.py": "5ea9a796353544bea0d706153516f04ef3d92be305d15a73238403837d77e34c",
+            "configparser.py": "7ab0afca0fa85532a9c8846df2a93719d612610a0555a3bcbe9dd86e72f6abc8",
+            "dataclasses.py": "cd1435e8cd7b7fd8b0128e05c2583445ea3f76fb437b065d22cb7587206afca8"
+          },
+          "objects": {
+            "argparse.py": {
+              "bytes": 113638,
+              "sha256": "57381f4372a0e88c2bb13256fdd6215b6645fb795aafff3795443cc97473e6a8"
+            },
+            "ast.py": {
+              "bytes": 31574,
+              "sha256": "fd32f0a484a0300babef9063f7fac184dc26bea17046aea8edb46dcc3733f883"
+            },
+            "configparser.py": {
+              "bytes": 72878,
+              "sha256": "3547a1ef875a67ba13ada70013d442b20578f8781207894889eb127aa1f1e7c9"
+            },
+            "dataclasses.py": {
+              "bytes": 54756,
+              "sha256": "f84a1c45b364e973f75dde7e0dd555d075e8bc886ad54b3e0e076f499e7c4915"
+            }
+          },
+          "guard_cgroup": "chimera-peer-guest.service",
+          "cgroup_write_bytes": null,
+          "process_write_bytes": 278528,
+          "python": "3.14.4"
+        },
+        "samples_outside_compile_window": 2
+      }
+    },
+    {
+      "pair": 2,
+      "order": [
+        "build",
+        "idle"
+      ],
+      "build": [
+        {
+          "start_ns": 2461066467792843,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.2917,
+            "asset": 1.2341
+          },
+          "host": {
+            "mem_available_mib": 7659.94,
+            "load1": 0.46630859375,
+            "cpu_temp_c": 58.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.32,
+                "total_us": 194676748068
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581382402
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592131805184,
+              "sda": 592131805184
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461066761184193,
+          "windows_http_ms": 195.6671
+        },
+        {
+          "start_ns": 2461067056368175,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.2527,
+            "asset": 1.3076
+          },
+          "host": {
+            "mem_available_mib": 7659.63,
+            "load1": 0.46630859375,
+            "cpu_temp_c": 58.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.45,
+                "total_us": 194676763043
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581382402
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592131805184,
+              "sda": 592131805184
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461067345194548,
+          "windows_http_ms": 190.7732
+        },
+        {
+          "start_ns": 2461067640275485,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.2311,
+            "asset": 1.2504
+          },
+          "host": {
+            "mem_available_mib": 7659.42,
+            "load1": 0.50927734375,
+            "cpu_temp_c": 57.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.45,
+                "total_us": 194676771739
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581382675
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592132083712,
+              "sda": 592132083712
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461067931498354,
+          "windows_http_ms": 187.6527
+        },
+        {
+          "start_ns": 2461068229484080,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.1343,
+            "asset": 1.2778
+          },
+          "host": {
+            "mem_available_mib": 7659.36,
+            "load1": 0.50927734375,
+            "cpu_temp_c": 57.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.45,
+                "total_us": 194676779670
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581382675
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592132083712,
+              "sda": 592132083712
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461068515812782,
+          "windows_http_ms": 188.8427
+        },
+        {
+          "start_ns": 2461068810664103,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.303,
+            "asset": 1.2804
+          },
+          "host": {
+            "mem_available_mib": 7657.65,
+            "load1": 0.50927734375,
+            "cpu_temp_c": 58.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.45,
+                "total_us": 194676787962
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581382675
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592132083712,
+              "sda": 592132083712
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461069092977386,
+          "windows_http_ms": 186.2991
+        }
+      ],
+      "guard": {
+        "request_id": "f85e0884015d47cb9ad56147bdf36fea",
+        "attempt_id": "4fd185f7e5574cda86afeb0b68dd9e3d",
+        "input_snapshot": "2ced304d1a849500f7b63b4fc70e91cd95f7d6acb7bc643614f1ca311f4a4f8a",
+        "delivery": "executed",
+        "admitted": true,
+        "attempts_deferred_busy": [],
+        "limits_verified": true,
+        "policy": {
+          "ram_reserve_mib": 2560,
+          "job_memory_mib": 512,
+          "disk_reserve_mib": 14306,
+          "job_disk_mib": 128,
+          "cpu_quota_pct": 100,
+          "max_tasks": 128,
+          "runtime_seconds": 900,
+          "psi_cpu_pct": 25.0,
+          "psi_memory_pct": 1.0,
+          "psi_io_pct": 5.0,
+          "max_load1": 1.8,
+          "max_temp_c": 70.0,
+          "service_p95_ms": 150.0,
+          "service_samples": 5,
+          "service_timeout_s": 0.5,
+          "max_sample_age_s": 5.0,
+          "require_io_cap": false,
+          "io_write_bps": 8388608,
+          "disk_path": "/home/svhome"
+        },
+        "service_checks": [
+          {
+            "url": "http://127.0.0.1:9780/.well-known/chimera.json",
+            "p95_ms": 5.823478102684021
+          }
+        ],
+        "runtime_health_samples": 6,
+        "cgroup_limits": {
+          "memory_high": 429494272,
+          "memory_max": 536870912,
+          "swap_max": 0,
+          "tasks_max": 128,
+          "cpu_quota_pct": 100.0,
+          "io_write_bps": null,
+          "io_devices": [
+            "8:0",
+            "8:2"
+          ]
+        },
+        "work": {
+          "start_ns": 2461065963370243,
+          "end_ns": 2461069264074685,
+          "cpu_ms": 3251.269,
+          "duration_ms": 3300.704,
+          "rounds": 70,
+          "source_hashes": {
+            "argparse.py": "104e328d7e5e6c04a5cd3052d0b866c16fcd5d5bd67426b6308bcbed061c91cb",
+            "ast.py": "5ea9a796353544bea0d706153516f04ef3d92be305d15a73238403837d77e34c",
+            "configparser.py": "7ab0afca0fa85532a9c8846df2a93719d612610a0555a3bcbe9dd86e72f6abc8",
+            "dataclasses.py": "cd1435e8cd7b7fd8b0128e05c2583445ea3f76fb437b065d22cb7587206afca8"
+          },
+          "objects": {
+            "argparse.py": {
+              "bytes": 113638,
+              "sha256": "57381f4372a0e88c2bb13256fdd6215b6645fb795aafff3795443cc97473e6a8"
+            },
+            "ast.py": {
+              "bytes": 31574,
+              "sha256": "fd32f0a484a0300babef9063f7fac184dc26bea17046aea8edb46dcc3733f883"
+            },
+            "configparser.py": {
+              "bytes": 72878,
+              "sha256": "3547a1ef875a67ba13ada70013d442b20578f8781207894889eb127aa1f1e7c9"
+            },
+            "dataclasses.py": {
+              "bytes": 54756,
+              "sha256": "f84a1c45b364e973f75dde7e0dd555d075e8bc886ad54b3e0e076f499e7c4915"
+            }
+          },
+          "guard_cgroup": "chimera-peer-guest.service",
+          "cgroup_write_bytes": null,
+          "process_write_bytes": 278528,
+          "python": "3.14.4"
+        },
+        "samples_outside_compile_window": 3
+      },
+      "idle": [
+        {
+          "start_ns": 2461070768876682,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.2172,
+            "asset": 1.4143
+          },
+          "host": {
+            "mem_available_mib": 7685.55,
+            "load1": 0.50927734375,
+            "cpu_temp_c": 48.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.55,
+                "total_us": 194676808659
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581382675
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592132083712,
+              "sda": 592132083712
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461071065862089,
+          "windows_http_ms": 192.0006
+        },
+        {
+          "start_ns": 2461071360865957,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.1631,
+            "asset": 1.0543
+          },
+          "host": {
+            "mem_available_mib": 7690.55,
+            "load1": 0.50927734375,
+            "cpu_temp_c": 48.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.45,
+                "total_us": 194676811587
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581382675
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592132083712,
+              "sda": 592132083712
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461071652262466,
+          "windows_http_ms": 192.5326
+        },
+        {
+          "start_ns": 2461071947870806,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.2068,
+            "asset": 1.3072
+          },
+          "host": {
+            "mem_available_mib": 7690.8,
+            "load1": 0.50927734375,
+            "cpu_temp_c": 47.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.45,
+                "total_us": 194676815086
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581382675
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592132218880,
+              "sda": 592132218880
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461072239569514,
+          "windows_http_ms": 190.405
+        },
+        {
+          "start_ns": 2461072536148006,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.1259,
+            "asset": 1.339
+          },
+          "host": {
+            "mem_available_mib": 7690.99,
+            "load1": 0.548828125,
+            "cpu_temp_c": 47.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.45,
+                "total_us": 194676818278
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581385106
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592132481024,
+              "sda": 592132481024
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461072820893824,
+          "windows_http_ms": 186.6683
+        },
+        {
+          "start_ns": 2461073119434997,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 1.8173,
+            "asset": 1.0019
+          },
+          "host": {
+            "mem_available_mib": 7690.81,
+            "load1": 0.548828125,
+            "cpu_temp_c": 47.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.36,
+                "total_us": 194676821805
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581385106
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592132481024,
+              "sda": 592132481024
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461073404815181,
+          "windows_http_ms": 186.5487
+        },
+        {
+          "start_ns": 2461073699963617,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.4346,
+            "asset": 0.9685
+          },
+          "host": {
+            "mem_available_mib": 7690.82,
+            "load1": 0.548828125,
+            "cpu_temp_c": 47.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.36,
+                "total_us": 194676825243
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581385106
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592132481024,
+              "sda": 592132481024
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461073983057258,
+          "windows_http_ms": 185.5148
+        },
+        {
+          "start_ns": 2461074275883137,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.4468,
+            "asset": 1.3222
+          },
+          "host": {
+            "mem_available_mib": 7690.82,
+            "load1": 0.548828125,
+            "cpu_temp_c": 47.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.36,
+                "total_us": 194676828023
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581385106
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592132481024,
+              "sda": 592132481024
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461074562247250,
+          "windows_http_ms": 188.1003
+        },
+        {
+          "start_ns": 2461074859062250,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.5028,
+            "asset": 1.345
+          },
+          "host": {
+            "mem_available_mib": 7690.82,
+            "load1": 0.548828125,
+            "cpu_temp_c": 47.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.36,
+                "total_us": 194676830648
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581385106
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592132481024,
+              "sda": 592132481024
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461075146106618,
+          "windows_http_ms": 189.3486
+        }
+      ],
+      "baseline_restarts_busy": 0
+    },
+    {
+      "pair": 3,
+      "order": [
+        "idle",
+        "build"
+      ],
+      "idle": [
+        {
+          "start_ns": 2461076240990126,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 1.3555,
+            "asset": 1.5283
+          },
+          "host": {
+            "mem_available_mib": 7690.61,
+            "load1": 0.548828125,
+            "cpu_temp_c": 47.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.3,
+                "total_us": 194676836841
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581386362
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592135479296,
+              "sda": 592135479296
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461076538814106,
+          "windows_http_ms": 198.3317
+        },
+        {
+          "start_ns": 2461076833956272,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.5062,
+            "asset": 1.3519
+          },
+          "host": {
+            "mem_available_mib": 7690.61,
+            "load1": 0.548828125,
+            "cpu_temp_c": 47.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.3,
+                "total_us": 194676839308
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581386362
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592135479296,
+              "sda": 592135479296
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461077138504382,
+          "windows_http_ms": 202.1128
+        },
+        {
+          "start_ns": 2461077435547572,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 1.8927,
+            "asset": 1.3514
+          },
+          "host": {
+            "mem_available_mib": 7690.61,
+            "load1": 0.50439453125,
+            "cpu_temp_c": 47.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.24,
+                "total_us": 194676842103
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581386362
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592135479296,
+              "sda": 592135479296
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461077743132603,
+          "windows_http_ms": 196.5309
+        },
+        {
+          "start_ns": 2461078041210462,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.0065,
+            "asset": 1.0644
+          },
+          "host": {
+            "mem_available_mib": 7690.61,
+            "load1": 0.50439453125,
+            "cpu_temp_c": 47.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.24,
+                "total_us": 194676845979
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581389398
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592135569408,
+              "sda": 592135569408
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461078357987997,
+          "windows_http_ms": 211.6847
+        },
+        {
+          "start_ns": 2461078654336472,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.478,
+            "asset": 1.053
+          },
+          "host": {
+            "mem_available_mib": 7690.41,
+            "load1": 0.50439453125,
+            "cpu_temp_c": 48.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.24,
+                "total_us": 194676850073
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581389398
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592135569408,
+              "sda": 592135569408
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461079200176055,
+          "windows_http_ms": 332.235
+        },
+        {
+          "start_ns": 2461079497218994,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.2771,
+            "asset": 1.3011
+          },
+          "host": {
+            "mem_available_mib": 7690.38,
+            "load1": 0.50439453125,
+            "cpu_temp_c": 48.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.2,
+                "total_us": 194676854175
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581389398
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592135569408,
+              "sda": 592135569408
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461079892683801,
+          "windows_http_ms": 293.8239
+        },
+        {
+          "start_ns": 2461080189662383,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 1.5847,
+            "asset": 1.2998
+          },
+          "host": {
+            "mem_available_mib": 7690.38,
+            "load1": 0.50439453125,
+            "cpu_temp_c": 46.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.2,
+                "total_us": 194676858026
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581389398
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592135569408,
+              "sda": 592135569408
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461080489369886,
+          "windows_http_ms": 193.4857
+        },
+        {
+          "start_ns": 2461080784335477,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.0507,
+            "asset": 1.2751
+          },
+          "host": {
+            "mem_available_mib": 7690.39,
+            "load1": 0.50439453125,
+            "cpu_temp_c": 46.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.2,
+                "total_us": 194676861132
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581389398
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592135569408,
+              "sda": 592135569408
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461081072036629,
+          "windows_http_ms": 189.2636
+        }
+      ],
+      "baseline_restarts_busy": 0,
+      "build": [
+        {
+          "start_ns": 2461083328973860,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.094,
+            "asset": 1.1665
+          },
+          "host": {
+            "mem_available_mib": 7661.4,
+            "load1": 0.4638671875,
+            "cpu_temp_c": 56.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.13,
+                "total_us": 194676880678
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581396746
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592135831552,
+              "sda": 592135831552
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461083697079313,
+          "windows_http_ms": 270.3759
+        },
+        {
+          "start_ns": 2461083998738788,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.0519,
+            "asset": 1.1662
+          },
+          "host": {
+            "mem_available_mib": 7660.92,
+            "load1": 0.4638671875,
+            "cpu_temp_c": 56.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.13,
+                "total_us": 194676887141
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581396746
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592135831552,
+              "sda": 592135831552
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461084285787703,
+          "windows_http_ms": 191.8988
+        },
+        {
+          "start_ns": 2461084579039303,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.1263,
+            "asset": 1.1972
+          },
+          "host": {
+            "mem_available_mib": 7660.18,
+            "load1": 0.4638671875,
+            "cpu_temp_c": 56.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.13,
+                "total_us": 194676893823
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581396746
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592135831552,
+              "sda": 592135831552
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461084861711878,
+          "windows_http_ms": 186.1786
+        },
+        {
+          "start_ns": 2461085159276235,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.0905,
+            "asset": 1.2473
+          },
+          "host": {
+            "mem_available_mib": 7660.18,
+            "load1": 0.4638671875,
+            "cpu_temp_c": 56.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.29,
+                "total_us": 194676899908
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581396746
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592135831552,
+              "sda": 592135831552
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461085443742494,
+          "windows_http_ms": 188.0616
+        },
+        {
+          "start_ns": 2461085739590389,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.1336,
+            "asset": 1.2014
+          },
+          "host": {
+            "mem_available_mib": 7660.18,
+            "load1": 0.4638671875,
+            "cpu_temp_c": 56.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.29,
+                "total_us": 194676907645
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581396746
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592135831552,
+              "sda": 592135831552
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461086041207703,
+          "windows_http_ms": 198.8938
+        }
+      ],
+      "guard": {
+        "request_id": "0dbd085355b24e6a8cbd095a80feb833",
+        "attempt_id": "07400d205f4b4a59aca7adbd00db6d7f",
+        "input_snapshot": "2ced304d1a849500f7b63b4fc70e91cd95f7d6acb7bc643614f1ca311f4a4f8a",
+        "delivery": "executed",
+        "admitted": true,
+        "attempts_deferred_busy": [],
+        "limits_verified": true,
+        "policy": {
+          "ram_reserve_mib": 2560,
+          "job_memory_mib": 512,
+          "disk_reserve_mib": 14306,
+          "job_disk_mib": 128,
+          "cpu_quota_pct": 100,
+          "max_tasks": 128,
+          "runtime_seconds": 900,
+          "psi_cpu_pct": 25.0,
+          "psi_memory_pct": 1.0,
+          "psi_io_pct": 5.0,
+          "max_load1": 1.8,
+          "max_temp_c": 70.0,
+          "service_p95_ms": 150.0,
+          "service_samples": 5,
+          "service_timeout_s": 0.5,
+          "max_sample_age_s": 5.0,
+          "require_io_cap": false,
+          "io_write_bps": 8388608,
+          "disk_path": "/home/svhome"
+        },
+        "service_checks": [
+          {
+            "url": "http://127.0.0.1:9780/.well-known/chimera.json",
+            "p95_ms": 3.695144783705473
+          }
+        ],
+        "runtime_health_samples": 6,
+        "cgroup_limits": {
+          "memory_high": 429494272,
+          "memory_max": 536870912,
+          "swap_max": 0,
+          "tasks_max": 128,
+          "cpu_quota_pct": 100.0,
+          "io_write_bps": null,
+          "io_devices": [
+            "8:0",
+            "8:2"
+          ]
+        },
+        "work": {
+          "start_ns": 2461082878782390,
+          "end_ns": 2461086171432180,
+          "cpu_ms": 3249.025,
+          "duration_ms": 3292.65,
+          "rounds": 70,
+          "source_hashes": {
+            "argparse.py": "104e328d7e5e6c04a5cd3052d0b866c16fcd5d5bd67426b6308bcbed061c91cb",
+            "ast.py": "5ea9a796353544bea0d706153516f04ef3d92be305d15a73238403837d77e34c",
+            "configparser.py": "7ab0afca0fa85532a9c8846df2a93719d612610a0555a3bcbe9dd86e72f6abc8",
+            "dataclasses.py": "cd1435e8cd7b7fd8b0128e05c2583445ea3f76fb437b065d22cb7587206afca8"
+          },
+          "objects": {
+            "argparse.py": {
+              "bytes": 113638,
+              "sha256": "57381f4372a0e88c2bb13256fdd6215b6645fb795aafff3795443cc97473e6a8"
+            },
+            "ast.py": {
+              "bytes": 31574,
+              "sha256": "fd32f0a484a0300babef9063f7fac184dc26bea17046aea8edb46dcc3733f883"
+            },
+            "configparser.py": {
+              "bytes": 72878,
+              "sha256": "3547a1ef875a67ba13ada70013d442b20578f8781207894889eb127aa1f1e7c9"
+            },
+            "dataclasses.py": {
+              "bytes": 54756,
+              "sha256": "f84a1c45b364e973f75dde7e0dd555d075e8bc886ad54b3e0e076f499e7c4915"
+            }
+          },
+          "guard_cgroup": "chimera-peer-guest.service",
+          "cgroup_write_bytes": null,
+          "process_write_bytes": 278528,
+          "python": "3.14.4"
+        },
+        "samples_outside_compile_window": 2
+      }
+    },
+    {
+      "pair": 4,
+      "order": [
+        "build",
+        "idle"
+      ],
+      "build": [
+        {
+          "start_ns": 2461088303983745,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.1635,
+            "asset": 1.1232
+          },
+          "host": {
+            "mem_available_mib": 7659.27,
+            "load1": 0.42626953125,
+            "cpu_temp_c": 57.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.42,
+                "total_us": 194676930277
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581399199
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592136097792,
+              "sda": 592136097792
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461088595746162,
+          "windows_http_ms": 191.2235
+        },
+        {
+          "start_ns": 2461088890246056,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.1412,
+            "asset": 1.1469
+          },
+          "host": {
+            "mem_available_mib": 7661.53,
+            "load1": 0.42626953125,
+            "cpu_temp_c": 57.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.42,
+                "total_us": 194676936028
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581399199
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592136097792,
+              "sda": 592136097792
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461089202773529,
+          "windows_http_ms": 205.0895
+        },
+        {
+          "start_ns": 2461089499299750,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.1001,
+            "asset": 1.1428
+          },
+          "host": {
+            "mem_available_mib": 7661.34,
+            "load1": 0.42626953125,
+            "cpu_temp_c": 58.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.52,
+                "total_us": 194676947726
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581399199
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592136097792,
+              "sda": 592136097792
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461089793169498,
+          "windows_http_ms": 197.0601
+        },
+        {
+          "start_ns": 2461090089576727,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.1226,
+            "asset": 1.217
+          },
+          "host": {
+            "mem_available_mib": 7663.34,
+            "load1": 0.42626953125,
+            "cpu_temp_c": 58.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.52,
+                "total_us": 194676954932
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581399199
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592136097792,
+              "sda": 592136097792
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461090381577066,
+          "windows_http_ms": 194.1073
+        },
+        {
+          "start_ns": 2461090675013366,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.0712,
+            "asset": 1.1155
+          },
+          "host": {
+            "mem_available_mib": 7663.09,
+            "load1": 0.42626953125,
+            "cpu_temp_c": 58.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.52,
+                "total_us": 194676962407
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581399399
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592136183808,
+              "sda": 592136183808
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461090962081800,
+          "windows_http_ms": 187.9304
+        }
+      ],
+      "guard": {
+        "request_id": "34baefd98b1a4007a5a095e3e8d5d2c9",
+        "attempt_id": "aaba358a4d884f1bb1d3a8640fe61aed",
+        "input_snapshot": "2ced304d1a849500f7b63b4fc70e91cd95f7d6acb7bc643614f1ca311f4a4f8a",
+        "delivery": "executed",
+        "admitted": true,
+        "attempts_deferred_busy": [],
+        "limits_verified": true,
+        "policy": {
+          "ram_reserve_mib": 2560,
+          "job_memory_mib": 512,
+          "disk_reserve_mib": 14306,
+          "job_disk_mib": 128,
+          "cpu_quota_pct": 100,
+          "max_tasks": 128,
+          "runtime_seconds": 900,
+          "psi_cpu_pct": 25.0,
+          "psi_memory_pct": 1.0,
+          "psi_io_pct": 5.0,
+          "max_load1": 1.8,
+          "max_temp_c": 70.0,
+          "service_p95_ms": 150.0,
+          "service_samples": 5,
+          "service_timeout_s": 0.5,
+          "max_sample_age_s": 5.0,
+          "require_io_cap": false,
+          "io_write_bps": 8388608,
+          "disk_path": "/home/svhome"
+        },
+        "service_checks": [
+          {
+            "url": "http://127.0.0.1:9780/.well-known/chimera.json",
+            "p95_ms": 8.853358682245016
+          }
+        ],
+        "runtime_health_samples": 6,
+        "cgroup_limits": {
+          "memory_high": 429494272,
+          "memory_max": 536870912,
+          "swap_max": 0,
+          "tasks_max": 128,
+          "cpu_quota_pct": 100.0,
+          "io_write_bps": null,
+          "io_devices": [
+            "8:0",
+            "8:2"
+          ]
+        },
+        "work": {
+          "start_ns": 2461087936016628,
+          "end_ns": 2461091239770926,
+          "cpu_ms": 3257.891,
+          "duration_ms": 3303.754,
+          "rounds": 70,
+          "source_hashes": {
+            "argparse.py": "104e328d7e5e6c04a5cd3052d0b866c16fcd5d5bd67426b6308bcbed061c91cb",
+            "ast.py": "5ea9a796353544bea0d706153516f04ef3d92be305d15a73238403837d77e34c",
+            "configparser.py": "7ab0afca0fa85532a9c8846df2a93719d612610a0555a3bcbe9dd86e72f6abc8",
+            "dataclasses.py": "cd1435e8cd7b7fd8b0128e05c2583445ea3f76fb437b065d22cb7587206afca8"
+          },
+          "objects": {
+            "argparse.py": {
+              "bytes": 113638,
+              "sha256": "57381f4372a0e88c2bb13256fdd6215b6645fb795aafff3795443cc97473e6a8"
+            },
+            "ast.py": {
+              "bytes": 31574,
+              "sha256": "fd32f0a484a0300babef9063f7fac184dc26bea17046aea8edb46dcc3733f883"
+            },
+            "configparser.py": {
+              "bytes": 72878,
+              "sha256": "3547a1ef875a67ba13ada70013d442b20578f8781207894889eb127aa1f1e7c9"
+            },
+            "dataclasses.py": {
+              "bytes": 54756,
+              "sha256": "f84a1c45b364e973f75dde7e0dd555d075e8bc886ad54b3e0e076f499e7c4915"
+            }
+          },
+          "guard_cgroup": "chimera-peer-guest.service",
+          "cgroup_write_bytes": null,
+          "process_write_bytes": 278528,
+          "python": "3.14.4"
+        },
+        "samples_outside_compile_window": 3
+      },
+      "idle": [
+        {
+          "start_ns": 2461092645981658,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.2493,
+            "asset": 1.138
+          },
+          "host": {
+            "mem_available_mib": 7699.8,
+            "load1": 0.47265625,
+            "cpu_temp_c": 48.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.61,
+                "total_us": 194676981961
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581399425
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592136548352,
+              "sda": 592136548352
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461092951618428,
+          "windows_http_ms": 201.543
+        },
+        {
+          "start_ns": 2461093256375052,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.0166,
+            "asset": 1.3857
+          },
+          "host": {
+            "mem_available_mib": 7699.8,
+            "load1": 0.47265625,
+            "cpu_temp_c": 48.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.5,
+                "total_us": 194676985186
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581399425
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592136548352,
+              "sda": 592136548352
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461093552833524,
+          "windows_http_ms": 191.7257
+        },
+        {
+          "start_ns": 2461093851570291,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 1.8043,
+            "asset": 1.2222
+          },
+          "host": {
+            "mem_available_mib": 7699.8,
+            "load1": 0.47265625,
+            "cpu_temp_c": 48.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.5,
+                "total_us": 194676988112
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581399425
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592136548352,
+              "sda": 592136548352
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461094148222638,
+          "windows_http_ms": 198.5599
+        },
+        {
+          "start_ns": 2461094445981572,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 1.2475,
+            "asset": 1.2868
+          },
+          "host": {
+            "mem_available_mib": 7699.8,
+            "load1": 0.47265625,
+            "cpu_temp_c": 48.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.5,
+                "total_us": 194676991030
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581399425
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592136548352,
+              "sda": 592136548352
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461094742662969,
+          "windows_http_ms": 196.3219
+        },
+        {
+          "start_ns": 2461095040254913,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.0845,
+            "asset": 1.3443
+          },
+          "host": {
+            "mem_available_mib": 7699.8,
+            "load1": 0.47265625,
+            "cpu_temp_c": 48.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.5,
+                "total_us": 194676994683
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581399425
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592136548352,
+              "sda": 592136548352
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461095331284745,
+          "windows_http_ms": 190.6554
+        },
+        {
+          "start_ns": 2461095625466215,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 3.6396,
+            "asset": 2.0994
+          },
+          "host": {
+            "mem_available_mib": 7699.57,
+            "load1": 0.47265625,
+            "cpu_temp_c": 48.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.41,
+                "total_us": 194676998486
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581409135
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592139280384,
+              "sda": 592139280384
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461096004452823,
+          "windows_http_ms": 222.4465
+        },
+        {
+          "start_ns": 2461096329083055,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.5732,
+            "asset": 1.4848
+          },
+          "host": {
+            "mem_available_mib": 7699.61,
+            "load1": 0.47265625,
+            "cpu_temp_c": 48.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.41,
+                "total_us": 194677006754
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581409135
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592139280384,
+              "sda": 592139280384
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461096619199751,
+          "windows_http_ms": 188.9282
+        },
+        {
+          "start_ns": 2461096913565470,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.5472,
+            "asset": 1.5788
+          },
+          "host": {
+            "mem_available_mib": 7699.17,
+            "load1": 0.47265625,
+            "cpu_temp_c": 48.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.41,
+                "total_us": 194677012454
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581409135
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592139280384,
+              "sda": 592139280384
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461097250325917,
+          "windows_http_ms": 237.8446
+        }
+      ],
+      "baseline_restarts_busy": 0
+    },
+    {
+      "pair": 5,
+      "order": [
+        "idle",
+        "build"
+      ],
+      "idle": [
+        {
+          "start_ns": 2461098345390022,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.7664,
+            "asset": 1.3445
+          },
+          "host": {
+            "mem_available_mib": 7699.17,
+            "load1": 0.59521484375,
+            "cpu_temp_c": 48.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.33,
+                "total_us": 194677022591
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581409257
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592139530240,
+              "sda": 592139530240
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461098642837675,
+          "windows_http_ms": 191.292
+        },
+        {
+          "start_ns": 2461098939089122,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.5234,
+            "asset": 1.3355
+          },
+          "host": {
+            "mem_available_mib": 7699.41,
+            "load1": 0.59521484375,
+            "cpu_temp_c": 48.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.33,
+                "total_us": 194677025086
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581409257
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592139530240,
+              "sda": 592139530240
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461099228132349,
+          "windows_http_ms": 189.8162
+        },
+        {
+          "start_ns": 2461099523974872,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.5496,
+            "asset": 1.0622
+          },
+          "host": {
+            "mem_available_mib": 7699.41,
+            "load1": 0.59521484375,
+            "cpu_temp_c": 47.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.27,
+                "total_us": 194677029507
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581409257
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592139530240,
+              "sda": 592139530240
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461099818736790,
+          "windows_http_ms": 194.1402
+        },
+        {
+          "start_ns": 2461100112683477,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.1244,
+            "asset": 2.2653
+          },
+          "host": {
+            "mem_available_mib": 7699.18,
+            "load1": 0.59521484375,
+            "cpu_temp_c": 47.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.27,
+                "total_us": 194677033284
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581409257
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592139530240,
+              "sda": 592139530240
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461100411888915,
+          "windows_http_ms": 199.0212
+        },
+        {
+          "start_ns": 2461100706637202,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.3916,
+            "asset": 1.3126
+          },
+          "host": {
+            "mem_available_mib": 7699.18,
+            "load1": 0.59521484375,
+            "cpu_temp_c": 46.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.27,
+                "total_us": 194677036196
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581409257
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592139530240,
+              "sda": 592139530240
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461101002194881,
+          "windows_http_ms": 192.9915
+        },
+        {
+          "start_ns": 2461101296627373,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 1.9593,
+            "asset": 1.3248
+          },
+          "host": {
+            "mem_available_mib": 7699.19,
+            "load1": 0.59521484375,
+            "cpu_temp_c": 46.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.22,
+                "total_us": 194677039155
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581411356
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592139603968,
+              "sda": 592139603968
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461101585695593,
+          "windows_http_ms": 190.6552
+        },
+        {
+          "start_ns": 2461101884654544,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.5202,
+            "asset": 1.3239
+          },
+          "host": {
+            "mem_available_mib": 7698.95,
+            "load1": 0.59521484375,
+            "cpu_temp_c": 47.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.22,
+                "total_us": 194677042696
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581411356
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592139603968,
+              "sda": 592139603968
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461102176823040,
+          "windows_http_ms": 193.0028
+        },
+        {
+          "start_ns": 2461102470232318,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.2776,
+            "asset": 1.3427
+          },
+          "host": {
+            "mem_available_mib": 7698.95,
+            "load1": 0.54736328125,
+            "cpu_temp_c": 47.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.22,
+                "total_us": 194677046423
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581411356
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592139603968,
+              "sda": 592139603968
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461102760370112,
+          "windows_http_ms": 190.2682
+        }
+      ],
+      "baseline_restarts_busy": 0,
+      "build": [
+        {
+          "start_ns": 2461105121612898,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.0999,
+            "asset": 1.2697
+          },
+          "host": {
+            "mem_available_mib": 7678.88,
+            "load1": 0.54736328125,
+            "cpu_temp_c": 57.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.14,
+                "total_us": 194677070300
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581411762
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592139698176,
+              "sda": 592139698176
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461105412867502,
+          "windows_http_ms": 191.6326
+        },
+        {
+          "start_ns": 2461105707692348,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 32.7142,
+            "asset": 23.7755
+          },
+          "host": {
+            "mem_available_mib": 7678.88,
+            "load1": 0.54736328125,
+            "cpu_temp_c": 57.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.14,
+                "total_us": 194677078505
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581411762
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592139698176,
+              "sda": 592139698176
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461106051322058,
+          "windows_http_ms": 192.2401
+        },
+        {
+          "start_ns": 2461106346612829,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.0611,
+            "asset": 1.1582
+          },
+          "host": {
+            "mem_available_mib": 7678.81,
+            "load1": 0.54736328125,
+            "cpu_temp_c": 57.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.14,
+                "total_us": 194677088236
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581412206
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592139784192,
+              "sda": 592139784192
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461106633323333,
+          "windows_http_ms": 190.005
+        },
+        {
+          "start_ns": 2461106928811225,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 60.6461,
+            "asset": 2.2448
+          },
+          "host": {
+            "mem_available_mib": 7678.08,
+            "load1": 0.54736328125,
+            "cpu_temp_c": 57.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.14,
+                "total_us": 194677095120
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581413924
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592139866112,
+              "sda": 592139866112
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461107279739232,
+          "windows_http_ms": 192.5172
+        },
+        {
+          "start_ns": 2461107577451352,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.0292,
+            "asset": 1.087
+          },
+          "host": {
+            "mem_available_mib": 7677.0,
+            "load1": 0.583984375,
+            "cpu_temp_c": 57.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.3,
+                "total_us": 194677102208
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581413924
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459592
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592140021760,
+              "sda": 592140021760
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461107876785726,
+          "windows_http_ms": 201.2767
+        }
+      ],
+      "guard": {
+        "request_id": "12989b7325d048fb8d043d64b5872390",
+        "attempt_id": "9a5acd6561d047ab981495a0feebcedd",
+        "input_snapshot": "2ced304d1a849500f7b63b4fc70e91cd95f7d6acb7bc643614f1ca311f4a4f8a",
+        "delivery": "executed",
+        "admitted": true,
+        "attempts_deferred_busy": [],
+        "limits_verified": true,
+        "policy": {
+          "ram_reserve_mib": 2560,
+          "job_memory_mib": 512,
+          "disk_reserve_mib": 14306,
+          "job_disk_mib": 128,
+          "cpu_quota_pct": 100,
+          "max_tasks": 128,
+          "runtime_seconds": 900,
+          "psi_cpu_pct": 25.0,
+          "psi_memory_pct": 1.0,
+          "psi_io_pct": 5.0,
+          "max_load1": 1.8,
+          "max_temp_c": 70.0,
+          "service_p95_ms": 150.0,
+          "service_samples": 5,
+          "service_timeout_s": 0.5,
+          "max_sample_age_s": 5.0,
+          "require_io_cap": false,
+          "io_write_bps": 8388608,
+          "disk_path": "/home/svhome"
+        },
+        "service_checks": [
+          {
+            "url": "http://127.0.0.1:9780/.well-known/chimera.json",
+            "p95_ms": 8.189098909497261
+          }
+        ],
+        "runtime_health_samples": 6,
+        "cgroup_limits": {
+          "memory_high": 429494272,
+          "memory_max": 536870912,
+          "swap_max": 0,
+          "tasks_max": 128,
+          "cpu_quota_pct": 100.0,
+          "io_write_bps": null,
+          "io_devices": [
+            "8:0",
+            "8:2"
+          ]
+        },
+        "work": {
+          "start_ns": 2461104596262872,
+          "end_ns": 2461108014745179,
+          "cpu_ms": 3373.777,
+          "duration_ms": 3418.482,
+          "rounds": 70,
+          "source_hashes": {
+            "argparse.py": "104e328d7e5e6c04a5cd3052d0b866c16fcd5d5bd67426b6308bcbed061c91cb",
+            "ast.py": "5ea9a796353544bea0d706153516f04ef3d92be305d15a73238403837d77e34c",
+            "configparser.py": "7ab0afca0fa85532a9c8846df2a93719d612610a0555a3bcbe9dd86e72f6abc8",
+            "dataclasses.py": "cd1435e8cd7b7fd8b0128e05c2583445ea3f76fb437b065d22cb7587206afca8"
+          },
+          "objects": {
+            "argparse.py": {
+              "bytes": 113638,
+              "sha256": "57381f4372a0e88c2bb13256fdd6215b6645fb795aafff3795443cc97473e6a8"
+            },
+            "ast.py": {
+              "bytes": 31574,
+              "sha256": "fd32f0a484a0300babef9063f7fac184dc26bea17046aea8edb46dcc3733f883"
+            },
+            "configparser.py": {
+              "bytes": 72878,
+              "sha256": "3547a1ef875a67ba13ada70013d442b20578f8781207894889eb127aa1f1e7c9"
+            },
+            "dataclasses.py": {
+              "bytes": 54756,
+              "sha256": "f84a1c45b364e973f75dde7e0dd555d075e8bc886ad54b3e0e076f499e7c4915"
+            }
+          },
+          "guard_cgroup": "chimera-peer-guest.service",
+          "cgroup_write_bytes": null,
+          "process_write_bytes": 278528,
+          "python": "3.14.4"
+        },
+        "samples_outside_compile_window": 3
+      }
+    },
+    {
+      "pair": 6,
+      "order": [
+        "build",
+        "idle"
+      ],
+      "build": [
+        {
+          "start_ns": 2461110758624371,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.1403,
+            "asset": 1.2374
+          },
+          "host": {
+            "mem_available_mib": 7679.83,
+            "load1": 0.583984375,
+            "cpu_temp_c": 57.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.43,
+                "total_us": 194677134249
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581413924
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592140079104,
+              "sda": 592140079104
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461111049214651,
+          "windows_http_ms": 189.9752
+        },
+        {
+          "start_ns": 2461111344370815,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 20.2039,
+            "asset": 6.2657
+          },
+          "host": {
+            "mem_available_mib": 7679.83,
+            "load1": 0.583984375,
+            "cpu_temp_c": 57.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.35,
+                "total_us": 194677141603
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581413924
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592140087296,
+              "sda": 592140087296
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461111662845448,
+          "windows_http_ms": 190.5663
+        },
+        {
+          "start_ns": 2461111958691682,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.2561,
+            "asset": 1.3176
+          },
+          "host": {
+            "mem_available_mib": 7678.11,
+            "load1": 0.583984375,
+            "cpu_temp_c": 56.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.35,
+                "total_us": 194677150448
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581413924
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592140087296,
+              "sda": 592140087296
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461112244543085,
+          "windows_http_ms": 189.4293
+        },
+        {
+          "start_ns": 2461112544569873,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.1439,
+            "asset": 1.2224
+          },
+          "host": {
+            "mem_available_mib": 7677.91,
+            "load1": 0.69775390625,
+            "cpu_temp_c": 56.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.35,
+                "total_us": 194677158841
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581414230
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592140386304,
+              "sda": 592140386304
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461112834740480,
+          "windows_http_ms": 194.1465
+        },
+        {
+          "start_ns": 2461113130846878,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.2481,
+            "asset": 1.1997
+          },
+          "host": {
+            "mem_available_mib": 7677.92,
+            "load1": 0.69775390625,
+            "cpu_temp_c": 58.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.47,
+                "total_us": 194677166268
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581414230
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592140394496,
+              "sda": 592140394496
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461113414231903,
+          "windows_http_ms": 186.3456
+        }
+      ],
+      "guard": {
+        "request_id": "b30fae70cd9646e0810d17c9630df9e6",
+        "attempt_id": "6011da55cb524ad192a2cb587f46b73e",
+        "input_snapshot": "2ced304d1a849500f7b63b4fc70e91cd95f7d6acb7bc643614f1ca311f4a4f8a",
+        "delivery": "executed",
+        "admitted": true,
+        "attempts_deferred_busy": [],
+        "limits_verified": true,
+        "policy": {
+          "ram_reserve_mib": 2560,
+          "job_memory_mib": 512,
+          "disk_reserve_mib": 14306,
+          "job_disk_mib": 128,
+          "cpu_quota_pct": 100,
+          "max_tasks": 128,
+          "runtime_seconds": 900,
+          "psi_cpu_pct": 25.0,
+          "psi_memory_pct": 1.0,
+          "psi_io_pct": 5.0,
+          "max_load1": 1.8,
+          "max_temp_c": 70.0,
+          "service_p95_ms": 150.0,
+          "service_samples": 5,
+          "service_timeout_s": 0.5,
+          "max_sample_age_s": 5.0,
+          "require_io_cap": false,
+          "io_write_bps": 8388608,
+          "disk_path": "/home/svhome"
+        },
+        "service_checks": [
+          {
+            "url": "http://127.0.0.1:9780/.well-known/chimera.json",
+            "p95_ms": 4.559720866382122
+          }
+        ],
+        "runtime_health_samples": 7,
+        "cgroup_limits": {
+          "memory_high": 429494272,
+          "memory_max": 536870912,
+          "swap_max": 0,
+          "tasks_max": 128,
+          "cpu_quota_pct": 100.0,
+          "io_write_bps": null,
+          "io_devices": [
+            "8:0",
+            "8:2"
+          ]
+        },
+        "work": {
+          "start_ns": 2461110267924215,
+          "end_ns": 2461113782354933,
+          "cpu_ms": 3466.054,
+          "duration_ms": 3514.431,
+          "rounds": 70,
+          "source_hashes": {
+            "argparse.py": "104e328d7e5e6c04a5cd3052d0b866c16fcd5d5bd67426b6308bcbed061c91cb",
+            "ast.py": "5ea9a796353544bea0d706153516f04ef3d92be305d15a73238403837d77e34c",
+            "configparser.py": "7ab0afca0fa85532a9c8846df2a93719d612610a0555a3bcbe9dd86e72f6abc8",
+            "dataclasses.py": "cd1435e8cd7b7fd8b0128e05c2583445ea3f76fb437b065d22cb7587206afca8"
+          },
+          "objects": {
+            "argparse.py": {
+              "bytes": 113638,
+              "sha256": "57381f4372a0e88c2bb13256fdd6215b6645fb795aafff3795443cc97473e6a8"
+            },
+            "ast.py": {
+              "bytes": 31574,
+              "sha256": "fd32f0a484a0300babef9063f7fac184dc26bea17046aea8edb46dcc3733f883"
+            },
+            "configparser.py": {
+              "bytes": 72878,
+              "sha256": "3547a1ef875a67ba13ada70013d442b20578f8781207894889eb127aa1f1e7c9"
+            },
+            "dataclasses.py": {
+              "bytes": 54756,
+              "sha256": "f84a1c45b364e973f75dde7e0dd555d075e8bc886ad54b3e0e076f499e7c4915"
+            }
+          },
+          "guard_cgroup": "chimera-peer-guest.service",
+          "cgroup_write_bytes": null,
+          "process_write_bytes": 278528,
+          "python": "3.14.4"
+        },
+        "samples_outside_compile_window": 3
+      },
+      "idle": [
+        {
+          "start_ns": 2461115122488304,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 1.9384,
+            "asset": 1.3729
+          },
+          "host": {
+            "mem_available_mib": 7707.79,
+            "load1": 0.69775390625,
+            "cpu_temp_c": 48.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.56,
+                "total_us": 194677187723
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581424534
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592142123008,
+              "sda": 592142123008
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461115416529598,
+          "windows_http_ms": 195.1049
+        },
+        {
+          "start_ns": 2461115710278707,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.5099,
+            "asset": 1.2998
+          },
+          "host": {
+            "mem_available_mib": 7707.82,
+            "load1": 0.69775390625,
+            "cpu_temp_c": 48.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.56,
+                "total_us": 194677192109
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581426430
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592142196736,
+              "sda": 592142196736
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461115999619201,
+          "windows_http_ms": 189.0308
+        },
+        {
+          "start_ns": 2461116294604607,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 1.7922,
+            "asset": 1.1588
+          },
+          "host": {
+            "mem_available_mib": 7707.84,
+            "load1": 0.69775390625,
+            "cpu_temp_c": 48.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.56,
+                "total_us": 194677195167
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581427838
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592145068032,
+              "sda": 592145068032
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461116584302451,
+          "windows_http_ms": 190.3163
+        },
+        {
+          "start_ns": 2461116879210220,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 1.9015,
+            "asset": 0.9633
+          },
+          "host": {
+            "mem_available_mib": 7707.61,
+            "load1": 0.69775390625,
+            "cpu_temp_c": 48.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.56,
+                "total_us": 194677198440
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581434748
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592145227776,
+              "sda": 592145227776
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461117169636661,
+          "windows_http_ms": 192.2371
+        },
+        {
+          "start_ns": 2461117465960630,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.1139,
+            "asset": 1.0893
+          },
+          "host": {
+            "mem_available_mib": 7707.6,
+            "load1": 0.6416015625,
+            "cpu_temp_c": 48.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.46,
+                "total_us": 194677201407
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581434748
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592145227776,
+              "sda": 592145227776
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461117752352972,
+          "windows_http_ms": 188.1197
+        },
+        {
+          "start_ns": 2461118049355889,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 1.7999,
+            "asset": 1.2601
+          },
+          "host": {
+            "mem_available_mib": 7707.57,
+            "load1": 0.6416015625,
+            "cpu_temp_c": 48.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.46,
+                "total_us": 194677204108
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581439175
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592145301504,
+              "sda": 592145301504
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461118339718655,
+          "windows_http_ms": 190.2814
+        },
+        {
+          "start_ns": 2461118636893827,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 1.6167,
+            "asset": 1.1047
+          },
+          "host": {
+            "mem_available_mib": 7707.61,
+            "load1": 0.6416015625,
+            "cpu_temp_c": 49.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.46,
+                "total_us": 194677206583
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581439175
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592145301504,
+              "sda": 592145301504
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461118922267864,
+          "windows_http_ms": 185.4966
+        },
+        {
+          "start_ns": 2461119217864536,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.4302,
+            "asset": 1.0579
+          },
+          "host": {
+            "mem_available_mib": 7707.62,
+            "load1": 0.6416015625,
+            "cpu_temp_c": 49.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.37,
+                "total_us": 194677209171
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581439900
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592145379328,
+              "sda": 592145379328
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461119503687482,
+          "windows_http_ms": 188.3082
+        }
+      ],
+      "baseline_restarts_busy": 0
+    },
+    {
+      "pair": 7,
+      "order": [
+        "idle",
+        "build"
+      ],
+      "idle": [
+        {
+          "start_ns": 2461120612205827,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 1.2404,
+            "asset": 1.1017
+          },
+          "host": {
+            "mem_available_mib": 7707.81,
+            "load1": 0.6416015625,
+            "cpu_temp_c": 48.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.37,
+                "total_us": 194677220065
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581446256
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592145559552,
+              "sda": 592145559552
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461120902341057,
+          "windows_http_ms": 192.2771
+        },
+        {
+          "start_ns": 2461121195590568,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.2813,
+            "asset": 1.3042
+          },
+          "host": {
+            "mem_available_mib": 7707.85,
+            "load1": 0.6416015625,
+            "cpu_temp_c": 48.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.31,
+                "total_us": 194677223172
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581446256
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592145563648,
+              "sda": 592145563648
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461121493683232,
+          "windows_http_ms": 190.6783
+        },
+        {
+          "start_ns": 2461121789426798,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 1.9686,
+            "asset": 1.2338
+          },
+          "host": {
+            "mem_available_mib": 7707.84,
+            "load1": 0.6416015625,
+            "cpu_temp_c": 48.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.31,
+                "total_us": 194677226427
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581449456
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592145682432,
+              "sda": 592145682432
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461122096539811,
+          "windows_http_ms": 193.9065
+        },
+        {
+          "start_ns": 2461122392079364,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.6713,
+            "asset": 1.115
+          },
+          "host": {
+            "mem_available_mib": 7707.63,
+            "load1": 0.58984375,
+            "cpu_temp_c": 48.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.31,
+                "total_us": 194677230455
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581460766
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592146329600,
+              "sda": 592146329600
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461122741051380,
+          "windows_http_ms": 250.9574
+        },
+        {
+          "start_ns": 2461123035766652,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.4421,
+            "asset": 1.3158
+          },
+          "host": {
+            "mem_available_mib": 7707.24,
+            "load1": 0.58984375,
+            "cpu_temp_c": 47.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.31,
+                "total_us": 194677236220
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581461472
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592146411520,
+              "sda": 592146411520
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461123335593390,
+          "windows_http_ms": 190.5048
+        },
+        {
+          "start_ns": 2461123631493591,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.045,
+            "asset": 1.2711
+          },
+          "host": {
+            "mem_available_mib": 7707.24,
+            "load1": 0.58984375,
+            "cpu_temp_c": 47.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.25,
+                "total_us": 194677239991
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581461472
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592146411520,
+              "sda": 592146411520
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461123927964507,
+          "windows_http_ms": 196.0866
+        },
+        {
+          "start_ns": 2461124223183815,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.1268,
+            "asset": 1.2706
+          },
+          "host": {
+            "mem_available_mib": 7707.21,
+            "load1": 0.58984375,
+            "cpu_temp_c": 46.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.25,
+                "total_us": 194677243324
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581461472
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592146411520,
+              "sda": 592146411520
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461124516460639,
+          "windows_http_ms": 191.1315
+        },
+        {
+          "start_ns": 2461124812330184,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 1.968,
+            "asset": 1.1178
+          },
+          "host": {
+            "mem_available_mib": 7707.21,
+            "load1": 0.58984375,
+            "cpu_temp_c": 46.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.25,
+                "total_us": 194677246275
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581463428
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592146501632,
+              "sda": 592146501632
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461125104368391,
+          "windows_http_ms": 192.9942
+        }
+      ],
+      "baseline_restarts_busy": 0,
+      "build": [
+        {
+          "start_ns": 2461127381874795,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 17.0159,
+            "asset": 46.3881
+          },
+          "host": {
+            "mem_available_mib": 7673.88,
+            "load1": 0.703125,
+            "cpu_temp_c": 58.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.16,
+                "total_us": 194677265688
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581467018
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592147193856,
+              "sda": 592147193856
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461127734282596,
+          "windows_http_ms": 192.6672
+        },
+        {
+          "start_ns": 2461128029752856,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 19.9014,
+            "asset": 48.0522
+          },
+          "host": {
+            "mem_available_mib": 7673.64,
+            "load1": 0.703125,
+            "cpu_temp_c": 58.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.16,
+                "total_us": 194677276090
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581467090
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592147468288,
+              "sda": 592147468288
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461128388457794,
+          "windows_http_ms": 194.5146
+        },
+        {
+          "start_ns": 2461128684934992,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.144,
+            "asset": 1.2177
+          },
+          "host": {
+            "mem_available_mib": 7673.45,
+            "load1": 0.703125,
+            "cpu_temp_c": 60.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.16,
+                "total_us": 194677284031
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581471395
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592149008384,
+              "sda": 592149008384
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461128972207101,
+          "windows_http_ms": 189.2276
+        },
+        {
+          "start_ns": 2461129268506150,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.08,
+            "asset": 1.1697
+          },
+          "host": {
+            "mem_available_mib": 7673.33,
+            "load1": 0.703125,
+            "cpu_temp_c": 60.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.32,
+                "total_us": 194677289316
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581471395
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592149008384,
+              "sda": 592149008384
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461129569709233,
+          "windows_http_ms": 195.612
+        },
+        {
+          "start_ns": 2461129862872530,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.1319,
+            "asset": 1.4031
+          },
+          "host": {
+            "mem_available_mib": 7673.34,
+            "load1": 0.703125,
+            "cpu_temp_c": 58.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.32,
+                "total_us": 194677296657
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581471395
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592149008384,
+              "sda": 592149008384
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461130149980286,
+          "windows_http_ms": 187.4458
+        }
+      ],
+      "guard": {
+        "request_id": "891a60b42e0c473097b736f6f9816c69",
+        "attempt_id": "231ac6623df64287a3af3a28561e7fab",
+        "input_snapshot": "2ced304d1a849500f7b63b4fc70e91cd95f7d6acb7bc643614f1ca311f4a4f8a",
+        "delivery": "executed",
+        "admitted": true,
+        "attempts_deferred_busy": [],
+        "limits_verified": true,
+        "policy": {
+          "ram_reserve_mib": 2560,
+          "job_memory_mib": 512,
+          "disk_reserve_mib": 14306,
+          "job_disk_mib": 128,
+          "cpu_quota_pct": 100,
+          "max_tasks": 128,
+          "runtime_seconds": 900,
+          "psi_cpu_pct": 25.0,
+          "psi_memory_pct": 1.0,
+          "psi_io_pct": 5.0,
+          "max_load1": 1.8,
+          "max_temp_c": 70.0,
+          "service_p95_ms": 150.0,
+          "service_samples": 5,
+          "service_timeout_s": 0.5,
+          "max_sample_age_s": 5.0,
+          "require_io_cap": false,
+          "io_write_bps": 8388608,
+          "disk_path": "/home/svhome"
+        },
+        "service_checks": [
+          {
+            "url": "http://127.0.0.1:9780/.well-known/chimera.json",
+            "p95_ms": 8.802217897027731
+          }
+        ],
+        "runtime_health_samples": 6,
+        "cgroup_limits": {
+          "memory_high": 429494272,
+          "memory_max": 536870912,
+          "swap_max": 0,
+          "tasks_max": 128,
+          "cpu_quota_pct": 100.0,
+          "io_write_bps": null,
+          "io_devices": [
+            "8:0",
+            "8:2"
+          ]
+        },
+        "work": {
+          "start_ns": 2461126853184992,
+          "end_ns": 2461130247873505,
+          "cpu_ms": 3348.506,
+          "duration_ms": 3394.689,
+          "rounds": 70,
+          "source_hashes": {
+            "argparse.py": "104e328d7e5e6c04a5cd3052d0b866c16fcd5d5bd67426b6308bcbed061c91cb",
+            "ast.py": "5ea9a796353544bea0d706153516f04ef3d92be305d15a73238403837d77e34c",
+            "configparser.py": "7ab0afca0fa85532a9c8846df2a93719d612610a0555a3bcbe9dd86e72f6abc8",
+            "dataclasses.py": "cd1435e8cd7b7fd8b0128e05c2583445ea3f76fb437b065d22cb7587206afca8"
+          },
+          "objects": {
+            "argparse.py": {
+              "bytes": 113638,
+              "sha256": "57381f4372a0e88c2bb13256fdd6215b6645fb795aafff3795443cc97473e6a8"
+            },
+            "ast.py": {
+              "bytes": 31574,
+              "sha256": "fd32f0a484a0300babef9063f7fac184dc26bea17046aea8edb46dcc3733f883"
+            },
+            "configparser.py": {
+              "bytes": 72878,
+              "sha256": "3547a1ef875a67ba13ada70013d442b20578f8781207894889eb127aa1f1e7c9"
+            },
+            "dataclasses.py": {
+              "bytes": 54756,
+              "sha256": "f84a1c45b364e973f75dde7e0dd555d075e8bc886ad54b3e0e076f499e7c4915"
+            }
+          },
+          "guard_cgroup": "chimera-peer-guest.service",
+          "cgroup_write_bytes": null,
+          "process_write_bytes": 278528,
+          "python": "3.14.4"
+        },
+        "samples_outside_compile_window": 2
+      }
+    },
+    {
+      "pair": 8,
+      "order": [
+        "build",
+        "idle"
+      ],
+      "build": [
+        {
+          "start_ns": 2461132434118573,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.2055,
+            "asset": 1.25
+          },
+          "host": {
+            "mem_available_mib": 7675.24,
+            "load1": 0.72705078125,
+            "cpu_temp_c": 57.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.26,
+                "total_us": 194677322466
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581471395
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592149164032,
+              "sda": 592149164032
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461132725557141,
+          "windows_http_ms": 189.3918
+        },
+        {
+          "start_ns": 2461133023931055,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.1419,
+            "asset": 1.1832
+          },
+          "host": {
+            "mem_available_mib": 7674.99,
+            "load1": 0.72705078125,
+            "cpu_temp_c": 57.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.26,
+                "total_us": 194677328148
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581471395
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592149164032,
+              "sda": 592149164032
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461133365502482,
+          "windows_http_ms": 222.1167
+        },
+        {
+          "start_ns": 2461133666911791,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.2141,
+            "asset": 1.2335
+          },
+          "host": {
+            "mem_available_mib": 7674.25,
+            "load1": 0.72705078125,
+            "cpu_temp_c": 58.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.39,
+                "total_us": 194677334839
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581471395
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592149164032,
+              "sda": 592149164032
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461133979648291,
+          "windows_http_ms": 199.2092
+        },
+        {
+          "start_ns": 2461134277527776,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.1536,
+            "asset": 1.4069
+          },
+          "host": {
+            "mem_available_mib": 7674.06,
+            "load1": 0.72705078125,
+            "cpu_temp_c": 58.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.39,
+                "total_us": 194677340427
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581472400
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592149286912,
+              "sda": 592149286912
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461134573806441,
+          "windows_http_ms": 194.3834
+        },
+        {
+          "start_ns": 2461134866700722,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.3273,
+            "asset": 1.2361
+          },
+          "host": {
+            "mem_available_mib": 7674.06,
+            "load1": 0.72705078125,
+            "cpu_temp_c": 58.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.39,
+                "total_us": 194677346450
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581472400
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592149286912,
+              "sda": 592149286912
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461135164454908,
+          "windows_http_ms": 189.5859
+        }
+      ],
+      "guard": {
+        "request_id": "c4f69c024f544edbb077b9d64c397f05",
+        "attempt_id": "3cd7f4e7ba4a4a9683eb6f3ede50ecae",
+        "input_snapshot": "2ced304d1a849500f7b63b4fc70e91cd95f7d6acb7bc643614f1ca311f4a4f8a",
+        "delivery": "executed",
+        "admitted": true,
+        "attempts_deferred_busy": [],
+        "limits_verified": true,
+        "policy": {
+          "ram_reserve_mib": 2560,
+          "job_memory_mib": 512,
+          "disk_reserve_mib": 14306,
+          "job_disk_mib": 128,
+          "cpu_quota_pct": 100,
+          "max_tasks": 128,
+          "runtime_seconds": 900,
+          "psi_cpu_pct": 25.0,
+          "psi_memory_pct": 1.0,
+          "psi_io_pct": 5.0,
+          "max_load1": 1.8,
+          "max_temp_c": 70.0,
+          "service_p95_ms": 150.0,
+          "service_samples": 5,
+          "service_timeout_s": 0.5,
+          "max_sample_age_s": 5.0,
+          "require_io_cap": false,
+          "io_write_bps": 8388608,
+          "disk_path": "/home/svhome"
+        },
+        "service_checks": [
+          {
+            "url": "http://127.0.0.1:9780/.well-known/chimera.json",
+            "p95_ms": 2.6567880995571613
+          }
+        ],
+        "runtime_health_samples": 6,
+        "cgroup_limits": {
+          "memory_high": 429494272,
+          "memory_max": 536870912,
+          "swap_max": 0,
+          "tasks_max": 128,
+          "cpu_quota_pct": 100.0,
+          "io_write_bps": null,
+          "io_devices": [
+            "8:0",
+            "8:2"
+          ]
+        },
+        "work": {
+          "start_ns": 2461131904488994,
+          "end_ns": 2461135176734876,
+          "cpu_ms": 3233.115,
+          "duration_ms": 3272.246,
+          "rounds": 70,
+          "source_hashes": {
+            "argparse.py": "104e328d7e5e6c04a5cd3052d0b866c16fcd5d5bd67426b6308bcbed061c91cb",
+            "ast.py": "5ea9a796353544bea0d706153516f04ef3d92be305d15a73238403837d77e34c",
+            "configparser.py": "7ab0afca0fa85532a9c8846df2a93719d612610a0555a3bcbe9dd86e72f6abc8",
+            "dataclasses.py": "cd1435e8cd7b7fd8b0128e05c2583445ea3f76fb437b065d22cb7587206afca8"
+          },
+          "objects": {
+            "argparse.py": {
+              "bytes": 113638,
+              "sha256": "57381f4372a0e88c2bb13256fdd6215b6645fb795aafff3795443cc97473e6a8"
+            },
+            "ast.py": {
+              "bytes": 31574,
+              "sha256": "fd32f0a484a0300babef9063f7fac184dc26bea17046aea8edb46dcc3733f883"
+            },
+            "configparser.py": {
+              "bytes": 72878,
+              "sha256": "3547a1ef875a67ba13ada70013d442b20578f8781207894889eb127aa1f1e7c9"
+            },
+            "dataclasses.py": {
+              "bytes": 54756,
+              "sha256": "f84a1c45b364e973f75dde7e0dd555d075e8bc886ad54b3e0e076f499e7c4915"
+            }
+          },
+          "guard_cgroup": "chimera-peer-guest.service",
+          "cgroup_write_bytes": null,
+          "process_write_bytes": 278528,
+          "python": "3.14.4"
+        },
+        "samples_outside_compile_window": 2
+      },
+      "idle": [
+        {
+          "start_ns": 2461136262840655,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.2305,
+            "asset": 1.3208
+          },
+          "host": {
+            "mem_available_mib": 7697.46,
+            "load1": 0.72705078125,
+            "cpu_temp_c": 48.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.5,
+                "total_us": 194677362389
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581472400
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592149291008,
+              "sda": 592149291008
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461136558514291,
+          "windows_http_ms": 196.2287
+        },
+        {
+          "start_ns": 2461136854230098,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.1624,
+            "asset": 1.3573
+          },
+          "host": {
+            "mem_available_mib": 7697.46,
+            "load1": 0.72705078125,
+            "cpu_temp_c": 48.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.5,
+                "total_us": 194677365195
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581474501
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592151642112,
+              "sda": 592151642112
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461137145571876,
+          "windows_http_ms": 190.5279
+        },
+        {
+          "start_ns": 2461137440981165,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.4578,
+            "asset": 1.3041
+          },
+          "host": {
+            "mem_available_mib": 7697.46,
+            "load1": 0.66845703125,
+            "cpu_temp_c": 48.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.41,
+                "total_us": 194677368050
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581474501
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592151642112,
+              "sda": 592151642112
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461137732584162,
+          "windows_http_ms": 189.6581
+        },
+        {
+          "start_ns": 2461138026382693,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 1.2607,
+            "asset": 1.3614
+          },
+          "host": {
+            "mem_available_mib": 7697.46,
+            "load1": 0.66845703125,
+            "cpu_temp_c": 48.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.41,
+                "total_us": 194677370862
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581474501
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592151642112,
+              "sda": 592151642112
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461138316508732,
+          "windows_http_ms": 192.9109
+        },
+        {
+          "start_ns": 2461138623958156,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.5448,
+            "asset": 1.3428
+          },
+          "host": {
+            "mem_available_mib": 7697.46,
+            "load1": 0.66845703125,
+            "cpu_temp_c": 48.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.41,
+                "total_us": 194677374472
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581474501
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592151642112,
+              "sda": 592151642112
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461138917567459,
+          "windows_http_ms": 191.3096
+        },
+        {
+          "start_ns": 2461139212598345,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 1.7477,
+            "asset": 0.9582
+          },
+          "host": {
+            "mem_available_mib": 7697.23,
+            "load1": 0.66845703125,
+            "cpu_temp_c": 48.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.33,
+                "total_us": 194677377287
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581477113
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592151744512,
+              "sda": 592151744512
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461139501356598,
+          "windows_http_ms": 188.8378
+        },
+        {
+          "start_ns": 2461139797174424,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.5381,
+            "asset": 1.3174
+          },
+          "host": {
+            "mem_available_mib": 7696.35,
+            "load1": 0.66845703125,
+            "cpu_temp_c": 48.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.33,
+                "total_us": 194677379891
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581477113
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592151744512,
+              "sda": 592151744512
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461140094874983,
+          "windows_http_ms": 193.9171
+        },
+        {
+          "start_ns": 2461140390941079,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 1.9492,
+            "asset": 1.3047
+          },
+          "host": {
+            "mem_available_mib": 7692.71,
+            "load1": 0.66845703125,
+            "cpu_temp_c": 48.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.33,
+                "total_us": 194677383068
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581477113
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592151744512,
+              "sda": 592151744512
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461140677715614,
+          "windows_http_ms": 187.7345
+        }
+      ],
+      "baseline_restarts_busy": 0
+    },
+    {
+      "pair": 9,
+      "order": [
+        "idle",
+        "build"
+      ],
+      "idle": [
+        {
+          "start_ns": 2461141773614289,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.349,
+            "asset": 1.016
+          },
+          "host": {
+            "mem_available_mib": 7692.65,
+            "load1": 0.66845703125,
+            "cpu_temp_c": 48.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.27,
+                "total_us": 194677390094
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581477113
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592151900160,
+              "sda": 592151900160
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461142071546053,
+          "windows_http_ms": 197.1274
+        },
+        {
+          "start_ns": 2461142365909612,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.2416,
+            "asset": 1.2875
+          },
+          "host": {
+            "mem_available_mib": 7692.65,
+            "load1": 0.61474609375,
+            "cpu_temp_c": 48.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.27,
+                "total_us": 194677393314
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581477113
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592151900160,
+              "sda": 592151900160
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461142655401413,
+          "windows_http_ms": 190.9247
+        },
+        {
+          "start_ns": 2461142949610623,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.0697,
+            "asset": 1.6587
+          },
+          "host": {
+            "mem_available_mib": 7692.65,
+            "load1": 0.61474609375,
+            "cpu_temp_c": 47.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.27,
+                "total_us": 194677396187
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581477113
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592151900160,
+              "sda": 592151900160
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461143239135049,
+          "windows_http_ms": 190.7633
+        },
+        {
+          "start_ns": 2461143533809858,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.3055,
+            "asset": 1.279
+          },
+          "host": {
+            "mem_available_mib": 7692.65,
+            "load1": 0.61474609375,
+            "cpu_temp_c": 47.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.22,
+                "total_us": 194677399684
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581477113
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592151900160,
+              "sda": 592151900160
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461143818802678,
+          "windows_http_ms": 186.8998
+        },
+        {
+          "start_ns": 2461144120130141,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.5079,
+            "asset": 1.3959
+          },
+          "host": {
+            "mem_available_mib": 7692.42,
+            "load1": 0.61474609375,
+            "cpu_temp_c": 47.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.22,
+                "total_us": 194677402537
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581478570
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592151961600,
+              "sda": 592151961600
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461144421920942,
+          "windows_http_ms": 192.351
+        },
+        {
+          "start_ns": 2461144726657019,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 1.8578,
+            "asset": 1.3433
+          },
+          "host": {
+            "mem_available_mib": 7692.76,
+            "load1": 0.61474609375,
+            "cpu_temp_c": 47.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.22,
+                "total_us": 194677405445
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581478570
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592151961600,
+              "sda": 592151961600
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461145138915919,
+          "windows_http_ms": 306.3064
+        },
+        {
+          "start_ns": 2461145439546372,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.4179,
+            "asset": 1.3621
+          },
+          "host": {
+            "mem_available_mib": 7692.93,
+            "load1": 0.61474609375,
+            "cpu_temp_c": 47.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.18,
+                "total_us": 194677409964
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581478570
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592151961600,
+              "sda": 592151961600
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461145746886080,
+          "windows_http_ms": 200.6739
+        },
+        {
+          "start_ns": 2461146042921957,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.4996,
+            "asset": 1.3487
+          },
+          "host": {
+            "mem_available_mib": 7692.93,
+            "load1": 0.61474609375,
+            "cpu_temp_c": 47.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.18,
+                "total_us": 194677413273
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581478570
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592151961600,
+              "sda": 592151961600
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461146342543670,
+          "windows_http_ms": 195.3486
+        }
+      ],
+      "baseline_restarts_busy": 0,
+      "build": [
+        {
+          "start_ns": 2461148605982565,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.0983,
+            "asset": 1.1009
+          },
+          "host": {
+            "mem_available_mib": 7667.99,
+            "load1": 0.64599609375,
+            "cpu_temp_c": 55.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.15,
+                "total_us": 194677429796
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581478570
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592152129536,
+              "sda": 592152129536
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461148892443938,
+          "windows_http_ms": 187.8612
+        },
+        {
+          "start_ns": 2461149189184019,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.0836,
+            "asset": 1.1958
+          },
+          "host": {
+            "mem_available_mib": 7668.04,
+            "load1": 0.64599609375,
+            "cpu_temp_c": 55.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.12,
+                "total_us": 194677435290
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581480545
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592152297472,
+              "sda": 592152297472
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461149475755423,
+          "windows_http_ms": 189.1057
+        },
+        {
+          "start_ns": 2461149773910815,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.1011,
+            "asset": 1.2037
+          },
+          "host": {
+            "mem_available_mib": 7666.12,
+            "load1": 0.64599609375,
+            "cpu_temp_c": 56.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.12,
+                "total_us": 194677444371
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581480545
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592152297472,
+              "sda": 592152297472
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461150057761505,
+          "windows_http_ms": 187.847
+        },
+        {
+          "start_ns": 2461150358404896,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.1679,
+            "asset": 1.2105
+          },
+          "host": {
+            "mem_available_mib": 7665.08,
+            "load1": 0.64599609375,
+            "cpu_temp_c": 56.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.12,
+                "total_us": 194677451090
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581482251
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592152383488,
+              "sda": 592152383488
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461150643130556,
+          "windows_http_ms": 186.4523
+        },
+        {
+          "start_ns": 2461150935298610,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.0639,
+            "asset": 1.1725
+          },
+          "host": {
+            "mem_available_mib": 7665.08,
+            "load1": 0.64599609375,
+            "cpu_temp_c": 56.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.12,
+                "total_us": 194677457601
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581482251
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592152383488,
+              "sda": 592152383488
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461151219790792,
+          "windows_http_ms": 188.9862
+        }
+      ],
+      "guard": {
+        "request_id": "a1bf11b7809e4537adfd658d63265b29",
+        "attempt_id": "ff5dc5a63ca041808d1727de6bfb9fcf",
+        "input_snapshot": "2ced304d1a849500f7b63b4fc70e91cd95f7d6acb7bc643614f1ca311f4a4f8a",
+        "delivery": "executed",
+        "admitted": true,
+        "attempts_deferred_busy": [],
+        "limits_verified": true,
+        "policy": {
+          "ram_reserve_mib": 2560,
+          "job_memory_mib": 512,
+          "disk_reserve_mib": 14306,
+          "job_disk_mib": 128,
+          "cpu_quota_pct": 100,
+          "max_tasks": 128,
+          "runtime_seconds": 900,
+          "psi_cpu_pct": 25.0,
+          "psi_memory_pct": 1.0,
+          "psi_io_pct": 5.0,
+          "max_load1": 1.8,
+          "max_temp_c": 70.0,
+          "service_p95_ms": 150.0,
+          "service_samples": 5,
+          "service_timeout_s": 0.5,
+          "max_sample_age_s": 5.0,
+          "require_io_cap": false,
+          "io_write_bps": 8388608,
+          "disk_path": "/home/svhome"
+        },
+        "service_checks": [
+          {
+            "url": "http://127.0.0.1:9780/.well-known/chimera.json",
+            "p95_ms": 2.9255207628011703
+          }
+        ],
+        "runtime_health_samples": 6,
+        "cgroup_limits": {
+          "memory_high": 429494272,
+          "memory_max": 536870912,
+          "swap_max": 0,
+          "tasks_max": 128,
+          "cpu_quota_pct": 100.0,
+          "io_write_bps": null,
+          "io_devices": [
+            "8:0",
+            "8:2"
+          ]
+        },
+        "work": {
+          "start_ns": 2461148245694434,
+          "end_ns": 2461151500175175,
+          "cpu_ms": 3216.807,
+          "duration_ms": 3254.481,
+          "rounds": 70,
+          "source_hashes": {
+            "argparse.py": "104e328d7e5e6c04a5cd3052d0b866c16fcd5d5bd67426b6308bcbed061c91cb",
+            "ast.py": "5ea9a796353544bea0d706153516f04ef3d92be305d15a73238403837d77e34c",
+            "configparser.py": "7ab0afca0fa85532a9c8846df2a93719d612610a0555a3bcbe9dd86e72f6abc8",
+            "dataclasses.py": "cd1435e8cd7b7fd8b0128e05c2583445ea3f76fb437b065d22cb7587206afca8"
+          },
+          "objects": {
+            "argparse.py": {
+              "bytes": 113638,
+              "sha256": "57381f4372a0e88c2bb13256fdd6215b6645fb795aafff3795443cc97473e6a8"
+            },
+            "ast.py": {
+              "bytes": 31574,
+              "sha256": "fd32f0a484a0300babef9063f7fac184dc26bea17046aea8edb46dcc3733f883"
+            },
+            "configparser.py": {
+              "bytes": 72878,
+              "sha256": "3547a1ef875a67ba13ada70013d442b20578f8781207894889eb127aa1f1e7c9"
+            },
+            "dataclasses.py": {
+              "bytes": 54756,
+              "sha256": "f84a1c45b364e973f75dde7e0dd555d075e8bc886ad54b3e0e076f499e7c4915"
+            }
+          },
+          "guard_cgroup": "chimera-peer-guest.service",
+          "cgroup_write_bytes": null,
+          "process_write_bytes": 278528,
+          "python": "3.14.4"
+        },
+        "samples_outside_compile_window": 3
+      }
+    },
+    {
+      "pair": 10,
+      "order": [
+        "build",
+        "idle"
+      ],
+      "build": [
+        {
+          "start_ns": 2461154059311270,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.0808,
+            "asset": 1.2538
+          },
+          "host": {
+            "mem_available_mib": 7646.09,
+            "load1": 0.59423828125,
+            "cpu_temp_c": 56.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.23,
+                "total_us": 194677486661
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581483204
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592152657920,
+              "sda": 592152657920
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461154352871354,
+          "windows_http_ms": 191.0857
+        },
+        {
+          "start_ns": 2461154654045692,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.1722,
+            "asset": 1.2811
+          },
+          "host": {
+            "mem_available_mib": 7646.09,
+            "load1": 0.59423828125,
+            "cpu_temp_c": 56.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.23,
+                "total_us": 194677494632
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581483204
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592152657920,
+              "sda": 592152657920
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461154946783276,
+          "windows_http_ms": 195.1362
+        },
+        {
+          "start_ns": 2461155246882427,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.3395,
+            "asset": 1.3253
+          },
+          "host": {
+            "mem_available_mib": 7646.09,
+            "load1": 0.59423828125,
+            "cpu_temp_c": 58.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.37,
+                "total_us": 194677500838
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581483204
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592152657920,
+              "sda": 592152657920
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461155535320181,
+          "windows_http_ms": 190.7928
+        },
+        {
+          "start_ns": 2461155831023239,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.0799,
+            "asset": 1.239
+          },
+          "host": {
+            "mem_available_mib": 7646.09,
+            "load1": 0.59423828125,
+            "cpu_temp_c": 58.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.37,
+                "total_us": 194677509019
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581483204
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592152657920,
+              "sda": 592152657920
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461156140263047,
+          "windows_http_ms": 206.218
+        },
+        {
+          "start_ns": 2461156434649508,
+          "guest_before": true,
+          "linux_http_ms": {
+            "health": 1.2144,
+            "asset": 1.2033
+          },
+          "host": {
+            "mem_available_mib": 7646.09,
+            "load1": 0.59423828125,
+            "cpu_temp_c": 56.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.37,
+                "total_us": 194677515202
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581483204
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592152657920,
+              "sda": 592152657920
+            }
+          },
+          "guest_after": true,
+          "end_ns": 2461156729586420,
+          "windows_http_ms": 196.7871
+        }
+      ],
+      "guard": {
+        "request_id": "5882ad5ac378479294b2fe717b080879",
+        "attempt_id": "4c64a2266fcd4993a3d2f976bc7b6693",
+        "input_snapshot": "2ced304d1a849500f7b63b4fc70e91cd95f7d6acb7bc643614f1ca311f4a4f8a",
+        "delivery": "executed",
+        "admitted": true,
+        "attempts_deferred_busy": [],
+        "limits_verified": true,
+        "policy": {
+          "ram_reserve_mib": 2560,
+          "job_memory_mib": 512,
+          "disk_reserve_mib": 14306,
+          "job_disk_mib": 128,
+          "cpu_quota_pct": 100,
+          "max_tasks": 128,
+          "runtime_seconds": 900,
+          "psi_cpu_pct": 25.0,
+          "psi_memory_pct": 1.0,
+          "psi_io_pct": 5.0,
+          "max_load1": 1.8,
+          "max_temp_c": 70.0,
+          "service_p95_ms": 150.0,
+          "service_samples": 5,
+          "service_timeout_s": 0.5,
+          "max_sample_age_s": 5.0,
+          "require_io_cap": false,
+          "io_write_bps": 8388608,
+          "disk_path": "/home/svhome"
+        },
+        "service_checks": [
+          {
+            "url": "http://127.0.0.1:9780/.well-known/chimera.json",
+            "p95_ms": 11.049611959606409
+          }
+        ],
+        "runtime_health_samples": 6,
+        "cgroup_limits": {
+          "memory_high": 429494272,
+          "memory_max": 536870912,
+          "swap_max": 0,
+          "tasks_max": 128,
+          "cpu_quota_pct": 100.0,
+          "io_write_bps": null,
+          "io_devices": [
+            "8:0",
+            "8:2"
+          ]
+        },
+        "work": {
+          "start_ns": 2461153542341441,
+          "end_ns": 2461156787739990,
+          "cpu_ms": 3198.176,
+          "duration_ms": 3245.399,
+          "rounds": 70,
+          "source_hashes": {
+            "argparse.py": "104e328d7e5e6c04a5cd3052d0b866c16fcd5d5bd67426b6308bcbed061c91cb",
+            "ast.py": "5ea9a796353544bea0d706153516f04ef3d92be305d15a73238403837d77e34c",
+            "configparser.py": "7ab0afca0fa85532a9c8846df2a93719d612610a0555a3bcbe9dd86e72f6abc8",
+            "dataclasses.py": "cd1435e8cd7b7fd8b0128e05c2583445ea3f76fb437b065d22cb7587206afca8"
+          },
+          "objects": {
+            "argparse.py": {
+              "bytes": 113638,
+              "sha256": "57381f4372a0e88c2bb13256fdd6215b6645fb795aafff3795443cc97473e6a8"
+            },
+            "ast.py": {
+              "bytes": 31574,
+              "sha256": "fd32f0a484a0300babef9063f7fac184dc26bea17046aea8edb46dcc3733f883"
+            },
+            "configparser.py": {
+              "bytes": 72878,
+              "sha256": "3547a1ef875a67ba13ada70013d442b20578f8781207894889eb127aa1f1e7c9"
+            },
+            "dataclasses.py": {
+              "bytes": 54756,
+              "sha256": "f84a1c45b364e973f75dde7e0dd555d075e8bc886ad54b3e0e076f499e7c4915"
+            }
+          },
+          "guard_cgroup": "chimera-peer-guest.service",
+          "cgroup_write_bytes": null,
+          "process_write_bytes": 278528,
+          "python": "3.14.4"
+        },
+        "samples_outside_compile_window": 2
+      },
+      "idle": [
+        {
+          "start_ns": 2461157830958597,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.1363,
+            "asset": 1.0543
+          },
+          "host": {
+            "mem_available_mib": 7670.37,
+            "load1": 0.54638671875,
+            "cpu_temp_c": 48.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.48,
+                "total_us": 194677531677
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581493396
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592156712960,
+              "sda": 592156712960
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461158137612947,
+          "windows_http_ms": 201.3487
+        },
+        {
+          "start_ns": 2461158433343133,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.0398,
+            "asset": 1.3471
+          },
+          "host": {
+            "mem_available_mib": 7673.19,
+            "load1": 0.54638671875,
+            "cpu_temp_c": 48.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.48,
+                "total_us": 194677534813
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581493396
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592156712960,
+              "sda": 592156712960
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461158725860108,
+          "windows_http_ms": 190.7685
+        },
+        {
+          "start_ns": 2461159020916967,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 1.0425,
+            "asset": 1.166
+          },
+          "host": {
+            "mem_available_mib": 7672.96,
+            "load1": 0.54638671875,
+            "cpu_temp_c": 53.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.48,
+                "total_us": 194677540342
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581493542
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592157007872,
+              "sda": 592157007872
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461159303760249,
+          "windows_http_ms": 186.8717
+        },
+        {
+          "start_ns": 2461159599793026,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 1.0503,
+            "asset": 1.0822
+          },
+          "host": {
+            "mem_available_mib": 7685.4,
+            "load1": 0.54638671875,
+            "cpu_temp_c": 53.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.39,
+                "total_us": 194677545746
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581493542
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592157028352,
+              "sda": 592157028352
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461159887810392,
+          "windows_http_ms": 188.1529
+        },
+        {
+          "start_ns": 2461160186345526,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 1.7161,
+            "asset": 1.0741
+          },
+          "host": {
+            "mem_available_mib": 7694.83,
+            "load1": 0.54638671875,
+            "cpu_temp_c": 49.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.39,
+                "total_us": 194677548916
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581496451
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592157151232,
+              "sda": 592157151232
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461160482247395,
+          "windows_http_ms": 193.0825
+        },
+        {
+          "start_ns": 2461160775812767,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.7446,
+            "asset": 1.2685
+          },
+          "host": {
+            "mem_available_mib": 7694.98,
+            "load1": 0.54638671875,
+            "cpu_temp_c": 49.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.39,
+                "total_us": 194677551898
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581496451
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592157151232,
+              "sda": 592157151232
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461161066754351,
+          "windows_http_ms": 192.9138
+        },
+        {
+          "start_ns": 2461161369588613,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 1.9556,
+            "asset": 2.3014
+          },
+          "host": {
+            "mem_available_mib": 7694.98,
+            "load1": 0.54638671875,
+            "cpu_temp_c": 48.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.32,
+                "total_us": 194677554852
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581496451
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592157151232,
+              "sda": 592157151232
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461161668617390,
+          "windows_http_ms": 194.892
+        },
+        {
+          "start_ns": 2461161964261463,
+          "guest_before": false,
+          "linux_http_ms": {
+            "health": 2.008,
+            "asset": 1.3537
+          },
+          "host": {
+            "mem_available_mib": 7695.0,
+            "load1": 0.54638671875,
+            "cpu_temp_c": 48.0,
+            "psi": {
+              "cpu": {
+                "avg10_pct": 0.32,
+                "total_us": 194677558104
+              },
+              "io": {
+                "avg10_pct": 0.0,
+                "total_us": 5581513746
+              },
+              "memory": {
+                "avg10_pct": 0.0,
+                "total_us": 445459593
+              }
+            },
+            "device_write_bytes": {
+              "sda2": 592157351936,
+              "sda": 592157351936
+            }
+          },
+          "guest_after": false,
+          "end_ns": 2461162287806286,
+          "windows_http_ms": 198.7918
+        }
+      ],
+      "baseline_restarts_busy": 0
+    }
+  ],
+  "service": {
+    "unit": "radar-dashboard.service",
+    "unit_pid": 3924427,
+    "port": 8787,
+    "health_path": "/api/health",
+    "asset_path": "/desk.css?v=20261124h",
+    "asset_bytes": 7291,
+    "asset_sha256": "a30b34d9630c59574496227ac35601be8d80cbff10d5bad01aa03d74b5001d69",
+    "unit_declares_port": true,
+    "entry_links_asset": true,
+    "route_at_open": {
+      "kind": "relay_hint",
+      "region": "hkg",
+      "source": "tailscale_current_peer"
+    },
+    "device_names": [
+      "sda2",
+      "sda"
+    ]
+  },
+  "service_final": {
+    "same_service": true,
+    "route_at_close": {
+      "kind": "relay_hint",
+      "region": "hkg",
+      "source": "tailscale_current_peer"
+    }
+  },
+  "status": "completed",
+  "finished_utc": "2026-11-27T02:04:45+00:00",
+  "summary": {
+    "completed_pairs": 10,
+    "raw_counts": {
+      "idle": 80,
+      "build": 50
+    },
+    "balanced_count_each": 50,
+    "p95": {
+      "idle": {
+        "linux_health_ms": 2.7446,
+        "linux_asset_ms": 1.5788,
+        "windows_health_ms": 293.8239
+      },
+      "build": {
+        "linux_health_ms": 20.2039,
+        "linux_asset_ms": 23.7755,
+        "windows_health_ms": 206.218
+      }
+    },
+    "build_minus_idle_p95_ms": {
+      "linux_health_ms": 17.4593,
+      "linux_asset_ms": 22.1967,
+      "windows_health_ms": -87.6059
+    },
+    "median_paired_p95_difference_ms": {
+      "linux_health_ms": -1.2087,
+      "linux_asset_ms": -0.0675,
+      "windows_health_ms": 1.5959
+    },
+    "paired_p95_differences_ms": [
+      {
+        "linux_health_ms": -1.0204,
+        "linux_asset_ms": -0.1095,
+        "windows_health_ms": 3.82
+      },
+      {
+        "linux_health_ms": -1.1998,
+        "linux_asset_ms": -0.1067,
+        "windows_health_ms": 3.6665
+      },
+      {
+        "linux_health_ms": -1.3444,
+        "linux_asset_ms": -0.281,
+        "windows_health_ms": -61.8591
+      },
+      {
+        "linux_health_ms": -2.4761,
+        "linux_asset_ms": -0.8824,
+        "windows_health_ms": -32.7551
+      },
+      {
+        "linux_health_ms": 57.8797,
+        "linux_asset_ms": 22.431,
+        "windows_health_ms": 7.1365
+      },
+      {
+        "linux_health_ms": 17.7737,
+        "linux_asset_ms": 4.8928,
+        "windows_health_ms": -0.9584
+      },
+      {
+        "linux_health_ms": 17.4593,
+        "linux_asset_ms": 46.7364,
+        "windows_health_ms": -0.4746
+      },
+      {
+        "linux_health_ms": -1.2175,
+        "linux_asset_ms": 0.0641,
+        "windows_health_ms": 25.888
+      },
+      {
+        "linux_health_ms": -1.34,
+        "linux_asset_ms": -0.4482,
+        "windows_health_ms": -117.2007
+      },
+      {
+        "linux_health_ms": -1.4051,
+        "linux_asset_ms": -0.0284,
+        "windows_health_ms": 4.8693
+      }
+    ],
+    "host": {
+      "idle": {
+        "min_mem_available_mib": 7670.37,
+        "max_cpu_temp_c": 53.0,
+        "max_psi_some_avg10_pct": {
+          "cpu": 0.61,
+          "io": 0.01,
+          "memory": 0.0
+        },
+        "observed_device_write_bytes": {
+          "sda2": 11010048,
+          "sda": 11010048
+        }
+      },
+      "build": {
+        "min_mem_available_mib": 7646.09,
+        "max_cpu_temp_c": 60.0,
+        "max_psi_some_avg10_pct": {
+          "cpu": 0.52,
+          "io": 0.0,
+          "memory": 0.0
+        },
+        "observed_device_write_bytes": {
+          "sda2": 3817472,
+          "sda": 3817472
+        }
+      }
+    },
+    "eligible_for_gate": true,
+    "experimental_gate_pass": false
+  }
+}

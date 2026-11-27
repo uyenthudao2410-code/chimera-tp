@@ -1,0 +1,124 @@
+{
+  "benchmark": "CHIMERA_SYMBIONT_END_TO_END_AB",
+  "stage_a_slow_commands_12ops": {
+    "legacy_powershell_ms": 3585.58,
+    "legacy_ps_per_cmd_ms": [
+      286.38,
+      300.69,
+      302.52,
+      295.32,
+      298.14,
+      295.1,
+      314.48,
+      323.9,
+      291.71,
+      301.41,
+      289.84,
+      285.9
+    ],
+    "legacy_ps_spawns": 12,
+    "legacy_ok": 12,
+    "legacy_stdout_bytes": 14469,
+    "http_xray_batch_ms": 86.4,
+    "http_engine_ms": 70.12,
+    "http_ok": 12,
+    "http_speedup_x": 41.5,
+    "mcp_stdio_cold_init_ms": 185.06,
+    "mcp_stdio_warm_12op_ms": 114.38,
+    "mcp_warm_speedup_x": 31.3,
+    "mcp_wire_bytes": 8401,
+    "mcp_spill_shield_ok_under_8600B": true
+  },
+  "stage_b_outline_vs_full_read": {
+    "three_large_files_raw_bytes": 259641,
+    "outline_batch_bytes": 7005,
+    "outline_batch_ms": 100.93,
+    "bytes_reduction_pct": 97.3
+  },
+  "stage_c_ast_index_speed": {
+    "files_indexed": 238,
+    "callgraph_cold_ms": 1346.23,
+    "callgraph_warm_ms": 45.37,
+    "incremental_single_file_ast_ms": 36.1,
+    "incremental_vs_cold_x": 37.3
+  },
+  "stage_d_precog_shadow_verify": {
+    "sync_commit_verify_ms": 816.75,
+    "precog_shadow_scheduled": true,
+    "precog_commit_verify_ms": 28.24,
+    "precog_hit": true,
+    "verify_wait_speedup_x": 28.9
+  },
+  "stage_e_surgeon_capsule_bootstrap": {
+    "ram_toml_gate_ms": 14.36,
+    "ram_toml_gate_blocked": true,
+    "ram_toml_disk_touched": false,
+    "capsule_create_ms": 33.76,
+    "capsule_load_ms": 26.2,
+    "capsule_est_tokens": 201,
+    "repo_bootstrap_ms": 171.95,
+    "repo_bootstrap_bytes": 1826
+  },
+  "daemon_health": {
+    "pid": 35156,
+    "ram_mb": 37.14,
+    "zero_weight_ok": true,
+    "probe_stats": {
+      "ok": true,
+      "organ": "akashic_swarm_kernel",
+      "probe": {
+        "batches_run": 5,
+        "ops_run": 39,
+        "shells_avoided": 37,
+        "coalesced_hits": 0
+      },
+      "callgraph": {
+        "queries": 3,
+        "cached_repos": 2
+      },
+      "verifier": {
+        "runs": 2,
+        "cache_hits": 1,
+        "cached_fingerprints": 2
+      },
+      "token_diet": {
+        "calls": 2,
+        "raw_bytes_in": 276,
+        "compacted_bytes_out": 276,
+        "bytes_saved": 0,
+        "saved_pct": 0.0,
+        "stored_refs": 0,
+        "stored_bytes": 0
+      },
+      "symbiont": {
+        "ok": true,
+        "hive": {
+          "active_leases": 0,
+          "recent_mutations": 0,
+          "immune_rules": 0
+        },
+        "precog": {
+          "ok": true,
+          "inflight_shadow_tests": 0,
+          "watchers": [],
+          "saves_processed": 2,
+          "ast_incremental_updates": 2,
+          "shadow_tests_started": 1,
+          "shadow_tests_completed": 1,
+          "shadow_cache_joins": 0,
+          "shadow_precomputed_hits": 1,
+          "syntax_early_catches": 0
+        },
+        "surgeon": {
+          "patches_attempted": 1,
+          "patches_committed": 0,
+          "gate_rejections": 1,
+          "rollbacks_executed": 0
+        },
+        "capsules": {
+          "stored": 1
+        }
+      }
+    }
+  }
+}

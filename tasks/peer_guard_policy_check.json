@@ -1,0 +1,102 @@
+{
+  "ok": true,
+  "verified_utc": "2026-11-26T13:34:51.190168+00:00",
+  "peer": "svhome",
+  "entry_point": "chimera_tp.platform.work_admission.peer_assessment",
+  "source_sha256": "3aa6c68a9572a294b7bf1af3c402ef2dc521bc69ce31056a67172203059b94f8",
+  "scope": "Read-only Linux admission. A stricter threshold in a request exercises the refusal branch against actual host readings. No job, change to receiver policy or induced hardware stress.",
+  "trials": [
+    {
+      "policy_requested": {},
+      "accepted": true,
+      "reason": "capacity",
+      "effective_limits": {
+        "max_load1": 1.8,
+        "max_temp_c": 70.0,
+        "ram_reserve_mib": 2560
+      },
+      "readings": {
+        "load1": 0.2783203125,
+        "temp_c": 46.0,
+        "available_ram_mib": 6278.73046875,
+        "available_disk_mib": 34383.6953125,
+        "psi_some_avg10": {
+          "cpu": 0.0,
+          "memory": 0.0,
+          "io": 0.0
+        },
+        "service_p95_ms": {
+          "http://127.0.0.1:9780/.well-known/chimera.json": 4.384769592434168
+        }
+      }
+    },
+    {
+      "policy_requested": {
+        "max_load1": 1e-05
+      },
+      "accepted": false,
+      "reason": "host_load",
+      "effective_limits": null,
+      "readings": {
+        "load1": 0.2783203125,
+        "temp_c": 47.0,
+        "available_ram_mib": 6278.59375,
+        "available_disk_mib": 34383.69921875,
+        "psi_some_avg10": {
+          "cpu": 0.0,
+          "memory": 0.0,
+          "io": 0.0
+        },
+        "service_p95_ms": {
+          "http://127.0.0.1:9780/.well-known/chimera.json": 3.4736632369458675
+        }
+      }
+    },
+    {
+      "policy_requested": {
+        "max_temp_c": 1.0
+      },
+      "accepted": false,
+      "reason": "temperature",
+      "effective_limits": null,
+      "readings": {
+        "load1": 0.2783203125,
+        "temp_c": 48.0,
+        "available_ram_mib": 6279.8984375,
+        "available_disk_mib": 34383.6953125,
+        "psi_some_avg10": {
+          "cpu": 0.0,
+          "memory": 0.0,
+          "io": 0.0
+        },
+        "service_p95_ms": {
+          "http://127.0.0.1:9780/.well-known/chimera.json": 3.5013146698474884
+        }
+      }
+    },
+    {
+      "policy_requested": {},
+      "accepted": true,
+      "reason": "capacity",
+      "effective_limits": {
+        "max_load1": 1.8,
+        "max_temp_c": 70.0,
+        "ram_reserve_mib": 2560
+      },
+      "readings": {
+        "load1": 0.255859375,
+        "temp_c": 47.0,
+        "available_ram_mib": 6288.1171875,
+        "available_disk_mib": 34382.80859375,
+        "psi_some_avg10": {
+          "cpu": 0.0,
+          "memory": 0.0,
+          "io": 0.0
+        },
+        "service_p95_ms": {
+          "http://127.0.0.1:9780/.well-known/chimera.json": 3.3329492434859276
+        }
+      }
+    }
+  ]
+}

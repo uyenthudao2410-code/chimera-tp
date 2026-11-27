@@ -1,0 +1,165 @@
+{
+  "ui_mode": "v26_zero_webgl",
+  "static_sizes": {
+    "raw_bytes": 38271,
+    "gzip_level9_bytes": 14845,
+    "gzip_level5_bytes": 14889,
+    "packed_bytes": 20248,
+    "packed_gzip_bytes": 15442
+  },
+  "blocking_assets": {
+    "external_script_srcs": 0,
+    "external_stylesheets": 0,
+    "external_http_urls": 0
+  },
+  "js_syntax": {
+    "node_checked": true,
+    "ok": true,
+    "check_ms": 69.99,
+    "stderr": ""
+  },
+  "live_wire": {
+    "root": {
+      "status": 200,
+      "wire_bytes": 16495,
+      "content_encoding": "gzip",
+      "x_chimera_packed": "",
+      "elapsed_ms": 28.1
+    },
+    "packed": {
+      "status": 200,
+      "wire_bytes": 20520,
+      "content_encoding": "",
+      "x_chimera_packed": "kolmogorov-deflate-raw",
+      "elapsed_ms": 1.87
+    },
+    "pulse": {
+      "status": 200,
+      "wire_bytes": 1330,
+      "content_encoding": "gzip",
+      "x_chimera_packed": "",
+      "elapsed_ms": 30.0
+    },
+    "total_wire_to_first_interactive_bytes": 17825,
+    "budget_bytes": 26000,
+    "within_budget": true
+  },
+  "browser_verification": {
+    "available": true,
+    "engine": "playwright_chromium",
+    "pages": {
+      "root": {
+        "path": "/",
+        "dom_content_loaded_ms": 96.8,
+        "first_interactive_ms": 130.16,
+        "pulse_hydrated_ms": 205.03,
+        "console_error_count": 0,
+        "page_error_count": 0,
+        "errors": [],
+        "mode": "v26_zero_webgl",
+        "webgl_ok": null,
+        "gl_error": null,
+        "cortex": {
+          "version": "26.0",
+          "webgl": false,
+          "zeroGpu": true,
+          "unified": true,
+          "living": true,
+          "hosi": true,
+          "flowsSeen": 0
+        },
+        "kpi_groups": [
+          3,
+          3,
+          3,
+          3
+        ],
+        "svg_nodes": 6,
+        "charts": [
+          {
+            "id": "c-ram",
+            "width": 324,
+            "height": 116
+          },
+          {
+            "id": "c-kal",
+            "width": 324,
+            "height": 123
+          },
+          {
+            "id": "c-ph",
+            "width": 324,
+            "height": 116
+          },
+          {
+            "id": "c-ht",
+            "width": 324,
+            "height": 116
+          }
+        ],
+        "cartridges_rendered": 15,
+        "sync_label": "SYNC #1 \u00b7 1.0s",
+        "interactions": {
+          "spotlight_ctrl_k": true,
+          "tactical_tab_toggle": true
+        }
+      },
+      "packed": {
+        "path": "/?packed=1",
+        "dom_content_loaded_ms": 15.2,
+        "first_interactive_ms": 113.45,
+        "pulse_hydrated_ms": 207.51,
+        "console_error_count": 0,
+        "page_error_count": 0,
+        "errors": [],
+        "mode": "v26_zero_webgl",
+        "webgl_ok": null,
+        "gl_error": null,
+        "cortex": {
+          "version": "26.0",
+          "webgl": false,
+          "zeroGpu": true,
+          "unified": true,
+          "living": true,
+          "hosi": true,
+          "flowsSeen": 0
+        },
+        "kpi_groups": [
+          3,
+          3,
+          3,
+          3
+        ],
+        "svg_nodes": 6,
+        "charts": [
+          {
+            "id": "c-ram",
+            "width": 324,
+            "height": 116
+          },
+          {
+            "id": "c-kal",
+            "width": 324,
+            "height": 123
+          },
+          {
+            "id": "c-ph",
+            "width": 324,
+            "height": 116
+          },
+          {
+            "id": "c-ht",
+            "width": 324,
+            "height": 116
+          }
+        ],
+        "cartridges_rendered": 15,
+        "sync_label": "SYNC #1 \u00b7 1.0s",
+        "interactions": {
+          "spotlight_ctrl_k": true,
+          "tactical_tab_toggle": true
+        }
+      }
+    }
+  }
+}

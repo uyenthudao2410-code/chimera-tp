@@ -1,0 +1,137 @@
+{
+  "schema": "chimera.traffic-verification/1",
+  "verified_utc": "2026-11-26T16:29:56.648Z",
+  "scope": "Real local HTTP with synthetic events and responses, two ephemeral daemons",
+  "isolated_daemons": 2,
+  "daemon_wired_without_fixture": true,
+  "heartbeat_changed_pulse": false,
+  "sdk_publish_count": 2,
+  "receiver_observed_first_payload": true,
+  "later_bare_200_confirmed_relay": false,
+  "cache_hits_refreshed_evidence": false,
+  "upstream_http_requests": 3,
+  "independent_egress_responses": [
+    200,
+    200,
+    503,
+    200,
+    200
+  ],
+  "secret_present_in_evidence": false,
+  "ledger_expiry_and_storage": {
+    "concurrent_events": 48,
+    "disk_flushes_for_burst": 1,
+    "ttl_s": 0.4,
+    "wait_until_stale_s": 0.406,
+    "status_reads": 25,
+    "reads_changed_disk": false,
+    "old_session_verified_after_restart": false,
+    "persisted_events": 49
+  },
+  "selected_receipts": {
+    "relay_delivered": {
+      "enabled": true,
+      "verification_status": "verified",
+      "last_verified_at": "2026-11-26T16:29:51.985409+00:00",
+      "last_observed_at": "2026-11-26T16:29:51.985409+00:00",
+      "evidence_source": "fixture_traffic",
+      "previous_process": false,
+      "execution_node": "sender",
+      "fallback_mode": null,
+      "sample_count": 1,
+      "expires_at": "2026-11-26T16:34:51.985409+00:00",
+      "stale": false,
+      "metrics": {
+        "operation": "pulse.relay",
+        "successful": true,
+        "sequence": 1
+      },
+      "receipt_id": "c48ad52ea05ba7778c6ef73be7456ccf4fcb980f0eb2d8764bc621f72c0dd7d2"
+    },
+    "relay_failed": {
+      "enabled": true,
+      "verification_status": "unverified",
+      "last_verified_at": "2026-11-26T16:29:51.985409+00:00",
+      "last_observed_at": "2026-11-26T16:29:52.279472+00:00",
+      "evidence_source": "fixture_traffic",
+      "previous_process": false,
+      "execution_node": "sender",
+      "fallback_mode": null,
+      "sample_count": 2,
+      "expires_at": "2026-11-26T16:34:52.279472+00:00",
+      "stale": false,
+      "metrics": {
+        "operation": "pulse.relay",
+        "successful": false,
+        "sequence": 2
+      },
+      "receipt_id": "b5b236afb8bc561274381d27a8a339d3f5ad881487af13e100c4139408c04221"
+    },
+    "egress_ok": {
+      "enabled": true,
+      "verification_status": "verified",
+      "last_verified_at": "2026-11-26T16:29:52.339466+00:00",
+      "last_observed_at": "2026-11-26T16:29:52.339466+00:00",
+      "evidence_source": "fixture_traffic",
+      "previous_process": false,
+      "execution_node": "sender",
+      "fallback_mode": null,
+      "sample_count": 2,
+      "expires_at": "2026-11-26T16:34:52.339466+00:00",
+      "stale": false,
+      "metrics": {
+        "operation": "egress.forward",
+        "successful": true,
+        "http_status": 200
+      },
+      "receipt_id": "c9ed098b2e8a3d5699e5aa3bc0e70a0487aebea7d061a0b636a8ca8d94d6c09e"
+    },
+    "egress_failed": {
+      "enabled": true,
+      "verification_status": "unverified",
+      "last_verified_at": "2026-11-26T16:29:52.339466+00:00",
+      "last_observed_at": "2026-11-26T16:29:52.385368+00:00",
+      "evidence_source": "fixture_traffic",
+      "previous_process": false,
+      "execution_node": "sender",
+      "fallback_mode": null,
+      "sample_count": 3,
+      "expires_at": "2026-11-26T16:34:52.385368+00:00",
+      "stale": false,
+      "metrics": {
+        "operation": "egress.forward",
+        "successful": false,
+        "http_status": 503
+      },
+      "receipt_id": "b90a991dec010ce6a7eb4b7293dc5460167f09e6c0a0188226251fc7acc493e9"
+    },
+    "egress_recovered": {
+      "enabled": true,
+      "verification_status": "verified",
+      "last_verified_at": "2026-11-26T16:29:52.432702+00:00",
+      "last_observed_at": "2026-11-26T16:29:52.432702+00:00",
+      "evidence_source": "fixture_traffic",
+      "previous_process": false,
+      "execution_node": "sender",
+      "fallback_mode": null,
+      "sample_count": 4,
+      "expires_at": "2026-11-26T16:34:52.432702+00:00",
+      "stale": false,
+      "metrics": {
+        "operation": "egress.forward",
+        "successful": true,
+        "http_status": 200
+      },
+      "receipt_id": "83f43063bec99f17159d96317b9ae08eb6e4476a0493fec9fe57cad8e5cd22d0"
+    }
+  },
+  "temporary_state_removed": true,
+  "source_sha256": {
+    "chimera_tp/platform/evidence.py": "1ca356247d118b6daaaf79ec6518a45d6e580620c7e486038662a04f31d15cef",
+    "chimera_tp/platform/pulse_bus.py": "ccd69b98debff87a7751e91205aeb7eaf4c0660b143238015edfdc3c0b1f9b64",
+    "chimera_tp/platform/egress_membrane.py": "4e279f8027d0103b9883ce82afe774a1678f7489347740c76bef66818423ccd9",
+    "chimera_tp/platform/substrate.py": "21ab1ee4f020d18f9abea8bf86f3d78aef2e4fb571ffa6b1c5a4dd563d1c2d19",
+    "scripts/verify_evidence_traffic.mjs": "a7e9df575a811e75f7bd9f0f598118a00c5b219b9dc63b9b2dc2f5e2c9fa5282",
+    "tests/test_evidence_traffic.py": "a7631d9c178e718e0a352ad04e006324b97690d79dba0c9dc9e0bb3900d2ae41"
+  }
+}

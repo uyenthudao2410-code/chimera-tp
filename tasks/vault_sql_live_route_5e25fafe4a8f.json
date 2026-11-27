@@ -1,0 +1,67 @@
+{
+  "schema": "chimera.live-vault-sql-route/1",
+  "verified_utc": "2026-11-27T02:02:46.401731+00:00",
+  "release": "5e25fafe4a8f2de1d2b492c6fbfc992166e79cad",
+  "database": "svhome_telemetry",
+  "direction": "svhome to win-desktop",
+  "sdk_method": "ChimeraClient.vault_sql_sync(name)",
+  "peer_base_override": false,
+  "initial_registered_digest": "92f43d3be831ea5997d10b5180bcaea2a3d616e0d53edf5ef5e909d76b052f6c",
+  "route_before": {
+    "port": 9789,
+    "session_id": 3215369294,
+    "tx": 1783401,
+    "rx": 1661426,
+    "kernel_peaks": {
+      "win-desktop": 66703360,
+      "svhome": 70275072
+    }
+  },
+  "rounds": [
+    {
+      "ordinal": 1,
+      "sdk_wall_ms": 45.036,
+      "protocol": 2,
+      "mode": "delta",
+      "changed_pages": 5,
+      "raw_bytes": 135168,
+      "wire_bytes": 4244,
+      "sha256": "66d0ff5c78dcdabbed9cad0b65383da9e7044e173a7a2b7ff90365a89882eabe",
+      "primary_generation_confirmed": true,
+      "integrity_check": "ok",
+      "route": {
+        "port": 9789,
+        "session_id": 3215369294,
+        "tx": 1785929,
+        "rx": 1672472,
+        "kernel_peaks": {
+          "win-desktop": 66703360,
+          "svhome": 70275072
+        }
+      }
+    },
+    {
+      "ordinal": 2,
+      "sdk_wall_ms": 53.003,
+      "protocol": 2,
+      "mode": "unchanged",
+      "changed_pages": 0,
+      "raw_bytes": 135168,
+      "wire_bytes": 0,
+      "sha256": "66d0ff5c78dcdabbed9cad0b65383da9e7044e173a7a2b7ff90365a89882eabe",
+      "primary_generation_confirmed": true,
+      "integrity_check": "ok",
+      "route": {
+        "port": 9789,
+        "session_id": 3215369294,
+        "tx": 1787877,
+        "rx": 1679188,
+        "kernel_peaks": {
+          "win-desktop": 66703360,
+          "svhome": 70275072
+        }
+      }
+    }
+  ],
+  "byte_scope": "wire_bytes counts encoded page data only. PHANTOM counters include all concurrent traffic."
+}

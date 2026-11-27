@@ -1,0 +1,89 @@
+{
+  "benchmark": "CHIMERA_AGENT_HYPER_BUS_AB",
+  "ops_compared": 12,
+  "legacy_powershell": {
+    "total_ms": 5703.84,
+    "per_cmd_ms": [
+      690.8,
+      626.12,
+      484.32,
+      555.19,
+      480.79,
+      397.09,
+      482.1,
+      432.58,
+      397.04,
+      456.88,
+      386.86,
+      313.82
+    ],
+    "powershell_spawns": 12,
+    "llm_turns_needed_serial": 12,
+    "ok_count": 12,
+    "stdout_bytes": 24691
+  },
+  "chimera_xray_batch": {
+    "http_roundtrip_ms": 122.18,
+    "engine_elapsed_ms": 104.11,
+    "powershell_spawns": 0,
+    "llm_turns_needed": 1,
+    "ok_count": 12,
+    "payload_bytes": 29734,
+    "speedup_x": 46.7
+  },
+  "callgraph_telepathy": {
+    "symbol": "handle_mcp_request",
+    "files_indexed": 234,
+    "cold_ms": 1363.06,
+    "warm_ms": 67.18,
+    "callees": 11,
+    "callers": 1,
+    "related_tests": 7,
+    "chars_used": 4200
+  },
+  "commit_verify": {
+    "cold_ms": 15994.58,
+    "warm_cache_hit_ms": 8.92,
+    "cache_hit": true,
+    "cache_speedup_x": 1793.1,
+    "tests_ran": [
+      "tests/test_agent_hyper_bus.py"
+    ],
+    "ok": true,
+    "token_diet": {
+      "compacted": false,
+      "raw_bytes": 878,
+      "compacted_bytes": 878,
+      "saved_pct": 0.0,
+      "ref_id": null
+    }
+  },
+  "daemon_ram_mb": 56.9,
+  "probe_stats": {
+    "ok": true,
+    "organ": "akashic_swarm_kernel",
+    "probe": {
+      "batches_run": 1,
+      "ops_run": 12,
+      "shells_avoided": 11
+    },
+    "callgraph": {
+      "queries": 2,
+      "cached_repos": 1
+    },
+    "verifier": {
+      "runs": 1,
+      "cache_hits": 1,
+      "cached_fingerprints": 1
+    },
+    "token_diet": {
+      "calls": 1,
+      "raw_bytes_in": 878,
+      "compacted_bytes_out": 878,
+      "bytes_saved": 0,
+      "saved_pct": 0.0,
+      "stored_refs": 0,
+      "stored_bytes": 0
+    }
+  }
+}

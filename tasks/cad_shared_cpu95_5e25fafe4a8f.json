@@ -1,0 +1,250 @@
+{
+  "schema": "chimera.cad-preflight-series/1",
+  "release": "5e25fafe4a8f2de1d2b492c6fbfc992166e79cad",
+  "cad_pairs": 0,
+  "automatic_cad_offload": false,
+  "captured_utc": "2026-11-27T02:32:42.387430+00:00",
+  "requested_cpu_quota_pct": 95,
+  "rounds": 240,
+  "local_build_strategy": "shared",
+  "windows_radar_p95_limit_ms": 400,
+  "receiver_limits": {
+    "linux_p95_ms": 20,
+    "linux_p95_added_ms": 5,
+    "min_samples": 20,
+    "ram_reserve_mib": 2560,
+    "max_load1": 1.8,
+    "max_cpu_temp_c": 70,
+    "max_psi_some_avg10_pct": {
+      "cpu": 25,
+      "memory": 1,
+      "io": 5
+    }
+  },
+  "trials": [
+    {
+      "started_utc": "2026-11-27T02:20:00.809Z",
+      "raw": "V:\\ChimeraTrials\\cad-peer-5e25fafe4a8f-cpu95-20261127T022000\\report.json",
+      "raw_sha256": "f9c51bf435f8134348f812c5745160195a90da5dffceca3e4d92b73f83de61d5",
+      "state": "failed",
+      "reason": "io_pressure"
+    },
+    {
+      "started_utc": "2026-11-27T02:27:12.066Z",
+      "raw": "V:\\ChimeraTrials\\cad-peer-5e25fafe4a8f-cpu95-20261127T022711\\report.json",
+      "raw_sha256": "71b4fc9eadeb8a72862cb7994b931d98b9fbd9a396343f5028d14e0fa291d881",
+      "state": "peer_preflight",
+      "peer_check": {
+        "passed": false,
+        "issues": [
+          "workstation service probes incomplete",
+          "local: missing workstation samples"
+        ],
+        "breaches": []
+      },
+      "arms": [
+        {
+          "site": "local",
+          "result_sha256": "419667852ed442ad3380ad74f799c69aef377c8503e81cc7307e2c7a3be43a46",
+          "input_sha256": "f391c2350a9f19cd8f3130af5e6a0e18523505bbcfd76d15e68acc7908395b3f",
+          "snapshot": "e1663fef86f85a0fcb85a4b361b069a2bf9e595b524f48f5c07a3d0ebca263ee",
+          "request_ids": [
+            "63048153002d45159dedd49b8bd2f78a",
+            "959ba43ce1c340918ea6f54fe0ac0f19"
+          ],
+          "client_pids": [
+            25484,
+            24756
+          ],
+          "attempt_id": "7e771003083b42379a28044fd8e6cde4",
+          "compiler": {
+            "id": "bd8d8542355b422b8c3c19079c629570",
+            "pid": 17264,
+            "cpu_s": 14.84375,
+            "wall_s": 14.97537490000002,
+            "python": "3.11.7"
+          },
+          "end_to_end_ms": 16594.88400000002,
+          "sender_deliveries": [
+            "joined",
+            "executed"
+          ],
+          "build_route": "local",
+          "admission": null,
+          "linux_samples": 53,
+          "windows_samples": 50,
+          "windows_errors": {
+            "TimeoutError": 1
+          },
+          "windows_radar_health_p95_ms": 267.5768000000098,
+          "linux_radar_health_p95_ms": 2.593,
+          "linux_radar_css_p95_ms": 1.4385,
+          "min_available_ram_mib": 7555.24,
+          "max_temperature_c": 46,
+          "max_load1": 0.04248046875,
+          "max_psi_some_avg10_pct": {
+            "cpu": 0,
+            "memory": 0,
+            "io": 0
+          }
+        },
+        {
+          "site": "remote",
+          "result_sha256": "419667852ed442ad3380ad74f799c69aef377c8503e81cc7307e2c7a3be43a46",
+          "input_sha256": "f391c2350a9f19cd8f3130af5e6a0e18523505bbcfd76d15e68acc7908395b3f",
+          "snapshot": "e1663fef86f85a0fcb85a4b361b069a2bf9e595b524f48f5c07a3d0ebca263ee",
+          "request_ids": [
+            "f359339bdb7041cb925ff279e4742218",
+            "519f50f4975346c28e06842a662126f9"
+          ],
+          "client_pids": [
+            16692,
+            23948
+          ],
+          "attempt_id": "371351561d094f37b14dc9d4dd768486",
+          "compiler": {
+            "id": "8a79ac06869543a39c99fa312db7d0af",
+            "pid": 4049913,
+            "cpu_s": 24.568975971,
+            "wall_s": 26.22746611898765,
+            "python": "3.14.4"
+          },
+          "end_to_end_ms": 27958.171799999953,
+          "sender_deliveries": [
+            "executed",
+            "joined"
+          ],
+          "build_route": "phantom_ssh",
+          "admission": {
+            "accepted": true,
+            "limits_verified": true,
+            "requested_cpu_quota_pct": 95,
+            "effective_cpu_quota_pct": 95,
+            "kernel_cpu_quota_pct": 95
+          },
+          "linux_samples": 127,
+          "windows_samples": 126,
+          "windows_errors": {},
+          "windows_radar_health_p95_ms": 216.6689999999944,
+          "linux_radar_health_p95_ms": 1.4561,
+          "linux_radar_css_p95_ms": 1.6427,
+          "min_available_ram_mib": 7447.7,
+          "max_temperature_c": 59,
+          "max_load1": 0.75634765625,
+          "max_psi_some_avg10_pct": {
+            "cpu": 4.56,
+            "memory": 0,
+            "io": 3.65
+          }
+        }
+      ],
+      "remote_wall_change_pct": 68.47
+    },
+    {
+      "started_utc": "2026-11-27T02:31:19.324Z",
+      "raw": "V:\\ChimeraTrials\\cad-peer-5e25fafe4a8f-cpu95-20261127T023118\\report.json",
+      "raw_sha256": "7058d7da5437cbda6454a8f9b37656794647b548e4aee3475d5c694d99c6ee3b",
+      "state": "peer_preflight",
+      "peer_check": {
+        "passed": true,
+        "issues": [],
+        "breaches": []
+      },
+      "arms": [
+        {
+          "site": "local",
+          "result_sha256": "419667852ed442ad3380ad74f799c69aef377c8503e81cc7307e2c7a3be43a46",
+          "input_sha256": "f391c2350a9f19cd8f3130af5e6a0e18523505bbcfd76d15e68acc7908395b3f",
+          "snapshot": "e1663fef86f85a0fcb85a4b361b069a2bf9e595b524f48f5c07a3d0ebca263ee",
+          "request_ids": [
+            "9596db72d63a4991859962ec491e6cd6",
+            "a291b9b4807b4fd482869fb4d9d4133d"
+          ],
+          "client_pids": [
+            29020,
+            27604
+          ],
+          "attempt_id": "f0305de6f82f4006b2709819628aae79",
+          "compiler": {
+            "id": "311dbf29ac624e3b82e63ff09685bb42",
+            "pid": 29608,
+            "cpu_s": 14.265625,
+            "wall_s": 14.407030200000008,
+            "python": "3.11.7"
+          },
+          "end_to_end_ms": 15449.435700000031,
+          "sender_deliveries": [
+            "executed",
+            "joined"
+          ],
+          "build_route": "local",
+          "admission": null,
+          "linux_samples": 70,
+          "windows_samples": 69,
+          "windows_errors": {},
+          "windows_radar_health_p95_ms": 221.32199999998556,
+          "linux_radar_health_p95_ms": 2.5991,
+          "linux_radar_css_p95_ms": 1.4394,
+          "min_available_ram_mib": 7301.67,
+          "max_temperature_c": 46,
+          "max_load1": 0.9853515625,
+          "max_psi_some_avg10_pct": {
+            "cpu": 0.39,
+            "memory": 0,
+            "io": 1.1
+          }
+        },
+        {
+          "site": "remote",
+          "result_sha256": "419667852ed442ad3380ad74f799c69aef377c8503e81cc7307e2c7a3be43a46",
+          "input_sha256": "f391c2350a9f19cd8f3130af5e6a0e18523505bbcfd76d15e68acc7908395b3f",
+          "snapshot": "e1663fef86f85a0fcb85a4b361b069a2bf9e595b524f48f5c07a3d0ebca263ee",
+          "request_ids": [
+            "5577f24b362945c1a110c35eea5ac8d1",
+            "2aebefebc4f948548ff0d02b2b51491f"
+          ],
+          "client_pids": [
+            15820,
+            24028
+          ],
+          "attempt_id": "7ab459767cf84257a4c22884e2b329ce",
+          "compiler": {
+            "id": "a73cb0a9a3764d99a8142087e565bd9a",
+            "pid": 4052574,
+            "cpu_s": 25.526810479999998,
+            "wall_s": 27.318041353020817,
+            "python": "3.14.4"
+          },
+          "end_to_end_ms": 29005.11089999997,
+          "sender_deliveries": [
+            "joined",
+            "executed"
+          ],
+          "build_route": "phantom_ssh",
+          "admission": {
+            "accepted": true,
+            "limits_verified": true,
+            "requested_cpu_quota_pct": 95,
+            "effective_cpu_quota_pct": 95,
+            "kernel_cpu_quota_pct": 95
+          },
+          "linux_samples": 132,
+          "windows_samples": 128,
+          "windows_errors": {},
+          "windows_radar_health_p95_ms": 230.33330000005662,
+          "linux_radar_health_p95_ms": 1.9452,
+          "linux_radar_css_p95_ms": 2.0559,
+          "min_available_ram_mib": 7313.8,
+          "max_temperature_c": 61,
+          "max_load1": 0.806640625,
+          "max_psi_some_avg10_pct": {
+            "cpu": 6.02,
+            "memory": 0.18,
+            "io": 1.09
+          }
+        }
+      ],
+      "remote_wall_change_pct": 87.74
+    }
+  ]
+}

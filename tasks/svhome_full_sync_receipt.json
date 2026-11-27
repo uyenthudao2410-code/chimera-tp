@@ -1,0 +1,21 @@
+{
+  "synced_files_count": 270,
+  "tar_kb": 1256.3,
+  "chimera_win_repo_vs_sv_repo_mismatches": 0,
+  "chimera_win_repo_vs_win_rel_mismatches": 0,
+  "chimera_win_repo_vs_sv_rel_mismatches": 0,
+  "pkg_py_files_checked": 115,
+  "sv_rel_dir": "/home/svhome/.local/share/chimera/releases/5e25fafe4a8f",
+  "win_rel_dir": "C:\\Users\\Admin\\AppData\\Local\\chimera\\releases\\5e25fafe4a8f",
+  "sv_chimera_pid": 4038034,
+  "sv_chimera_rss_mb": 65.57,
+  "native_so_present": true,
+  "sv_smoke_test_ok": false,
+  "sv_smoke_test_tail": [
+    "Ran 4 tests in 11.082s",
+    "",
+    "FAILED (errors=1)"
+  ],
+  "soak_check_rc": 2,
+  "soak_check_out": "{\n  \"release\": \"5e25fafe4a8f2de1d2b492c6fbfc992166e79cad\",\n  \"state\": \"stale\",\n  \"samples\": 11,\n  \"source_checks\": 1,\n  \"missed\": 0,\n  \"observed_seconds\": 1198.578,\n  \"peak_mib\": {\n    \"win-desktop\": 63.61,\n    \"svhome\": 71.25\n  },\n  \"last_observation_utc\": \"2026-11-27T02:20:40.846325+00:00\",\n  \"required_seconds\": 86400,\n  \"reason\": \"no_recent_successful_sample\"\n}"
+}

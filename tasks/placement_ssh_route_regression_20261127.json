@@ -1,0 +1,298 @@
+{
+  "schema": "chimera.verified-placement-trial/1",
+  "verified_utc": "2026-11-26T20:07:53.201612+00:00",
+  "scope": "Opt-in measurement of deadline for a fresh reproducible ZIP, not interactive CAD.",
+  "module_sha256": {
+    "build_snapshot.py": "25802a40127019d24cd4658a0bf4b56f9c7328daa7a88ee5f76c5db2856078d9",
+    "build_registry.py": "272482b8ea92f53f1eaf0c206de416aba4490c4026dec56f936ac4f84ebb2088",
+    "peer_guard.py": "73a007c9ae7a403cff78a662a795ca2917b67d0aec1cd191284e5ad3c000e800",
+    "result_reuse.py": "37d8136856487666a1fad1fa9cbfc082d62345709849c0433d627bb4e8b8fd5f"
+  },
+  "artifact_bytes": 40488,
+  "artifact_sha256": "82989eb7ea7a29a79fcaf7c7ed69076a634f4cb951165683ecae38f67bf02c8a",
+  "oracle": "ZIP entries equal original bytes",
+  "snapshot": "6c50099ed0aeed40581b4273c156d389190a59f30fad40ae093497f0d88e6fef",
+  "runtime_sha256": "7ac976e9eda317932f2817a109100b8d16856868f2141053b58e0274a93445af",
+  "trials": [
+    {
+      "pair": 1,
+      "site": "local",
+      "wall_ms": 296.99999999138527,
+      "state": "completed",
+      "delivery": "executed",
+      "attempt_id": "a96be7f207b84a8fbc39fb86501d3cf0",
+      "artifacts": {
+        "sources.zip": [
+          "82989eb7ea7a29a79fcaf7c7ed69076a634f4cb951165683ecae38f67bf02c8a",
+          40488
+        ]
+      },
+      "client_timing_ms": {
+        "setup": 0.0,
+        "snapshot": 78.0,
+        "dispatch_or_join": 219.0
+      }
+    },
+    {
+      "pair": 1,
+      "site": "svhome",
+      "wall_ms": 765.0000000139698,
+      "state": "completed",
+      "delivery": "executed",
+      "attempt_id": "eebf00596a334f8ea6da1ad3d828f0d8",
+      "ssh_route": "phantom_ssh",
+      "artifacts": {
+        "sources.zip": [
+          "82989eb7ea7a29a79fcaf7c7ed69076a634f4cb951165683ecae38f67bf02c8a",
+          40488
+        ]
+      },
+      "client_timing_ms": {
+        "setup": 0.0,
+        "snapshot": 62.0,
+        "dispatch_or_join": 703.0
+      },
+      "attempt_timing_ms": {
+        "admission_ms": 16.103,
+        "workspace_ms": 2.275,
+        "command_ms": 65.15,
+        "outputs_ms": 0.543,
+        "cleanup_ms": 0.321,
+        "total_ms": 84.392
+      },
+      "ssh_exchange_ms": 609.0,
+      "ssh_request_bytes": 36170,
+      "reaped_child_cpu_ms": 56.939,
+      "process_wall_ms": 64.781
+    },
+    {
+      "pair": 2,
+      "site": "svhome",
+      "wall_ms": 796.9999999913853,
+      "state": "completed",
+      "delivery": "executed",
+      "attempt_id": "dd11b5170bc94a71b2cc2bf12d2e29e5",
+      "ssh_route": "phantom_ssh",
+      "artifacts": {
+        "sources.zip": [
+          "82989eb7ea7a29a79fcaf7c7ed69076a634f4cb951165683ecae38f67bf02c8a",
+          40488
+        ]
+      },
+      "client_timing_ms": {
+        "setup": 0.0,
+        "snapshot": 110.0,
+        "dispatch_or_join": 687.0
+      },
+      "attempt_timing_ms": {
+        "admission_ms": 15.135,
+        "workspace_ms": 2.414,
+        "command_ms": 65.126,
+        "outputs_ms": 0.514,
+        "cleanup_ms": 0.361,
+        "total_ms": 83.55
+      },
+      "ssh_exchange_ms": 593.0,
+      "ssh_request_bytes": 36205,
+      "reaped_child_cpu_ms": 57.129,
+      "process_wall_ms": 64.815
+    },
+    {
+      "pair": 2,
+      "site": "local",
+      "wall_ms": 250.0,
+      "state": "completed",
+      "delivery": "executed",
+      "attempt_id": "4834ab731b0a4ed49af6127b500a089c",
+      "artifacts": {
+        "sources.zip": [
+          "82989eb7ea7a29a79fcaf7c7ed69076a634f4cb951165683ecae38f67bf02c8a",
+          40488
+        ]
+      },
+      "client_timing_ms": {
+        "setup": 16.0,
+        "snapshot": 47.0,
+        "dispatch_or_join": 187.0
+      }
+    },
+    {
+      "pair": 3,
+      "site": "local",
+      "wall_ms": 250.0,
+      "state": "completed",
+      "delivery": "executed",
+      "attempt_id": "65b47c76b2174eba9ac522587fbe7bc4",
+      "artifacts": {
+        "sources.zip": [
+          "82989eb7ea7a29a79fcaf7c7ed69076a634f4cb951165683ecae38f67bf02c8a",
+          40488
+        ]
+      },
+      "client_timing_ms": {
+        "setup": 0.0,
+        "snapshot": 78.0,
+        "dispatch_or_join": 172.0
+      }
+    },
+    {
+      "pair": 3,
+      "site": "svhome",
+      "wall_ms": 766.0000000032596,
+      "state": "completed",
+      "delivery": "executed",
+      "attempt_id": "41b477959ba1458e80d5c63a6d586a42",
+      "ssh_route": "phantom_ssh",
+      "artifacts": {
+        "sources.zip": [
+          "82989eb7ea7a29a79fcaf7c7ed69076a634f4cb951165683ecae38f67bf02c8a",
+          40488
+        ]
+      },
+      "client_timing_ms": {
+        "setup": 0.0,
+        "snapshot": 62.0,
+        "dispatch_or_join": 704.0
+      },
+      "attempt_timing_ms": {
+        "admission_ms": 15.11,
+        "workspace_ms": 2.3,
+        "command_ms": 65.338,
+        "outputs_ms": 0.732,
+        "cleanup_ms": 0.507,
+        "total_ms": 83.986
+      },
+      "ssh_exchange_ms": 610.0,
+      "ssh_request_bytes": 36205,
+      "reaped_child_cpu_ms": 57.15,
+      "process_wall_ms": 64.96
+    },
+    {
+      "pair": 4,
+      "site": "svhome",
+      "wall_ms": 859.9999999860302,
+      "state": "completed",
+      "delivery": "executed",
+      "attempt_id": "253262cde3ce463d92946f3714741601",
+      "ssh_route": "phantom_ssh",
+      "artifacts": {
+        "sources.zip": [
+          "82989eb7ea7a29a79fcaf7c7ed69076a634f4cb951165683ecae38f67bf02c8a",
+          40488
+        ]
+      },
+      "client_timing_ms": {
+        "setup": 0.0,
+        "snapshot": 63.0,
+        "dispatch_or_join": 797.0
+      },
+      "attempt_timing_ms": {
+        "admission_ms": 15.237,
+        "workspace_ms": 2.462,
+        "command_ms": 65.099,
+        "outputs_ms": 0.549,
+        "cleanup_ms": 0.321,
+        "total_ms": 83.667
+      },
+      "ssh_exchange_ms": 750.0,
+      "ssh_request_bytes": 36205,
+      "reaped_child_cpu_ms": 56.398,
+      "process_wall_ms": 64.717
+    },
+    {
+      "pair": 4,
+      "site": "local",
+      "wall_ms": 312.0000000053551,
+      "state": "completed",
+      "delivery": "executed",
+      "attempt_id": "56b4abb6578f443281415b62113291bc",
+      "artifacts": {
+        "sources.zip": [
+          "82989eb7ea7a29a79fcaf7c7ed69076a634f4cb951165683ecae38f67bf02c8a",
+          40488
+        ]
+      },
+      "client_timing_ms": {
+        "setup": 0.0,
+        "snapshot": 62.0,
+        "dispatch_or_join": 250.0
+      }
+    },
+    {
+      "pair": 5,
+      "site": "local",
+      "wall_ms": 250.0,
+      "state": "completed",
+      "delivery": "executed",
+      "attempt_id": "1a02e3ddff174897b9082749948530a8",
+      "artifacts": {
+        "sources.zip": [
+          "82989eb7ea7a29a79fcaf7c7ed69076a634f4cb951165683ecae38f67bf02c8a",
+          40488
+        ]
+      },
+      "client_timing_ms": {
+        "setup": 0.0,
+        "snapshot": 63.0,
+        "dispatch_or_join": 187.0
+      }
+    },
+    {
+      "pair": 5,
+      "site": "svhome",
+      "wall_ms": 750.0,
+      "state": "completed",
+      "delivery": "executed",
+      "attempt_id": "cc8faf1605614141b1f7483c55bde562",
+      "ssh_route": "phantom_ssh",
+      "artifacts": {
+        "sources.zip": [
+          "82989eb7ea7a29a79fcaf7c7ed69076a634f4cb951165683ecae38f67bf02c8a",
+          40488
+        ]
+      },
+      "client_timing_ms": {
+        "setup": 16.0,
+        "snapshot": 62.0,
+        "dispatch_or_join": 672.0
+      },
+      "attempt_timing_ms": {
+        "admission_ms": 15.43,
+        "workspace_ms": 2.226,
+        "command_ms": 65.077,
+        "outputs_ms": 0.56,
+        "cleanup_ms": 0.307,
+        "total_ms": 83.6
+      },
+      "ssh_exchange_ms": 609.0,
+      "ssh_request_bytes": 36205,
+      "reaped_child_cpu_ms": 59.265,
+      "process_wall_ms": 64.779
+    }
+  ],
+  "comparison": {
+    "ssh_route": "phantom_ssh",
+    "selected": "local",
+    "median_paired_peer_to_local": 3.0,
+    "median_ms": {
+      "local": 250.0,
+      "svhome": 766.0000000032596
+    },
+    "peer_faster_pairs": 0,
+    "pairs": 5,
+    "paired_ratio_range": [
+      2.575757575879324,
+      3.187999999965541
+    ]
+  },
+  "selected_cli_receipt": {
+    "target": "local",
+    "delivery": "executed",
+    "attempt_id": "f015cc7e95f54fbc901d754a216ffc9a",
+    "wall_ms": 375.0
+  },
+  "repeat_delivery": "cached",
+  "edited_input": "placement_inputs_changed",
+  "different_dependencies": "placement_profile_or_environment_changed",
+  "fixture_removed": true
+}

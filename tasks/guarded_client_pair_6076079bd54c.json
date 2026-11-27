@@ -1,0 +1,277 @@
+{
+  "finished_utc": "2026-11-27T00:45:48.359041+00:00",
+  "input_rejections": [
+    {
+      "case": "same_size_content_tamper",
+      "error": "snapshot_digest_mismatch"
+    },
+    {
+      "case": "oversize_workspace",
+      "error": "snapshot_byte_limit"
+    }
+  ],
+  "node": "svhome",
+  "ok": true,
+  "receipts": [
+    {
+      "artifact_bytes": 151,
+      "artifact_sha256": "af45fd287ac63e7b28c81bf6f274406dfb63ab813170404862996f31fdffbc5f",
+      "attempt_id": "25881d6f36904f4b8a0bbd736b61c4a9",
+      "client_ms": 3172.0,
+      "client_timing_ms": {
+        "dispatch_or_join": 2297.0,
+        "setup": 0.0,
+        "snapshot": 438.0
+      },
+      "delivery": "executed",
+      "entry": "swarm",
+      "exit_code": 0,
+      "input_file_sha256": "0bc466c1ba211f5fcd29f0e25ccb7c66648aa6cdae0b2c154d89ff30f76b3d85",
+      "instance": "9b4819f21109470ebd1003f3d2691696",
+      "key": "8058c036a054a1b35fd33a0f64e3136bcb3eb8097ecaf6cf2e78685b593d8e1e",
+      "max_protected_service_p95_ms": 4.011486191302538,
+      "ok": true,
+      "origin_attempt_child_cpu_ms": 63.543,
+      "origin_attempt_timing_ms": {
+        "admission_ms": 16.715,
+        "cleanup_ms": 0.244,
+        "command_ms": 1565.219,
+        "outputs_ms": 0.26,
+        "total_ms": 1584.11,
+        "workspace_ms": 1.673
+      },
+      "origin_ssh_exchange_ms": 2203.0,
+      "request_id": "ef1eab7f03b14cbcabe48a206f15bf00",
+      "runtime_health_samples": 3,
+      "snapshot": "0ac549c49f91b7f50f6f2ab155bf253762ea24adf701c8f4539610735a6dd17d",
+      "source_delivery": "executed",
+      "ssh_request_bytes": 21478,
+      "state": "completed",
+      "target": "svhome"
+    },
+    {
+      "artifact_bytes": 151,
+      "artifact_sha256": "af45fd287ac63e7b28c81bf6f274406dfb63ab813170404862996f31fdffbc5f",
+      "attempt_id": "25881d6f36904f4b8a0bbd736b61c4a9",
+      "client_ms": 3203.0,
+      "client_timing_ms": {
+        "dispatch_or_join": 2187.0,
+        "setup": 0.0,
+        "snapshot": 359.0
+      },
+      "delivery": "executed",
+      "entry": "mcp",
+      "exit_code": 0,
+      "input_file_sha256": "0bc466c1ba211f5fcd29f0e25ccb7c66648aa6cdae0b2c154d89ff30f76b3d85",
+      "instance": "9b4819f21109470ebd1003f3d2691696",
+      "key": "8058c036a054a1b35fd33a0f64e3136bcb3eb8097ecaf6cf2e78685b593d8e1e",
+      "max_protected_service_p95_ms": 4.011486191302538,
+      "ok": true,
+      "origin_attempt_child_cpu_ms": 63.543,
+      "origin_attempt_timing_ms": {
+        "admission_ms": 16.715,
+        "cleanup_ms": 0.244,
+        "command_ms": 1565.219,
+        "outputs_ms": 0.26,
+        "total_ms": 1584.11,
+        "workspace_ms": 1.673
+      },
+      "origin_ssh_exchange_ms": 2203.0,
+      "request_id": "10ac5ff2769449c4808b6d96abfc76dc",
+      "runtime_health_samples": 3,
+      "snapshot": "0ac549c49f91b7f50f6f2ab155bf253762ea24adf701c8f4539610735a6dd17d",
+      "source_delivery": "joined",
+      "ssh_request_bytes": 21478,
+      "state": "completed",
+      "target": "svhome"
+    },
+    {
+      "artifact_bytes": 151,
+      "artifact_sha256": "af45fd287ac63e7b28c81bf6f274406dfb63ab813170404862996f31fdffbc5f",
+      "attempt_id": "25881d6f36904f4b8a0bbd736b61c4a9",
+      "client_ms": 1454.0,
+      "client_timing_ms": {
+        "dispatch_or_join": 718.0,
+        "setup": 0.0,
+        "snapshot": 391.0
+      },
+      "delivery": "cached",
+      "entry": "swarm",
+      "exit_code": 0,
+      "input_file_sha256": "0bc466c1ba211f5fcd29f0e25ccb7c66648aa6cdae0b2c154d89ff30f76b3d85",
+      "instance": "9b4819f21109470ebd1003f3d2691696",
+      "key": "8058c036a054a1b35fd33a0f64e3136bcb3eb8097ecaf6cf2e78685b593d8e1e",
+      "max_protected_service_p95_ms": 4.011486191302538,
+      "ok": true,
+      "origin_attempt_child_cpu_ms": 63.543,
+      "origin_attempt_timing_ms": {
+        "admission_ms": 16.715,
+        "cleanup_ms": 0.244,
+        "command_ms": 1565.219,
+        "outputs_ms": 0.26,
+        "total_ms": 1584.11,
+        "workspace_ms": 1.673
+      },
+      "origin_ssh_exchange_ms": 625.0,
+      "request_id": "4bf3be9994b04e648548496d8d0b05c2",
+      "runtime_health_samples": 3,
+      "snapshot": "0ac549c49f91b7f50f6f2ab155bf253762ea24adf701c8f4539610735a6dd17d",
+      "source_delivery": "executed",
+      "ssh_request_bytes": 21478,
+      "state": "completed",
+      "target": "svhome"
+    },
+    {
+      "artifact_bytes": 165,
+      "artifact_sha256": "9b957399ae263cf585e6d5aba3968b0b2d338dff94097d4c6173c510eeb0313d",
+      "attempt_id": "92663231afde44a4adb94623b4bbc88a",
+      "client_ms": 3172.0,
+      "client_timing_ms": {
+        "dispatch_or_join": 2313.0,
+        "setup": 15.0,
+        "snapshot": 328.0
+      },
+      "delivery": "executed",
+      "entry": "mcp",
+      "exit_code": 0,
+      "input_file_sha256": "1d83f98e5ce03b95b4097c54363a7f20949b4da4f952cd7310991bd6e013d0c3",
+      "instance": "85471970389f4eb19fa71acc5444ebd7",
+      "key": "323980d75f3e4b612d60ab89ad04671166bfe1178da4c53e9124f79ffdb64a8e",
+      "max_protected_service_p95_ms": 3.626353107392788,
+      "ok": true,
+      "origin_attempt_child_cpu_ms": 61.015,
+      "origin_attempt_timing_ms": {
+        "admission_ms": 15.281,
+        "cleanup_ms": 0.267,
+        "command_ms": 1563.332,
+        "outputs_ms": 0.258,
+        "total_ms": 1580.663,
+        "workspace_ms": 1.525
+      },
+      "origin_ssh_exchange_ms": 2187.0,
+      "request_id": "ac600652bbb5447ca9ecd6546992cba8",
+      "runtime_health_samples": 3,
+      "snapshot": "defa4d0124d043ea588b129b89fa407b6501d881cdf5a06c607225350e775d1b",
+      "source_delivery": "executed",
+      "ssh_request_bytes": 21494,
+      "state": "completed",
+      "target": "svhome"
+    },
+    {
+      "artifact_bytes": 165,
+      "artifact_sha256": "9b957399ae263cf585e6d5aba3968b0b2d338dff94097d4c6173c510eeb0313d",
+      "attempt_id": "27338ce2273b468da306fe141691feaf",
+      "client_ms": 3203.0,
+      "client_timing_ms": {
+        "dispatch_or_join": 2344.0,
+        "setup": 16.0,
+        "snapshot": 453.0
+      },
+      "delivery": "executed",
+      "entry": "swarm",
+      "exit_code": 0,
+      "input_file_sha256": "1d83f98e5ce03b95b4097c54363a7f20949b4da4f952cd7310991bd6e013d0c3",
+      "instance": "e66c7cc45ac441aa9e266a9774289f6e",
+      "key": "b31a250446568af6c470c6ba6b4e20104ba54fcea9e80b6cd867db74d79b6a9b",
+      "max_protected_service_p95_ms": 4.157921764999628,
+      "ok": true,
+      "origin_attempt_child_cpu_ms": 56.83,
+      "origin_attempt_timing_ms": {
+        "admission_ms": 14.911,
+        "cleanup_ms": 0.355,
+        "command_ms": 1560.872,
+        "outputs_ms": 0.33,
+        "total_ms": 1578.087,
+        "workspace_ms": 1.619
+      },
+      "origin_ssh_exchange_ms": 2203.0,
+      "request_id": "0d29ca5625e945c7893f8232c2bbbded",
+      "runtime_health_samples": 3,
+      "snapshot": "defa4d0124d043ea588b129b89fa407b6501d881cdf5a06c607225350e775d1b",
+      "source_delivery": "executed",
+      "ssh_request_bytes": 21501,
+      "state": "completed",
+      "target": "svhome"
+    },
+    {
+      "attempt_id": "b19829c0f00842459949a84a20716100",
+      "client_ms": 1859.0,
+      "delivery": "executed",
+      "entry": "swarm",
+      "error": "",
+      "exit_code": 23,
+      "instance": "cbf75d421e7649e8ae754759a84ea6b3",
+      "key": "8f5412daa30fff2937196a4763e00cb3b4b66eb0334ce17fcff3a18d9a105f7c",
+      "max_protected_service_p95_ms": null,
+      "ok": false,
+      "request_id": "581ff045d22a4da8bfc4a0019c83753c",
+      "runtime_health_samples": 0,
+      "snapshot": "defa4d0124d043ea588b129b89fa407b6501d881cdf5a06c607225350e775d1b",
+      "source_delivery": "executed",
+      "state": "failed",
+      "target": "svhome"
+    },
+    {
+      "artifact_bytes": 165,
+      "artifact_sha256": "9b957399ae263cf585e6d5aba3968b0b2d338dff94097d4c6173c510eeb0313d",
+      "attempt_id": "ecec3cdc0a2341c7a23c4dad3c9bf4d0",
+      "client_ms": 3594.0,
+      "client_timing_ms": {
+        "dispatch_or_join": 2266.0,
+        "setup": 0.0,
+        "snapshot": 640.0
+      },
+      "delivery": "executed",
+      "entry": "mcp",
+      "exit_code": 0,
+      "input_file_sha256": "1d83f98e5ce03b95b4097c54363a7f20949b4da4f952cd7310991bd6e013d0c3",
+      "instance": "921f4666761d46b4aafad210f6d12c1e",
+      "key": "8f5412daa30fff2937196a4763e00cb3b4b66eb0334ce17fcff3a18d9a105f7c",
+      "max_protected_service_p95_ms": 4.172295331954956,
+      "ok": true,
+      "origin_attempt_child_cpu_ms": 57.468,
+      "origin_attempt_timing_ms": {
+        "admission_ms": 15.58,
+        "cleanup_ms": 0.255,
+        "command_ms": 1561.024,
+        "outputs_ms": 0.232,
+        "total_ms": 1578.646,
+        "workspace_ms": 1.556
+      },
+      "origin_ssh_exchange_ms": 2125.0,
+      "request_id": "df8694ce572046b4b8a5ef317f62ad7a",
+      "runtime_health_samples": 3,
+      "snapshot": "defa4d0124d043ea588b129b89fa407b6501d881cdf5a06c607225350e775d1b",
+      "source_delivery": "executed",
+      "ssh_request_bytes": 21507,
+      "state": "completed",
+      "target": "svhome"
+    },
+    {
+      "client_ms": 2047.0,
+      "entry": "swarm",
+      "error": "io_cap_unavailable",
+      "ok": false,
+      "outbox_round_trip_verified": true,
+      "request_id": "75e7621fb8ae47eb9e32b1fe78fa1711",
+      "source_delivery": "executed",
+      "state": "deferred"
+    }
+  ],
+  "receiver_fixture_cleaned": true,
+  "receiver_invocations": 5,
+  "receiver_user_controllers": [
+    "cpu",
+    "memory",
+    "pids"
+  ],
+  "schema": "chimera.guarded_build.acceptance.v1",
+  "started_utc": "2026-11-27T00:45:22.352588+00:00",
+  "worker_sources_sha256": {
+    "build_registry": "272482b8ea92f53f1eaf0c206de416aba4490c4026dec56f936ac4f84ebb2088",
+    "build_snapshot": "6d71222df4965dbe5b17c47ed7092e0b3d373138e8ce3ee3f899a94f9d99f3ae",
+    "build_worker": "50fb421532a567eaced3eb83d2d2ce72b4810deaf37032e5129aacf80c7129d3",
+    "guarded_build": "73ca337c6ca3d256d773013aed095fba082382e9760e4c4a4c0e754fa426d2f9",
+    "peer_guard": "73a007c9ae7a403cff78a662a795ca2917b67d0aec1cd191284e5ad3c000e800"
+  }
+}

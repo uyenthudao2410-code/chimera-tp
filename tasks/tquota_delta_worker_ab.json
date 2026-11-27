@@ -1,0 +1,61 @@
+{
+  "payload_bytes": 654277,
+  "all_sha256_bit_identical": true,
+  "snapshot_12turns": {
+    "before_avg_ms": 1.74,
+    "after_avg_ms": 0.67,
+    "speedup_x": 2.6
+  },
+  "gen_key_12turns": {
+    "before_avg_ms": 1.47,
+    "after_avg_ms": 0.3,
+    "speedup_x": 4.9
+  },
+  "combined_prep_avg_ms": {
+    "before": 3.21,
+    "after": 0.97,
+    "speedup_x": 3.31
+  },
+  "gzip_6x_burst": {
+    "before_sync": {
+      "wall_ms": 67.06,
+      "max_event_loop_lag_ms": 10.79,
+      "p95_event_loop_lag_ms": 10.79
+    },
+    "after_worker_pool": {
+      "wall_ms": 8.64,
+      "max_event_loop_lag_ms": 0.88,
+      "p95_event_loop_lag_ms": 0.88
+    }
+  },
+  "delta_stats": {
+    "deltaHits": 12,
+    "deltaMisses": 1,
+    "deltaItemsSkipped": 2532,
+    "toolsDeltaHits": 12,
+    "outboundToolsReuseHits": 0,
+    "workerColdSnapshots": 0,
+    "cachedSessions": 1,
+    "cachedRawBytes": 661370
+  },
+  "gen_key_delta_stats": {
+    "incrementalHits": 12,
+    "incrementalMisses": 1,
+    "itemsSkipped": 2532,
+    "canonicalToolsHits": 12,
+    "cachedPrefixStates": 1,
+    "cachedCanonicalTools": 1
+  },
+  "pool_stats": {
+    "inlineCount": 0,
+    "offloadedCount": 8,
+    "workerFallbacks": 0,
+    "gzipOffloadedCount": 8,
+    "gzipAsyncLibuvCount": 0,
+    "coldPrefixOffloadedCount": 0,
+    "activeWorkers": 2,
+    "pendingJobs": 0,
+    "offloadThresholdBytes": 65536,
+    "closed": false
+  }
+}

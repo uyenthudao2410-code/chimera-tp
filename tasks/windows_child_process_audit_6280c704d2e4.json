@@ -1,0 +1,491 @@
+{
+  "schema": "chimera.windows-subprocess-audit/1",
+  "release": "6280c704d2e4923a3089f9fdce7aceeac7700ff4",
+  "measured_utc": "2026-11-26T19:52:13.221289+00:00",
+  "scope": "Static Python AST of direct subprocess API calls in the committed package. Includes aliases. Excludes processes inside external applications, child scripts in strings and native code. No claim of observing every GUI path.",
+  "verified_against": "tasks/workstation_rollout_6280c704d2e4.json",
+  "previous_audit": "tasks/windows_child_process_audit_b75a1438f924.json",
+  "method": "Parse every attested Python file and check direct call AST, import alias, symbol and previous classification. Review changed calls separately.",
+  "files_scanned": 115,
+  "counts": {
+    "windows_no_console": 46,
+    "foreground": 5,
+    "posix_only": 7,
+    "user_requested_terminal": 1
+  },
+  "total": 59,
+  "sites": [
+    {
+      "file": "chimera_tp/apex_synergy.py",
+      "line": 531,
+      "symbol": "ApexSynergyEngine.build_surgical_brief",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0)"
+    },
+    {
+      "file": "chimera_tp/apex_synergy.py",
+      "line": 892,
+      "symbol": "ApexSynergyEngine.backup_apex_vault",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0)"
+    },
+    {
+      "file": "chimera_tp/cli.py",
+      "line": 1840,
+      "symbol": "main",
+      "operation": "call",
+      "category": "foreground",
+      "reason": "Foreground user command passed to chimera-tp run; stdin/stdout/stderr inherited."
+    },
+    {
+      "file": "chimera_tp/drop_portal.py",
+      "line": 219,
+      "symbol": "pack_ai_context",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0)"
+    },
+    {
+      "file": "chimera_tp/ghost_fs.py",
+      "line": 149,
+      "symbol": "GhostFsEngine.git_status",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0) if os.name == 'nt' else 0"
+    },
+    {
+      "file": "chimera_tp/ghost_fs.py",
+      "line": 156,
+      "symbol": "GhostFsEngine.git_status",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0) if os.name == 'nt' else 0"
+    },
+    {
+      "file": "chimera_tp/ghost_pty.py",
+      "line": 88,
+      "symbol": "GhostPtyManager.create_session",
+      "operation": "Popen",
+      "category": "posix_only",
+      "reason": "POSIX pty.openpty branch. The Windows pipe branch supplies CREATE_NO_WINDOW."
+    },
+    {
+      "file": "chimera_tp/ghost_pty.py",
+      "line": 110,
+      "symbol": "GhostPtyManager.create_session",
+      "operation": "Popen",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0)"
+    },
+    {
+      "file": "chimera_tp/medic.py",
+      "line": 223,
+      "symbol": "MedicEngine.run_playbook",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0)"
+    },
+    {
+      "file": "chimera_tp/platform/agent_probe.py",
+      "line": 698,
+      "symbol": "OmniProbeBatchEngine._op_git_status",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0) if os.name == 'nt' else 0"
+    },
+    {
+      "file": "chimera_tp/platform/agent_probe.py",
+      "line": 1296,
+      "symbol": "AtomicCommitVerifyEngine._detect_changed_files",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0) if os.name == 'nt' else 0"
+    },
+    {
+      "file": "chimera_tp/platform/agent_probe.py",
+      "line": 1471,
+      "symbol": "AtomicCommitVerifyEngine.verify",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0) if os.name == 'nt' else 0"
+    },
+    {
+      "file": "chimera_tp/platform/agent_probe.py",
+      "line": 1484,
+      "symbol": "AtomicCommitVerifyEngine.verify",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0) if os.name == 'nt' else 0"
+    },
+    {
+      "file": "chimera_tp/platform/agent_symbiont.py",
+      "line": 863,
+      "symbol": "SurgeonAtomicPatchEngine._validate_in_ram",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0) if os.name == 'nt' else 0"
+    },
+    {
+      "file": "chimera_tp/platform/agent_symbiont.py",
+      "line": 1148,
+      "symbol": "TelepathyCapsuleEngine._git_compact",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0) if os.name == 'nt' else 0"
+    },
+    {
+      "file": "chimera_tp/platform/agent_symbiont.py",
+      "line": 1165,
+      "symbol": "TelepathyCapsuleEngine._git_compact",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0) if os.name == 'nt' else 0"
+    },
+    {
+      "file": "chimera_tp/platform/agent_workspace.py",
+      "line": 16,
+      "symbol": "_git",
+      "operation": "check_output",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0)"
+    },
+    {
+      "file": "chimera_tp/platform/agent_workspace.py",
+      "line": 78,
+      "symbol": "run_leased",
+      "operation": "run",
+      "category": "foreground",
+      "reason": "Caller-selected foreground command in the current worktree or a leased worktree."
+    },
+    {
+      "file": "chimera_tp/platform/agent_workspace.py",
+      "line": 92,
+      "symbol": "run_leased",
+      "operation": "run",
+      "category": "foreground",
+      "reason": "Caller-selected foreground command in the current worktree or a leased worktree."
+    },
+    {
+      "file": "chimera_tp/platform/agent_workspace.py",
+      "line": 127,
+      "symbol": "open_workspace",
+      "operation": "Popen",
+      "category": "user_requested_terminal",
+      "reason": "Opens a terminal listed in the restored workspace manifest."
+    },
+    {
+      "file": "chimera_tp/platform/browser_grid.py",
+      "line": 116,
+      "symbol": "SharedBrowserGrid._ensure_browser_locked",
+      "operation": "Popen",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0) if os.name == 'nt' else 0"
+    },
+    {
+      "file": "chimera_tp/platform/build_snapshot.py",
+      "line": 44,
+      "symbol": "_git",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0)"
+    },
+    {
+      "file": "chimera_tp/platform/build_worker.py",
+      "line": 55,
+      "symbol": "_run",
+      "operation": "Popen",
+      "category": "posix_only",
+      "reason": "Linux receiver under the systemd guest unit. Windows local builds use windows_build_job."
+    },
+    {
+      "file": "chimera_tp/platform/build_worker.py",
+      "line": 168,
+      "symbol": "coordinate.launch",
+      "operation": "run",
+      "category": "posix_only",
+      "reason": "Runs the systemd-limited Linux receiver, including admission checks."
+    },
+    {
+      "file": "chimera_tp/platform/clipboard_parcel.py",
+      "line": 91,
+      "symbol": "_ssh",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0)"
+    },
+    {
+      "file": "chimera_tp/platform/clipboard_parcel.py",
+      "line": 118,
+      "symbol": "read_clipboard_text",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "subprocess.CREATE_NO_WINDOW"
+    },
+    {
+      "file": "chimera_tp/platform/colab_cli_bridge.py",
+      "line": 463,
+      "symbol": "ColabCliBridge._run_colab",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0) if os.name == 'nt' else 0"
+    },
+    {
+      "file": "chimera_tp/platform/colab_on_peer.py",
+      "line": 41,
+      "symbol": "headless",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0)"
+    },
+    {
+      "file": "chimera_tp/platform/colab_on_peer.py",
+      "line": 44,
+      "symbol": "headless",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0)"
+    },
+    {
+      "file": "chimera_tp/platform/discovery.py",
+      "line": 513,
+      "symbol": "PassivePortScanner._probe_os",
+      "operation": "check_output",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0)"
+    },
+    {
+      "file": "chimera_tp/platform/discovery.py",
+      "line": 531,
+      "symbol": "PassivePortScanner._probe_os",
+      "operation": "check_output",
+      "category": "posix_only",
+      "reason": "POSIX branch. The Windows netstat branch already supplies CREATE_NO_WINDOW."
+    },
+    {
+      "file": "chimera_tp/platform/frame_notes.py",
+      "line": 39,
+      "symbol": "_run",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0)"
+    },
+    {
+      "file": "chimera_tp/platform/ghost_bubble.py",
+      "line": 92,
+      "symbol": "GhostBubbleEngine.run_bubble",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0) if os.name == 'nt' else 0"
+    },
+    {
+      "file": "chimera_tp/platform/guarded_build.py",
+      "line": 93,
+      "symbol": "_dispatch",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0)"
+    },
+    {
+      "file": "chimera_tp/platform/guarded_build.py",
+      "line": 295,
+      "symbol": "submit_isolated",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0)"
+    },
+    {
+      "file": "chimera_tp/platform/phantom_silicon.py",
+      "line": 96,
+      "symbol": "_create_junction",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0) if os.name == 'nt' else 0"
+    },
+    {
+      "file": "chimera_tp/platform/phantom_silicon.py",
+      "line": 124,
+      "symbol": "_copy_tree_fast",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0) if os.name == 'nt' else 0"
+    },
+    {
+      "file": "chimera_tp/platform/phantom_silicon.py",
+      "line": 160,
+      "symbol": "_sync_diff_tree",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0) if os.name == 'nt' else 0"
+    },
+    {
+      "file": "chimera_tp/platform/phantom_silicon.py",
+      "line": 1082,
+      "symbol": "AgentExileEngine._probe_svhome",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0) if os.name == 'nt' else 0"
+    },
+    {
+      "file": "chimera_tp/platform/phantom_silicon.py",
+      "line": 1245,
+      "symbol": "SiliconThermostat._apply_procthrottlemax",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0) if os.name == 'nt' else 0"
+    },
+    {
+      "file": "chimera_tp/platform/phantom_silicon.py",
+      "line": 1252,
+      "symbol": "SiliconThermostat._apply_procthrottlemax",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0) if os.name == 'nt' else 0"
+    },
+    {
+      "file": "chimera_tp/platform/recall_open.py",
+      "line": 32,
+      "symbol": "_open_document",
+      "operation": "Popen",
+      "category": "posix_only",
+      "reason": "open / xdg-open on POSIX. Windows uses os.startfile."
+    },
+    {
+      "file": "chimera_tp/platform/recall_open.py",
+      "line": 46,
+      "symbol": "_dispatch",
+      "operation": "Popen",
+      "category": "foreground",
+      "reason": "Opens the selected document in the desktop editor at the requested location."
+    },
+    {
+      "file": "chimera_tp/platform/recall_open.py",
+      "line": 49,
+      "symbol": "_dispatch",
+      "operation": "Popen",
+      "category": "foreground",
+      "reason": "Opens the selected document in the desktop editor at the requested location."
+    },
+    {
+      "file": "chimera_tp/platform/vgpu_gateway.py",
+      "line": 24,
+      "symbol": "probe_nvidia_gpu",
+      "operation": "check_output",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0)"
+    },
+    {
+      "file": "chimera_tp/platform/windows_build_job.py",
+      "line": 123,
+      "symbol": "run",
+      "operation": "Popen",
+      "category": "windows_no_console",
+      "reason": "subprocess.CREATE_NO_WINDOW"
+    },
+    {
+      "file": "chimera_tp/platform/work_admission.py",
+      "line": 41,
+      "symbol": "gpu_temperature",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0)"
+    },
+    {
+      "file": "chimera_tp/platform/work_admission.py",
+      "line": 63,
+      "symbol": "cpu_temperature",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "subprocess.CREATE_NO_WINDOW"
+    },
+    {
+      "file": "chimera_tp/platform/work_admission.py",
+      "line": 135,
+      "symbol": "peer_ssh_route",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0)"
+    },
+    {
+      "file": "chimera_tp/platform/work_admission.py",
+      "line": 157,
+      "symbol": "_remote_guard",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0)"
+    },
+    {
+      "file": "chimera_tp/platform/zygote_canary.py",
+      "line": 115,
+      "symbol": "ZygoteWorkerPool._ensure_helper_locked",
+      "operation": "Popen",
+      "category": "posix_only",
+      "reason": "Only called on systems supporting os.fork; the Windows path uses its thread pool."
+    },
+    {
+      "file": "chimera_tp/probe.py",
+      "line": 90,
+      "symbol": "_query_windows_network",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0)"
+    },
+    {
+      "file": "chimera_tp/probe.py",
+      "line": 271,
+      "symbol": "_probe_posix_environment",
+      "operation": "run",
+      "category": "posix_only",
+      "reason": "POSIX adapter discovery runs ip -j addr."
+    },
+    {
+      "file": "chimera_tp/symbiote_engine.py",
+      "line": 1110,
+      "symbol": "ChimeraSymbioteEngine.precog_verify",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0)"
+    },
+    {
+      "file": "chimera_tp/symbiote_engine.py",
+      "line": 1153,
+      "symbol": "ChimeraSymbioteEngine.precog_verify",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0)"
+    },
+    {
+      "file": "chimera_tp/symbiote_engine.py",
+      "line": 1174,
+      "symbol": "ChimeraSymbioteEngine.precog_verify",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0)"
+    },
+    {
+      "file": "chimera_tp/symbiote_engine.py",
+      "line": 1205,
+      "symbol": "ChimeraSymbioteEngine.precog_verify",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0)"
+    },
+    {
+      "file": "chimera_tp/v9_app_index.py",
+      "line": 59,
+      "symbol": "probe_hw_encoders",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0)"
+    },
+    {
+      "file": "chimera_tp/v9_nvme_grid.py",
+      "line": 88,
+      "symbol": "probe_accelerators",
+      "operation": "run",
+      "category": "windows_no_console",
+      "reason": "getattr(subprocess, 'CREATE_NO_WINDOW', 0) if os.name == 'nt' else 0"
+    }
+  ]
+}

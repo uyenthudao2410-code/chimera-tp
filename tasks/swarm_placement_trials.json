@@ -1,0 +1,1676 @@
+{
+  "schema": "chimera.swarm-placement/1",
+  "started_utc": "2026-11-26T14:02:32.089Z",
+  "ended_utc": "2026-11-26T14:06:06.915Z",
+  "environment": {
+    "beacon_version": "21.0.0",
+    "desktop": "win-desktop",
+    "peer": "svhome",
+    "compilers": {
+      "windows": {
+        "version": [
+          3,
+          14,
+          4
+        ],
+        "implementation": "CPython",
+        "build": "3.14.4 (tags/v3.14.4:23116f9, Apr  7 2026, 14:10:54) [MSC v.1944 64 bit (AMD64)]",
+        "marshal": 5,
+        "architecture": "AMD64",
+        "executable_sha256": "7ca24f26d6e3f463419ee4f537ddd3acd312c38fe45e678cce08572f26a8bd1a",
+        "archive": {
+          "release": "https://www.python.org/downloads/release/python-3144/",
+          "url": "https://www.python.org/ftp/python/3.14.4/python-3.14.4-embed-amd64.zip",
+          "sha256": "cda80a9b1e75c0f1b4f9872ca1b417f0d19bce32facc811aea9180e70fad5fb9"
+        }
+      },
+      "linux": {
+        "version": [
+          3,
+          14,
+          4
+        ],
+        "implementation": "CPython",
+        "build": "3.14.4 (main, Aug 20 2026, 10:41:58) [GCC 15.2.0]",
+        "marshal": 5,
+        "architecture": "x86_64",
+        "executable_sha256": "52e0a13e60a981d8c4b6478be2ba5176f69da07948a056bf49cf6f077e30cb41"
+      }
+    },
+    "receiver_policy_after_run": {
+      "reason": "capacity",
+      "effective_policy": {
+        "ram_reserve_mib": 2560,
+        "job_memory_mib": 256,
+        "disk_reserve_mib": 2048,
+        "job_disk_mib": 16,
+        "cpu_quota_pct": 100,
+        "max_tasks": 128,
+        "runtime_seconds": 110,
+        "psi_cpu_pct": 25,
+        "psi_memory_pct": 1,
+        "psi_io_pct": 5,
+        "max_load1": 1.8,
+        "max_temp_c": 70,
+        "service_urls": [
+          "http://127.0.0.1:9780/.well-known/chimera.json"
+        ],
+        "service_p95_ms": 150,
+        "service_samples": 5,
+        "service_timeout_s": 0.5,
+        "max_sample_age_s": 5,
+        "require_io_cap": false,
+        "io_write_bps": 8388608
+      }
+    }
+  },
+  "workload": {
+    "input_sha256": "370b4974d7b3258701eaa46ddca4da83a7268d1953812416f3f103727da16bd1",
+    "sources": [
+      "chimera_tp/native.py",
+      "chimera_tp/platform/hyper_desk.py",
+      "chimera_tp/platform/phantom_silicon.py",
+      "chimera_tp/platform/substrate.py"
+    ],
+    "bytes": 323410,
+    "rounds": 96,
+    "source_utf8_sha256": {
+      "chimera_tp/native.py": "1aac0a239fc4e92852b8ad72334d387d6b876559bbd6c9856abb82983e803d50",
+      "chimera_tp/platform/hyper_desk.py": "59a33e4906836544a270b6393352783c4c363fb0ee1827a9984f7be3fd701428",
+      "chimera_tp/platform/phantom_silicon.py": "c3eb1018a7ae0fc7b43c5dac950b815ec2ce415c810b080550a2aa73694b9c43",
+      "chimera_tp/platform/substrate.py": "53ee4db7cca914d082369ee8526a2d921401fe70804e8f0876319192104a7b65"
+    },
+    "bytecode_sha256": {
+      "chimera_tp/native.py": "0292ca383fedbe1f5188aecd460edf8d70ad87fea3803cb6c4f51ef1a6895500",
+      "chimera_tp/platform/hyper_desk.py": "4d297a5d175fe3d715137f91fbae01beb3cf48e216045b04fd026daac8bb921f",
+      "chimera_tp/platform/phantom_silicon.py": "a37a24c4d1e206dbd5b22a609d9da9fb70441f8412eea6ed323dcce214905dfd",
+      "chimera_tp/platform/substrate.py": "ecddaa00d278426d3af1e64751a7813be087d1ffd2ea52de9bdf6ce5d67a5b22"
+    },
+    "units_per_request": 384
+  },
+  "protocol": {
+    "sets": 6,
+    "requests_per_arm": 2,
+    "arms": [
+      "local",
+      "local-shared",
+      "remote"
+    ],
+    "order": [
+      [
+        "local",
+        "local-shared",
+        "remote"
+      ],
+      [
+        "local-shared",
+        "remote",
+        "local"
+      ],
+      [
+        "remote",
+        "local",
+        "local-shared"
+      ],
+      [
+        "remote",
+        "local-shared",
+        "local"
+      ],
+      [
+        "local",
+        "remote",
+        "local-shared"
+      ],
+      [
+        "local-shared",
+        "local",
+        "remote"
+      ]
+    ],
+    "cache": "Fresh randomized build environment identifier per arm and set. OS, executable and file caches uncontrolled.",
+    "intervals": "Each wall interval starts before the Windows accountant and its gated launcher and ends after both requests and receipt validation. Preparation, cleanup and independent marker reads are outside these intervals.",
+    "cpu": "Compiler CPU is process_time per unique compiler. Windows Job Object BasicAccountingInfo independently covers the full local trial tree including its launcher, wrapper, clients, local compilers and SSH. The Node recorder, outer Python accountant, unrelated processes and remote Linux ancestors are excluded. The two CPU counters overlap for local builds and must not be added.",
+    "product": "Last-round marshal bytes of each of four shipped Python modules hashed; every pair validates every digest against an independent interpreter invocation.",
+    "guard": "Remote jobs entered through normal Swarm receiver admission. No foreground CAD frames, production changes or cloud runtimes."
+  },
+  "rows": [
+    {
+      "set": 1,
+      "position": 1,
+      "site": "local",
+      "wall_s": 8.931762,
+      "independent_markers": [
+        {
+          "instance": "38948e6fda1a477a945a0a59ae4c91da",
+          "pid": 29340,
+          "cpu_s": 8.171875,
+          "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+          "host": "windows"
+        },
+        {
+          "instance": "93fecb4666104fd994fd9850d32a3a1f",
+          "pid": 23948,
+          "cpu_s": 8.25,
+          "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+          "host": "windows"
+        }
+      ],
+      "input_sha256": "370b4974d7b3258701eaa46ddca4da83a7268d1953812416f3f103727da16bd1",
+      "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+      "units_per_agent": 384,
+      "snapshot": null,
+      "requests": 2,
+      "distinct_attempts": 2,
+      "compiler_windows_ms": [
+        [
+          137650550.5317,
+          137658867.2175
+        ],
+        [
+          137650550.5524,
+          137658778.7912
+        ]
+      ],
+      "compiler_clock": "windows_qpc",
+      "compiler_instances": [
+        {
+          "id": "93fecb4666104fd994fd9850d32a3a1f",
+          "pid": 23948,
+          "cpu_s": 8.25,
+          "wall_s": 8.31402839999646,
+          "python": "3.14.4"
+        },
+        {
+          "id": "38948e6fda1a477a945a0a59ae4c91da",
+          "pid": 29340,
+          "cpu_s": 8.171875,
+          "wall_s": 8.225579099991592,
+          "python": "3.14.4"
+        }
+      ],
+      "compiler_cpu_s": 16.421875,
+      "cold_environment_id": "cad-measured-cold-pair-fb2167309bb041d59ff8590d56ce2957",
+      "effective_worker_seconds": [
+        8.31402839999646,
+        8.225579099991592
+      ],
+      "receipts": [
+        {
+          "attempt_id": "fe8b736022cb4c4b928b61922e76b6db",
+          "delivery": "executed"
+        },
+        {
+          "attempt_id": "3c1954c10bd84d87a5cb96dfb16002de",
+          "delivery": "executed"
+        }
+      ],
+      "windows_process_tree": {
+        "processes": 5,
+        "active_at_close": 0,
+        "user_cpu_s": 15.484375,
+        "kernel_cpu_s": 1.328125,
+        "total_cpu_s": 16.8125
+      }
+    },
+    {
+      "set": 1,
+      "position": 2,
+      "site": "local-shared",
+      "wall_s": 9.8882396,
+      "independent_markers": [
+        {
+          "instance": "d82eab819bb44764b2b15f4548dd307d",
+          "pid": 3464,
+          "cpu_s": 8.015625,
+          "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+          "host": "windows"
+        }
+      ],
+      "input_sha256": "370b4974d7b3258701eaa46ddca4da83a7268d1953812416f3f103727da16bd1",
+      "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+      "units_per_agent": 384,
+      "snapshot": "a690a7886c255278ecfa48229e4eaa410a6e482a71f668df5a10373bbdc1269a",
+      "requests": 2,
+      "distinct_attempts": 1,
+      "compiler_windows_ms": [
+        [
+          137662147.495,
+          137670249.2764
+        ],
+        [
+          137662147.495,
+          137670249.2764
+        ]
+      ],
+      "compiler_clock": "windows_qpc",
+      "compiler_instances": [
+        {
+          "id": "d82eab819bb44764b2b15f4548dd307d",
+          "pid": 3464,
+          "cpu_s": 8.015625,
+          "wall_s": 8.099392999982229,
+          "python": "3.14.4"
+        }
+      ],
+      "compiler_cpu_s": 8.015625,
+      "cold_environment_id": "cad-measured-cold-pair-d3fbc58ba105492395f87a2591391b37",
+      "effective_worker_seconds": [
+        8.099392999982229,
+        8.099392999982229
+      ],
+      "receipts": [
+        {
+          "request_id": "9ca16ef73bdc47bbbf554c809b4ad70d",
+          "attempt_id": "521e7a42950d4e8688c63abe7f71b66d",
+          "source_delivery": "executed",
+          "delivery": "executed",
+          "snapshot": "a690a7886c255278ecfa48229e4eaa410a6e482a71f668df5a10373bbdc1269a",
+          "target": "local",
+          "elapsed_end_to_end_ms": 8594,
+          "client_pid": 30944
+        },
+        {
+          "request_id": "e9e745d7b76d4e1ca9b7ea91748ee56a",
+          "attempt_id": "521e7a42950d4e8688c63abe7f71b66d",
+          "source_delivery": "joined",
+          "delivery": "joined",
+          "snapshot": "a690a7886c255278ecfa48229e4eaa410a6e482a71f668df5a10373bbdc1269a",
+          "target": "local",
+          "elapsed_end_to_end_ms": 8641,
+          "client_pid": 27464
+        }
+      ],
+      "windows_process_tree": {
+        "processes": 49,
+        "active_at_close": 0,
+        "user_cpu_s": 8.46875,
+        "kernel_cpu_s": 1.578125,
+        "total_cpu_s": 10.046875
+      }
+    },
+    {
+      "set": 1,
+      "position": 3,
+      "site": "remote",
+      "wall_s": 11.263619900000002,
+      "independent_markers": [
+        {
+          "instance": "48326b92fa394e2e8e29dc67adddbe45",
+          "pid": 3904844,
+          "cpu_s": 7.5310579539999996,
+          "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+          "host": "linux"
+        }
+      ],
+      "input_sha256": "370b4974d7b3258701eaa46ddca4da83a7268d1953812416f3f103727da16bd1",
+      "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+      "units_per_agent": 384,
+      "snapshot": "a690a7886c255278ecfa48229e4eaa410a6e482a71f668df5a10373bbdc1269a",
+      "requests": 2,
+      "distinct_attempts": 1,
+      "compiler_windows_ms": [
+        [
+          2417855993.439358,
+          2417863633.237191
+        ],
+        [
+          2417855993.439358,
+          2417863633.237191
+        ]
+      ],
+      "compiler_clock": "linux_monotonic",
+      "compiler_instances": [
+        {
+          "id": "48326b92fa394e2e8e29dc67adddbe45",
+          "pid": 3904844,
+          "cpu_s": 7.5310579539999996,
+          "wall_s": 7.636598061304539,
+          "python": "3.14.4"
+        }
+      ],
+      "compiler_cpu_s": 7.5310579539999996,
+      "cold_environment_id": "cad-measured-cold-pair-b2282ede674449409ac54077b4620154",
+      "effective_worker_seconds": [
+        7.636598061304539,
+        7.636598061304539
+      ],
+      "receipts": [
+        {
+          "request_id": "89e06fe63a3d489296dc63fb47eeb467",
+          "attempt_id": "7782e2b266194ac6b61546fc9d86addd",
+          "source_delivery": "executed",
+          "delivery": "executed",
+          "snapshot": "a690a7886c255278ecfa48229e4eaa410a6e482a71f668df5a10373bbdc1269a",
+          "target": "svhome",
+          "process_wall_ms": 7708.501,
+          "reaped_child_cpu_ms": 7576.717,
+          "elapsed_end_to_end_ms": 9953,
+          "client_pid": 5604
+        },
+        {
+          "request_id": "9559d6ae6c614029a04ee97428134adc",
+          "attempt_id": "7782e2b266194ac6b61546fc9d86addd",
+          "source_delivery": "joined",
+          "delivery": "executed",
+          "snapshot": "a690a7886c255278ecfa48229e4eaa410a6e482a71f668df5a10373bbdc1269a",
+          "target": "svhome",
+          "process_wall_ms": 7708.501,
+          "reaped_child_cpu_ms": 7576.717,
+          "elapsed_end_to_end_ms": 9969,
+          "client_pid": 2288
+        }
+      ],
+      "windows_process_tree": {
+        "processes": 43,
+        "active_at_close": 0,
+        "user_cpu_s": 1.109375,
+        "kernel_cpu_s": 0.765625,
+        "total_cpu_s": 1.875
+      }
+    },
+    {
+      "set": 2,
+      "position": 1,
+      "site": "local-shared",
+      "wall_s": 10.080685600000004,
+      "independent_markers": [
+        {
+          "instance": "a355c0c170ae46858662f0499215c10d",
+          "pid": 14428,
+          "cpu_s": 8,
+          "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+          "host": "windows"
+        }
+      ],
+      "input_sha256": "370b4974d7b3258701eaa46ddca4da83a7268d1953812416f3f103727da16bd1",
+      "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+      "units_per_agent": 384,
+      "snapshot": "a690a7886c255278ecfa48229e4eaa410a6e482a71f668df5a10373bbdc1269a",
+      "requests": 2,
+      "distinct_attempts": 1,
+      "compiler_windows_ms": [
+        [
+          137686783.3486,
+          137694843.238
+        ],
+        [
+          137686783.3486,
+          137694843.238
+        ]
+      ],
+      "compiler_clock": "windows_qpc",
+      "compiler_instances": [
+        {
+          "id": "a355c0c170ae46858662f0499215c10d",
+          "pid": 14428,
+          "cpu_s": 8,
+          "wall_s": 8.056861999997636,
+          "python": "3.14.4"
+        }
+      ],
+      "compiler_cpu_s": 8,
+      "cold_environment_id": "cad-measured-cold-pair-42d104946b70409a85f1ac785180fc50",
+      "effective_worker_seconds": [
+        8.056861999997636,
+        8.056861999997636
+      ],
+      "receipts": [
+        {
+          "request_id": "47fa21ea979f420f95d07531ef7bb985",
+          "attempt_id": "c6053011e2f0457280df70ce3cc47dc0",
+          "source_delivery": "executed",
+          "delivery": "executed",
+          "snapshot": "a690a7886c255278ecfa48229e4eaa410a6e482a71f668df5a10373bbdc1269a",
+          "target": "local",
+          "elapsed_end_to_end_ms": 8734,
+          "client_pid": 31264
+        },
+        {
+          "request_id": "5f0062e8d09f45029077a9c6c824d7a5",
+          "attempt_id": "c6053011e2f0457280df70ce3cc47dc0",
+          "source_delivery": "joined",
+          "delivery": "joined",
+          "snapshot": "a690a7886c255278ecfa48229e4eaa410a6e482a71f668df5a10373bbdc1269a",
+          "target": "local",
+          "elapsed_end_to_end_ms": 8797,
+          "client_pid": 2720
+        }
+      ],
+      "windows_process_tree": {
+        "processes": 49,
+        "active_at_close": 0,
+        "user_cpu_s": 8.578125,
+        "kernel_cpu_s": 1.75,
+        "total_cpu_s": 10.328125
+      }
+    },
+    {
+      "set": 2,
+      "position": 2,
+      "site": "remote",
+      "wall_s": 11.035292999999998,
+      "independent_markers": [
+        {
+          "instance": "790de0ae5d68479dadf3275e70d8872a",
+          "pid": 3905117,
+          "cpu_s": 7.397125427,
+          "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+          "host": "linux"
+        }
+      ],
+      "input_sha256": "370b4974d7b3258701eaa46ddca4da83a7268d1953812416f3f103727da16bd1",
+      "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+      "units_per_agent": 384,
+      "snapshot": "a690a7886c255278ecfa48229e4eaa410a6e482a71f668df5a10373bbdc1269a",
+      "requests": 2,
+      "distinct_attempts": 1,
+      "compiler_windows_ms": [
+        [
+          2417880461.039747,
+          2417887959.439957
+        ],
+        [
+          2417880461.039747,
+          2417887959.439957
+        ]
+      ],
+      "compiler_clock": "linux_monotonic",
+      "compiler_instances": [
+        {
+          "id": "790de0ae5d68479dadf3275e70d8872a",
+          "pid": 3905117,
+          "cpu_s": 7.397125427,
+          "wall_s": 7.4953829208388925,
+          "python": "3.14.4"
+        }
+      ],
+      "compiler_cpu_s": 7.397125427,
+      "cold_environment_id": "cad-measured-cold-pair-d53951ce2da54615b8f56a0540ad1237",
+      "effective_worker_seconds": [
+        7.4953829208388925,
+        7.4953829208388925
+      ],
+      "receipts": [
+        {
+          "request_id": "85e24da491934fa3996529c95cd5a19e",
+          "attempt_id": "bd7602256c434b118e403d6d3313827b",
+          "source_delivery": "executed",
+          "delivery": "executed",
+          "snapshot": "a690a7886c255278ecfa48229e4eaa410a6e482a71f668df5a10373bbdc1269a",
+          "target": "svhome",
+          "process_wall_ms": 7579.175,
+          "reaped_child_cpu_ms": 7443.719,
+          "elapsed_end_to_end_ms": 9781,
+          "client_pid": 23144
+        },
+        {
+          "request_id": "f7ea1cb519fa4a1a982a7e3fb2e69396",
+          "attempt_id": "bd7602256c434b118e403d6d3313827b",
+          "source_delivery": "joined",
+          "delivery": "executed",
+          "snapshot": "a690a7886c255278ecfa48229e4eaa410a6e482a71f668df5a10373bbdc1269a",
+          "target": "svhome",
+          "process_wall_ms": 7579.175,
+          "reaped_child_cpu_ms": 7443.719,
+          "elapsed_end_to_end_ms": 9828,
+          "client_pid": 39548
+        }
+      ],
+      "windows_process_tree": {
+        "processes": 43,
+        "active_at_close": 0,
+        "user_cpu_s": 1.046875,
+        "kernel_cpu_s": 0.75,
+        "total_cpu_s": 1.796875
+      }
+    },
+    {
+      "set": 2,
+      "position": 3,
+      "site": "local",
+      "wall_s": 8.825825900000003,
+      "independent_markers": [
+        {
+          "instance": "5a1ff07a05d048a9b54f36e2e0f8e4fe",
+          "pid": 33532,
+          "cpu_s": 8.0625,
+          "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+          "host": "windows"
+        },
+        {
+          "instance": "ff6bfdb28fb64de8823bdb1f824deecc",
+          "pid": 21324,
+          "cpu_s": 8.171875,
+          "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+          "host": "windows"
+        }
+      ],
+      "input_sha256": "370b4974d7b3258701eaa46ddca4da83a7268d1953812416f3f103727da16bd1",
+      "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+      "units_per_agent": 384,
+      "snapshot": null,
+      "requests": 2,
+      "distinct_attempts": 2,
+      "compiler_windows_ms": [
+        [
+          137709894.9273,
+          137718099.4283
+        ],
+        [
+          137709891.5356,
+          137718028.6085
+        ]
+      ],
+      "compiler_clock": "windows_qpc",
+      "compiler_instances": [
+        {
+          "id": "ff6bfdb28fb64de8823bdb1f824deecc",
+          "pid": 21324,
+          "cpu_s": 8.171875,
+          "wall_s": 8.201430299988715,
+          "python": "3.14.4"
+        },
+        {
+          "id": "5a1ff07a05d048a9b54f36e2e0f8e4fe",
+          "pid": 33532,
+          "cpu_s": 8.0625,
+          "wall_s": 8.133931699994719,
+          "python": "3.14.4"
+        }
+      ],
+      "compiler_cpu_s": 16.234375,
+      "cold_environment_id": "cad-measured-cold-pair-3e045f99e271423eb3657370d277da04",
+      "effective_worker_seconds": [
+        8.201430299988715,
+        8.133931699994719
+      ],
+      "receipts": [
+        {
+          "attempt_id": "3fc5c1ccbb6b4c4083f9294d9e598445",
+          "delivery": "executed"
+        },
+        {
+          "attempt_id": "ce20c05f7294409689af5853df84f0a2",
+          "delivery": "executed"
+        }
+      ],
+      "windows_process_tree": {
+        "processes": 5,
+        "active_at_close": 0,
+        "user_cpu_s": 15.25,
+        "kernel_cpu_s": 1.375,
+        "total_cpu_s": 16.625
+      }
+    },
+    {
+      "set": 3,
+      "position": 1,
+      "site": "remote",
+      "wall_s": 11.401489099999992,
+      "independent_markers": [
+        {
+          "instance": "1f7524bbeb3745388b0076edfbc2c4f5",
+          "pid": 3905341,
+          "cpu_s": 7.675403255,
+          "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+          "host": "linux"
+        }
+      ],
+      "input_sha256": "370b4974d7b3258701eaa46ddca4da83a7268d1953812416f3f103727da16bd1",
+      "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+      "units_per_agent": 384,
+      "snapshot": "a690a7886c255278ecfa48229e4eaa410a6e482a71f668df5a10373bbdc1269a",
+      "requests": 2,
+      "distinct_attempts": 1,
+      "compiler_windows_ms": [
+        [
+          2417903892.74743,
+          2417911672.983639
+        ],
+        [
+          2417903892.74743,
+          2417911672.983639
+        ]
+      ],
+      "compiler_clock": "linux_monotonic",
+      "compiler_instances": [
+        {
+          "id": "1f7524bbeb3745388b0076edfbc2c4f5",
+          "pid": 3905341,
+          "cpu_s": 7.675403255,
+          "wall_s": 7.7771529708988965,
+          "python": "3.14.4"
+        }
+      ],
+      "compiler_cpu_s": 7.675403255,
+      "cold_environment_id": "cad-measured-cold-pair-36880544353e4214ac342019c8489b41",
+      "effective_worker_seconds": [
+        7.7771529708988965,
+        7.7771529708988965
+      ],
+      "receipts": [
+        {
+          "request_id": "40e6238c31c24d60831be90a7cca7a5c",
+          "attempt_id": "b4955395f792449e843de3e550c7951e",
+          "source_delivery": "joined",
+          "delivery": "executed",
+          "snapshot": "a690a7886c255278ecfa48229e4eaa410a6e482a71f668df5a10373bbdc1269a",
+          "target": "svhome",
+          "process_wall_ms": 7844.91,
+          "reaped_child_cpu_ms": 7719.691,
+          "elapsed_end_to_end_ms": 10141,
+          "client_pid": 16876
+        },
+        {
+          "request_id": "b8dc2bd2465c4aaa9284231e35de7715",
+          "attempt_id": "b4955395f792449e843de3e550c7951e",
+          "source_delivery": "executed",
+          "delivery": "executed",
+          "snapshot": "a690a7886c255278ecfa48229e4eaa410a6e482a71f668df5a10373bbdc1269a",
+          "target": "svhome",
+          "process_wall_ms": 7844.91,
+          "reaped_child_cpu_ms": 7719.691,
+          "elapsed_end_to_end_ms": 10140,
+          "client_pid": 27136
+        }
+      ],
+      "windows_process_tree": {
+        "processes": 43,
+        "active_at_close": 0,
+        "user_cpu_s": 0.953125,
+        "kernel_cpu_s": 1.0625,
+        "total_cpu_s": 2.015625
+      }
+    },
+    {
+      "set": 3,
+      "position": 2,
+      "site": "local",
+      "wall_s": 9.179439299999999,
+      "independent_markers": [
+        {
+          "instance": "c5d4da44e1ce4126a9a1788f818224d1",
+          "pid": 444,
+          "cpu_s": 8.34375,
+          "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+          "host": "windows"
+        },
+        {
+          "instance": "f496471edb034812b7319f15207d72b5",
+          "pid": 38728,
+          "cpu_s": 8.390625,
+          "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+          "host": "windows"
+        }
+      ],
+      "input_sha256": "370b4974d7b3258701eaa46ddca4da83a7268d1953812416f3f103727da16bd1",
+      "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+      "units_per_agent": 384,
+      "snapshot": null,
+      "requests": 2,
+      "distinct_attempts": 2,
+      "compiler_windows_ms": [
+        [
+          137733428.4795,
+          137741995.9684
+        ],
+        [
+          137733428.3424,
+          137742039.748
+        ]
+      ],
+      "compiler_clock": "windows_qpc",
+      "compiler_instances": [
+        {
+          "id": "c5d4da44e1ce4126a9a1788f818224d1",
+          "pid": 444,
+          "cpu_s": 8.34375,
+          "wall_s": 8.565288499987219,
+          "python": "3.14.4"
+        },
+        {
+          "id": "f496471edb034812b7319f15207d72b5",
+          "pid": 38728,
+          "cpu_s": 8.390625,
+          "wall_s": 8.608895400015172,
+          "python": "3.14.4"
+        }
+      ],
+      "compiler_cpu_s": 16.734375,
+      "cold_environment_id": "cad-measured-cold-pair-d616f78264c74d918a9ee2c1338d276d",
+      "effective_worker_seconds": [
+        8.565288499987219,
+        8.608895400015172
+      ],
+      "receipts": [
+        {
+          "attempt_id": "bfc16f58660f44579757740c62d66408",
+          "delivery": "executed"
+        },
+        {
+          "attempt_id": "2fb29a09857e40599b3fb574b3c1fa73",
+          "delivery": "executed"
+        }
+      ],
+      "windows_process_tree": {
+        "processes": 5,
+        "active_at_close": 0,
+        "user_cpu_s": 15.375,
+        "kernel_cpu_s": 1.734375,
+        "total_cpu_s": 17.109375
+      }
+    },
+    {
+      "set": 3,
+      "position": 3,
+      "site": "local-shared",
+      "wall_s": 10.240238299999998,
+      "independent_markers": [
+        {
+          "instance": "c7fd257903ff4e13a861429e62897cc5",
+          "pid": 39488,
+          "cpu_s": 8.25,
+          "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+          "host": "windows"
+        }
+      ],
+      "input_sha256": "370b4974d7b3258701eaa46ddca4da83a7268d1953812416f3f103727da16bd1",
+      "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+      "units_per_agent": 384,
+      "snapshot": "a690a7886c255278ecfa48229e4eaa410a6e482a71f668df5a10373bbdc1269a",
+      "requests": 2,
+      "distinct_attempts": 1,
+      "compiler_windows_ms": [
+        [
+          137745260.5365,
+          137753724.9654
+        ],
+        [
+          137745260.5365,
+          137753724.9654
+        ]
+      ],
+      "compiler_clock": "windows_qpc",
+      "compiler_instances": [
+        {
+          "id": "c7fd257903ff4e13a861429e62897cc5",
+          "pid": 39488,
+          "cpu_s": 8.25,
+          "wall_s": 8.46191829998861,
+          "python": "3.14.4"
+        }
+      ],
+      "compiler_cpu_s": 8.25,
+      "cold_environment_id": "cad-measured-cold-pair-31ce00a8dd3345159e43519ac6b17ae3",
+      "effective_worker_seconds": [
+        8.46191829998861,
+        8.46191829998861
+      ],
+      "receipts": [
+        {
+          "request_id": "adf5737b98444f3fa911c44c71b3d3e5",
+          "attempt_id": "32b34026fd534bfe8c80e9f73b537430",
+          "source_delivery": "joined",
+          "delivery": "joined",
+          "snapshot": "a690a7886c255278ecfa48229e4eaa410a6e482a71f668df5a10373bbdc1269a",
+          "target": "local",
+          "elapsed_end_to_end_ms": 9032,
+          "client_pid": 29588
+        },
+        {
+          "request_id": "7fd7baee4f0941f488d9219b7759650c",
+          "attempt_id": "32b34026fd534bfe8c80e9f73b537430",
+          "source_delivery": "executed",
+          "delivery": "executed",
+          "snapshot": "a690a7886c255278ecfa48229e4eaa410a6e482a71f668df5a10373bbdc1269a",
+          "target": "local",
+          "elapsed_end_to_end_ms": 8985,
+          "client_pid": 33732
+        }
+      ],
+      "windows_process_tree": {
+        "processes": 49,
+        "active_at_close": 0,
+        "user_cpu_s": 8.71875,
+        "kernel_cpu_s": 1.796875,
+        "total_cpu_s": 10.515625
+      }
+    },
+    {
+      "set": 4,
+      "position": 1,
+      "site": "remote",
+      "wall_s": 11.579848800000008,
+      "independent_markers": [
+        {
+          "instance": "cbad5dbd06214f75a5559efda86c36bb",
+          "pid": 3905624,
+          "cpu_s": 7.649438074,
+          "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+          "host": "linux"
+        }
+      ],
+      "input_sha256": "370b4974d7b3258701eaa46ddca4da83a7268d1953812416f3f103727da16bd1",
+      "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+      "units_per_agent": 384,
+      "snapshot": "a690a7886c255278ecfa48229e4eaa410a6e482a71f668df5a10373bbdc1269a",
+      "requests": 2,
+      "distinct_attempts": 1,
+      "compiler_windows_ms": [
+        [
+          2417939760.233989,
+          2417947528.735736
+        ],
+        [
+          2417939760.233989,
+          2417947528.735736
+        ]
+      ],
+      "compiler_clock": "linux_monotonic",
+      "compiler_instances": [
+        {
+          "id": "cbad5dbd06214f75a5559efda86c36bb",
+          "pid": 3905624,
+          "cpu_s": 7.649438074,
+          "wall_s": 7.765392352361232,
+          "python": "3.14.4"
+        }
+      ],
+      "compiler_cpu_s": 7.649438074,
+      "cold_environment_id": "cad-measured-cold-pair-155eb178668348e8b7b4427150c957fd",
+      "effective_worker_seconds": [
+        7.765392352361232,
+        7.765392352361232
+      ],
+      "receipts": [
+        {
+          "request_id": "b0f24ed38c974f9194db2a614317c976",
+          "attempt_id": "f277a14408d646899ca57a64343df468",
+          "source_delivery": "executed",
+          "delivery": "executed",
+          "snapshot": "a690a7886c255278ecfa48229e4eaa410a6e482a71f668df5a10373bbdc1269a",
+          "target": "svhome",
+          "process_wall_ms": 7825.219,
+          "reaped_child_cpu_ms": 7693.566,
+          "elapsed_end_to_end_ms": 10125,
+          "client_pid": 7248
+        },
+        {
+          "request_id": "4e6b14563c6940eb8a78bf1d39d84efa",
+          "attempt_id": "f277a14408d646899ca57a64343df468",
+          "source_delivery": "joined",
+          "delivery": "executed",
+          "snapshot": "a690a7886c255278ecfa48229e4eaa410a6e482a71f668df5a10373bbdc1269a",
+          "target": "svhome",
+          "process_wall_ms": 7825.219,
+          "reaped_child_cpu_ms": 7693.566,
+          "elapsed_end_to_end_ms": 10140,
+          "client_pid": 39152
+        }
+      ],
+      "windows_process_tree": {
+        "processes": 43,
+        "active_at_close": 0,
+        "user_cpu_s": 1.03125,
+        "kernel_cpu_s": 0.921875,
+        "total_cpu_s": 1.953125
+      }
+    },
+    {
+      "set": 4,
+      "position": 2,
+      "site": "local-shared",
+      "wall_s": 10.81319570000001,
+      "independent_markers": [
+        {
+          "instance": "144a775b89744943a1fcc0c56aa251c1",
+          "pid": 29780,
+          "cpu_s": 8.6875,
+          "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+          "host": "windows"
+        }
+      ],
+      "input_sha256": "370b4974d7b3258701eaa46ddca4da83a7268d1953812416f3f103727da16bd1",
+      "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+      "units_per_agent": 384,
+      "snapshot": "a690a7886c255278ecfa48229e4eaa410a6e482a71f668df5a10373bbdc1269a",
+      "requests": 2,
+      "distinct_attempts": 1,
+      "compiler_windows_ms": [
+        [
+          137770360.2484,
+          137779477.8026
+        ],
+        [
+          137770360.2484,
+          137779477.8026
+        ]
+      ],
+      "compiler_clock": "windows_qpc",
+      "compiler_instances": [
+        {
+          "id": "144a775b89744943a1fcc0c56aa251c1",
+          "pid": 29780,
+          "cpu_s": 8.6875,
+          "wall_s": 9.115088999998989,
+          "python": "3.14.4"
+        }
+      ],
+      "compiler_cpu_s": 8.6875,
+      "cold_environment_id": "cad-measured-cold-pair-a002696524a940a6af214ddba07f1d9c",
+      "effective_worker_seconds": [
+        9.115088999998989,
+        9.115088999998989
+      ],
+      "receipts": [
+        {
+          "request_id": "59b5066ff49644a2ba9caf755a15c7bd",
+          "attempt_id": "9689ddaa6fe841259ff0d83798a3b314",
+          "source_delivery": "executed",
+          "delivery": "executed",
+          "snapshot": "a690a7886c255278ecfa48229e4eaa410a6e482a71f668df5a10373bbdc1269a",
+          "target": "local",
+          "elapsed_end_to_end_ms": 9609,
+          "client_pid": 36072
+        },
+        {
+          "request_id": "07ccb75db7a14cff9b959a1c3bafa75a",
+          "attempt_id": "9689ddaa6fe841259ff0d83798a3b314",
+          "source_delivery": "joined",
+          "delivery": "joined",
+          "snapshot": "a690a7886c255278ecfa48229e4eaa410a6e482a71f668df5a10373bbdc1269a",
+          "target": "local",
+          "elapsed_end_to_end_ms": 9656,
+          "client_pid": 10596
+        }
+      ],
+      "windows_process_tree": {
+        "processes": 49,
+        "active_at_close": 0,
+        "user_cpu_s": 9.078125,
+        "kernel_cpu_s": 1.71875,
+        "total_cpu_s": 10.796875
+      }
+    },
+    {
+      "set": 4,
+      "position": 3,
+      "site": "local",
+      "wall_s": 9.119098800000007,
+      "independent_markers": [
+        {
+          "instance": "84d3d4ed287949ae8edfbc2c2ad3c2a0",
+          "pid": 37956,
+          "cpu_s": 8.46875,
+          "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+          "host": "windows"
+        },
+        {
+          "instance": "9a66811e1cdb46b68ac78c186471b194",
+          "pid": 8676,
+          "cpu_s": 8.4375,
+          "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+          "host": "windows"
+        }
+      ],
+      "input_sha256": "370b4974d7b3258701eaa46ddca4da83a7268d1953812416f3f103727da16bd1",
+      "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+      "units_per_agent": 384,
+      "snapshot": null,
+      "requests": 2,
+      "distinct_attempts": 2,
+      "compiler_windows_ms": [
+        [
+          137781812.7161,
+          137790338.6529
+        ],
+        [
+          137781812.2842,
+          137790330.0631
+        ]
+      ],
+      "compiler_clock": "windows_qpc",
+      "compiler_instances": [
+        {
+          "id": "9a66811e1cdb46b68ac78c186471b194",
+          "pid": 8676,
+          "cpu_s": 8.4375,
+          "wall_s": 8.523284199996851,
+          "python": "3.14.4"
+        },
+        {
+          "id": "84d3d4ed287949ae8edfbc2c2ad3c2a0",
+          "pid": 37956,
+          "cpu_s": 8.46875,
+          "wall_s": 8.51520310001797,
+          "python": "3.14.4"
+        }
+      ],
+      "compiler_cpu_s": 16.90625,
+      "cold_environment_id": "cad-measured-cold-pair-384d51fe73594205a318bc5987d1fe89",
+      "effective_worker_seconds": [
+        8.523284199996851,
+        8.51520310001797
+      ],
+      "receipts": [
+        {
+          "attempt_id": "35f0e87d14e548b5b70431af70ce89df",
+          "delivery": "executed"
+        },
+        {
+          "attempt_id": "f2a1dd33969a41b1832d108e5de02668",
+          "delivery": "executed"
+        }
+      ],
+      "windows_process_tree": {
+        "processes": 5,
+        "active_at_close": 0,
+        "user_cpu_s": 15.90625,
+        "kernel_cpu_s": 1.40625,
+        "total_cpu_s": 17.3125
+      }
+    },
+    {
+      "set": 5,
+      "position": 1,
+      "site": "local",
+      "wall_s": 9.073685599999997,
+      "independent_markers": [
+        {
+          "instance": "0892b42cf831459199148142361ee681",
+          "pid": 30064,
+          "cpu_s": 8.40625,
+          "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+          "host": "windows"
+        },
+        {
+          "instance": "b6eb39fe3ec04375a1f568a6335b91c1",
+          "pid": 17504,
+          "cpu_s": 8.390625,
+          "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+          "host": "windows"
+        }
+      ],
+      "input_sha256": "370b4974d7b3258701eaa46ddca4da83a7268d1953812416f3f103727da16bd1",
+      "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+      "units_per_agent": 384,
+      "snapshot": null,
+      "requests": 2,
+      "distinct_attempts": 2,
+      "compiler_windows_ms": [
+        [
+          137792553.3678,
+          137801019.4689
+        ],
+        [
+          137792550.4206,
+          137801021.8117
+        ]
+      ],
+      "compiler_clock": "windows_qpc",
+      "compiler_instances": [
+        {
+          "id": "b6eb39fe3ec04375a1f568a6335b91c1",
+          "pid": 17504,
+          "cpu_s": 8.390625,
+          "wall_s": 8.463913899991894,
+          "python": "3.14.4"
+        },
+        {
+          "id": "0892b42cf831459199148142361ee681",
+          "pid": 30064,
+          "cpu_s": 8.40625,
+          "wall_s": 8.469239500002004,
+          "python": "3.14.4"
+        }
+      ],
+      "compiler_cpu_s": 16.796875,
+      "cold_environment_id": "cad-measured-cold-pair-5db33e0e6f0b492880b1f81d6e38d99f",
+      "effective_worker_seconds": [
+        8.463913899991894,
+        8.469239500002004
+      ],
+      "receipts": [
+        {
+          "attempt_id": "5b00f681270f4a95a1c51cb205376654",
+          "delivery": "executed"
+        },
+        {
+          "attempt_id": "2667077299b34709b4eaa2264561d61a",
+          "delivery": "executed"
+        }
+      ],
+      "windows_process_tree": {
+        "processes": 5,
+        "active_at_close": 0,
+        "user_cpu_s": 15.640625,
+        "kernel_cpu_s": 1.53125,
+        "total_cpu_s": 17.171875
+      }
+    },
+    {
+      "set": 5,
+      "position": 2,
+      "site": "remote",
+      "wall_s": 11.635740300000005,
+      "independent_markers": [
+        {
+          "instance": "17d773237c4c40b68e7302662a3158c4",
+          "pid": 3905955,
+          "cpu_s": 7.823531260999999,
+          "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+          "host": "linux"
+        }
+      ],
+      "input_sha256": "370b4974d7b3258701eaa46ddca4da83a7268d1953812416f3f103727da16bd1",
+      "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+      "units_per_agent": 384,
+      "snapshot": "a690a7886c255278ecfa48229e4eaa410a6e482a71f668df5a10373bbdc1269a",
+      "requests": 2,
+      "distinct_attempts": 1,
+      "compiler_windows_ms": [
+        [
+          2417986682.196194,
+          2417994617.931328
+        ],
+        [
+          2417986682.196194,
+          2417994617.931328
+        ]
+      ],
+      "compiler_clock": "linux_monotonic",
+      "compiler_instances": [
+        {
+          "id": "17d773237c4c40b68e7302662a3158c4",
+          "pid": 3905955,
+          "cpu_s": 7.823531260999999,
+          "wall_s": 7.932243585120887,
+          "python": "3.14.4"
+        }
+      ],
+      "compiler_cpu_s": 7.823531260999999,
+      "cold_environment_id": "cad-measured-cold-pair-b607bf59262842099a327a430be3bfa1",
+      "effective_worker_seconds": [
+        7.932243585120887,
+        7.932243585120887
+      ],
+      "receipts": [
+        {
+          "request_id": "51cd00b11dec4cfdbda6d9ab0441f87a",
+          "attempt_id": "60b3ad4bf13d473f8b409b3490c640d2",
+          "source_delivery": "joined",
+          "delivery": "executed",
+          "snapshot": "a690a7886c255278ecfa48229e4eaa410a6e482a71f668df5a10373bbdc1269a",
+          "target": "svhome",
+          "process_wall_ms": 7998.3,
+          "reaped_child_cpu_ms": 7871.438,
+          "elapsed_end_to_end_ms": 10453,
+          "client_pid": 12624
+        },
+        {
+          "request_id": "673e8686bee245e68fca3cebcdba147e",
+          "attempt_id": "60b3ad4bf13d473f8b409b3490c640d2",
+          "source_delivery": "executed",
+          "delivery": "executed",
+          "snapshot": "a690a7886c255278ecfa48229e4eaa410a6e482a71f668df5a10373bbdc1269a",
+          "target": "svhome",
+          "process_wall_ms": 7998.3,
+          "reaped_child_cpu_ms": 7871.438,
+          "elapsed_end_to_end_ms": 10406,
+          "client_pid": 17416
+        }
+      ],
+      "windows_process_tree": {
+        "processes": 43,
+        "active_at_close": 0,
+        "user_cpu_s": 0.9375,
+        "kernel_cpu_s": 1.03125,
+        "total_cpu_s": 1.96875
+      }
+    },
+    {
+      "set": 5,
+      "position": 3,
+      "site": "local-shared",
+      "wall_s": 10.070921200000011,
+      "independent_markers": [
+        {
+          "instance": "504f555395624c4b99fc1edac8d0882f",
+          "pid": 32936,
+          "cpu_s": 8.0625,
+          "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+          "host": "windows"
+        }
+      ],
+      "input_sha256": "370b4974d7b3258701eaa46ddca4da83a7268d1953812416f3f103727da16bd1",
+      "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+      "units_per_agent": 384,
+      "snapshot": "a690a7886c255278ecfa48229e4eaa410a6e482a71f668df5a10373bbdc1269a",
+      "requests": 2,
+      "distinct_attempts": 1,
+      "compiler_windows_ms": [
+        [
+          137817721.2108,
+          137825880.6843
+        ],
+        [
+          137817721.2108,
+          137825880.6843
+        ]
+      ],
+      "compiler_clock": "windows_qpc",
+      "compiler_instances": [
+        {
+          "id": "504f555395624c4b99fc1edac8d0882f",
+          "pid": 32936,
+          "cpu_s": 8.0625,
+          "wall_s": 8.156840700015891,
+          "python": "3.14.4"
+        }
+      ],
+      "compiler_cpu_s": 8.0625,
+      "cold_environment_id": "cad-measured-cold-pair-3af323a8fa7e4f2aaa1102240c93f30d",
+      "effective_worker_seconds": [
+        8.156840700015891,
+        8.156840700015891
+      ],
+      "receipts": [
+        {
+          "request_id": "36475a45fff74f789e490755f24b2bc7",
+          "attempt_id": "0fd05102cbee4d489e539b06d2c2b902",
+          "source_delivery": "executed",
+          "delivery": "executed",
+          "snapshot": "a690a7886c255278ecfa48229e4eaa410a6e482a71f668df5a10373bbdc1269a",
+          "target": "local",
+          "elapsed_end_to_end_ms": 8812,
+          "client_pid": 31776
+        },
+        {
+          "request_id": "d1b5becc506e4a9ea08ec28af1497412",
+          "attempt_id": "0fd05102cbee4d489e539b06d2c2b902",
+          "source_delivery": "joined",
+          "delivery": "joined",
+          "snapshot": "a690a7886c255278ecfa48229e4eaa410a6e482a71f668df5a10373bbdc1269a",
+          "target": "local",
+          "elapsed_end_to_end_ms": 8813,
+          "client_pid": 12840
+        }
+      ],
+      "windows_process_tree": {
+        "processes": 49,
+        "active_at_close": 0,
+        "user_cpu_s": 8.5625,
+        "kernel_cpu_s": 1.921875,
+        "total_cpu_s": 10.484375
+      }
+    },
+    {
+      "set": 6,
+      "position": 1,
+      "site": "local-shared",
+      "wall_s": 10.153545700000016,
+      "independent_markers": [
+        {
+          "instance": "df07689835fa42b49f217eaaf4a9ed4f",
+          "pid": 9324,
+          "cpu_s": 8.21875,
+          "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+          "host": "windows"
+        }
+      ],
+      "input_sha256": "370b4974d7b3258701eaa46ddca4da83a7268d1953812416f3f103727da16bd1",
+      "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+      "units_per_agent": 384,
+      "snapshot": "a690a7886c255278ecfa48229e4eaa410a6e482a71f668df5a10373bbdc1269a",
+      "requests": 2,
+      "distinct_attempts": 1,
+      "compiler_windows_ms": [
+        [
+          137829319.4658,
+          137837616.7997
+        ],
+        [
+          137829319.4658,
+          137837616.7997
+        ]
+      ],
+      "compiler_clock": "windows_qpc",
+      "compiler_instances": [
+        {
+          "id": "df07689835fa42b49f217eaaf4a9ed4f",
+          "pid": 9324,
+          "cpu_s": 8.21875,
+          "wall_s": 8.294957100006286,
+          "python": "3.14.4"
+        }
+      ],
+      "compiler_cpu_s": 8.21875,
+      "cold_environment_id": "cad-measured-cold-pair-6f5da71c647440348ec5a2de20c3c489",
+      "effective_worker_seconds": [
+        8.294957100006286,
+        8.294957100006286
+      ],
+      "receipts": [
+        {
+          "request_id": "7c1b9dbe45d24511a39beb581cdd6927",
+          "attempt_id": "f1ea0a8307244c55aaf7507133befb1c",
+          "source_delivery": "joined",
+          "delivery": "joined",
+          "snapshot": "a690a7886c255278ecfa48229e4eaa410a6e482a71f668df5a10373bbdc1269a",
+          "target": "local",
+          "elapsed_end_to_end_ms": 8797,
+          "client_pid": 29776
+        },
+        {
+          "request_id": "4eccdcc1e7ee482db9d230ae7e3230a9",
+          "attempt_id": "f1ea0a8307244c55aaf7507133befb1c",
+          "source_delivery": "executed",
+          "delivery": "executed",
+          "snapshot": "a690a7886c255278ecfa48229e4eaa410a6e482a71f668df5a10373bbdc1269a",
+          "target": "local",
+          "elapsed_end_to_end_ms": 8797,
+          "client_pid": 828
+        }
+      ],
+      "windows_process_tree": {
+        "processes": 49,
+        "active_at_close": 0,
+        "user_cpu_s": 8.640625,
+        "kernel_cpu_s": 1.953125,
+        "total_cpu_s": 10.59375
+      }
+    },
+    {
+      "set": 6,
+      "position": 2,
+      "site": "local",
+      "wall_s": 9.057209099999978,
+      "independent_markers": [
+        {
+          "instance": "797c70d118434f0eb950eb0c5312dba7",
+          "pid": 39688,
+          "cpu_s": 8.25,
+          "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+          "host": "windows"
+        },
+        {
+          "instance": "81ad149b387540e593b36f6b43afa859",
+          "pid": 38844,
+          "cpu_s": 8.3125,
+          "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+          "host": "windows"
+        }
+      ],
+      "input_sha256": "370b4974d7b3258701eaa46ddca4da83a7268d1953812416f3f103727da16bd1",
+      "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+      "units_per_agent": 384,
+      "snapshot": null,
+      "requests": 2,
+      "distinct_attempts": 2,
+      "compiler_windows_ms": [
+        [
+          137839931.5797,
+          137848305.8118
+        ],
+        [
+          137839929.317,
+          137848449.7558
+        ]
+      ],
+      "compiler_clock": "windows_qpc",
+      "compiler_instances": [
+        {
+          "id": "797c70d118434f0eb950eb0c5312dba7",
+          "pid": 39688,
+          "cpu_s": 8.25,
+          "wall_s": 8.372002299991436,
+          "python": "3.14.4"
+        },
+        {
+          "id": "81ad149b387540e593b36f6b43afa859",
+          "pid": 38844,
+          "cpu_s": 8.3125,
+          "wall_s": 8.518007300008321,
+          "python": "3.14.4"
+        }
+      ],
+      "compiler_cpu_s": 16.5625,
+      "cold_environment_id": "cad-measured-cold-pair-38a9fdc9a55a4afb87c4da37f63d67b0",
+      "effective_worker_seconds": [
+        8.372002299991436,
+        8.518007300008321
+      ],
+      "receipts": [
+        {
+          "attempt_id": "0ff85fce77ae4489ab02e56a1f4cf71e",
+          "delivery": "executed"
+        },
+        {
+          "attempt_id": "ac0643667ad44c4c8158c7739471dbe9",
+          "delivery": "executed"
+        }
+      ],
+      "windows_process_tree": {
+        "processes": 5,
+        "active_at_close": 0,
+        "user_cpu_s": 15.5625,
+        "kernel_cpu_s": 1.359375,
+        "total_cpu_s": 16.921875
+      }
+    },
+    {
+      "set": 6,
+      "position": 3,
+      "site": "remote",
+      "wall_s": 11.09382699999999,
+      "independent_markers": [
+        {
+          "instance": "fcd5cf99090548fa9ac61d991701caad",
+          "pid": 3906577,
+          "cpu_s": 7.426010145,
+          "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+          "host": "linux"
+        }
+      ],
+      "input_sha256": "370b4974d7b3258701eaa46ddca4da83a7268d1953812416f3f103727da16bd1",
+      "result_sha256": "9179f544d718fc727a78649fb4f26ef346f1ef2fd921b761c521f2ec1c6239d6",
+      "units_per_agent": 384,
+      "snapshot": "a690a7886c255278ecfa48229e4eaa410a6e482a71f668df5a10373bbdc1269a",
+      "requests": 2,
+      "distinct_attempts": 1,
+      "compiler_windows_ms": [
+        [
+          2418034028.499146,
+          2418041563.445833
+        ],
+        [
+          2418034028.499146,
+          2418041563.445833
+        ]
+      ],
+      "compiler_clock": "linux_monotonic",
+      "compiler_instances": [
+        {
+          "id": "fcd5cf99090548fa9ac61d991701caad",
+          "pid": 3906577,
+          "cpu_s": 7.426010145,
+          "wall_s": 7.531891056802124,
+          "python": "3.14.4"
+        }
+      ],
+      "compiler_cpu_s": 7.426010145,
+      "cold_environment_id": "cad-measured-cold-pair-286cabe99ce8473281a81286a054a4ed",
+      "effective_worker_seconds": [
+        7.531891056802124,
+        7.531891056802124
+      ],
+      "receipts": [
+        {
+          "request_id": "94acaf287b964750845981300d3a399f",
+          "attempt_id": "40f4a059ad9f462f98d5b2e3c5ccdf79",
+          "source_delivery": "executed",
+          "delivery": "executed",
+          "snapshot": "a690a7886c255278ecfa48229e4eaa410a6e482a71f668df5a10373bbdc1269a",
+          "target": "svhome",
+          "process_wall_ms": 7581.774,
+          "reaped_child_cpu_ms": 7473.745,
+          "elapsed_end_to_end_ms": 9859,
+          "client_pid": 18132
+        },
+        {
+          "request_id": "3e94b6a553d845ac90157cee397caf8e",
+          "attempt_id": "40f4a059ad9f462f98d5b2e3c5ccdf79",
+          "source_delivery": "joined",
+          "delivery": "executed",
+          "snapshot": "a690a7886c255278ecfa48229e4eaa410a6e482a71f668df5a10373bbdc1269a",
+          "target": "svhome",
+          "process_wall_ms": 7581.774,
+          "reaped_child_cpu_ms": 7473.745,
+          "elapsed_end_to_end_ms": 9906,
+          "client_pid": 33200
+        }
+      ],
+      "windows_process_tree": {
+        "processes": 43,
+        "active_at_close": 0,
+        "user_cpu_s": 1.015625,
+        "kernel_cpu_s": 0.90625,
+        "total_cpu_s": 1.921875
+      }
+    }
+  ],
+  "summary": {
+    "methods": {
+      "local": {
+        "completed_sets": 6,
+        "compiler_processes": 12,
+        "median_wall_s": 9.065447349999989,
+        "median_longest_worker_s": 8.493623400005163,
+        "median_compiler_cpu_s": 16.6484375,
+        "median_windows_tree_cpu_s": 17.015625
+      },
+      "local-shared": {
+        "completed_sets": 6,
+        "compiler_processes": 6,
+        "median_wall_s": 10.11711565000001,
+        "median_longest_worker_s": 8.225898900011089,
+        "median_compiler_cpu_s": 8.140625,
+        "median_windows_tree_cpu_s": 10.5
+      },
+      "remote": {
+        "completed_sets": 6,
+        "compiler_processes": 6,
+        "median_wall_s": 11.332554499999997,
+        "median_longest_worker_s": 7.700995206832886,
+        "median_compiler_cpu_s": 7.590248014,
+        "median_windows_tree_cpu_s": 1.9375
+      }
+    },
+    "paired_ratios": [
+      {
+        "set": 1,
+        "shared_windows_vs_independent_windows": 1.1070872242229473,
+        "linux_vs_shared_windows": 1.1390925337205624,
+        "linux_vs_independent_windows": 1.2610747912897815,
+        "windows_cpu_shared_vs_independent": 0.5975836431226765,
+        "windows_cpu_remote_vs_local_shared": 0.18662519440124417
+      },
+      {
+        "set": 2,
+        "shared_windows_vs_independent_windows": 1.1421804275563605,
+        "linux_vs_shared_windows": 1.094696674202397,
+        "linux_vs_independent_windows": 1.2503411153850195,
+        "windows_cpu_shared_vs_independent": 0.6212406015037594,
+        "windows_cpu_remote_vs_local_shared": 0.17397881996974282
+      },
+      {
+        "set": 3,
+        "shared_windows_vs_independent_windows": 1.1155625049996245,
+        "linux_vs_shared_windows": 1.1134007594334983,
+        "linux_vs_independent_windows": 1.2420681402621174,
+        "windows_cpu_shared_vs_independent": 0.6146118721461187,
+        "windows_cpu_remote_vs_local_shared": 0.19167904903417535
+      },
+      {
+        "set": 4,
+        "shared_windows_vs_independent_windows": 1.1857745964985051,
+        "linux_vs_shared_windows": 1.0708997711009702,
+        "linux_vs_independent_windows": 1.2698457439675945,
+        "windows_cpu_shared_vs_independent": 0.6236462093862816,
+        "windows_cpu_remote_vs_local_shared": 0.1808972503617945
+      },
+      {
+        "set": 5,
+        "shared_windows_vs_independent_windows": 1.1099041386225696,
+        "linux_vs_shared_windows": 1.155379936842321,
+        "linux_vs_independent_windows": 1.2823609735827752,
+        "windows_cpu_shared_vs_independent": 0.6105550500454959,
+        "windows_cpu_remote_vs_local_shared": 0.18777943368107303
+      },
+      {
+        "set": 6,
+        "shared_windows_vs_independent_windows": 1.1210457424462068,
+        "linux_vs_shared_windows": 1.09260620159517,
+        "linux_vs_independent_windows": 1.2248615304685875,
+        "windows_cpu_shared_vs_independent": 0.6260387811634349,
+        "windows_cpu_remote_vs_local_shared": 0.18141592920353983
+      }
+    ],
+    "comparison": {
+      "shared_windows_vs_independent_windows": {
+        "median_ratio": 1.1183041237229157,
+        "range": [
+          1.1070872242229473,
+          1.1857745964985051
+        ],
+        "numerator_faster_sets": 0
+      },
+      "linux_vs_shared_windows": {
+        "median_ratio": 1.1040487168179476,
+        "range": [
+          1.0708997711009702,
+          1.155379936842321
+        ],
+        "numerator_faster_sets": 0
+      },
+      "linux_vs_independent_windows": {
+        "median_ratio": 1.2557079533374005,
+        "range": [
+          1.2248615304685875,
+          1.2823609735827752
+        ],
+        "numerator_faster_sets": 0
+      },
+      "windows_cpu_shared_vs_independent": {
+        "median_ratio": 0.617926236824939,
+        "range": [
+          0.5975836431226765,
+          0.6260387811634349
+        ],
+        "numerator_faster_sets": 6
+      },
+      "windows_cpu_remote_vs_local_shared": {
+        "median_ratio": 0.184020561802392,
+        "range": [
+          0.17397881996974282,
+          0.19167904903417535
+        ],
+        "numerator_faster_sets": 6
+      }
+    }
+  },
+  "source_sha256": {
+    "scripts/measure_swarm_placement.mjs": "09a505a9051d8fa9a92b92c3147fe6b295e3544a958afb345cfee22704effa74",
+    "scripts/cad_swarm_job.py": "f9495709303df5913fe25dca7661898e70bab1ec201a689c18c104ca3aeeb9b8",
+    "scripts/placement_windows_cpu.py": "f996cf9d2b9110bb7981d0a0f515233e9789878b532fd5bdbadd15df192e6f85",
+    "scripts/cad_build_job.py": "4e938fc247d624741ccb0759f76000edf69c2dee8d2e57948203b55c632e932f",
+    "scripts/verify_guarded_build.py": "0f768d88a874587530d4956b32cd90001f6806848d344b329820eb5032b3284a",
+    "chimera_tp/platform/guarded_build.py": "3bcb46debe4cbbdaef76b2884e96bf296706e137f17e316d9936be6e66c5fa42",
+    "chimera_tp/platform/local_build.py": "bb888d1d12a9dc490dc61a00e7efdd18a2894c569c6d18182a69f54c39c5ac67",
+    "chimera_tp/platform/windows_build_job.py": "2facd8d35e2aa636fac98cf359165a4e77e6f3afdc6b2ca133e4725578c509c0",
+    "chimera_tp/platform/build_worker.py": "50fb421532a567eaced3eb83d2d2ce72b4810deaf37032e5129aacf80c7129d3",
+    "chimera_tp/platform/peer_guard.py": "3aa6c68a9572a294b7bf1af3c402ef2dc521bc69ce31056a67172203059b94f8"
+  },
+  "temporary_counters_removed": true
+}

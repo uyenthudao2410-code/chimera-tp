@@ -1,0 +1,510 @@
+{
+  "schema": "chimera.daemon-stage-peaks/1",
+  "measured_utc": "2026-11-26T17:41:51.202520+00:00",
+  "scope": "Three fresh processes per OS with the same saved Python sources, native libraries, private loopback ports and empty state. Includes the in-process HTTP measurement client and its threads. High-water marks are cumulative for each PID.",
+  "windows": {
+    "host": "DESKTOP-63643J4",
+    "os": "win32",
+    "runs": [
+      {
+        "pid": 4012,
+        "python": "3.11.7",
+        "stages": [
+          {
+            "stage": "interpreter",
+            "rss_bytes": 23744512,
+            "peak_bytes": 23744512,
+            "elapsed_s": 0.0
+          },
+          {
+            "stage": "package_import",
+            "rss_bytes": 24424448,
+            "peak_bytes": 24424448,
+            "elapsed_s": 0.007
+          },
+          {
+            "stage": "dashboard_import",
+            "rss_bytes": 41447424,
+            "peak_bytes": 43302912,
+            "elapsed_s": 0.366
+          },
+          {
+            "stage": "daemon_start",
+            "rss_bytes": 66232320,
+            "peak_bytes": 67141632,
+            "elapsed_s": 0.886
+          },
+          {
+            "stage": "beacon_health_pulse",
+            "rss_bytes": 62382080,
+            "peak_bytes": 67141632,
+            "elapsed_s": 0.942
+          },
+          {
+            "stage": "vsa_stats",
+            "rss_bytes": 63815680,
+            "peak_bytes": 67141632,
+            "elapsed_s": 1.991
+          },
+          {
+            "stage": "cosmos_omega_concurrent",
+            "rss_bytes": 65069056,
+            "peak_bytes": 67141632,
+            "elapsed_s": 2.078
+          },
+          {
+            "stage": "exile_coordinator",
+            "rss_bytes": 65867776,
+            "peak_bytes": 67141632,
+            "elapsed_s": 2.094
+          },
+          {
+            "stage": "/api/status",
+            "rss_bytes": 65945600,
+            "peak_bytes": 67141632,
+            "elapsed_s": 2.1
+          },
+          {
+            "stage": "/api/pulse",
+            "rss_bytes": 65957888,
+            "peak_bytes": 67141632,
+            "elapsed_s": 2.105
+          },
+          {
+            "stage": "/v1/truth-matrix",
+            "rss_bytes": 65933312,
+            "peak_bytes": 67141632,
+            "elapsed_s": 2.129
+          },
+          {
+            "stage": "dashboard_concurrent",
+            "rss_bytes": 66048000,
+            "peak_bytes": 67141632,
+            "elapsed_s": 2.148
+          }
+        ],
+        "first_observed_at_or_above_80_mib": null
+      },
+      {
+        "pid": 12052,
+        "python": "3.11.7",
+        "stages": [
+          {
+            "stage": "interpreter",
+            "rss_bytes": 23883776,
+            "peak_bytes": 23883776,
+            "elapsed_s": 0.0
+          },
+          {
+            "stage": "package_import",
+            "rss_bytes": 24580096,
+            "peak_bytes": 24580096,
+            "elapsed_s": 0.007
+          },
+          {
+            "stage": "dashboard_import",
+            "rss_bytes": 42467328,
+            "peak_bytes": 43311104,
+            "elapsed_s": 0.399
+          },
+          {
+            "stage": "daemon_start",
+            "rss_bytes": 62201856,
+            "peak_bytes": 67534848,
+            "elapsed_s": 0.947
+          },
+          {
+            "stage": "beacon_health_pulse",
+            "rss_bytes": 62562304,
+            "peak_bytes": 67534848,
+            "elapsed_s": 1.016
+          },
+          {
+            "stage": "vsa_stats",
+            "rss_bytes": 63889408,
+            "peak_bytes": 67534848,
+            "elapsed_s": 2.051
+          },
+          {
+            "stage": "cosmos_omega_concurrent",
+            "rss_bytes": 65605632,
+            "peak_bytes": 67534848,
+            "elapsed_s": 2.141
+          },
+          {
+            "stage": "exile_coordinator",
+            "rss_bytes": 66068480,
+            "peak_bytes": 67534848,
+            "elapsed_s": 2.158
+          },
+          {
+            "stage": "/api/status",
+            "rss_bytes": 66146304,
+            "peak_bytes": 67534848,
+            "elapsed_s": 2.164
+          },
+          {
+            "stage": "/api/pulse",
+            "rss_bytes": 66183168,
+            "peak_bytes": 67534848,
+            "elapsed_s": 2.19
+          },
+          {
+            "stage": "/v1/truth-matrix",
+            "rss_bytes": 66179072,
+            "peak_bytes": 67534848,
+            "elapsed_s": 2.203
+          },
+          {
+            "stage": "dashboard_concurrent",
+            "rss_bytes": 66228224,
+            "peak_bytes": 67534848,
+            "elapsed_s": 2.238
+          }
+        ],
+        "first_observed_at_or_above_80_mib": null
+      },
+      {
+        "pid": 6872,
+        "python": "3.11.7",
+        "stages": [
+          {
+            "stage": "interpreter",
+            "rss_bytes": 23752704,
+            "peak_bytes": 23752704,
+            "elapsed_s": 0.0
+          },
+          {
+            "stage": "package_import",
+            "rss_bytes": 24444928,
+            "peak_bytes": 24444928,
+            "elapsed_s": 0.005
+          },
+          {
+            "stage": "dashboard_import",
+            "rss_bytes": 42258432,
+            "peak_bytes": 43454464,
+            "elapsed_s": 0.343
+          },
+          {
+            "stage": "daemon_start",
+            "rss_bytes": 66011136,
+            "peak_bytes": 66703360,
+            "elapsed_s": 0.873
+          },
+          {
+            "stage": "beacon_health_pulse",
+            "rss_bytes": 62263296,
+            "peak_bytes": 66703360,
+            "elapsed_s": 0.965
+          },
+          {
+            "stage": "vsa_stats",
+            "rss_bytes": 64118784,
+            "peak_bytes": 66703360,
+            "elapsed_s": 2.017
+          },
+          {
+            "stage": "cosmos_omega_concurrent",
+            "rss_bytes": 65695744,
+            "peak_bytes": 66703360,
+            "elapsed_s": 2.098
+          },
+          {
+            "stage": "exile_coordinator",
+            "rss_bytes": 66236416,
+            "peak_bytes": 66703360,
+            "elapsed_s": 2.113
+          },
+          {
+            "stage": "/api/status",
+            "rss_bytes": 66244608,
+            "peak_bytes": 66703360,
+            "elapsed_s": 2.13
+          },
+          {
+            "stage": "/api/pulse",
+            "rss_bytes": 66289664,
+            "peak_bytes": 66703360,
+            "elapsed_s": 2.144
+          },
+          {
+            "stage": "/v1/truth-matrix",
+            "rss_bytes": 66265088,
+            "peak_bytes": 66703360,
+            "elapsed_s": 2.146
+          },
+          {
+            "stage": "dashboard_concurrent",
+            "rss_bytes": 66371584,
+            "peak_bytes": 66703360,
+            "elapsed_s": 2.166
+          }
+        ],
+        "first_observed_at_or_above_80_mib": null
+      }
+    ],
+    "max_kernel_peak_mib": 64.40625
+  },
+  "linux": {
+    "host": "svhome",
+    "os": "linux",
+    "runs": [
+      {
+        "pid": 3938002,
+        "python": "3.14.4",
+        "stages": [
+          {
+            "stage": "interpreter",
+            "rss_bytes": 26152960,
+            "peak_bytes": 26152960,
+            "elapsed_s": 0.0
+          },
+          {
+            "stage": "package_import",
+            "rss_bytes": 26873856,
+            "peak_bytes": 26873856,
+            "elapsed_s": 0.003
+          },
+          {
+            "stage": "dashboard_import",
+            "rss_bytes": 44097536,
+            "peak_bytes": 44097536,
+            "elapsed_s": 0.452
+          },
+          {
+            "stage": "daemon_start",
+            "rss_bytes": 45957120,
+            "peak_bytes": 45957120,
+            "elapsed_s": 0.772
+          },
+          {
+            "stage": "beacon_health_pulse",
+            "rss_bytes": 46964736,
+            "peak_bytes": 46964736,
+            "elapsed_s": 0.787
+          },
+          {
+            "stage": "vsa_stats",
+            "rss_bytes": 48971776,
+            "peak_bytes": 48971776,
+            "elapsed_s": 1.824
+          },
+          {
+            "stage": "cosmos_omega_concurrent",
+            "rss_bytes": 53755904,
+            "peak_bytes": 53755904,
+            "elapsed_s": 1.862
+          },
+          {
+            "stage": "exile_coordinator",
+            "rss_bytes": 55980032,
+            "peak_bytes": 55980032,
+            "elapsed_s": 1.885
+          },
+          {
+            "stage": "/api/status",
+            "rss_bytes": 56266752,
+            "peak_bytes": 56266752,
+            "elapsed_s": 1.889
+          },
+          {
+            "stage": "/api/pulse",
+            "rss_bytes": 56279040,
+            "peak_bytes": 56279040,
+            "elapsed_s": 1.891
+          },
+          {
+            "stage": "/v1/truth-matrix",
+            "rss_bytes": 56291328,
+            "peak_bytes": 56291328,
+            "elapsed_s": 1.893
+          },
+          {
+            "stage": "dashboard_concurrent",
+            "rss_bytes": 56406016,
+            "peak_bytes": 56406016,
+            "elapsed_s": 1.913
+          }
+        ],
+        "first_observed_at_or_above_80_mib": null
+      },
+      {
+        "pid": 3938096,
+        "python": "3.14.4",
+        "stages": [
+          {
+            "stage": "interpreter",
+            "rss_bytes": 26267648,
+            "peak_bytes": 26267648,
+            "elapsed_s": 0.0
+          },
+          {
+            "stage": "package_import",
+            "rss_bytes": 26988544,
+            "peak_bytes": 26988544,
+            "elapsed_s": 0.003
+          },
+          {
+            "stage": "dashboard_import",
+            "rss_bytes": 44048384,
+            "peak_bytes": 44048384,
+            "elapsed_s": 0.463
+          },
+          {
+            "stage": "daemon_start",
+            "rss_bytes": 46116864,
+            "peak_bytes": 46116864,
+            "elapsed_s": 0.943
+          },
+          {
+            "stage": "beacon_health_pulse",
+            "rss_bytes": 47058944,
+            "peak_bytes": 47058944,
+            "elapsed_s": 0.959
+          },
+          {
+            "stage": "vsa_stats",
+            "rss_bytes": 49057792,
+            "peak_bytes": 49057792,
+            "elapsed_s": 1.995
+          },
+          {
+            "stage": "cosmos_omega_concurrent",
+            "rss_bytes": 53854208,
+            "peak_bytes": 53854208,
+            "elapsed_s": 2.037
+          },
+          {
+            "stage": "exile_coordinator",
+            "rss_bytes": 54300672,
+            "peak_bytes": 54300672,
+            "elapsed_s": 2.058
+          },
+          {
+            "stage": "/api/status",
+            "rss_bytes": 54591488,
+            "peak_bytes": 54591488,
+            "elapsed_s": 2.062
+          },
+          {
+            "stage": "/api/pulse",
+            "rss_bytes": 54599680,
+            "peak_bytes": 54599680,
+            "elapsed_s": 2.065
+          },
+          {
+            "stage": "/v1/truth-matrix",
+            "rss_bytes": 54607872,
+            "peak_bytes": 54607872,
+            "elapsed_s": 2.066
+          },
+          {
+            "stage": "dashboard_concurrent",
+            "rss_bytes": 54747136,
+            "peak_bytes": 54747136,
+            "elapsed_s": 2.096
+          }
+        ],
+        "first_observed_at_or_above_80_mib": null
+      },
+      {
+        "pid": 3938190,
+        "python": "3.14.4",
+        "stages": [
+          {
+            "stage": "interpreter",
+            "rss_bytes": 26189824,
+            "peak_bytes": 26189824,
+            "elapsed_s": 0.0
+          },
+          {
+            "stage": "package_import",
+            "rss_bytes": 26910720,
+            "peak_bytes": 26910720,
+            "elapsed_s": 0.003
+          },
+          {
+            "stage": "dashboard_import",
+            "rss_bytes": 44134400,
+            "peak_bytes": 44134400,
+            "elapsed_s": 0.461
+          },
+          {
+            "stage": "daemon_start",
+            "rss_bytes": 46018560,
+            "peak_bytes": 46018560,
+            "elapsed_s": 0.855
+          },
+          {
+            "stage": "beacon_health_pulse",
+            "rss_bytes": 47050752,
+            "peak_bytes": 47050752,
+            "elapsed_s": 0.869
+          },
+          {
+            "stage": "vsa_stats",
+            "rss_bytes": 49049600,
+            "peak_bytes": 49049600,
+            "elapsed_s": 1.94
+          },
+          {
+            "stage": "cosmos_omega_concurrent",
+            "rss_bytes": 53846016,
+            "peak_bytes": 53846016,
+            "elapsed_s": 1.979
+          },
+          {
+            "stage": "exile_coordinator",
+            "rss_bytes": 54300672,
+            "peak_bytes": 54300672,
+            "elapsed_s": 2.0
+          },
+          {
+            "stage": "/api/status",
+            "rss_bytes": 54591488,
+            "peak_bytes": 54591488,
+            "elapsed_s": 2.003
+          },
+          {
+            "stage": "/api/pulse",
+            "rss_bytes": 54599680,
+            "peak_bytes": 54599680,
+            "elapsed_s": 2.006
+          },
+          {
+            "stage": "/v1/truth-matrix",
+            "rss_bytes": 54607872,
+            "peak_bytes": 54607872,
+            "elapsed_s": 2.007
+          },
+          {
+            "stage": "dashboard_concurrent",
+            "rss_bytes": 54784000,
+            "peak_bytes": 54784000,
+            "elapsed_s": 2.031
+          }
+        ],
+        "first_observed_at_or_above_80_mib": null
+      }
+    ],
+    "max_kernel_peak_mib": 53.79296875,
+    "live_daemon_observed": {
+      "daemon_pid": 3937603,
+      "daemon_proc_status": {
+        "VmHWM": "81544",
+        "VmRSS": "68356",
+        "Threads": "28"
+      },
+      "rss_unit": "KiB",
+      "sqlite": "3.46.1",
+      "native_sha256": "64e250008d7ed1884b1225607866179c1d38cb24deb62b6d3e343a0f895b53e2",
+      "working_directory": "/home/svhome/.chimera/guarded-builds/job-fog221_1"
+    }
+  },
+  "windows_native_sha256": "1a7006fe93da5bce618d93f647c6bd67fecd45d201a76c6c1810c3a09fe5e880",
+  "worker_snapshot": "dea3bd9ea058925374c849142d1a3bb459bb973fa5611172f76ee0a50512e205",
+  "worker_attempt": "bd2bfe9381d646aba7a5cb6f821a35ea",
+  "limits_verified": true,
+  "temporary_workspaces_removed": true
+}

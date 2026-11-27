@@ -1,0 +1,1532 @@
+{
+  "schema": "chimera.hyperdesk_ab.v1",
+  "created_at": "2026-11-26T11:08:03.456578+00:00",
+  "host": {
+    "os": "nt",
+    "platform": "win32",
+    "cpu_threads": 12,
+    "urban_mask_hex": "0xff",
+    "industrial_mask_hex": "0xf00",
+    "full_mask_hex": "0xfff",
+    "hard_cage_cap_pct": 35,
+    "live_daemon_isolated": true
+  },
+  "config": {
+    "pairs": 10,
+    "schedule_orders": [
+      "AB",
+      "BA",
+      "AB",
+      "BA",
+      "AB",
+      "BA",
+      "AB",
+      "BA",
+      "AB",
+      "BA"
+    ],
+    "frames": 180,
+    "target_fps": 60.0,
+    "frame_budget_ms": 16.6667,
+    "vertices": 3200,
+    "workers": 12,
+    "jobs_per_worker": 210,
+    "cooldown_s": 0.25
+  },
+  "decision": "MIXED_KEEP_OPT_IN",
+  "decision_rule": {
+    "p99_reduction_pct_min": 20.0,
+    "build_time_delta_pct_max": 10.0,
+    "median_p99_reduction_pct": 92.986,
+    "median_build_time_delta_pct": 239.973
+  },
+  "summary": {
+    "p99_reduction_pct": {
+      "mean": 92.258,
+      "median": 92.986,
+      "p25": 91.118,
+      "p75": 94.643,
+      "min": 85.709,
+      "max": 96.708
+    },
+    "build_time_delta_pct": {
+      "mean": 338.06,
+      "median": 239.973,
+      "p25": 184.934,
+      "p75": 292.751,
+      "min": 114.347,
+      "max": 868.471
+    },
+    "condition_a": {
+      "p50_ms": {
+        "mean": 20.358,
+        "median": 18.669,
+        "p25": 14.926,
+        "p75": 25.843,
+        "min": 14.358,
+        "max": 29.107
+      },
+      "p95_ms": {
+        "mean": 50.065,
+        "median": 49.82,
+        "p25": 36.253,
+        "p75": 62.965,
+        "min": 29.454,
+        "max": 75.315
+      },
+      "p99_ms": {
+        "mean": 69.887,
+        "median": 65.022,
+        "p25": 51.914,
+        "p75": 78.969,
+        "min": 33.07,
+        "max": 134.309
+      },
+      "dropped_frames_pct": {
+        "mean": 55.222,
+        "median": 54.722,
+        "p25": 45.694,
+        "p75": 66.805,
+        "min": 35.0,
+        "max": 74.444
+      },
+      "build_time_s": {
+        "mean": 6.818,
+        "median": 6.608,
+        "p25": 5.372,
+        "p75": 7.938,
+        "min": 5.181,
+        "max": 8.995
+      },
+      "working_set_mb": {
+        "mean": 355.111,
+        "median": 374.101,
+        "p25": 285.123,
+        "p75": 434.655,
+        "min": 152.527,
+        "max": 500.771
+      },
+      "private_commit_mb": {
+        "mean": 459.062,
+        "median": 459.41,
+        "p25": 458.032,
+        "p75": 460.45,
+        "min": 456.183,
+        "max": 461.045
+      },
+      "total_page_fault_count": {
+        "mean": 2108198.3,
+        "median": 2110469.0,
+        "p25": 2081921.25,
+        "p75": 2127745.5,
+        "min": 2054265.0,
+        "max": 2167603.0
+      },
+      "hard_page_faults_per_s": {
+        "mean": 101.602,
+        "median": 65.242,
+        "p25": 21.674,
+        "p75": 99.215,
+        "min": 2.406,
+        "max": 349.388
+      },
+      "pages_input_per_s": {
+        "mean": 784.485,
+        "median": 350.147,
+        "p25": 177.963,
+        "p75": 719.638,
+        "min": 19.443,
+        "max": 3594.606
+      },
+      "soft_page_faults_per_s": {
+        "mean": 323151.559,
+        "median": 318349.776,
+        "p25": 266913.484,
+        "p75": 393314.795,
+        "min": 228333.01,
+        "max": 418323.311
+      }
+    },
+    "condition_b": {
+      "p50_ms": {
+        "mean": 2.305,
+        "median": 2.412,
+        "p25": 2.035,
+        "p75": 2.494,
+        "min": 1.873,
+        "max": 2.676
+      },
+      "p95_ms": {
+        "mean": 3.788,
+        "median": 3.779,
+        "p25": 3.673,
+        "p75": 4.049,
+        "min": 3.014,
+        "max": 4.491
+      },
+      "p99_ms": {
+        "mean": 4.813,
+        "median": 4.417,
+        "p25": 4.063,
+        "p75": 4.685,
+        "min": 3.184,
+        "max": 10.114
+      },
+      "dropped_frames_pct": {
+        "mean": 0.111,
+        "median": 0.0,
+        "p25": 0.0,
+        "p75": 0.0,
+        "min": 0.0,
+        "max": 1.111
+      },
+      "build_time_s": {
+        "mean": 27.851,
+        "median": 21.14,
+        "p25": 19.433,
+        "p75": 32.486,
+        "min": 18.673,
+        "max": 53.861
+      },
+      "working_set_mb": {
+        "mean": 509.888,
+        "median": 508.09,
+        "p25": 503.675,
+        "p75": 517.445,
+        "min": 496.937,
+        "max": 526.756
+      },
+      "private_commit_mb": {
+        "mean": 458.678,
+        "median": 458.762,
+        "p25": 458.318,
+        "p75": 459.26,
+        "min": 456.336,
+        "max": 461.738
+      },
+      "total_page_fault_count": {
+        "mean": 2064801.2,
+        "median": 2064732.0,
+        "p25": 2051534.25,
+        "p75": 2083745.75,
+        "min": 2011324.0,
+        "max": 2105610.0
+      },
+      "hard_page_faults_per_s": {
+        "mean": 73.784,
+        "median": 36.962,
+        "p25": 24.844,
+        "p75": 103.956,
+        "min": 12.651,
+        "max": 257.975
+      },
+      "pages_input_per_s": {
+        "mean": 916.444,
+        "median": 254.66,
+        "p25": 151.683,
+        "p75": 1589.335,
+        "min": 108.096,
+        "max": 3540.27
+      },
+      "soft_page_faults_per_s": {
+        "mean": 86071.305,
+        "median": 97403.33,
+        "p25": 66252.631,
+        "p75": 107490.266,
+        "min": 37223.353,
+        "max": 111381.068
+      }
+    }
+  },
+  "pairs": [
+    {
+      "pair": 1,
+      "order": "AB",
+      "run_a": {
+        "condition": "A",
+        "label": "baseline",
+        "run_wall_s": 5.5809,
+        "fg": {
+          "frames": 180,
+          "elapsed_s": 4.1865,
+          "p50_ms": 27.07,
+          "p95_ms": 60.285,
+          "p99_ms": 68.757,
+          "mean_ms": 27.594,
+          "max_ms": 71.757,
+          "render_p50_ms": 2.784,
+          "dropped_frames": 125,
+          "dropped_frames_pct": 69.444,
+          "checksum": 21273
+        },
+        "bg": {
+          "workers": 12,
+          "jobs_per_worker": 210,
+          "jobs_total": 2520,
+          "build_time_s": 5.5615,
+          "worker_max_elapsed_s": 5.2325,
+          "checksum": 120900003397004864675
+        },
+        "memory": {
+          "working_set_mb": 436.302,
+          "end_working_set_mb": 569.082,
+          "peak_working_set_mb": 593.879,
+          "private_commit_mb": 460.43,
+          "fg_working_set_mb": 36.629,
+          "fg_private_commit_mb": 28.129,
+          "bg_working_set_mb": 532.453,
+          "bg_private_commit_mb": 432.301,
+          "total_page_fault_count": 2070172
+        },
+        "faults": {
+          "hard_page_faults_per_s": 77.066,
+          "pages_input_per_s": 362.178,
+          "system_total_page_faults_per_s": 368582.143,
+          "system_soft_page_faults_per_s": 368505.077,
+          "proc_delta_faults_per_s": 370939.708,
+          "soft_page_faults_per_s": 370862.642,
+          "pdh_active": true,
+          "pdh_samples": 8
+        },
+        "governance": {
+          "fg_affinity_applied": false,
+          "fg_priority_applied": false,
+          "bg_affinity_applied_count": 0,
+          "bg_eco_qos_count": 0,
+          "bg_mem_priority_count": 0,
+          "bg_priority_count": 0,
+          "bg_hard_caged_count": 0,
+          "hard_cage_cap_pct": 100,
+          "timer_res_ms": 0.0
+        }
+      },
+      "run_b": {
+        "condition": "B",
+        "label": "hyperdesk",
+        "run_wall_s": 53.8621,
+        "fg": {
+          "frames": 180,
+          "elapsed_s": 2.9851,
+          "p50_ms": 1.873,
+          "p95_ms": 3.014,
+          "p99_ms": 3.184,
+          "mean_ms": 2.012,
+          "max_ms": 3.204,
+          "render_p50_ms": 1.533,
+          "dropped_frames": 0,
+          "dropped_frames_pct": 0.0,
+          "checksum": 21273
+        },
+        "bg": {
+          "workers": 12,
+          "jobs_per_worker": 210,
+          "jobs_total": 2520,
+          "build_time_s": 53.8615,
+          "worker_max_elapsed_s": 53.503,
+          "checksum": 120900003397004864675
+        },
+        "memory": {
+          "working_set_mb": 520.371,
+          "end_working_set_mb": 554.645,
+          "peak_working_set_mb": 597.03,
+          "private_commit_mb": 461.738,
+          "fg_working_set_mb": 36.637,
+          "fg_private_commit_mb": 28.094,
+          "bg_working_set_mb": 518.008,
+          "bg_private_commit_mb": 433.644,
+          "total_page_fault_count": 2011324
+        },
+        "faults": {
+          "hard_page_faults_per_s": 118.731,
+          "pages_input_per_s": 1945.952,
+          "system_total_page_faults_per_s": 181450.375,
+          "system_soft_page_faults_per_s": 181331.644,
+          "proc_delta_faults_per_s": 37342.084,
+          "soft_page_faults_per_s": 37223.353,
+          "pdh_active": true,
+          "pdh_samples": 320
+        },
+        "governance": {
+          "fg_affinity_applied": true,
+          "fg_priority_applied": true,
+          "bg_affinity_applied_count": 12,
+          "bg_eco_qos_count": 12,
+          "bg_mem_priority_count": 12,
+          "bg_priority_count": 12,
+          "bg_hard_caged_count": 12,
+          "hard_cage_cap_pct": 35,
+          "timer_res_ms": 0.5
+        }
+      },
+      "deltas": {
+        "p99_reduction_pct": 95.369,
+        "p95_reduction_pct": 95.0,
+        "p50_reduction_pct": 93.081,
+        "dropped_frames_delta_pct": -69.444,
+        "build_time_delta_pct": 868.471
+      }
+    },
+    {
+      "pair": 2,
+      "order": "BA",
+      "run_a": {
+        "condition": "A",
+        "label": "baseline",
+        "run_wall_s": 5.2444,
+        "fg": {
+          "frames": 180,
+          "elapsed_s": 3.3456,
+          "p50_ms": 14.384,
+          "p95_ms": 49.297,
+          "p99_ms": 79.657,
+          "mean_ms": 18.681,
+          "max_ms": 90.922,
+          "render_p50_ms": 2.951,
+          "dropped_frames": 80,
+          "dropped_frames_pct": 44.444,
+          "checksum": 21273
+        },
+        "bg": {
+          "workers": 12,
+          "jobs_per_worker": 210,
+          "jobs_total": 2520,
+          "build_time_s": 5.2437,
+          "worker_max_elapsed_s": 4.3397,
+          "checksum": 120900003397004864675
+        },
+        "memory": {
+          "working_set_mb": 500.771,
+          "end_working_set_mb": 566.155,
+          "peak_working_set_mb": 593.816,
+          "private_commit_mb": 456.223,
+          "fg_working_set_mb": 36.395,
+          "fg_private_commit_mb": 27.793,
+          "bg_working_set_mb": 529.76,
+          "bg_private_commit_mb": 428.43,
+          "total_page_fault_count": 2102440
+        },
+        "faults": {
+          "hard_page_faults_per_s": 19.543,
+          "pages_input_per_s": 130.638,
+          "system_total_page_faults_per_s": 445907.932,
+          "system_soft_page_faults_per_s": 445888.389,
+          "proc_delta_faults_per_s": 400891.784,
+          "soft_page_faults_per_s": 400872.241,
+          "pdh_active": true,
+          "pdh_samples": 17
+        },
+        "governance": {
+          "fg_affinity_applied": false,
+          "fg_priority_applied": false,
+          "bg_affinity_applied_count": 0,
+          "bg_eco_qos_count": 0,
+          "bg_mem_priority_count": 0,
+          "bg_priority_count": 0,
+          "bg_hard_caged_count": 0,
+          "hard_cage_cap_pct": 100,
+          "timer_res_ms": 0.0
+        }
+      },
+      "run_b": {
+        "condition": "B",
+        "label": "hyperdesk",
+        "run_wall_s": 47.7298,
+        "fg": {
+          "frames": 180,
+          "elapsed_s": 2.9851,
+          "p50_ms": 1.951,
+          "p95_ms": 3.66,
+          "p99_ms": 10.114,
+          "mean_ms": 2.42,
+          "max_ms": 26.621,
+          "render_p50_ms": 1.649,
+          "dropped_frames": 2,
+          "dropped_frames_pct": 1.111,
+          "checksum": 21273
+        },
+        "bg": {
+          "workers": 12,
+          "jobs_per_worker": 210,
+          "jobs_total": 2520,
+          "build_time_s": 47.7293,
+          "worker_max_elapsed_s": 47.7143,
+          "checksum": 120900003397004864675
+        },
+        "memory": {
+          "working_set_mb": 519.106,
+          "end_working_set_mb": 567.779,
+          "peak_working_set_mb": 593.048,
+          "private_commit_mb": 459.308,
+          "fg_working_set_mb": 36.453,
+          "fg_private_commit_mb": 27.719,
+          "bg_working_set_mb": 531.326,
+          "bg_private_commit_mb": 431.589,
+          "total_page_fault_count": 2062926
+        },
+        "faults": {
+          "hard_page_faults_per_s": 108.777,
+          "pages_input_per_s": 735.081,
+          "system_total_page_faults_per_s": 178216.301,
+          "system_soft_page_faults_per_s": 178107.524,
+          "proc_delta_faults_per_s": 43220.948,
+          "soft_page_faults_per_s": 43112.171,
+          "pdh_active": true,
+          "pdh_samples": 285
+        },
+        "governance": {
+          "fg_affinity_applied": true,
+          "fg_priority_applied": true,
+          "bg_affinity_applied_count": 12,
+          "bg_eco_qos_count": 12,
+          "bg_mem_priority_count": 12,
+          "bg_priority_count": 12,
+          "bg_hard_caged_count": 12,
+          "hard_cage_cap_pct": 35,
+          "timer_res_ms": 0.5
+        }
+      },
+      "deltas": {
+        "p99_reduction_pct": 87.303,
+        "p95_reduction_pct": 92.576,
+        "p50_reduction_pct": 86.436,
+        "dropped_frames_delta_pct": -43.333,
+        "build_time_delta_pct": 810.222
+      }
+    },
+    {
+      "pair": 3,
+      "order": "AB",
+      "run_a": {
+        "condition": "A",
+        "label": "baseline",
+        "run_wall_s": 8.9308,
+        "fg": {
+          "frames": 180,
+          "elapsed_s": 3.5918,
+          "p50_ms": 20.201,
+          "p95_ms": 50.344,
+          "p99_ms": 61.287,
+          "mean_ms": 21.369,
+          "max_ms": 66.944,
+          "render_p50_ms": 3.112,
+          "dropped_frames": 105,
+          "dropped_frames_pct": 58.333,
+          "checksum": 21273
+        },
+        "bg": {
+          "workers": 12,
+          "jobs_per_worker": 210,
+          "jobs_total": 2520,
+          "build_time_s": 8.9304,
+          "worker_max_elapsed_s": 6.33,
+          "checksum": 120900003397004864675
+        },
+        "memory": {
+          "working_set_mb": 152.527,
+          "end_working_set_mb": 565.641,
+          "peak_working_set_mb": 593.419,
+          "private_commit_mb": 456.183,
+          "fg_working_set_mb": 36.664,
+          "fg_private_commit_mb": 27.93,
+          "bg_working_set_mb": 528.977,
+          "bg_private_commit_mb": 428.253,
+          "total_page_fault_count": 2140956
+        },
+        "faults": {
+          "hard_page_faults_per_s": 349.388,
+          "pages_input_per_s": 3594.606,
+          "system_total_page_faults_per_s": 449473.751,
+          "system_soft_page_faults_per_s": 449124.363,
+          "proc_delta_faults_per_s": 239727.292,
+          "soft_page_faults_per_s": 239377.904,
+          "pdh_active": true,
+          "pdh_samples": 26
+        },
+        "governance": {
+          "fg_affinity_applied": false,
+          "fg_priority_applied": false,
+          "bg_affinity_applied_count": 0,
+          "bg_eco_qos_count": 0,
+          "bg_mem_priority_count": 0,
+          "bg_priority_count": 0,
+          "bg_hard_caged_count": 0,
+          "hard_cage_cap_pct": 100,
+          "timer_res_ms": 0.0
+        }
+      },
+      "run_b": {
+        "condition": "B",
+        "label": "hyperdesk",
+        "run_wall_s": 35.9691,
+        "fg": {
+          "frames": 180,
+          "elapsed_s": 2.9849,
+          "p50_ms": 1.913,
+          "p95_ms": 3.18,
+          "p99_ms": 3.393,
+          "mean_ms": 2.081,
+          "max_ms": 3.895,
+          "render_p50_ms": 1.621,
+          "dropped_frames": 0,
+          "dropped_frames_pct": 0.0,
+          "checksum": 21273
+        },
+        "bg": {
+          "workers": 12,
+          "jobs_per_worker": 210,
+          "jobs_total": 2520,
+          "build_time_s": 35.9687,
+          "worker_max_elapsed_s": 35.9539,
+          "checksum": 120900003397004864675
+        },
+        "memory": {
+          "working_set_mb": 526.756,
+          "end_working_set_mb": 567.613,
+          "peak_working_set_mb": 592.668,
+          "private_commit_mb": 459.358,
+          "fg_working_set_mb": 36.805,
+          "fg_private_commit_mb": 27.969,
+          "bg_working_set_mb": 530.808,
+          "bg_private_commit_mb": 431.389,
+          "total_page_fault_count": 2066538
+        },
+        "faults": {
+          "hard_page_faults_per_s": 257.975,
+          "pages_input_per_s": 1874.086,
+          "system_total_page_faults_per_s": 255074.999,
+          "system_soft_page_faults_per_s": 254817.024,
+          "proc_delta_faults_per_s": 57453.176,
+          "soft_page_faults_per_s": 57195.201,
+          "pdh_active": true,
+          "pdh_samples": 225
+        },
+        "governance": {
+          "fg_affinity_applied": true,
+          "fg_priority_applied": true,
+          "bg_affinity_applied_count": 12,
+          "bg_eco_qos_count": 12,
+          "bg_mem_priority_count": 12,
+          "bg_priority_count": 12,
+          "bg_hard_caged_count": 12,
+          "hard_cage_cap_pct": 35,
+          "timer_res_ms": 0.5
+        }
+      },
+      "deltas": {
+        "p99_reduction_pct": 94.464,
+        "p95_reduction_pct": 93.683,
+        "p50_reduction_pct": 90.53,
+        "dropped_frames_delta_pct": -58.333,
+        "build_time_delta_pct": 302.767
+      }
+    },
+    {
+      "pair": 4,
+      "order": "BA",
+      "run_a": {
+        "condition": "A",
+        "label": "baseline",
+        "run_wall_s": 6.2587,
+        "fg": {
+          "frames": 180,
+          "elapsed_s": 4.2037,
+          "p50_ms": 23.993,
+          "p95_ms": 75.315,
+          "p99_ms": 134.309,
+          "mean_ms": 29.443,
+          "max_ms": 164.32,
+          "render_p50_ms": 3.827,
+          "dropped_frames": 112,
+          "dropped_frames_pct": 62.222,
+          "checksum": 21273
+        },
+        "bg": {
+          "workers": 12,
+          "jobs_per_worker": 210,
+          "jobs_total": 2520,
+          "build_time_s": 6.2582,
+          "worker_max_elapsed_s": 6.2414,
+          "checksum": 120900003397004864675
+        },
+        "memory": {
+          "working_set_mb": 383.443,
+          "end_working_set_mb": 569.393,
+          "peak_working_set_mb": 594.855,
+          "private_commit_mb": 460.456,
+          "fg_working_set_mb": 36.488,
+          "fg_private_commit_mb": 27.898,
+          "bg_working_set_mb": 532.905,
+          "bg_private_commit_mb": 432.558,
+          "total_page_fault_count": 2118498
+        },
+        "faults": {
+          "hard_page_faults_per_s": 284.502,
+          "pages_input_per_s": 1575.218,
+          "system_total_page_faults_per_s": 5261916.094,
+          "system_soft_page_faults_per_s": 5261631.592,
+          "proc_delta_faults_per_s": 338490.24,
+          "soft_page_faults_per_s": 338205.738,
+          "pdh_active": true,
+          "pdh_samples": 11
+        },
+        "governance": {
+          "fg_affinity_applied": false,
+          "fg_priority_applied": false,
+          "bg_affinity_applied_count": 0,
+          "bg_eco_qos_count": 0,
+          "bg_mem_priority_count": 0,
+          "bg_priority_count": 0,
+          "bg_hard_caged_count": 0,
+          "hard_cage_cap_pct": 100,
+          "timer_res_ms": 0.0
+        }
+      },
+      "run_b": {
+        "condition": "B",
+        "label": "hyperdesk",
+        "run_wall_s": 20.5403,
+        "fg": {
+          "frames": 180,
+          "elapsed_s": 2.986,
+          "p50_ms": 2.564,
+          "p95_ms": 4.073,
+          "p99_ms": 4.422,
+          "mean_ms": 2.861,
+          "max_ms": 4.457,
+          "render_p50_ms": 2.215,
+          "dropped_frames": 0,
+          "dropped_frames_pct": 0.0,
+          "checksum": 21273
+        },
+        "bg": {
+          "workers": 12,
+          "jobs_per_worker": 210,
+          "jobs_total": 2520,
+          "build_time_s": 20.5399,
+          "worker_max_elapsed_s": 20.504,
+          "checksum": 120900003397004864675
+        },
+        "memory": {
+          "working_set_mb": 499.107,
+          "end_working_set_mb": 531.969,
+          "peak_working_set_mb": 593.774,
+          "private_commit_mb": 458.6,
+          "fg_working_set_mb": 36.797,
+          "fg_private_commit_mb": 27.996,
+          "bg_working_set_mb": 495.172,
+          "bg_private_commit_mb": 430.604,
+          "total_page_fault_count": 2083821
+        },
+        "faults": {
+          "hard_page_faults_per_s": 89.491,
+          "pages_input_per_s": 3540.27,
+          "system_total_page_faults_per_s": 226959.696,
+          "system_soft_page_faults_per_s": 226870.205,
+          "proc_delta_faults_per_s": 101450.356,
+          "soft_page_faults_per_s": 101360.865,
+          "pdh_active": true,
+          "pdh_samples": 130
+        },
+        "governance": {
+          "fg_affinity_applied": true,
+          "fg_priority_applied": true,
+          "bg_affinity_applied_count": 12,
+          "bg_eco_qos_count": 12,
+          "bg_mem_priority_count": 12,
+          "bg_priority_count": 12,
+          "bg_hard_caged_count": 12,
+          "hard_cage_cap_pct": 35,
+          "timer_res_ms": 1.0
+        }
+      },
+      "deltas": {
+        "p99_reduction_pct": 96.708,
+        "p95_reduction_pct": 94.592,
+        "p50_reduction_pct": 89.314,
+        "dropped_frames_delta_pct": -62.222,
+        "build_time_delta_pct": 228.208
+      }
+    },
+    {
+      "pair": 5,
+      "order": "AB",
+      "run_a": {
+        "condition": "A",
+        "label": "baseline",
+        "run_wall_s": 8.0038,
+        "fg": {
+          "frames": 180,
+          "elapsed_s": 3.2206,
+          "p50_ms": 16.46,
+          "p95_ms": 36.086,
+          "p99_ms": 51.901,
+          "mean_ms": 17.389,
+          "max_ms": 61.67,
+          "render_p50_ms": 3.73,
+          "dropped_frames": 89,
+          "dropped_frames_pct": 49.444,
+          "checksum": 21273
+        },
+        "bg": {
+          "workers": 12,
+          "jobs_per_worker": 210,
+          "jobs_total": 2520,
+          "build_time_s": 8.0034,
+          "worker_max_elapsed_s": 5.7566,
+          "checksum": 120900003397004864675
+        },
+        "memory": {
+          "working_set_mb": 179.359,
+          "end_working_set_mb": 569.952,
+          "peak_working_set_mb": 596.534,
+          "private_commit_mb": 460.852,
+          "fg_working_set_mb": 36.785,
+          "fg_private_commit_mb": 28.102,
+          "bg_working_set_mb": 533.167,
+          "bg_private_commit_mb": 432.75,
+          "total_page_fault_count": 2127072
+        },
+        "faults": {
+          "hard_page_faults_per_s": 53.417,
+          "pages_input_per_s": 338.115,
+          "system_total_page_faults_per_s": 229094.857,
+          "system_soft_page_faults_per_s": 229041.44,
+          "proc_delta_faults_per_s": 265756.341,
+          "soft_page_faults_per_s": 265702.924,
+          "pdh_active": true,
+          "pdh_samples": 21
+        },
+        "governance": {
+          "fg_affinity_applied": false,
+          "fg_priority_applied": false,
+          "bg_affinity_applied_count": 0,
+          "bg_eco_qos_count": 0,
+          "bg_mem_priority_count": 0,
+          "bg_priority_count": 0,
+          "bg_hard_caged_count": 0,
+          "hard_cage_cap_pct": 100,
+          "timer_res_ms": 0.0
+        }
+      },
+      "run_b": {
+        "condition": "B",
+        "label": "hyperdesk",
+        "run_wall_s": 21.7403,
+        "fg": {
+          "frames": 180,
+          "elapsed_s": 2.9856,
+          "p50_ms": 2.413,
+          "p95_ms": 3.975,
+          "p99_ms": 4.562,
+          "mean_ms": 2.618,
+          "max_ms": 4.742,
+          "render_p50_ms": 1.997,
+          "dropped_frames": 0,
+          "dropped_frames_pct": 0.0,
+          "checksum": 21273
+        },
+        "bg": {
+          "workers": 12,
+          "jobs_per_worker": 210,
+          "jobs_total": 2520,
+          "build_time_s": 21.7399,
+          "worker_max_elapsed_s": 21.733,
+          "checksum": 120900003397004864675
+        },
+        "memory": {
+          "working_set_mb": 506.61,
+          "end_working_set_mb": 567.718,
+          "peak_working_set_mb": 593.216,
+          "private_commit_mb": 458.589,
+          "fg_working_set_mb": 37.16,
+          "fg_private_commit_mb": 28.367,
+          "bg_working_set_mb": 530.558,
+          "bg_private_commit_mb": 430.222,
+          "total_page_fault_count": 2032339
+        },
+        "faults": {
+          "hard_page_faults_per_s": 36.904,
+          "pages_input_per_s": 157.888,
+          "system_total_page_faults_per_s": 225275.244,
+          "system_soft_page_faults_per_s": 225238.34,
+          "proc_delta_faults_per_s": 93482.699,
+          "soft_page_faults_per_s": 93445.795,
+          "pdh_active": true,
+          "pdh_samples": 138
+        },
+        "governance": {
+          "fg_affinity_applied": true,
+          "fg_priority_applied": true,
+          "bg_affinity_applied_count": 12,
+          "bg_eco_qos_count": 12,
+          "bg_mem_priority_count": 12,
+          "bg_priority_count": 12,
+          "bg_hard_caged_count": 12,
+          "hard_cage_cap_pct": 35,
+          "timer_res_ms": 1.0
+        }
+      },
+      "deltas": {
+        "p99_reduction_pct": 91.21,
+        "p95_reduction_pct": 88.985,
+        "p50_reduction_pct": 85.34,
+        "dropped_frames_delta_pct": -49.444,
+        "build_time_delta_pct": 171.633
+      }
+    },
+    {
+      "pair": 6,
+      "order": "BA",
+      "run_a": {
+        "condition": "A",
+        "label": "baseline",
+        "run_wall_s": 7.7431,
+        "fg": {
+          "frames": 180,
+          "elapsed_s": 4.2942,
+          "p50_ms": 29.107,
+          "p95_ms": 63.859,
+          "p99_ms": 76.907,
+          "mean_ms": 30.657,
+          "max_ms": 120.421,
+          "render_p50_ms": 3.74,
+          "dropped_frames": 134,
+          "dropped_frames_pct": 74.444,
+          "checksum": 21273
+        },
+        "bg": {
+          "workers": 12,
+          "jobs_per_worker": 210,
+          "jobs_total": 2520,
+          "build_time_s": 7.7427,
+          "worker_max_elapsed_s": 7.6486,
+          "checksum": 120900003397004864675
+        },
+        "memory": {
+          "working_set_mb": 364.759,
+          "end_working_set_mb": 568.479,
+          "peak_working_set_mb": 596.978,
+          "private_commit_mb": 459.469,
+          "fg_working_set_mb": 36.887,
+          "fg_private_commit_mb": 28.391,
+          "bg_working_set_mb": 531.592,
+          "bg_private_commit_mb": 431.078,
+          "total_page_fault_count": 2095668
+        },
+        "faults": {
+          "hard_page_faults_per_s": 103.598,
+          "pages_input_per_s": 722.245,
+          "system_total_page_faults_per_s": 287883.5,
+          "system_soft_page_faults_per_s": 287779.902,
+          "proc_delta_faults_per_s": 270648.761,
+          "soft_page_faults_per_s": 270545.163,
+          "pdh_active": true,
+          "pdh_samples": 15
+        },
+        "governance": {
+          "fg_affinity_applied": false,
+          "fg_priority_applied": false,
+          "bg_affinity_applied_count": 0,
+          "bg_eco_qos_count": 0,
+          "bg_mem_priority_count": 0,
+          "bg_priority_count": 0,
+          "bg_hard_caged_count": 0,
+          "hard_cage_cap_pct": 100,
+          "timer_res_ms": 0.0
+        }
+      },
+      "run_b": {
+        "condition": "B",
+        "label": "hyperdesk",
+        "run_wall_s": 22.0371,
+        "fg": {
+          "frames": 180,
+          "elapsed_s": 2.9864,
+          "p50_ms": 2.286,
+          "p95_ms": 3.838,
+          "p99_ms": 4.195,
+          "mean_ms": 2.445,
+          "max_ms": 4.604,
+          "render_p50_ms": 1.904,
+          "dropped_frames": 0,
+          "dropped_frames_pct": 0.0,
+          "checksum": 21273
+        },
+        "bg": {
+          "workers": 12,
+          "jobs_per_worker": 210,
+          "jobs_total": 2520,
+          "build_time_s": 22.0367,
+          "worker_max_elapsed_s": 22.0171,
+          "checksum": 120900003397004864675
+        },
+        "memory": {
+          "working_set_mb": 504.588,
+          "end_working_set_mb": 567.033,
+          "peak_working_set_mb": 593.851,
+          "private_commit_mb": 459.117,
+          "fg_working_set_mb": 36.48,
+          "fg_private_commit_mb": 27.82,
+          "bg_working_set_mb": 530.553,
+          "bg_private_commit_mb": 431.297,
+          "total_page_fault_count": 2059311
+        },
+        "faults": {
+          "hard_page_faults_per_s": 22.665,
+          "pages_input_per_s": 238.659,
+          "system_total_page_faults_per_s": 217187.633,
+          "system_soft_page_faults_per_s": 217164.968,
+          "proc_delta_faults_per_s": 93447.587,
+          "soft_page_faults_per_s": 93424.922,
+          "pdh_active": true,
+          "pdh_samples": 140
+        },
+        "governance": {
+          "fg_affinity_applied": true,
+          "fg_priority_applied": true,
+          "bg_affinity_applied_count": 12,
+          "bg_eco_qos_count": 12,
+          "bg_mem_priority_count": 12,
+          "bg_priority_count": 12,
+          "bg_hard_caged_count": 12,
+          "hard_cage_cap_pct": 35,
+          "timer_res_ms": 0.5
+        }
+      },
+      "deltas": {
+        "p99_reduction_pct": 94.545,
+        "p95_reduction_pct": 93.99,
+        "p50_reduction_pct": 92.146,
+        "dropped_frames_delta_pct": -74.444,
+        "build_time_delta_pct": 184.613
+      }
+    },
+    {
+      "pair": 7,
+      "order": "AB",
+      "run_a": {
+        "condition": "A",
+        "label": "baseline",
+        "run_wall_s": 6.9574,
+        "fg": {
+          "frames": 180,
+          "elapsed_s": 3.2633,
+          "p50_ms": 17.136,
+          "p95_ms": 36.753,
+          "p99_ms": 51.954,
+          "mean_ms": 18.768,
+          "max_ms": 68.62,
+          "render_p50_ms": 3.88,
+          "dropped_frames": 92,
+          "dropped_frames_pct": 51.111,
+          "checksum": 21273
+        },
+        "bg": {
+          "workers": 12,
+          "jobs_per_worker": 210,
+          "jobs_total": 2520,
+          "build_time_s": 6.957,
+          "worker_max_elapsed_s": 6.3775,
+          "checksum": 120900003397004864675
+        },
+        "memory": {
+          "working_set_mb": 337.51,
+          "end_working_set_mb": 570.007,
+          "peak_working_set_mb": 596.476,
+          "private_commit_mb": 461.045,
+          "fg_working_set_mb": 36.699,
+          "fg_private_commit_mb": 28.07,
+          "bg_working_set_mb": 533.308,
+          "bg_private_commit_mb": 432.975,
+          "total_page_fault_count": 2077339
+        },
+        "faults": {
+          "hard_page_faults_per_s": 86.066,
+          "pages_input_per_s": 711.816,
+          "system_total_page_faults_per_s": 1141451.171,
+          "system_soft_page_faults_per_s": 1141365.105,
+          "proc_delta_faults_per_s": 298579.88,
+          "soft_page_faults_per_s": 298493.814,
+          "pdh_active": true,
+          "pdh_samples": 14
+        },
+        "governance": {
+          "fg_affinity_applied": false,
+          "fg_priority_applied": false,
+          "bg_affinity_applied_count": 0,
+          "bg_eco_qos_count": 0,
+          "bg_mem_priority_count": 0,
+          "bg_priority_count": 0,
+          "bg_hard_caged_count": 0,
+          "hard_cage_cap_pct": 100,
+          "timer_res_ms": 0.0
+        }
+      },
+      "run_b": {
+        "condition": "B",
+        "label": "hyperdesk",
+        "run_wall_s": 19.8903,
+        "fg": {
+          "frames": 180,
+          "elapsed_s": 2.9858,
+          "p50_ms": 2.459,
+          "p95_ms": 3.71,
+          "p99_ms": 4.412,
+          "mean_ms": 2.63,
+          "max_ms": 5.083,
+          "render_p50_ms": 2.035,
+          "dropped_frames": 0,
+          "dropped_frames_pct": 0.0,
+          "checksum": 21273
+        },
+        "bg": {
+          "workers": 12,
+          "jobs_per_worker": 210,
+          "jobs_total": 2520,
+          "build_time_s": 19.8899,
+          "worker_max_elapsed_s": 19.8608,
+          "checksum": 120900003397004864675
+        },
+        "memory": {
+          "working_set_mb": 512.461,
+          "end_working_set_mb": 568.185,
+          "peak_working_set_mb": 593.156,
+          "private_commit_mb": 458.923,
+          "fg_working_set_mb": 36.559,
+          "fg_private_commit_mb": 27.934,
+          "bg_working_set_mb": 531.626,
+          "bg_private_commit_mb": 430.989,
+          "total_page_fault_count": 2105610
+        },
+        "faults": {
+          "hard_page_faults_per_s": 37.019,
+          "pages_input_per_s": 149.614,
+          "system_total_page_faults_per_s": 198585.274,
+          "system_soft_page_faults_per_s": 198548.255,
+          "proc_delta_faults_per_s": 105860.997,
+          "soft_page_faults_per_s": 105823.978,
+          "pdh_active": true,
+          "pdh_samples": 127
+        },
+        "governance": {
+          "fg_affinity_applied": true,
+          "fg_priority_applied": true,
+          "bg_affinity_applied_count": 12,
+          "bg_eco_qos_count": 12,
+          "bg_mem_priority_count": 12,
+          "bg_priority_count": 12,
+          "bg_hard_caged_count": 12,
+          "hard_cage_cap_pct": 35,
+          "timer_res_ms": 0.5
+        }
+      },
+      "deltas": {
+        "p99_reduction_pct": 91.508,
+        "p95_reduction_pct": 89.906,
+        "p50_reduction_pct": 85.65,
+        "dropped_frames_delta_pct": -51.111,
+        "build_time_delta_pct": 185.898
+      }
+    },
+    {
+      "pair": 8,
+      "order": "BA",
+      "run_a": {
+        "condition": "A",
+        "label": "baseline",
+        "run_wall_s": 5.3093,
+        "fg": {
+          "frames": 180,
+          "elapsed_s": 3.0943,
+          "p50_ms": 14.415,
+          "p95_ms": 31.712,
+          "p99_ms": 45.096,
+          "mean_ms": 16.217,
+          "max_ms": 47.134,
+          "render_p50_ms": 4.013,
+          "dropped_frames": 71,
+          "dropped_frames_pct": 39.444,
+          "checksum": 21273
+        },
+        "bg": {
+          "workers": 12,
+          "jobs_per_worker": 210,
+          "jobs_total": 2520,
+          "build_time_s": 5.3089,
+          "worker_max_elapsed_s": 5.3026,
+          "checksum": 120900003397004864675
+        },
+        "memory": {
+          "working_set_mb": 429.714,
+          "end_working_set_mb": 568.017,
+          "peak_working_set_mb": 594.661,
+          "private_commit_mb": 459.351,
+          "fg_working_set_mb": 36.707,
+          "fg_private_commit_mb": 28.043,
+          "bg_working_set_mb": 531.31,
+          "bg_private_commit_mb": 431.308,
+          "total_page_fault_count": 2127970
+        },
+        "faults": {
+          "hard_page_faults_per_s": 2.406,
+          "pages_input_per_s": 19.443,
+          "system_total_page_faults_per_s": 294775.297,
+          "system_soft_page_faults_per_s": 294772.891,
+          "proc_delta_faults_per_s": 400801.252,
+          "soft_page_faults_per_s": 400798.846,
+          "pdh_active": true,
+          "pdh_samples": 8
+        },
+        "governance": {
+          "fg_affinity_applied": false,
+          "fg_priority_applied": false,
+          "bg_affinity_applied_count": 0,
+          "bg_eco_qos_count": 0,
+          "bg_mem_priority_count": 0,
+          "bg_priority_count": 0,
+          "bg_hard_caged_count": 0,
+          "hard_cage_cap_pct": 100,
+          "timer_res_ms": 0.0
+        }
+      },
+      "run_b": {
+        "condition": "B",
+        "label": "hyperdesk",
+        "run_wall_s": 18.6739,
+        "fg": {
+          "frames": 180,
+          "elapsed_s": 2.9858,
+          "p50_ms": 2.505,
+          "p95_ms": 3.719,
+          "p99_ms": 4.019,
+          "mean_ms": 2.637,
+          "max_ms": 4.277,
+          "render_p50_ms": 2.108,
+          "dropped_frames": 0,
+          "dropped_frames_pct": 0.0,
+          "checksum": 21273
+        },
+        "bg": {
+          "workers": 12,
+          "jobs_per_worker": 210,
+          "jobs_total": 2520,
+          "build_time_s": 18.6734,
+          "worker_max_elapsed_s": 18.6327,
+          "checksum": 120900003397004864675
+        },
+        "memory": {
+          "working_set_mb": 509.57,
+          "end_working_set_mb": 567.906,
+          "peak_working_set_mb": 593.89,
+          "private_commit_mb": 456.582,
+          "fg_working_set_mb": 36.656,
+          "fg_private_commit_mb": 27.898,
+          "bg_working_set_mb": 531.25,
+          "bg_private_commit_mb": 428.684,
+          "total_page_fault_count": 2048942
+        },
+        "faults": {
+          "hard_page_faults_per_s": 22.249,
+          "pages_input_per_s": 144.13,
+          "system_total_page_faults_per_s": 200277.468,
+          "system_soft_page_faults_per_s": 200255.219,
+          "proc_delta_faults_per_s": 109722.251,
+          "soft_page_faults_per_s": 109700.002,
+          "pdh_active": true,
+          "pdh_samples": 119
+        },
+        "governance": {
+          "fg_affinity_applied": true,
+          "fg_priority_applied": true,
+          "bg_affinity_applied_count": 12,
+          "bg_eco_qos_count": 12,
+          "bg_mem_priority_count": 12,
+          "bg_priority_count": 12,
+          "bg_hard_caged_count": 12,
+          "hard_cage_cap_pct": 35,
+          "timer_res_ms": 0.5
+        }
+      },
+      "deltas": {
+        "p99_reduction_pct": 91.088,
+        "p95_reduction_pct": 88.273,
+        "p50_reduction_pct": 82.622,
+        "dropped_frames_delta_pct": -39.444,
+        "build_time_delta_pct": 251.738
+      }
+    },
+    {
+      "pair": 9,
+      "order": "AB",
+      "run_a": {
+        "condition": "A",
+        "label": "baseline",
+        "run_wall_s": 5.1815,
+        "fg": {
+          "frames": 180,
+          "elapsed_s": 3.0224,
+          "p50_ms": 14.358,
+          "p95_ms": 29.454,
+          "p99_ms": 33.07,
+          "mean_ms": 15.298,
+          "max_ms": 38.601,
+          "render_p50_ms": 4.068,
+          "dropped_frames": 63,
+          "dropped_frames_pct": 35.0,
+          "checksum": 21273
+        },
+        "bg": {
+          "workers": 12,
+          "jobs_per_worker": 210,
+          "jobs_total": 2520,
+          "build_time_s": 5.181,
+          "worker_max_elapsed_s": 5.1613,
+          "checksum": 120900003397004864675
+        },
+        "memory": {
+          "working_set_mb": 499.061,
+          "end_working_set_mb": 567.414,
+          "peak_working_set_mb": 595.121,
+          "private_commit_mb": 457.758,
+          "fg_working_set_mb": 37.074,
+          "fg_private_commit_mb": 28.406,
+          "bg_working_set_mb": 530.34,
+          "bg_private_commit_mb": 429.352,
+          "total_page_fault_count": 2167603
+        },
+        "faults": {
+          "hard_page_faults_per_s": 11.969,
+          "pages_input_per_s": 70.651,
+          "system_total_page_faults_per_s": 317735.855,
+          "system_soft_page_faults_per_s": 317723.886,
+          "proc_delta_faults_per_s": 418335.28,
+          "soft_page_faults_per_s": 418323.311,
+          "pdh_active": true,
+          "pdh_samples": 7
+        },
+        "governance": {
+          "fg_affinity_applied": false,
+          "fg_priority_applied": false,
+          "bg_affinity_applied_count": 0,
+          "bg_eco_qos_count": 0,
+          "bg_mem_priority_count": 0,
+          "bg_priority_count": 0,
+          "bg_hard_caged_count": 0,
+          "hard_cage_cap_pct": 100,
+          "timer_res_ms": 0.0
+        }
+      },
+      "run_b": {
+        "condition": "B",
+        "label": "hyperdesk",
+        "run_wall_s": 18.7922,
+        "fg": {
+          "frames": 180,
+          "elapsed_s": 2.9854,
+          "p50_ms": 2.41,
+          "p95_ms": 4.218,
+          "p99_ms": 4.726,
+          "mean_ms": 2.636,
+          "max_ms": 4.844,
+          "render_p50_ms": 2.035,
+          "dropped_frames": 0,
+          "dropped_frames_pct": 0.0,
+          "checksum": 21273
+        },
+        "bg": {
+          "workers": 12,
+          "jobs_per_worker": 210,
+          "jobs_total": 2520,
+          "build_time_s": 18.7917,
+          "worker_max_elapsed_s": 18.7828,
+          "checksum": 120900003397004864675
+        },
+        "memory": {
+          "working_set_mb": 503.37,
+          "end_working_set_mb": 568.859,
+          "peak_working_set_mb": 594.021,
+          "private_commit_mb": 458.228,
+          "fg_working_set_mb": 36.797,
+          "fg_private_commit_mb": 28.062,
+          "bg_working_set_mb": 532.062,
+          "bg_private_commit_mb": 430.166,
+          "total_page_fault_count": 2093681
+        },
+        "faults": {
+          "hard_page_faults_per_s": 31.381,
+          "pages_input_per_s": 270.661,
+          "system_total_page_faults_per_s": 192621.529,
+          "system_soft_page_faults_per_s": 192590.148,
+          "proc_delta_faults_per_s": 111412.449,
+          "soft_page_faults_per_s": 111381.068,
+          "pdh_active": true,
+          "pdh_samples": 119
+        },
+        "governance": {
+          "fg_affinity_applied": true,
+          "fg_priority_applied": true,
+          "bg_affinity_applied_count": 12,
+          "bg_eco_qos_count": 12,
+          "bg_mem_priority_count": 12,
+          "bg_priority_count": 12,
+          "bg_hard_caged_count": 12,
+          "hard_cage_cap_pct": 35,
+          "timer_res_ms": 1.0
+        }
+      },
+      "deltas": {
+        "p99_reduction_pct": 85.709,
+        "p95_reduction_pct": 85.679,
+        "p50_reduction_pct": 83.215,
+        "dropped_frames_delta_pct": -35.0,
+        "build_time_delta_pct": 262.704
+      }
+    },
+    {
+      "pair": 10,
+      "order": "BA",
+      "run_a": {
+        "condition": "A",
+        "label": "baseline",
+        "run_wall_s": 8.9957,
+        "fg": {
+          "frames": 180,
+          "elapsed_s": 4.1348,
+          "p50_ms": 26.46,
+          "p95_ms": 67.542,
+          "p99_ms": 95.929,
+          "mean_ms": 29.272,
+          "max_ms": 112.3,
+          "render_p50_ms": 4.229,
+          "dropped_frames": 123,
+          "dropped_frames_pct": 68.333,
+          "checksum": 21273
+        },
+        "bg": {
+          "workers": 12,
+          "jobs_per_worker": 210,
+          "jobs_total": 2520,
+          "build_time_s": 8.9952,
+          "worker_max_elapsed_s": 7.7833,
+          "checksum": 120900003397004864675
+        },
+        "memory": {
+          "working_set_mb": 267.66,
+          "end_working_set_mb": 567.109,
+          "peak_working_set_mb": 594.301,
+          "private_commit_mb": 458.855,
+          "fg_working_set_mb": 36.602,
+          "fg_private_commit_mb": 28.098,
+          "bg_working_set_mb": 530.507,
+          "bg_private_commit_mb": 430.757,
+          "total_page_fault_count": 2054265
+        },
+        "faults": {
+          "hard_page_faults_per_s": 28.067,
+          "pages_input_per_s": 319.938,
+          "system_total_page_faults_per_s": 192417.83,
+          "system_soft_page_faults_per_s": 192389.763,
+          "proc_delta_faults_per_s": 228361.077,
+          "soft_page_faults_per_s": 228333.01,
+          "pdh_active": true,
+          "pdh_samples": 21
+        },
+        "governance": {
+          "fg_affinity_applied": false,
+          "fg_priority_applied": false,
+          "bg_affinity_applied_count": 0,
+          "bg_eco_qos_count": 0,
+          "bg_mem_priority_count": 0,
+          "bg_priority_count": 0,
+          "bg_hard_caged_count": 0,
+          "hard_cage_cap_pct": 100,
+          "timer_res_ms": 0.0
+        }
+      },
+      "run_b": {
+        "condition": "B",
+        "label": "hyperdesk",
+        "run_wall_s": 19.2814,
+        "fg": {
+          "frames": 180,
+          "elapsed_s": 2.9887,
+          "p50_ms": 2.676,
+          "p95_ms": 4.491,
+          "p99_ms": 5.107,
+          "mean_ms": 3.032,
+          "max_ms": 9.058,
+          "render_p50_ms": 2.295,
+          "dropped_frames": 0,
+          "dropped_frames_pct": 0.0,
+          "checksum": 21273
+        },
+        "bg": {
+          "workers": 12,
+          "jobs_per_worker": 210,
+          "jobs_total": 2520,
+          "build_time_s": 19.2809,
+          "worker_max_elapsed_s": 19.2704,
+          "checksum": 120900003397004864675
+        },
+        "memory": {
+          "working_set_mb": 496.937,
+          "end_working_set_mb": 566.749,
+          "peak_working_set_mb": 593.002,
+          "private_commit_mb": 456.336,
+          "fg_working_set_mb": 36.793,
+          "fg_private_commit_mb": 28.039,
+          "bg_working_set_mb": 529.956,
+          "bg_private_commit_mb": 428.297,
+          "total_page_fault_count": 2083520
+        },
+        "faults": {
+          "hard_page_faults_per_s": 12.651,
+          "pages_input_per_s": 108.096,
+          "system_total_page_faults_per_s": 190714.786,
+          "system_soft_page_faults_per_s": 190702.135,
+          "proc_delta_faults_per_s": 108058.346,
+          "soft_page_faults_per_s": 108045.695,
+          "pdh_active": true,
+          "pdh_samples": 123
+        },
+        "governance": {
+          "fg_affinity_applied": true,
+          "fg_priority_applied": true,
+          "bg_affinity_applied_count": 12,
+          "bg_eco_qos_count": 12,
+          "bg_mem_priority_count": 12,
+          "bg_priority_count": 12,
+          "bg_hard_caged_count": 12,
+          "hard_cage_cap_pct": 35,
+          "timer_res_ms": 0.5
+        }
+      },
+      "deltas": {
+        "p99_reduction_pct": 94.676,
+        "p95_reduction_pct": 93.351,
+        "p50_reduction_pct": 89.887,
+        "dropped_frames_delta_pct": -68.333,
+        "build_time_delta_pct": 114.347
+      }
+    }
+  ],
+  "vram_swap_check": {
+    "ok": true,
+    "tier_used": "vram",
+    "device": "NVIDIA GeForce GTX 1650",
+    "raw_mb": 4.0,
+    "vram_compressed_mb": 0.016,
+    "compression_ratio": 252.58,
+    "put_ms": 196.154,
+    "get_ms": 8.926,
+    "effective_gbps": 0.04,
+    "sha256_exact": true,
+    "yield_ms": 53.919,
+    "vram_retained_mb": 0.0
+  },
+  "vram_yield_investigation": {
+    "target_ms": 30.0,
+    "baseline_live_omega_bench_ms": 32.097,
+    "root_cause": "cuMemFree_v2 takes ~0.2-0.4 ms, whereas cuCtxDestroy_v2 on Windows WDDM takes ~32-47 ms to tear down the ~49 MB CUDA driver context allocation. Keeping a pre-warmed context without cuCtxDestroy_v2 retains ~49 MB VRAM (violating vram_retained_mb == 0.0), so yield_vram retains cuCtxDestroy_v2."
+  }
+}

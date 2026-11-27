@@ -1,0 +1,342 @@
+{
+  "schema": "chimera.daily-transport-rss/2",
+  "base_ref": "a62f741db82dd79b3028f1434b890c7a0705da9c",
+  "candidate_ref": "79e05f9f370b19427850828b4f8a545797efd8d3",
+  "baseline_source_sha256": "606728925c3dd2bfd1e56980e7ee3335ef406ea1abd8c01fe5ac81204dddae7e",
+  "candidate_source_sha256": "ef019251b6fbdc3a354de1fd0c6c139d826350e57d59200b9a6b1d496f5688a2",
+  "native_sha256": "64e250008d7ed1884b1225607866179c1d38cb24deb62b6d3e343a0f895b53e2",
+  "probe_sha256": "6622beee5c1f4811a85d0dbf777d045d12d3586c2a20f7f0ed8a25cb720f1e6a",
+  "host": "svhome",
+  "started_utc": "2026-11-27T01:33:59.520987+00:00",
+  "finished_utc": "2026-11-27T01:35:06.961814+00:00",
+  "passed": true,
+  "median_peak_mib": {
+    "before": 61.03125,
+    "after": 59.9609375
+  },
+  "trials": [
+    {
+      "host": "linux",
+      "pid": 4027912,
+      "stages": [
+        {
+          "stage": "cli_beacon",
+          "rss_bytes": 40632320,
+          "peak_bytes": 40632320
+        },
+        {
+          "stage": "health_truth",
+          "rss_bytes": 40656896,
+          "peak_bytes": 40656896
+        },
+        {
+          "stage": "build_log_tail",
+          "rss_bytes": 41512960,
+          "peak_bytes": 41512960
+        },
+        {
+          "stage": "vsa_open_populated",
+          "rss_bytes": 41803776,
+          "peak_bytes": 41803776
+        },
+        {
+          "stage": "vsa_search_populated",
+          "rss_bytes": 41852928,
+          "peak_bytes": 41852928
+        },
+        {
+          "stage": "daily_transport_1",
+          "rss_bytes": 47558656,
+          "peak_bytes": 59117568
+        },
+        {
+          "stage": "daily_transport_2",
+          "rss_bytes": 48906240,
+          "peak_bytes": 64110592
+        }
+      ],
+      "fixture_bytes": 23789568,
+      "persisted_vsa_rows": 6144,
+      "daily_runs": [
+        {
+          "run_id": 1,
+          "genome": "G0_BALANCED",
+          "wormhole_ok": true,
+          "ring_bytes": null,
+          "wormhole_transfer_bytes": null,
+          "tcp_loopback_verified_bytes": null,
+          "kernel_peak_at_health_report": 59117568
+        },
+        {
+          "run_id": 2,
+          "genome": "G1_DUAL_RACE",
+          "wormhole_ok": true,
+          "ring_bytes": null,
+          "wormhole_transfer_bytes": null,
+          "tcp_loopback_verified_bytes": null,
+          "kernel_peak_at_health_report": 64110592
+        }
+      ],
+      "fixture_lines": 196608,
+      "verified_hash": "ead48d9da9961ac3323dd858",
+      "peak_mib": 61.140625,
+      "temp_removed": true,
+      "variant": "before",
+      "native_sha256": "64e250008d7ed1884b1225607866179c1d38cb24deb62b6d3e343a0f895b53e2",
+      "regression": null,
+      "source_count": 115,
+      "node": "svhome",
+      "overlay_removed": true,
+      "ssh_route": "phantom_ssh",
+      "limits_verified": true,
+      "attempt_id": "2c0c38dfcec94340aa1abbae54fdb024",
+      "snapshot": "98b1198700f93455c0f84b76d232171edc402148b39612995c3633cfd0f121bb"
+    },
+    {
+      "host": "linux",
+      "pid": 4028497,
+      "stages": [
+        {
+          "stage": "cli_beacon",
+          "rss_bytes": 49610752,
+          "peak_bytes": 49610752
+        },
+        {
+          "stage": "health_truth",
+          "rss_bytes": 49627136,
+          "peak_bytes": 49627136
+        },
+        {
+          "stage": "build_log_tail",
+          "rss_bytes": 55017472,
+          "peak_bytes": 55017472
+        },
+        {
+          "stage": "vsa_open_populated",
+          "rss_bytes": 55066624,
+          "peak_bytes": 55066624
+        },
+        {
+          "stage": "vsa_search_populated",
+          "rss_bytes": 55070720,
+          "peak_bytes": 55070720
+        },
+        {
+          "stage": "daily_transport_1",
+          "rss_bytes": 59703296,
+          "peak_bytes": 59703296
+        },
+        {
+          "stage": "daily_transport_2",
+          "rss_bytes": 62906368,
+          "peak_bytes": 62906368
+        }
+      ],
+      "fixture_bytes": 23789568,
+      "persisted_vsa_rows": 6144,
+      "daily_runs": [
+        {
+          "run_id": 1,
+          "genome": "G0_BALANCED",
+          "wormhole_ok": true,
+          "ring_bytes": 1048576,
+          "wormhole_transfer_bytes": 16777216,
+          "tcp_loopback_verified_bytes": 16777216,
+          "kernel_peak_at_health_report": 59715584
+        },
+        {
+          "run_id": 2,
+          "genome": "G1_DUAL_RACE",
+          "wormhole_ok": true,
+          "ring_bytes": 1048576,
+          "wormhole_transfer_bytes": 16777216,
+          "tcp_loopback_verified_bytes": 16777216,
+          "kernel_peak_at_health_report": 62918656
+        }
+      ],
+      "fixture_lines": 196608,
+      "verified_hash": "ead48d9da9961ac3323dd858",
+      "peak_mib": 59.9921875,
+      "temp_removed": true,
+      "variant": "after",
+      "native_sha256": "64e250008d7ed1884b1225607866179c1d38cb24deb62b6d3e343a0f895b53e2",
+      "regression": {
+        "executed": 19,
+        "errors": 0,
+        "failures": 0,
+        "skipped": 0,
+        "names": [
+          "test_peer_guard",
+          "test_vsa_disk_budget",
+          "test_daily_autopilot",
+          "test_build_placement.PlacementTests.test_linux_job_admission_precedes_all_daemon_execution",
+          "test_build_placement.PlacementTests.test_peer_mirror_declines_before_transport_or_local_fallback",
+          "test_build_placement.PlacementTests.test_linux_release_writes_require_maintenance",
+          "test_build_placement.PlacementTests.test_sdk_returns_daemon_denial_without_replaying_locally"
+        ]
+      },
+      "source_count": 115,
+      "node": "svhome",
+      "overlay_removed": true,
+      "ssh_route": "phantom_ssh",
+      "limits_verified": true,
+      "attempt_id": "f69754c0f8a34ae198f0b2a1f9cf5948",
+      "snapshot": "1c8fa94b74151bc250a20a1ff3a84210be56878c410e54f5cdc7b81700249283"
+    },
+    {
+      "host": "linux",
+      "pid": 4029054,
+      "stages": [
+        {
+          "stage": "cli_beacon",
+          "rss_bytes": 49561600,
+          "peak_bytes": 49561600
+        },
+        {
+          "stage": "health_truth",
+          "rss_bytes": 49577984,
+          "peak_bytes": 49577984
+        },
+        {
+          "stage": "build_log_tail",
+          "rss_bytes": 54964224,
+          "peak_bytes": 54964224
+        },
+        {
+          "stage": "vsa_open_populated",
+          "rss_bytes": 55017472,
+          "peak_bytes": 55017472
+        },
+        {
+          "stage": "vsa_search_populated",
+          "rss_bytes": 55021568,
+          "peak_bytes": 55021568
+        },
+        {
+          "stage": "daily_transport_1",
+          "rss_bytes": 59637760,
+          "peak_bytes": 59637760
+        },
+        {
+          "stage": "daily_transport_2",
+          "rss_bytes": 62840832,
+          "peak_bytes": 62840832
+        }
+      ],
+      "fixture_bytes": 23789568,
+      "persisted_vsa_rows": 6144,
+      "daily_runs": [
+        {
+          "run_id": 1,
+          "genome": "G0_BALANCED",
+          "wormhole_ok": true,
+          "ring_bytes": 1048576,
+          "wormhole_transfer_bytes": 16777216,
+          "tcp_loopback_verified_bytes": 16777216,
+          "kernel_peak_at_health_report": 59650048
+        },
+        {
+          "run_id": 2,
+          "genome": "G1_DUAL_RACE",
+          "wormhole_ok": true,
+          "ring_bytes": 1048576,
+          "wormhole_transfer_bytes": 16777216,
+          "tcp_loopback_verified_bytes": 16777216,
+          "kernel_peak_at_health_report": 62853120
+        }
+      ],
+      "fixture_lines": 196608,
+      "verified_hash": "ead48d9da9961ac3323dd858",
+      "peak_mib": 59.9296875,
+      "temp_removed": true,
+      "variant": "after",
+      "native_sha256": "64e250008d7ed1884b1225607866179c1d38cb24deb62b6d3e343a0f895b53e2",
+      "regression": null,
+      "source_count": 115,
+      "node": "svhome",
+      "overlay_removed": true,
+      "ssh_route": "phantom_ssh",
+      "limits_verified": true,
+      "attempt_id": "3d14bb4a03734ea9b6456617d0e7cb5f",
+      "snapshot": "bb45ad4ca43c7e9b2a37eb6f7638c6ca9d8b9f76336e5c464bf0a812d0fbcc2b"
+    },
+    {
+      "host": "linux",
+      "pid": 4029475,
+      "stages": [
+        {
+          "stage": "cli_beacon",
+          "rss_bytes": 40488960,
+          "peak_bytes": 40488960
+        },
+        {
+          "stage": "health_truth",
+          "rss_bytes": 40513536,
+          "peak_bytes": 40513536
+        },
+        {
+          "stage": "build_log_tail",
+          "rss_bytes": 41349120,
+          "peak_bytes": 41349120
+        },
+        {
+          "stage": "vsa_open_populated",
+          "rss_bytes": 41648128,
+          "peak_bytes": 41648128
+        },
+        {
+          "stage": "vsa_search_populated",
+          "rss_bytes": 41697280,
+          "peak_bytes": 41697280
+        },
+        {
+          "stage": "daily_transport_1",
+          "rss_bytes": 47423488,
+          "peak_bytes": 58740736
+        },
+        {
+          "stage": "daily_transport_2",
+          "rss_bytes": 48500736,
+          "peak_bytes": 63881216
+        }
+      ],
+      "fixture_bytes": 23789568,
+      "persisted_vsa_rows": 6144,
+      "daily_runs": [
+        {
+          "run_id": 1,
+          "genome": "G0_BALANCED",
+          "wormhole_ok": true,
+          "ring_bytes": null,
+          "wormhole_transfer_bytes": null,
+          "tcp_loopback_verified_bytes": null,
+          "kernel_peak_at_health_report": 58740736
+        },
+        {
+          "run_id": 2,
+          "genome": "G1_DUAL_RACE",
+          "wormhole_ok": true,
+          "ring_bytes": null,
+          "wormhole_transfer_bytes": null,
+          "tcp_loopback_verified_bytes": null,
+          "kernel_peak_at_health_report": 63881216
+        }
+      ],
+      "fixture_lines": 196608,
+      "verified_hash": "ead48d9da9961ac3323dd858",
+      "peak_mib": 60.921875,
+      "temp_removed": true,
+      "variant": "before",
+      "native_sha256": "64e250008d7ed1884b1225607866179c1d38cb24deb62b6d3e343a0f895b53e2",
+      "regression": null,
+      "source_count": 115,
+      "node": "svhome",
+      "overlay_removed": true,
+      "ssh_route": "phantom_ssh",
+      "limits_verified": true,
+      "attempt_id": "b1ab046121d746ddb89cfb2ecfddfa91",
+      "snapshot": "98b1198700f93455c0f84b76d232171edc402148b39612995c3633cfd0f121bb"
+    }
+  ],
+  "deferrals": []
+}

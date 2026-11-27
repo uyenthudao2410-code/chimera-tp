@@ -1,0 +1,573 @@
+{
+  "date": "2026-11-26",
+  "timezone": "Asia/Ho_Chi_Minh",
+  "scope": "Live sessions preserved. Isolated ports and synthetic fixtures unless stated.",
+  "distribution": "18.0.0",
+  "running_beacon": "21.0.0",
+  "inventory": {
+    "display_paths": [
+      {
+        "monitor": "MSI MP275 E2",
+        "target_id": 4353,
+        "adapter_pci": "VEN_10DE&DEV_2188&SUBSYS_41191458&REV_A1",
+        "adapter_luid": "00000000:0000aad1",
+        "connector": "HDMI",
+        "hz": 120
+      },
+      {
+        "monitor": "KA272",
+        "target_id": 4355,
+        "adapter_pci": "VEN_10DE&DEV_2188&SUBSYS_41191458&REV_A1",
+        "adapter_luid": "00000000:0000aad1",
+        "connector": "DVI",
+        "hz": 75
+      }
+    ],
+    "display_adapter": "NVIDIA GeForce GTX 1650",
+    "power": ["Current AC Power Setting Index: 0x00000064","Current DC Power Setting Index: 0x00000064"],
+    "affinity_readable": [
+      {
+        "Name": "0xFFF",
+        "Count": 230
+      }
+    ],
+    "disks": [
+      {
+        "FriendlyName": "WDC WD10EZEX-00BBHA0",
+        "BusType": "SATA"
+      },
+      {
+        "FriendlyName": "HS-SSD-WAVE(P) 512G",
+        "BusType": "NVMe"
+      }
+    ],
+    "observed": "2026-11-26T19:11:12.3149564+07:00",
+    "physical_uplinks_up": ["Intel Ethernet I219-V"],
+    "desktop_policy": {
+      "enabled": false,
+      "running": false,
+      "arm": "aether",
+      "hardCap": 100,
+      "target_count": true
+    },
+    "active_ports": [
+      {
+        "LocalPort": 8765,
+        "OwningProcess": 36008
+      },
+      {
+        "LocalPort": 8787,
+        "OwningProcess": 22352
+      },
+      {
+        "LocalPort": 8788,
+        "OwningProcess": 25916
+      },
+      {
+        "LocalPort": 9780,
+        "OwningProcess": 20452
+      }
+    ]
+  },
+  "host_perfmon": {
+    "window_samples": 20,
+    "units": "Windows performance counter units. Background workloads differed.",
+    "columns": ["time","processor(_total)\\% processor time","system\\processor queue length","memory\\available mbytes","memory\\pages input/sec","processor information(_total)\\% processor performance","physicaldisk(_total)\\disk bytes/sec","logicaldisk(e:)\\disk bytes/sec"],
+    "before": {
+      "median": {
+        "processor(_total)\\% processor time": 59.906,
+        "system\\processor queue length": 13.5,
+        "memory\\available mbytes": 9904.5,
+        "memory\\pages input/sec": 482.041,
+        "processor information(_total)\\% processor performance": 161.4775,
+        "physicaldisk(_total)\\disk bytes/sec": 6426429.2615,
+        "logicaldisk(e:)\\disk bytes/sec": 221259.6815
+      },
+      "samples": [
+        ["2026-11-26T18:25:34.5300094+07:00",39.8,12,9898,285.536,161.556,4107602.054,2634530.972],
+        ["2026-11-26T18:25:35.5408454+07:00",53.37,14,9951,120.7,161.535,6618496.235,490334.024],
+        ["2026-11-26T18:25:36.5564360+07:00",59.991,17,9877,351.535,161.563,8396311.387,1020423.577],
+        ["2026-11-26T18:25:37.5769357+07:00",61.091,20,9866,1102.363,161.477,17001526.258,4567454.41],
+        ["2026-11-26T18:25:38.5923873+07:00",91.664,30,10017,534.642,161.311,5859879.911,1298610.689],
+        ["2026-11-26T18:25:39.6020637+07:00",83.493,18,10084,590.356,161.093,7303991.993,1636069.863],
+        ["2026-11-26T18:25:40.6111308+07:00",77.811,18,10058,234.907,161.411,4043582.424,219230.372],
+        ["2026-11-26T18:25:41.6259737+07:00",71.253,7,10303,289.678,160.951,3289675.308,209861.207],
+        ["2026-11-26T18:25:42.6362847+07:00",61.597,6,10247,434.589,161.848,4703614.084,0],
+        ["2026-11-26T18:25:43.6571820+07:00",59.821,8,10195,410.412,161.54,7066725.019,300903.769],
+        ["2026-11-26T18:25:44.6676294+07:00",74.614,19,10000,1288.549,161.238,6289799.301,156573.591],
+        ["2026-11-26T18:25:45.6796350+07:00",94.596,14,9741,1683.499,161.281,19403519.699,129495.061],
+        ["2026-11-26T18:25:46.6866132+07:00",82.285,12,9762,400.311,161.529,3869308.563,130197.554],
+        ["2026-11-26T18:25:47.7069508+07:00",36.074,14,9935,394.95,161.563,5578210.585,223288.991],
+        ["2026-11-26T18:25:48.7276356+07:00",30.593,13,9911,1077.833,162.767,8375083.52,6472704.419],
+        ["2026-11-26T18:25:49.7309531+07:00",36.415,15,9791,301.024,162.897,7965478.292,1065602.17],
+        ["2026-11-26T18:25:50.7494750+07:00",55.251,11,9664,583.123,161.392,5898804.548,0],
+        ["2026-11-26T18:25:51.7546852+07:00",57.643,11,9582,1784.563,161.297,10369487.189,0],
+        ["2026-11-26T18:25:52.7666205+07:00",57.667,10,9415,596.008,161.358,3412892.046,109309.71],
+        ["2026-11-26T18:25:53.7788830+07:00",50.091,13,9515,529.493,161.478,6563059.222,0]
+      ]
+    },
+    "after": {
+      "median": {
+        "processor(_total)\\% processor time": 29.1955,
+        "system\\processor queue length": 20,
+        "memory\\available mbytes": 9272.5,
+        "memory\\pages input/sec": 231.5775,
+        "processor information(_total)\\% processor performance": 162.746,
+        "physicaldisk(_total)\\disk bytes/sec": 3026038.1605,
+        "logicaldisk(e:)\\disk bytes/sec": 0
+      },
+      "samples": [
+        ["2026-11-26T18:48:53.6369697+07:00",21.158,12,9372,272.263,159.583,8179420.643,81104.815],
+        ["2026-11-26T18:48:54.6461859+07:00",35.49,17,9378,986.728,159.457,4215619.092,24347.217],
+        ["2026-11-26T18:48:55.6534230+07:00",16.886,15,9370,228.347,157.16,2472472.246,20332.831],
+        ["2026-11-26T18:48:56.6631018+07:00",39.023,18,9295,657.562,162.079,2636584.933,0],
+        ["2026-11-26T18:48:57.6709490+07:00",21.544,13,9290,455.512,163.349,10751584.367,0],
+        ["2026-11-26T18:48:58.6771724+07:00",19.9,23,9294,78.511,162.195,516972.553,77342.351],
+        ["2026-11-26T18:48:59.6875802+07:00",33.118,30,9287,72.217,162.587,5020502.673,0],
+        ["2026-11-26T18:49:00.6983558+07:00",31.983,30,9290,844.428,162.464,4896725.341,0],
+        ["2026-11-26T18:49:01.7010112+07:00",31.952,25,9266,601.241,162.921,13791852.211,0],
+        ["2026-11-26T18:49:02.7208611+07:00",23.024,22,9251,349.111,163.16,1863764.655,0],
+        ["2026-11-26T18:49:03.7377435+07:00",22.401,20,9259,79.661,163.311,4612380.805,20141.401],
+        ["2026-11-26T18:49:04.7470280+07:00",22.721,24,9279,187.278,163.45,1440834.838,0],
+        ["2026-11-26T18:49:05.7628973+07:00",29.632,21,9231,627.025,163.496,3415491.388,0],
+        ["2026-11-26T18:49:06.7708960+07:00",29.605,20,9243,2539.709,163.578,9930261.185,0],
+        ["2026-11-26T18:49:07.7760396+07:00",25.891,18,9250,234.808,162.67,4412550.746,0],
+        ["2026-11-26T18:49:08.7926323+07:00",28.786,15,9248,130.824,163.209,983071.007,80579.591],
+        ["2026-11-26T18:49:09.8107276+07:00",30.298,19,9237,70.73,162.822,816819.394,0],
+        ["2026-11-26T18:49:10.8180431+07:00",50.88,28,9159,212.417,162.446,1414866.537,8131.417],
+        ["2026-11-26T18:49:11.8297989+07:00",68.221,25,9159,152.219,161.573,2307726.067,4048.642],
+        ["2026-11-26T18:49:12.8374114+07:00",25.69,17,9301,105.189,163.459,1377918.731,0]
+      ]
+    }
+  },
+  "hud": {
+    "before": {
+      "browser": "159.0.4402.13",
+      "window_s": 5,
+      "initial": {
+        "callbacks": 431,
+        "contextRequests": 1
+      },
+      "after_toggle": {
+        "callbacks": 432,
+        "contextRequests": 1,
+        "tactical": true
+      },
+      "script_errors": []
+    },
+    "after": {
+      "browser": "159.0.4402.13",
+      "window_s": 5,
+      "initial": {
+        "callbacks": 0,
+        "contextRequests": 0
+      },
+      "after_toggle": {
+        "callbacks": 0,
+        "contextRequests": 0,
+        "tactical": true
+      },
+      "script_errors": []
+    },
+    "source_sha256": "A099E84EB5B0F10BEAF3E140DC83A4297695028281E028A7F55056A134D8880B"
+  },
+  "browser_memory": {
+    "rows": [
+      {
+        "pair": 1,
+        "shared": false,
+        "private_mib": 859.69,
+        "processes": 32,
+        "browser_roots": 2,
+        "pages_loaded": 2
+      },
+      {
+        "pair": 1,
+        "shared": true,
+        "private_mib": 449.33,
+        "processes": 15,
+        "browser_roots": 1,
+        "pages_loaded": 2
+      },
+      {
+        "pair": 2,
+        "shared": true,
+        "private_mib": 458.11,
+        "processes": 16,
+        "browser_roots": 1,
+        "pages_loaded": 2
+      },
+      {
+        "pair": 2,
+        "shared": false,
+        "private_mib": 821.96,
+        "processes": 29,
+        "browser_roots": 2,
+        "pages_loaded": 2
+      },
+      {
+        "pair": 3,
+        "shared": false,
+        "private_mib": 799.55,
+        "processes": 28,
+        "browser_roots": 2,
+        "pages_loaded": 2
+      },
+      {
+        "pair": 3,
+        "shared": true,
+        "private_mib": 451.27,
+        "processes": 15,
+        "browser_roots": 1,
+        "pages_loaded": 2
+      }
+    ],
+    "median_private_mib": {
+      "False": 821.96,
+      "True": 451.27
+    }
+  },
+  "build_location": {
+    "files": ["chimera_tp/native.py","chimera_tp/platform/hyper_desk.py","chimera_tp/platform/phantom_silicon.py","chimera_tp/platform/substrate.py"],
+    "bytes_per_run": 322127,
+    "summary": {
+      "local": {
+        "wall_s": 3.3175,
+        "work_s": 3.2596,
+        "cpu_s": 3.2188,
+        "windows_child_cpu_s": 3.2734
+      },
+      "remote": {
+        "wall_s": 5.443,
+        "work_s": 3.5935,
+        "cpu_s": 3.5929,
+        "windows_child_cpu_s": 0.0625
+      }
+    },
+    "rows": [
+      {
+        "pair": 1,
+        "site": "local",
+        "digest": "eedd80bdbc6ca1ed0e029a917b4ddbd9fcd752b3ad63083144936e068c66a05e",
+        "units": 180,
+        "cpu_s": 3.03125,
+        "work_s": 3.038010399992345,
+        "python": "3.11.7",
+        "wall_s": 3.0936,
+        "windows_child_cpu_s": 3.0938
+      },
+      {
+        "pair": 1,
+        "site": "remote",
+        "digest": "eedd80bdbc6ca1ed0e029a917b4ddbd9fcd752b3ad63083144936e068c66a05e",
+        "units": 180,
+        "cpu_s": 3.413420685,
+        "work_s": 3.4140746002085507,
+        "python": "3.14.4",
+        "wall_s": 5.2667,
+        "windows_child_cpu_s": 0.0469
+      },
+      {
+        "pair": 2,
+        "site": "remote",
+        "digest": "eedd80bdbc6ca1ed0e029a917b4ddbd9fcd752b3ad63083144936e068c66a05e",
+        "units": 180,
+        "cpu_s": 3.6286309639999996,
+        "work_s": 3.6291589182801545,
+        "python": "3.14.4",
+        "wall_s": 5.4741,
+        "windows_child_cpu_s": 0.0469
+      },
+      {
+        "pair": 2,
+        "site": "local",
+        "digest": "eedd80bdbc6ca1ed0e029a917b4ddbd9fcd752b3ad63083144936e068c66a05e",
+        "units": 180,
+        "cpu_s": 3.28125,
+        "work_s": 3.3605610999948112,
+        "python": "3.11.7",
+        "wall_s": 3.4135,
+        "windows_child_cpu_s": 3.3281
+      },
+      {
+        "pair": 3,
+        "site": "local",
+        "digest": "eedd80bdbc6ca1ed0e029a917b4ddbd9fcd752b3ad63083144936e068c66a05e",
+        "units": 180,
+        "cpu_s": 3.359375,
+        "work_s": 3.418051100001321,
+        "python": "3.11.7",
+        "wall_s": 3.4771,
+        "windows_child_cpu_s": 3.4219
+      },
+      {
+        "pair": 3,
+        "site": "remote",
+        "digest": "eedd80bdbc6ca1ed0e029a917b4ddbd9fcd752b3ad63083144936e068c66a05e",
+        "units": 180,
+        "cpu_s": 3.588561926,
+        "work_s": 3.5890584639273584,
+        "python": "3.14.4",
+        "wall_s": 5.4119,
+        "windows_child_cpu_s": 0.0781
+      },
+      {
+        "pair": 4,
+        "site": "remote",
+        "digest": "eedd80bdbc6ca1ed0e029a917b4ddbd9fcd752b3ad63083144936e068c66a05e",
+        "units": 180,
+        "cpu_s": 3.5971974270000002,
+        "work_s": 3.597846413962543,
+        "python": "3.14.4",
+        "wall_s": 5.5214,
+        "windows_child_cpu_s": 0.0781
+      },
+      {
+        "pair": 4,
+        "site": "local",
+        "digest": "eedd80bdbc6ca1ed0e029a917b4ddbd9fcd752b3ad63083144936e068c66a05e",
+        "units": 180,
+        "cpu_s": 3.15625,
+        "work_s": 3.1586653999984264,
+        "python": "3.11.7",
+        "wall_s": 3.2215,
+        "windows_child_cpu_s": 3.2188
+      }
+    ]
+  },
+  "local_relay": {
+    "peer": "svhome",
+    "identity": ["svhome","chimera.capabilities.v1","21.0.0"],
+    "bytes_exe": 203264,
+    "median_ms": {
+      "ssh_only": 266.235,
+      "via_relay": 256.6935
+    },
+    "windows_private_mib": {
+      "ssh": 3.18,
+      "rust": 0.93
+    },
+    "samples_ms": {
+      "ssh_only": [235.77,284.722,269.673,270.211,278.008,268.512,244.107,252.158,273.385,259.296,263.958,251.256],
+      "via_relay": [279.41,269.722,240.261,246.134,256.379,227.836,306.979,306.398,254.174,257.008,224.429,268.834]
+    }
+  },
+  "remote_resources": {
+    "socket_activation": {
+      "pid_before": 0,
+      "worker_started": true,
+      "http_status": 200
+    },
+    "scratch": {
+      "mount_bytes": 2147483648,
+      "roundtrip_bytes": 8388608,
+      "sha256_ok": true
+    },
+    "video": {
+      "bytes": 26954,
+      "frames_decoded_on_windows": 5
+    }
+  },
+  "interactive_thread": {
+    "registered": true,
+    "task": "Window Manager",
+    "reverted": true
+  },
+  "remote_browser": {
+    "code": 133,
+    "stderr": "No usable sandbox!",
+    "tested": "isolated Chromium headless shell on svhome"
+  },
+  "new_features": {
+    "frame": {
+      "id": "4fe14fd65cdc6c6ad9f5cfa051b10f2c932e251cb4ecbbb81ca8f47b1a68614a",
+      "encoder": "hevc_qsv",
+      "hevc_bytes": 4724,
+      "ocr_chars": 19,
+      "encode_plus_peer_ocr_ms": 2959.65,
+      "fts_median_ms_15": 0.871,
+      "replay_size": [1000,260]
+    },
+    "revisions": {
+      "fixture_bytes": 83886080,
+      "edited_bytes": 448,
+      "native_fastcdc": true,
+      "full_archive_bytes": 84909373,
+      "delta_archive_bytes": 9977,
+      "new_chunk_bytes": 9455,
+      "included_chunks": 1,
+      "full_ack_ms": 164768.6,
+      "delta_ack_ms": 444.11,
+      "local_restore_sha256": "f71fc6aa9eb4e28d666695af2405ef53c2baa9a57d20aeb758cda7f4aaace84b",
+      "peer_verified_both": true
+    },
+    "parcel": {
+      "roundtrip_ms": 3581.87,
+      "bytes": 26,
+      "equal": true,
+      "ttl_seconds": 60,
+      "formats": {
+        "csv": 33,
+        "json": 51,
+        "xlsx": 4871,
+        "markdown": 58
+      }
+    },
+    "reuse": {
+      "first_hits": 0,
+      "repeat_hits": 30,
+      "median_ms_30": 0.563,
+      "cross_model_hits": 0
+    },
+    "revision_count": {
+      "saves": 10000,
+      "distinct": 10000,
+      "fixture_bytes": 256,
+      "validated_saves": [1,5000,10000],
+      "elapsed_s": 110.51
+    },
+    "workspace_restore_preview": {
+      "manifest_bytes": 234,
+      "documents": 1,
+      "urls": 1,
+      "terminals": 1,
+      "opened": false
+    },
+    "git_leases": {
+      "test": "test_git_conflict_rejected_and_routed_to_separate_worktree",
+      "busy_exit": 75,
+      "clean_worktree_original_preserved": true
+    },
+    "colab_preflight": {
+      "usage": ["Current balance: 2350.14 compute units","Usage rate: 0.00/hr","Active assignments: 0"],
+      "argv": ["/home/svhome/DEV/radar_dashboard/.venv/bin/colab","run","--timeout","180","--gpu","T4","<peer-script>"],
+      "executed": false
+    },
+    "work_admission": {
+      "target": "peer",
+      "reason": "protect_interaction",
+      "hour": 19,
+      "idle_s": 0.219,
+      "peer_online": true,
+      "temp_c": 46.3,
+      "continuous_hot_s": 0,
+      "gpu_c": 46.3,
+      "cpu_c": null,
+      "job": {
+        "state": "finished",
+        "entry": "syntax_check",
+        "files": 127,
+        "errors": []
+      }
+    },
+    "multipath_baseline": {
+      "loopback_lanes": 2,
+      "cut_lane": false,
+      "bytes": 131072,
+      "match": true,
+      "sha256": "a97cb4f606323647bc883c094d1affb3d56acdfcf70775dd43551238dc3d2610",
+      "elapsed_ms": 12.38,
+      "lane_tx": [62,61],
+      "reconnects": 0,
+      "exit_code": 0
+    },
+    "multipath_lane_cut": {
+      "loopback_lanes": 2,
+      "cut_lane": true,
+      "bytes": 131072,
+      "match": true,
+      "sha256": "a97cb4f606323647bc883c094d1affb3d56acdfcf70775dd43551238dc3d2610",
+      "elapsed_ms": 15.47,
+      "lane_tx": [18,107],
+      "reconnects": 0,
+      "exit_code": 0
+    },
+    "multipath_source_bound": {
+      "loopback_lanes": 2,
+      "cut_lane": true,
+      "bytes": 131072,
+      "match": true,
+      "sha256": "a97cb4f606323647bc883c094d1affb3d56acdfcf70775dd43551238dc3d2610",
+      "elapsed_ms": 12.76,
+      "lane_tx": [18,107],
+      "reconnects": 0,
+      "exit_code": 0
+    }
+  },
+  "staging": {
+    "directory": "C:\\Users\\Admin\\.chimera\\aether-stage-20261126-mwxgzb0m",
+    "chat_initial": {
+      "ok": false,
+      "source": "E:\\DEV\\Chat",
+      "staged": "C:\\Users\\Admin\\.chimera\\aether-stage-20261126-mwxgzb0m\\Chat",
+      "files": 29710,
+      "staged_files": 29708,
+      "bytes": 4151400991,
+      "missing": ["radar_dashboard/job_radar/data/last30days_cache/research.db-shm","radar_dashboard/job_radar/data/last30days_cache/research.db-wal"],
+      "extra": [],
+      "different": [],
+      "source_errors": [],
+      "stage_errors": []
+    },
+    "chat_rescan": {
+      "ok": false,
+      "source": "E:\\DEV\\Chat",
+      "staged": "C:\\Users\\Admin\\.chimera\\aether-stage-20261126-mwxgzb0m\\Chat",
+      "files": 29712,
+      "staged_files": 29713,
+      "bytes": 4151649957,
+      "missing": [],
+      "extra": ["radar_dashboard/job_radar/data/dashboard.stderr.log"],
+      "different": ["radar_dashboard/app/command_loop.py","radar_dashboard/app/necromancer_verifier.py","radar_dashboard/app/server.py","radar_dashboard/app/sovereign_governor.py"],
+      "source_errors": ["radar_dashboard/job_radar/data/dashboard.stderr.log (changed during read)"],
+      "stage_errors": []
+    },
+    "chat_followup": [
+      {
+        "file": "radar_dashboard/app/command_loop.py",
+        "equal": true
+      },
+      {
+        "file": "radar_dashboard/app/necromancer_verifier.py",
+        "equal": true
+      },
+      {
+        "file": "radar_dashboard/app/server.py",
+        "equal": true
+      },
+      {
+        "file": "radar_dashboard/app/sovereign_governor.py",
+        "equal": true
+      },
+      {
+        "file": "radar_dashboard/job_radar/data/dashboard.stderr.log",
+        "equal": true
+      }
+    ],
+    "online_sqlite": {
+      "snapshot": "C:\\Users\\Admin\\.chimera\\aether-stage-20261126-mwxgzb0m\\research-live-snapshot.sqlite",
+      "bytes": 131072,
+      "check": [
+        ["ok"]
+      ],
+      "tables": 13
+    },
+    "final_receipt": "C:\\Users\\Admin\\.chimera\\aether-stage-20261126-mwxgzb0m\\verify-projects.json"
+  },
+  "package_validation": {
+    "wheel": "C:\\Users\\Admin\\.chimera\\aether-stage-20261126-mwxgzb0m\\wheel\\chimera_tp-18.0.0-py3-none-any.whl",
+    "bytes": 785389,
+    "sha256": "fb963b4519ac044b4bbae02d97f8c5a92285ba048f22c851c968dddbe5719c1f",
+    "installed_cli_help": true,
+    "verified_modules": 9,
+    "native_windows": true,
+    "build_mode": "no_build_isolation_builder_venv"
+  },
+  "tests": {
+    "passed": 39,
+    "subtests_passed": 9,
+    "stdout_path": "C:\\Users\\Admin\\AppData\\Local\\Temp\\tool-log-VUga4m\\stdout.log",
+    "modules": ["test_aether_workstation","test_hyper","test_v3_hypergrid","test_v16_platform_connect","test_v19_v21_omega_entity","test_v24_hyperdesk_ab"]
+  },
+  "limits": ["Synthetic binary instead of live CAD session","Logical loopback failover only","No provider GPU allocated","AutoCAD frame times and power unmeasured","No automatic sleep","Production port/path cutover deferred"]
+}

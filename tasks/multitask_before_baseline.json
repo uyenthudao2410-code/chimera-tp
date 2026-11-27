@@ -1,0 +1,32 @@
+{
+  "captured_at": "2026-11-27T02:39:26",
+  "live_workstation_before": {
+    "total_procs": 434,
+    "clock_mhz": 2592,
+    "free_ram_gb": 9.67,
+    "pwsh_count": 6,
+    "cpu_pct": 31,
+    "conhost_count": 31,
+    "node_count": 3,
+    "total_ram_gb": 30.85,
+    "python_count": 22,
+    "agent_ui_count": 26,
+    "proc_queue": 7
+  },
+  "multitask_6burner_before_normal_prio": {
+    "frame_p50_ms": 17.02,
+    "frame_p95_ms": 17.25,
+    "frame_p99_ms": 19.67,
+    "frame_max_ms": 22.63,
+    "dropped_frames_over_25ms": 0,
+    "dropped_pct": 0.0,
+    "http_avg_ms": 8.5,
+    "http_max_ms": 22.58,
+    "burner_total_iters": 11288
+  },
+  "six_agent_uncoalesced_test_storm_before": {
+    "wall_ms": 644.66,
+    "python_spawns": 6,
+    "all_ok": true
+  }
+}

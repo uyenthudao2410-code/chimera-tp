@@ -1,0 +1,22 @@
+{
+  "source": "QueryDisplayConfig active paths",
+  "captured_utc": "2026-11-26T19:35:52.307306+00:00",
+  "paths": [
+    {
+      "monitor": "MSI MP275 E2",
+      "target_id": 4353,
+      "adapter_pci": "VEN_10DE&DEV_2188&SUBSYS_41191458&REV_A1",
+      "adapter_luid": "00000000:0000aad1",
+      "connector": "HDMI",
+      "hz": 120.0
+    },
+    {
+      "monitor": "KA272",
+      "target_id": 4355,
+      "adapter_pci": "VEN_10DE&DEV_2188&SUBSYS_41191458&REV_A1",
+      "adapter_luid": "00000000:0000aad1",
+      "connector": "DVI",
+      "hz": 75.0
+    }
+  ]
+}

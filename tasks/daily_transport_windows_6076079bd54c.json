@@ -1,0 +1,287 @@
+{
+  "schema": "chimera.daily-transport-rss/1",
+  "os": "win32",
+  "base": "6076079bd54ccc2de7769f07dab88949efc9495d",
+  "started_utc": "2026-11-27T01:16:54.560287+00:00",
+  "finished_utc": "2026-11-27T01:17:51.510174+00:00",
+  "probe_sha256": "6622beee5c1f4811a85d0dbf777d045d12d3586c2a20f7f0ed8a25cb720f1e6a",
+  "after_autopilot_sha256": "ab1064fd74423670e8f28ef9665362ab3fd0a13f103be3ff438e35fb90ff9393",
+  "trials": [
+    {
+      "variant": "before",
+      "host": "win32",
+      "pid": 17832,
+      "stages": [
+        {
+          "stage": "cli_beacon",
+          "rss_bytes": 60891136,
+          "peak_bytes": 61939712
+        },
+        {
+          "stage": "health_truth",
+          "rss_bytes": 60956672,
+          "peak_bytes": 61939712
+        },
+        {
+          "stage": "build_log_tail",
+          "rss_bytes": 59936768,
+          "peak_bytes": 61939712
+        },
+        {
+          "stage": "vsa_open_populated",
+          "rss_bytes": 60813312,
+          "peak_bytes": 61939712
+        },
+        {
+          "stage": "vsa_search_populated",
+          "rss_bytes": 60964864,
+          "peak_bytes": 61939712
+        },
+        {
+          "stage": "daily_transport_1",
+          "rss_bytes": 68513792,
+          "peak_bytes": 78630912
+        },
+        {
+          "stage": "daily_transport_2",
+          "rss_bytes": 69296128,
+          "peak_bytes": 85528576
+        }
+      ],
+      "fixture_bytes": 23789568,
+      "persisted_vsa_rows": 6144,
+      "daily_runs": [
+        {
+          "run_id": 1,
+          "genome": "G0_BALANCED",
+          "wormhole_ok": true,
+          "ring_bytes": null,
+          "wormhole_transfer_bytes": null,
+          "tcp_loopback_verified_bytes": null,
+          "kernel_peak_at_health_report": 78630912
+        },
+        {
+          "run_id": 2,
+          "genome": "G1_DUAL_RACE",
+          "wormhole_ok": true,
+          "ring_bytes": null,
+          "wormhole_transfer_bytes": null,
+          "tcp_loopback_verified_bytes": null,
+          "kernel_peak_at_health_report": 85528576
+        }
+      ],
+      "fixture_lines": 196608,
+      "verified_hash": "ead48d9da9961ac3323dd858",
+      "peak_mib": 81.56640625,
+      "temp_removed": true
+    },
+    {
+      "variant": "after",
+      "host": "win32",
+      "pid": 25468,
+      "stages": [
+        {
+          "stage": "cli_beacon",
+          "rss_bytes": 66551808,
+          "peak_bytes": 67682304
+        },
+        {
+          "stage": "health_truth",
+          "rss_bytes": 66600960,
+          "peak_bytes": 67682304
+        },
+        {
+          "stage": "build_log_tail",
+          "rss_bytes": 60243968,
+          "peak_bytes": 67682304
+        },
+        {
+          "stage": "vsa_open_populated",
+          "rss_bytes": 63287296,
+          "peak_bytes": 67682304
+        },
+        {
+          "stage": "vsa_search_populated",
+          "rss_bytes": 63406080,
+          "peak_bytes": 67682304
+        },
+        {
+          "stage": "daily_transport_1",
+          "rss_bytes": 68997120,
+          "peak_bytes": 68997120
+        },
+        {
+          "stage": "daily_transport_2",
+          "rss_bytes": 68780032,
+          "peak_bytes": 71348224
+        }
+      ],
+      "fixture_bytes": 23789568,
+      "persisted_vsa_rows": 6144,
+      "daily_runs": [
+        {
+          "run_id": 1,
+          "genome": "G0_BALANCED",
+          "wormhole_ok": true,
+          "ring_bytes": 1048576,
+          "wormhole_transfer_bytes": 16777216,
+          "tcp_loopback_verified_bytes": 16777216,
+          "kernel_peak_at_health_report": 68882432
+        },
+        {
+          "run_id": 2,
+          "genome": "G1_DUAL_RACE",
+          "wormhole_ok": true,
+          "ring_bytes": 1048576,
+          "wormhole_transfer_bytes": 16777216,
+          "tcp_loopback_verified_bytes": 16777216,
+          "kernel_peak_at_health_report": 71348224
+        }
+      ],
+      "fixture_lines": 196608,
+      "verified_hash": "ead48d9da9961ac3323dd858",
+      "peak_mib": 68.04296875,
+      "temp_removed": true
+    },
+    {
+      "variant": "after",
+      "host": "win32",
+      "pid": 18632,
+      "stages": [
+        {
+          "stage": "cli_beacon",
+          "rss_bytes": 66486272,
+          "peak_bytes": 67670016
+        },
+        {
+          "stage": "health_truth",
+          "rss_bytes": 66502656,
+          "peak_bytes": 67670016
+        },
+        {
+          "stage": "build_log_tail",
+          "rss_bytes": 60174336,
+          "peak_bytes": 67670016
+        },
+        {
+          "stage": "vsa_open_populated",
+          "rss_bytes": 62967808,
+          "peak_bytes": 67670016
+        },
+        {
+          "stage": "vsa_search_populated",
+          "rss_bytes": 63135744,
+          "peak_bytes": 67670016
+        },
+        {
+          "stage": "daily_transport_1",
+          "rss_bytes": 68362240,
+          "peak_bytes": 68362240
+        },
+        {
+          "stage": "daily_transport_2",
+          "rss_bytes": 68374528,
+          "peak_bytes": 70586368
+        }
+      ],
+      "fixture_bytes": 23789568,
+      "persisted_vsa_rows": 6144,
+      "daily_runs": [
+        {
+          "run_id": 1,
+          "genome": "G0_BALANCED",
+          "wormhole_ok": true,
+          "ring_bytes": 1048576,
+          "wormhole_transfer_bytes": 16777216,
+          "tcp_loopback_verified_bytes": 16777216,
+          "kernel_peak_at_health_report": 68255744
+        },
+        {
+          "run_id": 2,
+          "genome": "G1_DUAL_RACE",
+          "wormhole_ok": true,
+          "ring_bytes": 1048576,
+          "wormhole_transfer_bytes": 16777216,
+          "tcp_loopback_verified_bytes": 16777216,
+          "kernel_peak_at_health_report": 70586368
+        }
+      ],
+      "fixture_lines": 196608,
+      "verified_hash": "ead48d9da9961ac3323dd858",
+      "peak_mib": 67.31640625,
+      "temp_removed": true
+    },
+    {
+      "variant": "before",
+      "host": "win32",
+      "pid": 1100,
+      "stages": [
+        {
+          "stage": "cli_beacon",
+          "rss_bytes": 60817408,
+          "peak_bytes": 61911040
+        },
+        {
+          "stage": "health_truth",
+          "rss_bytes": 60841984,
+          "peak_bytes": 61911040
+        },
+        {
+          "stage": "build_log_tail",
+          "rss_bytes": 59932672,
+          "peak_bytes": 61911040
+        },
+        {
+          "stage": "vsa_open_populated",
+          "rss_bytes": 60682240,
+          "peak_bytes": 61911040
+        },
+        {
+          "stage": "vsa_search_populated",
+          "rss_bytes": 60903424,
+          "peak_bytes": 61911040
+        },
+        {
+          "stage": "daily_transport_1",
+          "rss_bytes": 68706304,
+          "peak_bytes": 78569472
+        },
+        {
+          "stage": "daily_transport_2",
+          "rss_bytes": 68083712,
+          "peak_bytes": 85741568
+        }
+      ],
+      "fixture_bytes": 23789568,
+      "persisted_vsa_rows": 6144,
+      "daily_runs": [
+        {
+          "run_id": 1,
+          "genome": "G0_BALANCED",
+          "wormhole_ok": true,
+          "ring_bytes": null,
+          "wormhole_transfer_bytes": null,
+          "tcp_loopback_verified_bytes": null,
+          "kernel_peak_at_health_report": 78569472
+        },
+        {
+          "run_id": 2,
+          "genome": "G1_DUAL_RACE",
+          "wormhole_ok": true,
+          "ring_bytes": null,
+          "wormhole_transfer_bytes": null,
+          "tcp_loopback_verified_bytes": null,
+          "kernel_peak_at_health_report": 85741568
+        }
+      ],
+      "fixture_lines": 196608,
+      "verified_hash": "ead48d9da9961ac3323dd858",
+      "peak_mib": 81.76953125,
+      "temp_removed": true
+    }
+  ],
+  "median_peak_mib": {
+    "before": 81.66796875,
+    "after": 67.6796875
+  }
+}

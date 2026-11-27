@@ -1,0 +1,75 @@
+{
+  "schema": "chimera.aether.packaging/1",
+  "verified_utc": "2026-11-26 12:51:40 UTC",
+  "windows_wheel": {
+    "base_python": "3.11.7",
+    "openssl": "OpenSSL 3.0.11 19 Sep 2023",
+    "optional_python_modules_present": {
+      "PIL": false,
+      "cryptography": false,
+      "openpyxl": false,
+      "imageio_ffmpeg": false
+    },
+    "parcel_bytes": 45,
+    "xlsx_bytes": 1560,
+    "frame": {
+      "synthetic_input_sha256": "49556a19072b185e3c614c51a8e57e338c8ad946c7c465855459ecb949d5fb67",
+      "qsv_stream_bytes": 3525,
+      "ocr_hit": "AETHER [427913]",
+      "decoded_png_bytes": 11651,
+      "dimensions": [
+        960,
+        160
+      ],
+      "source": "generated fixture, no desktop capture"
+    },
+    "wheel": "chimera_tp-18.0.0-py3-none-any.whl",
+    "wheel_sha256": "c9962cc17a83bc8892b50f5e2c9345f8db01fcee41ab008ea1b0331f0ed8a918",
+    "base_requirements": []
+  },
+  "linux_over_ssh": {
+    "OpenSSL": "OpenSSL 3.5.5 27 Jan 2026",
+    "tests": 4,
+    "python": "3.14.4",
+    "Windows_AESGCM_read_linux_CH_P1": true,
+    "peer": "svhome",
+    "isolated_python_flags": [
+      "-I",
+      "-B",
+      "-S"
+    ],
+    "temporary_import_package": true
+  },
+  "windows_crypto": {
+    "interoperable_payload_sizes_bytes": [
+      0,
+      1,
+      31,
+      2048,
+      8388608
+    ],
+    "original_cryptography_aesgcm_reads_new": true,
+    "new_host_evp_reads_original": true,
+    "invalid_tag_is_rejected": true
+  },
+  "xlsx": {
+    "independent_reader": "openpyxl",
+    "literal_formula_and_xml_metacharacters": true
+  },
+  "regression": {
+    "command": "python -B -m pytest -q -p no:cacheprovider tests/test_aether_media_packaging.py tests/test_aether_workstation.py tests/test_v24_packaging_repro.py",
+    "result": "17 passed, 4 subtests passed",
+    "unchanged_dependency_audit": true
+  },
+  "scope": {
+    "screen_capture": "FFmpeg advertises gdigrab and the Windows selector was tested without recording the user's desktop.",
+    "native_tools": "The clean wheel used host OpenSSL, an explicit FFmpeg binary with Intel hevc_qsv, and Windows Tesseract with eng+vie."
+  },
+  "source_sha256": {
+    "chimera_tp/platform/clipboard_parcel.py": "ab8b8344bc0c5c903a85f273ae287d5dda12edb4824f6ff29aa7eedd3ec29ee7",
+    "chimera_tp/platform/frame_notes.py": "9923a93d7f7d9dbe5a83f67df386a429331c9045714c6efd4cc8e5bae224f3ec",
+    "chimera_tp/platform/_parcel_gcm.py": "1af80e8a5d7314bf9d071a1a0feccf116ea34881e8a8531027530160a65a9a58",
+    "chimera_tp/platform/_table_xlsx.py": "e93891da254b623712b74396fc75410bb2e6a945222502f42cd8c86b3f53a929",
+    "tests/test_aether_media_packaging.py": "50ca4f1b3d2bee34e31cf6e899fb0e928bf58077387a7ae2230e6b4686646614"
+  }
+}

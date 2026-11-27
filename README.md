@@ -4,6 +4,8 @@
 
 ---
 
+The figures above describe the v18 evaluation. Each running node publishes its current configuration at `/.well-known/chimera.json`. The Moonshot audit compares those declarations with observed behavior, package contents, and outstanding release checks on both hosts. [Moonshot Vault audit, 26 November 2026](docs/reports/MOONSHOT_VAULT_AUDIT_2026-11-26.md)
+
 ## 1. Architecture Overview (5-Layer Open Substrate)
 
 ```text

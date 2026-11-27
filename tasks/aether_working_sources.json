@@ -1,0 +1,97 @@
+{
+  "ok": true,
+  "verified_utc": "2026-11-26T14:05:32.673877+00:00",
+  "peer": "svhome",
+  "entry": "work_admission.run_batch",
+  "bad": {
+    "snapshot": "c337676f9f4cd298f0fb1677237b730a7538d7265651d4cee8f12b7d070f8cc1",
+    "files": 1,
+    "errors": [
+      {
+        "file": "sample.py",
+        "type": "SyntaxError"
+      }
+    ],
+    "attempt_id": "5f63c9d92f4c490aa57a9ebbb4ddb853"
+  },
+  "repaired": {
+    "snapshot": "6da7773a98007f7c66b8d3247b907ccf32a79f5cfb4add2b2a89c10a7addcfad",
+    "files": 1,
+    "errors": [],
+    "attempt_id": "b56cb532650a4eff98aa2ee5de0bd6fa"
+  },
+  "limits_verified": true,
+  "caller_temperature_c": 69,
+  "stricter_load_limit_actual_reason": "host_load",
+  "retained_ticket_cancelled": "e2b70fa9cdcf56d0e6b8311619eb3ee697fde229e56c1a398b6aaff37be71537",
+  "public_cli": {
+    "target": "peer",
+    "keys": [
+      "target",
+      "reason",
+      "hour",
+      "idle_s",
+      "peer_online",
+      "peer_guard",
+      "temp_c",
+      "continuous_hot_s",
+      "gpu_c",
+      "cpu_c",
+      "job"
+    ],
+    "source_mode": "submitted_workspace",
+    "snapshot": "6da7773a98007f7c66b8d3247b907ccf32a79f5cfb4add2b2a89c10a7addcfad",
+    "state": "finished"
+  },
+  "real_current_workspace_unchanged": true,
+  "additional_verification_utc": "2026-11-26T14:18:11.211519+00:00",
+  "reserved_report_names": {
+    "source_mode": "submitted_workspace",
+    "snapshot": "8ce125b52cfecd954d972366faa3881ff77ec91dcd47b45e5a79c4b4fcd9858e",
+    "attempt_id": "604b40bd80634bc28b05742a188b2e90",
+    "files": 1,
+    "errors": [],
+    "user_files_before_and_after_sha256": {
+      ".chimera-syntax-report-1.json": "61fadff718ffdd4746b8c3992bdeed5cfe9fa68742e8cfd5feaa536ec6753e4b",
+      ".chimera-syntax-report.json": "650908a2d8bf41c5386495628421b1e15fb370579feda5fb677f3723a4b0d7ae",
+      "sample.py": "149f8d2b05fe00146cfbc987726628643ce653502ce89c2b94552f89a0fad241"
+    }
+  },
+  "explicit_peer_tree": {
+    "state": "finished",
+    "source_mode": "existing_peer_tree",
+    "source_path": "/usr/lib/python3.14/email",
+    "files": 29,
+    "errors": []
+  },
+  "implementation_sha256": "6d6a5b685e10a64c09e97b6454cf3319be4fbfbff325a713752c611f2d9ccda6",
+  "package_snapshot": {
+    "verified_utc": "2026-11-26T14:20:38.987679+00:00",
+    "scope": "All saved .py files in the local chimera_tp package, staged as exact bytes. Local ast.parse versus two calls to the public aether batch CLI.",
+    "source_files": 107,
+    "source_bytes": 2397088,
+    "source_inventory_sha256": "9504d0f74459a4febc696795151535a96280573888a9041c62b001799024d17b",
+    "local_errors": [],
+    "receipts": [
+      {
+        "elapsed_cli_s": 6.5631,
+        "attempt_id": "8b11962c8c5845eab23192c403204542",
+        "snapshot": "641ffcf8caf87e57fddc1853cc73bd634d93c1390b02143a8626f3ec8efe3ab1",
+        "files": 107,
+        "errors": [],
+        "delivery": "executed",
+        "source_mode": "submitted_workspace"
+      },
+      {
+        "elapsed_cli_s": 5.3425,
+        "attempt_id": "8b11962c8c5845eab23192c403204542",
+        "snapshot": "641ffcf8caf87e57fddc1853cc73bd634d93c1390b02143a8626f3ec8efe3ab1",
+        "files": 107,
+        "errors": [],
+        "delivery": "cached",
+        "source_mode": "submitted_workspace"
+      }
+    ],
+    "temporary_workspace_removed": true
+  }
+}

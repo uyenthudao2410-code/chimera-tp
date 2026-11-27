@@ -1,0 +1,355 @@
+{
+  "schema": "chimera.workstation-acceptance/3",
+  "release": "5e25fafe4a8f2de1d2b492c6fbfc992166e79cad",
+  "captured_utc": "2026-11-27T02:08:34.280233+00:00",
+  "followup_utc": "2026-11-27T02:33:07.011250+00:00",
+  "latest_soak_nodes": {
+    "win-desktop": {
+      "pid": 5268,
+      "started_at": "2026-11-27T09:24:23+07:00",
+      "version": "18.0.0",
+      "rss_bytes": 35639296,
+      "peak_bytes": 60657664,
+      "verified": 0
+    },
+    "svhome": {
+      "pid": 4038034,
+      "started_at": "2026-11-27T08:59:28+07:00",
+      "version": "18.0.0",
+      "rss_bytes": 69967872,
+      "peak_bytes": 74706944,
+      "verified": 0
+    }
+  },
+  "complete": false,
+  "rollout": {
+    "path": "tasks/workstation_rollout_5e25fafe4a8f.json",
+    "sha256": "e222257a990538fb402a7181c54b1de1f8bb8a72d80df0b5377ed9307d136640"
+  },
+  "serving_source_count": 115,
+  "source_set_sha256": "1d8ae58ab45eb125c2d3290c9253c807a130001482252c4afa8ea22001a366a6",
+  "verified_workspace_equals_serving": true,
+  "verified_native_sha256": {
+    "win-desktop": "1a7006fe93da5bce618d93f647c6bd67fecd45d201a76c6c1810c3a09fe5e880",
+    "svhome": "64e250008d7ed1884b1225607866179c1d38cb24deb62b6d3e343a0f895b53e2"
+  },
+  "live_snapshot": {
+    "win-desktop": {
+      "pid": 25004,
+      "started_at": "2026-11-27T09:00:08+07:00",
+      "version": "18.0.0",
+      "rss_bytes": 47276032,
+      "peak_bytes": 66703360,
+      "verified": 0
+    },
+    "svhome": {
+      "pid": 4038034,
+      "started_at": "2026-11-27T08:59:28+07:00",
+      "version": "18.0.0",
+      "rss_bytes": 63864832,
+      "peak_bytes": 70275072,
+      "verified": 0
+    }
+  },
+  "inter_node_route": "phantom",
+  "pulse_round_trip": {
+    "topic": "chimera.release.check",
+    "nonce": "1084c74378f34877983717e08738796b",
+    "origin": "win-desktop",
+    "receiver": "svhome",
+    "sender_sequence": 2,
+    "receiver_sequence": 2
+  },
+  "regressions_at_rollout": {
+    "windows": {
+      "executed": 82,
+      "skipped": 4,
+      "failures": 0,
+      "errors": 0,
+      "passed": 78,
+      "candidate": "5e25fafe4a8f2de1d2b492c6fbfc992166e79cad",
+      "modules": [
+        "tests.test_vsa_disk_budget",
+        "tests.test_v15_trinity_cortex",
+        "tests.test_v19_midbrain_dopamine",
+        "tests.test_agent_symbiont",
+        "tests.test_agent_hyper_bus",
+        "tests.test_v18_unify",
+        "tests.test_peer_guard",
+        "tests.test_v18_overmind_cortex",
+        "tests.test_guarded_build",
+        "tests.test_build_placement",
+        "tests.test_aether_workstation",
+        "tests.test_v24_hyperdesk_ab",
+        "tests.test_exile_guard_fault_matrix",
+        "tests.test_daily_autopilot"
+      ],
+      "utc": "2026-11-27T01:58:30.915313+00:00"
+    },
+    "linux": {
+      "executed": 21,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "names": [
+        "test_peer_guard",
+        "test_vsa_disk_budget",
+        "test_daily_autopilot",
+        "test_build_placement.PlacementTests.test_linux_job_admission_precedes_all_daemon_execution",
+        "test_build_placement.PlacementTests.test_peer_mirror_declines_before_transport_or_local_fallback",
+        "test_build_placement.PlacementTests.test_linux_release_writes_require_maintenance",
+        "test_build_placement.PlacementTests.test_sdk_returns_daemon_denial_without_replaying_locally"
+      ]
+    }
+  },
+  "scheduled": {
+    "path": "tasks/scheduled_daily_live_5e25fafe4a8f.json",
+    "sha256": "6ca7b9b8dfb4c90f27ad14fa97a6a684841f5f00595ef65be4c0eaf9ee7219cb",
+    "windows_run": 13,
+    "health_score": 100,
+    "same_row_after_windows_task": true,
+    "same_rows_after_linux_unit": true,
+    "windows_scheduled_rows_today": 1,
+    "windows_scheduler_http_403_before_switch": 129,
+    "windows_scheduler_errors_since_switch": 0
+  },
+  "memory": {
+    "report": "tasks/live_daemon_soak_5e25fafe4a8f_win5268.json",
+    "journal": "tasks/live_daemon_soak_5e25fafe4a8f_win5268.jsonl",
+    "observer_pid": 9504,
+    "start_utc": "2026-11-27T02:29:27.603645+00:00",
+    "earliest_finish_utc": "2026-11-28T02:29:27.603645+00:00",
+    "budget_exclusive_bytes": 83886080,
+    "snapshot": {
+      "release": "5e25fafe4a8f2de1d2b492c6fbfc992166e79cad",
+      "state": "running",
+      "samples": 2,
+      "source_checks": 1,
+      "missed": 0,
+      "observed_seconds": 120.125,
+      "peak_mib": {
+        "win-desktop": 57.85,
+        "svhome": 71.25
+      },
+      "last_observation_utc": "2026-11-27T02:31:27.615340+00:00",
+      "required_seconds": 86400
+    },
+    "previous_soak_windows": [
+      {
+        "path": "tasks/live_daemon_soak_6076079bd54c.json",
+        "sha256": "90e443cc16dcd01585d73760863680796a7399b1917873bbdf1140974b044f59",
+        "reason": "kernel_peak_reached_budget",
+        "samples": 24,
+        "maximum_bytes": {
+          "win-desktop": 65474560,
+          "svhome": 86130688
+        }
+      },
+      {
+        "path": "tasks/live_daemon_soak_79e05f9f370b.json",
+        "sha256": "d141e642483e4800548f12a4ffbf663122343c14df081629bc45a57a1a8f17be",
+        "reason": "svhome: PID or start time changed",
+        "samples": 9,
+        "maximum_bytes": {
+          "win-desktop": 65126400,
+          "svhome": 71983104
+        }
+      },
+      {
+        "path": "tasks/live_daemon_soak_5e25fafe4a8f.json",
+        "sha256": "76959b72df8d2668085502a8436dbb6c81eb8c7a84d9a97f2f5832d00b5d59d8",
+        "reason": "windows_reboot",
+        "windows_shutdown_event_id": 1074,
+        "windows_boot_time": "2026-11-27T09:23:05.5000000+07:00",
+        "samples": 11,
+        "last_observation_utc": "2026-11-27T02:20:40.846325+00:00",
+        "maximum_bytes": {
+          "win-desktop": 66703360,
+          "svhome": 74706944
+        }
+      }
+    ],
+    "paired_trials": [
+      {
+        "path": "tasks/daily_transport_win-desktop_79e05f9f370b.json",
+        "sha256": "547cd0571650bc1b4a6ac4905f9cf9b07998815b428a8a5d7cdc60f56375a822"
+      },
+      {
+        "path": "tasks/daily_transport_win-desktop_5e25fafe4a8f.json",
+        "sha256": "d309c3caf9fbac0af92f24e8b54995def440688965336148a96d8fba9d20f157"
+      },
+      {
+        "path": "tasks/daily_transport_svhome_79e05f9f370b.json",
+        "sha256": "fb06c0f8a670e9d9fc5c68a99ed06d4cbcff077306caa3c2ea62d767365ab8d3"
+      },
+      {
+        "path": "tasks/daily_transport_svhome_5e25fafe4a8f.json",
+        "sha256": "bf0c198b4ef36f520d430e31f7858bd084b0e73daf3c958ef46ab9f3a6e2428c"
+      }
+    ],
+    "expected_pids": {
+      "win-desktop": 5268,
+      "svhome": 4038034
+    }
+  },
+  "concurrent_build": {
+    "path": "tasks/guarded_client_pair_5e25fafe4a8f.json",
+    "sha256": "67c34bf7d0e34ddcf16f70b0888010ba67772ee035762a2bf662e19f19c30cb8",
+    "shared_attempt_id": "1895550b5c0744168995e14326c0663b",
+    "returned_bytes": 151,
+    "edited_returned_bytes": 165,
+    "cached_replay": "cached",
+    "required_write_cap": "io_cap_unavailable"
+  },
+  "service_latency": {
+    "release_trials": [
+      {
+        "path": "tasks/peer_service_slo_5e25fafe4a8f.json",
+        "sha256": "874212fec32f1912034f41484e8da1cf7c6f9fc0c7af62896edbb70b68488cee",
+        "status": "completed",
+        "reason": null,
+        "requested_cpu_quota_pct": null,
+        "kernel_cpu_quota_pct_values": [
+          100.0
+        ],
+        "balanced_each": 50,
+        "pairs": 10,
+        "eligible": true,
+        "p95_ms": {
+          "idle": {
+            "linux_health_ms": 2.7446,
+            "linux_asset_ms": 1.5788,
+            "windows_health_ms": 293.8239
+          },
+          "build": {
+            "linux_health_ms": 20.2039,
+            "linux_asset_ms": 23.7755,
+            "windows_health_ms": 206.218
+          }
+        },
+        "p95_delta_ms": {
+          "linux_health_ms": 17.4593,
+          "linux_asset_ms": 22.1967,
+          "windows_health_ms": -87.6059
+        },
+        "pass": false,
+        "median_compiler_ms": 3296.677
+      },
+      {
+        "path": "tasks/peer_service_slo_5e25fafe4a8f_cpu95.json",
+        "sha256": "2a877d5e0d7d0879e808f5d3c046925dc2827be0671ec3600519496c8a7a34fb",
+        "status": "completed",
+        "reason": null,
+        "requested_cpu_quota_pct": 95,
+        "kernel_cpu_quota_pct_values": [
+          95.0
+        ],
+        "balanced_each": 50,
+        "pairs": 10,
+        "eligible": true,
+        "p95_ms": {
+          "idle": {
+            "linux_health_ms": 2.7021,
+            "linux_asset_ms": 2.2173,
+            "windows_health_ms": 202.3175
+          },
+          "build": {
+            "linux_health_ms": 1.3473,
+            "linux_asset_ms": 1.4202,
+            "windows_health_ms": 208.9413
+          }
+        },
+        "p95_delta_ms": {
+          "linux_health_ms": -1.3548,
+          "linux_asset_ms": -0.7971,
+          "windows_health_ms": 6.6238
+        },
+        "pass": true,
+        "median_compiler_ms": 3489.6895000000004
+      }
+    ],
+    "earlier_release_trials": [
+      {
+        "path": "tasks/peer_service_slo_79e05f9f370b.json",
+        "sha256": "444c2eeeb79f750a4b08b3e7cc6e0ae88fb6e999d4a07db4f4fe0e2c4e09876e",
+        "state": "stopped",
+        "completed_pairs": 1
+      },
+      {
+        "path": "tasks/peer_service_slo_79e05f9f370b_run2.json",
+        "sha256": "0c84315af18ab8e8deb843084cefa2d905b1e8008deb12ee72e5d023db5ccbe8",
+        "state": "stopped",
+        "completed_pairs": 9
+      },
+      {
+        "path": "tasks/peer_service_slo_79e05f9f370b_run3.json",
+        "sha256": "9497a8c181d56bcf544815e3b3d1b1955bedbbd9d9055957dc247b906f72234a",
+        "state": "completed",
+        "completed_pairs": 10
+      }
+    ],
+    "cpu95_change_in_median_compiler_time_pct": 5.85,
+    "cpu_cap_changes_persisted": false,
+    "cad_timing_measured": false
+  },
+  "sqlite": {
+    "path": "tasks/vault_sql_live_route_5e25fafe4a8f.json",
+    "sha256": "21a3e4808c4c3e60f5529b8e3e35e3619c142af7510aedc486d4fc05ee25801a",
+    "page_data_wire_bytes": [
+      4244,
+      0
+    ]
+  },
+  "subprocess_audit": {
+    "path": "tasks/windows_child_process_audit_5e25fafe4a8f.json",
+    "sha256": "67a9aeeef41e19891142e0f9786607a15c0b7a47ece47dbdc9dccccce43a8ebb"
+  },
+  "write_cap": {
+    "path": "tasks/guest_io_delegation_79e05f9f370b.json",
+    "sha256": "2c6104c9ea9fc2a7023b3f9b08d6a1ace58eb07f46f3e5f3bbcf887294690d13",
+    "fixture": {
+      "path": "tasks/guest_write_budget_fixture_6076079bd54c.json",
+      "sha256": "db0ead145cfd2f6c12f5a298ba21d14a0ab77b92ec4cd5dfa61a76f6ef5ea6f8"
+    },
+    "on_default_build_path": true,
+    "requires_explicit_request": true,
+    "survives_peer_reboot": false,
+    "runtime_verification": {
+      "path": "tasks/guest_io_reexec_5e25fafe4a8f.json",
+      "sha256": "267de77e39a99b2680dac72adb37f9bd98d68f875c6df84f093873e95d1fafc2",
+      "kernel_write_limit_bytes_per_second": 8388608
+    },
+    "active_user_services_at_capture": 36
+  },
+  "cad": {
+    "live_viewport_pairs": 0,
+    "required_pairs": 10,
+    "schedule": "deferred_by_user",
+    "offload_automatically_while_drawing": false,
+    "preflight": {
+      "path": "tasks/cad_local_shared_preflight.json",
+      "sha256": "7b4998774d6124d6c12b4564e128d58085c9184fa0555af492b981a1cc4c88ad"
+    },
+    "cpu95_shared_preflight": {
+      "path": "tasks/cad_shared_cpu95_5e25fafe4a8f.json",
+      "sha256": "614fc8cefc59299d5da2eecf138924a61434b0504f012652a55410a4e8da79db",
+      "attempts": 3,
+      "passed": 1,
+      "last_peer_check": {
+        "passed": true,
+        "issues": [],
+        "breaches": []
+      },
+      "last_remote_wall_change_pct": 87.74
+    }
+  },
+  "limits_and_decisions": {
+    "ricoh_queue": "preserved",
+    "colab_cu_spent": 0,
+    "display_or_driver_changed": false,
+    "git_push": false,
+    "user_manager_reexec": true,
+    "electron_webview2_application_consolidation_measured": false
+  },
+  "plan": "docs/WORKSTATION_EXECUTION_PLAN.md"
+}

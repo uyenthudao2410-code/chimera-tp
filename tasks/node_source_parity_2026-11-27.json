@@ -1,0 +1,283 @@
+{
+  "schema": "chimera.node-source-parity/1",
+  "measured_utc": "2026-11-26T17:38:58.362132+00:00",
+  "scope": "Hashes of saved Python files on disk. A running interpreter may still hold older modules.",
+  "windows": {
+    "root": "E:\\DEV\\chimera-tp",
+    "pid": 34396,
+    "node": "win-desktop",
+    "version": "21.0.0",
+    "reachable": true,
+    "last_error": null,
+    "package_version": "18.0.0",
+    "started_at": "2026-11-27T00:34:24+07:00",
+    "route_status": {
+      "/api/health": 200,
+      "/v1/truth-matrix": 200
+    },
+    "process_working_set_mib": {
+      "current": 73.898,
+      "process_peak": 86.629
+    },
+    "evidence_counts": {
+      "verified": 2,
+      "unverified": 14,
+      "violated": 0,
+      "disabled": 0
+    }
+  },
+  "linux": {
+    "pid": 3930019,
+    "node": "svhome",
+    "version": "21.0.0",
+    "package_version": "18.0.0",
+    "root": "/home/svhome/DEV/chimera-tp",
+    "process_memory_bytes": {
+      "VmHWM": 100200448,
+      "VmRSS": 82432000
+    },
+    "evidence_counts": {
+      "verified": 0,
+      "unverified": 15,
+      "violated": 0,
+      "disabled": 0
+    }
+  },
+  "platform": {
+    "windows_files": 55,
+    "linux_files": 28,
+    "windows_only": [
+      "chimera_tp/platform/_parcel_gcm.py",
+      "chimera_tp/platform/_table_xlsx.py",
+      "chimera_tp/platform/aether_cli.py",
+      "chimera_tp/platform/agent_workspace.py",
+      "chimera_tp/platform/build_placement.py",
+      "chimera_tp/platform/build_queue.py",
+      "chimera_tp/platform/build_registry.py",
+      "chimera_tp/platform/build_snapshot.py",
+      "chimera_tp/platform/build_worker.py",
+      "chimera_tp/platform/clipboard_parcel.py",
+      "chimera_tp/platform/colab_on_peer.py",
+      "chimera_tp/platform/exile_colab.py",
+      "chimera_tp/platform/exile_queue.py",
+      "chimera_tp/platform/file_revisions.py",
+      "chimera_tp/platform/frame_notes.py",
+      "chimera_tp/platform/guarded_build.py",
+      "chimera_tp/platform/guarded_cas.py",
+      "chimera_tp/platform/local_build.py",
+      "chimera_tp/platform/peer_guard.py",
+      "chimera_tp/platform/recall_open.py",
+      "chimera_tp/platform/result_reuse.py",
+      "chimera_tp/platform/source_recall.py",
+      "chimera_tp/platform/swarm_symbols.py",
+      "chimera_tp/platform/vault_sql_pages.py",
+      "chimera_tp/platform/windows_build_job.py",
+      "chimera_tp/platform/work_admission.py",
+      "chimera_tp/platform/workspace_capsule.py"
+    ],
+    "linux_only": [],
+    "identical": 14,
+    "different": {
+      "chimera_tp/platform/__init__.py": {
+        "windows": "27bda9b8b475ad01689f3e41df8a4d60f942ed8a0ae67ba8c5f0f092cfc3447c",
+        "linux": "f7f397b11d93138daf1c61abda76a505076f152bc9c081daab7312b5d04e3209"
+      },
+      "chimera_tp/platform/client.py": {
+        "windows": "afdc81204371d2ce41c0fea1ec1a30603820256b03691ed9f34aad3e80e6c474",
+        "linux": "587b9ba45b55ffe121502f5644a35931b8a6ce9cb28968d8b7d531aadc24a106"
+      },
+      "chimera_tp/platform/colab_cli_bridge.py": {
+        "windows": "3e235d1b5a360b8fc821c3ecb9b9d4b09f36285d1c40c10ad30f1d28974fc33b",
+        "linux": "5405665fa3c8eacc4b4a90ef92b9c42d097bc4d178ac5219c7c3e698b4f161cd"
+      },
+      "chimera_tp/platform/egress_membrane.py": {
+        "windows": "e140a95ef77ef68bf0d8c264608c8f4c490c8f536387f5f9b10a00165b6e90e3",
+        "linux": "12b044a12e0b8ffb7b87b712c173e73866900c683426527daf2b2d1d1e4adfc8"
+      },
+      "chimera_tp/platform/evidence.py": {
+        "windows": "1ca356247d118b6daaaf79ec6518a45d6e580620c7e486038662a04f31d15cef",
+        "linux": "94c0b6e76c8e0d38d58277edde6b9e56ed77db9d342086f5a1aac1d635ee7841"
+      },
+      "chimera_tp/platform/exile_handoff.py": {
+        "windows": "bd7ed3bfd08103537f9a95860ac2441702a5ff97aa70865809e0adfb3c736275",
+        "linux": "1209a2e94fd00b120d247ae49c59f61212c15298d29c3e3e30b56950d3d90ac4"
+      },
+      "chimera_tp/platform/hybrid_search.py": {
+        "windows": "d8143615614ab248e595e202eb13ca619af7e624c5a793b873b068fd67b2a812",
+        "linux": "df67277c64fb519f840cf9c15ffb47f8e9cc0c4d8adf69443f3a389e74ea7514"
+      },
+      "chimera_tp/platform/hyper_desk.py": {
+        "windows": "727ae8ba015c486ff5cc53542e575d9fa58dc2e01eb4783ef25d97b87dc586fb",
+        "linux": "59a33e4906836544a270b6393352783c4c363fb0ee1827a9984f7be3fd701428"
+      },
+      "chimera_tp/platform/mcp_server.py": {
+        "windows": "fb4fe3dd2acd21411681c8451faa54192d921a62d6e911d9a43c7e0fdcf6916c",
+        "linux": "9bf237b3e493693746d275b667162e73a2df9483f7841b437fb0b9f083582882"
+      },
+      "chimera_tp/platform/phantom_silicon.py": {
+        "windows": "ccd469c491c29da6d30400e228d92c754cf0aa4c4b2c2324f648cf7cf193a3b1",
+        "linux": "91356770809566833860fa5a2878c793de0f1ee2bd256dd615ae532e51484a3f"
+      },
+      "chimera_tp/platform/pulse_bus.py": {
+        "windows": "ccd69b98debff87a7751e91205aeb7eaf4c0660b143238015edfdc3c0b1f9b64",
+        "linux": "3a85b0f2d870ed56431ba25de005db7cbd7701f0946254eff3db88d32d3ce33f"
+      },
+      "chimera_tp/platform/substrate.py": {
+        "windows": "dc2652ade989dd926fe05f182432d7932954e6415abc6049d01f74b6e2f775d5",
+        "linux": "f23ab8e47c2df37f6f34a6bfc6c94bf39d78777d73a81673cceef0076c341ea2"
+      },
+      "chimera_tp/platform/vault_sql.py": {
+        "windows": "acdac3d4df373f34dfce0d5ef700d55fdc7fd332eea9c35222363b11434bb559",
+        "linux": "2f3e940349b7c03f46ee4998b69a061bb5f0ce9f19e54c7a887e2f258723fa7f"
+      },
+      "chimera_tp/platform/vgpu_gateway.py": {
+        "windows": "5407317d0fe9070a9e40506faad490c919784945338d9d530afc684ced04fb8c",
+        "linux": "05ba6be1c5a17bad766c95361569d9ecea2002ebb384a40bd1627bb97b8a4226"
+      }
+    }
+  },
+  "package": {
+    "windows_files": 111,
+    "linux_files": 84,
+    "windows_only": [
+      "chimera_tp/platform/_parcel_gcm.py",
+      "chimera_tp/platform/_table_xlsx.py",
+      "chimera_tp/platform/aether_cli.py",
+      "chimera_tp/platform/agent_workspace.py",
+      "chimera_tp/platform/build_placement.py",
+      "chimera_tp/platform/build_queue.py",
+      "chimera_tp/platform/build_registry.py",
+      "chimera_tp/platform/build_snapshot.py",
+      "chimera_tp/platform/build_worker.py",
+      "chimera_tp/platform/clipboard_parcel.py",
+      "chimera_tp/platform/colab_on_peer.py",
+      "chimera_tp/platform/exile_colab.py",
+      "chimera_tp/platform/exile_queue.py",
+      "chimera_tp/platform/file_revisions.py",
+      "chimera_tp/platform/frame_notes.py",
+      "chimera_tp/platform/guarded_build.py",
+      "chimera_tp/platform/guarded_cas.py",
+      "chimera_tp/platform/local_build.py",
+      "chimera_tp/platform/peer_guard.py",
+      "chimera_tp/platform/recall_open.py",
+      "chimera_tp/platform/result_reuse.py",
+      "chimera_tp/platform/source_recall.py",
+      "chimera_tp/platform/swarm_symbols.py",
+      "chimera_tp/platform/vault_sql_pages.py",
+      "chimera_tp/platform/windows_build_job.py",
+      "chimera_tp/platform/work_admission.py",
+      "chimera_tp/platform/workspace_capsule.py"
+    ],
+    "linux_only": [],
+    "identical": 60,
+    "different": {
+      "chimera_tp/__init__.py": {
+        "windows": "a17f0cdd897a61074ecf7dec13cd4b08e0f47e0160742af5454c492e94e8d9cf",
+        "linux": "f50d78a51403672f139ce95f305c3ec273f02bf20d382faea68aa5d60309bd6d"
+      },
+      "chimera_tp/apex_synergy.py": {
+        "windows": "215c17ad45dc2a9499d861655a90dd185c6fb006c7356fd730d9a6c25c841a01",
+        "linux": "445a6943b5f905a47968cb201d38c28aea7d2bb76af9f7a357d58a4526e74ac3"
+      },
+      "chimera_tp/cli.py": {
+        "windows": "2cc7c59c23d69b4e2b107d0b9d6397b2f2a41958e5e7208a21750af350529076",
+        "linux": "e8659f73f593c656ee1c816039871cca2985736c63c552cabaa596276173cc31"
+      },
+      "chimera_tp/drop_portal.py": {
+        "windows": "3eac3feaee07442e40e635242f131149c99e5ee096c3cea57be75e8de32f2041",
+        "linux": "4a2210065ec277de33ec2eb17910c6162f5392d8a15f5dda5e6319e8c04236bb"
+      },
+      "chimera_tp/ghost_pty.py": {
+        "windows": "bccfa27bd1c5d47973b27ade37711a45a7bc7007402e20b0b00cc8a8b2cf61ce",
+        "linux": "b4dd7672be267ad3d77cc29e03324b5ee5b75442bdb3143b259c75f6ab774d70"
+      },
+      "chimera_tp/hyper_wire.py": {
+        "windows": "de3b9d6b7e050ee9633aaad26c2eef282226718b72e3569964ea2ed509d74608",
+        "linux": "b3b5a50a9944a5693b042cdceaba366d9c6880f568a2939c5d692849eb081302"
+      },
+      "chimera_tp/medic.py": {
+        "windows": "b76eca20aaa84ae726e7465461993271b2a3520c71dc142a08a866b3b1a15397",
+        "linux": "31377478867876123716b9edee5d16d178417e6e3cb40fdcb83b4715beb0f60b"
+      },
+      "chimera_tp/native.py": {
+        "windows": "1aac0a239fc4e92852b8ad72334d387d6b876559bbd6c9856abb82983e803d50",
+        "linux": "50be22697d4d9d4665651ad89e2b726414337d37fe97ec7ba8f2fae0cdea33a2"
+      },
+      "chimera_tp/platform/__init__.py": {
+        "windows": "27bda9b8b475ad01689f3e41df8a4d60f942ed8a0ae67ba8c5f0f092cfc3447c",
+        "linux": "f7f397b11d93138daf1c61abda76a505076f152bc9c081daab7312b5d04e3209"
+      },
+      "chimera_tp/platform/client.py": {
+        "windows": "afdc81204371d2ce41c0fea1ec1a30603820256b03691ed9f34aad3e80e6c474",
+        "linux": "587b9ba45b55ffe121502f5644a35931b8a6ce9cb28968d8b7d531aadc24a106"
+      },
+      "chimera_tp/platform/colab_cli_bridge.py": {
+        "windows": "3e235d1b5a360b8fc821c3ecb9b9d4b09f36285d1c40c10ad30f1d28974fc33b",
+        "linux": "5405665fa3c8eacc4b4a90ef92b9c42d097bc4d178ac5219c7c3e698b4f161cd"
+      },
+      "chimera_tp/platform/egress_membrane.py": {
+        "windows": "e140a95ef77ef68bf0d8c264608c8f4c490c8f536387f5f9b10a00165b6e90e3",
+        "linux": "12b044a12e0b8ffb7b87b712c173e73866900c683426527daf2b2d1d1e4adfc8"
+      },
+      "chimera_tp/platform/evidence.py": {
+        "windows": "1ca356247d118b6daaaf79ec6518a45d6e580620c7e486038662a04f31d15cef",
+        "linux": "94c0b6e76c8e0d38d58277edde6b9e56ed77db9d342086f5a1aac1d635ee7841"
+      },
+      "chimera_tp/platform/exile_handoff.py": {
+        "windows": "bd7ed3bfd08103537f9a95860ac2441702a5ff97aa70865809e0adfb3c736275",
+        "linux": "1209a2e94fd00b120d247ae49c59f61212c15298d29c3e3e30b56950d3d90ac4"
+      },
+      "chimera_tp/platform/hybrid_search.py": {
+        "windows": "d8143615614ab248e595e202eb13ca619af7e624c5a793b873b068fd67b2a812",
+        "linux": "df67277c64fb519f840cf9c15ffb47f8e9cc0c4d8adf69443f3a389e74ea7514"
+      },
+      "chimera_tp/platform/hyper_desk.py": {
+        "windows": "727ae8ba015c486ff5cc53542e575d9fa58dc2e01eb4783ef25d97b87dc586fb",
+        "linux": "59a33e4906836544a270b6393352783c4c363fb0ee1827a9984f7be3fd701428"
+      },
+      "chimera_tp/platform/mcp_server.py": {
+        "windows": "fb4fe3dd2acd21411681c8451faa54192d921a62d6e911d9a43c7e0fdcf6916c",
+        "linux": "9bf237b3e493693746d275b667162e73a2df9483f7841b437fb0b9f083582882"
+      },
+      "chimera_tp/platform/phantom_silicon.py": {
+        "windows": "ccd469c491c29da6d30400e228d92c754cf0aa4c4b2c2324f648cf7cf193a3b1",
+        "linux": "91356770809566833860fa5a2878c793de0f1ee2bd256dd615ae532e51484a3f"
+      },
+      "chimera_tp/platform/pulse_bus.py": {
+        "windows": "ccd69b98debff87a7751e91205aeb7eaf4c0660b143238015edfdc3c0b1f9b64",
+        "linux": "3a85b0f2d870ed56431ba25de005db7cbd7701f0946254eff3db88d32d3ce33f"
+      },
+      "chimera_tp/platform/substrate.py": {
+        "windows": "dc2652ade989dd926fe05f182432d7932954e6415abc6049d01f74b6e2f775d5",
+        "linux": "f23ab8e47c2df37f6f34a6bfc6c94bf39d78777d73a81673cceef0076c341ea2"
+      },
+      "chimera_tp/platform/vault_sql.py": {
+        "windows": "acdac3d4df373f34dfce0d5ef700d55fdc7fd332eea9c35222363b11434bb559",
+        "linux": "2f3e940349b7c03f46ee4998b69a061bb5f0ce9f19e54c7a887e2f258723fa7f"
+      },
+      "chimera_tp/platform/vgpu_gateway.py": {
+        "windows": "5407317d0fe9070a9e40506faad490c919784945338d9d530afc684ced04fb8c",
+        "linux": "05ba6be1c5a17bad766c95361569d9ecea2002ebb384a40bd1627bb97b8a4226"
+      },
+      "chimera_tp/probe.py": {
+        "windows": "d96b2949333d8fa7b51e3ef4a8805f8ffb434a3839975e1e4ca50d1fc3de7e2a",
+        "linux": "cff48f0425a09c2aea7f6ccf7d964eebe6fdf5d95f299d9ebb9b092ba6242afc"
+      },
+      "chimera_tp/v9_app_index.py": {
+        "windows": "631183b87b0df0adb7fa7f4c8513cbd54d8f72f173505ee1363217b32292c9a7",
+        "linux": "eeb0bff22e09ae3ffbdd4194dcb5c99a603eea418cd2f7d57a6626b0bb9d3e5c"
+      }
+    }
+  },
+  "windows_after_verification": {
+    "measured_utc": "2026-11-26T17:42:50.825062+00:00",
+    "pid": 27796,
+    "started_at": "2026-11-27T00:39:31+07:00",
+    "node": "win-desktop",
+    "route_status": {
+      "/api/health": 200,
+      "/v1/truth-matrix": 200
+    },
+    "pid_changed_since_memory_sample": true
+  }
+}

@@ -1,0 +1,1244 @@
+{
+  "win_chimera_git": {
+    "branch": "main",
+    "head": "5ff4a08",
+    "log5": [
+      "5ff4a08 feat(ui): replace WebGL with Zero-GPU v26 2D Telemetry & Live Sync Architecture Console",
+      "d32ec21 feat(ui): upgrade to CHIMERA OMNISCIENCE v25 Raymarched Volumetric Singularity + 4-Form GPU Morphing Entity",
+      "d5807ba feat(ui): CHIMERA // OMNISCIENCE v24.0 Hyper-Organic Spatial Intelligence HUD (full-bleed 3D Singularity, 9 Arc-Reactor rings, unobstructed labeled Plasma Conduits, 450ms realtime sync)",
+      "877b7da feat(ui): upgrade to CHIMERA-HYPER v23.0 Living Organism Cortex (Retina DPR, 8-panel synaptic mesh, native Silicon gauges, 800ms live pulse)",
+      "021c033 perf(platform): crush 3 live bottlenecks (malloc_trim RSS, non-blocking GPU probe, PHANTOM OpenAI relay)"
+    ],
+    "status_short": [
+      "M AGENTS.md",
+      " M README.md",
+      " M chimera_tp/__init__.py",
+      " M chimera_tp/apex_synergy.py",
+      " M chimera_tp/autopilot.py",
+      " M chimera_tp/cli.py",
+      " M chimera_tp/dashboard.py",
+      " M chimera_tp/drop_portal.py",
+      " M chimera_tp/ghost_fs.py",
+      " M chimera_tp/ghost_pty.py",
+      " M chimera_tp/host_governor.py",
+      " M chimera_tp/hyper_wire.py",
+      " M chimera_tp/medic.py",
+      " M chimera_tp/merkle_sync.py",
+      " M chimera_tp/native.py",
+      " M chimera_tp/phantom_tunnel.py",
+      " M chimera_tp/platform/__init__.py",
+      " M chimera_tp/platform/autoload.py",
+      " M chimera_tp/platform/browser_grid.py",
+      " M chimera_tp/platform/client.py",
+      " M chimera_tp/platform/colab_cli_bridge.py",
+      " M chimera_tp/platform/discovery.py",
+      " M chimera_tp/platform/egress_membrane.py",
+      " M chimera_tp/platform/flight_recorder.py",
+      " M chimera_tp/platform/ghost_bubble.py",
+      " M chimera_tp/platform/hybrid_search.py",
+      " M chimera_tp/platform/immortal_jobs.py",
+      " M chimera_tp/platform/mcp_server.py",
+      " M chimera_tp/platform/pulse_bus.py",
+      " M chimera_tp/platform/substrate.py",
+      " M chimera_tp/platform/unify.py",
+      " M chimera_tp/platform/vault_sql.py",
+      " M chimera_tp/platform/vgpu_gateway.py",
+      " M chimera_tp/probe.py",
+      " M chimera_tp/sentinel.py",
+      " M chimera_tp/trinity_bridge.py",
+      " M chimera_tp/v9_app_index.py",
+      " M chimera_tp/v9_nvme_grid.py",
+      " M chimera_tp/vsa_memory_service.py",
+      " M docs/MOONSHOT_VAULT.md",
+      " M native/chimera_core/src/lib.rs",
+      " M pyproject.toml",
+      " M tasks/lessons.md",
+      " M tasks/todo.md",
+      " M tests/test_v16_platform_connect.py",
+      " M tests/test_v17_silicon_cartridges.py",
+      " M tests/test_v18_unify.py",
+      "?? ErrorReports/",
+      "?? chimera_tp/_chimera_core.dll.prev",
+      "?? chimera_tp/midbrain_dopamine.py",
+      "?? chimera_tp/overmind_cortex.py",
+      "?? chimera_tp/platform/_parcel_gcm.py",
+      "?? chimera_tp/platform/_table_xlsx.py",
+      "?? chimera_tp/platform/aether_cli.py",
+      "?? chimera_tp/platform/agent_probe.py",
+      "?? chimera_tp/platform/agent_symbiont.py",
+      "?? chimera_tp/platform/agent_workspace.py",
+      "?? chimera_tp/platform/build_placement.py",
+      "?? chimera_tp/platform/build_queue.py",
+      "?? chimera_tp/platform/build_registry.py"
+    ],
+    "dirty_count": 328
+  },
+  "win_tquota_git": {
+    "git": false
+  },
+  "win_rel_dir": "C:\\Users\\Admin\\AppData\\Local\\chimera\\releases\\5e25fafe4a8f",
+  "sv_rel_dir": "/home/svhome/.local/share/chimera/releases/5e25fafe4a8f",
+  "sv_chimera_git": {
+    "git": false
+  },
+  "sv_tquota_git": {
+    "git": false
+  },
+  "win_chimera_live": {
+    "pid": 25004,
+    "started_at": "2026-11-27T09:00:08+07:00",
+    "zero_weight": {
+      "daemon_ram_mb": 46.27,
+      "daemon_rss_bytes": 48513024,
+      "daemon_peak_rss_bytes": 66703360,
+      "host_free_ram_gb": 9.58,
+      "host_total_ram_gb": 30.85,
+      "cpu_threads": 12,
+      "ram_budget_mb": 80.0,
+      "zero_weight_ok": true,
+      "peak_within_budget": true
+    },
+    "evidence_summary": {
+      "verified": 0,
+      "unverified": 18,
+      "violated": 0,
+      "disabled": 0
+    },
+    "apps_summary": {
+      "total": 5,
+      "online": 3,
+      "linked": 3
+    },
+    "hyperdesk": {
+      "autonomic_running": true,
+      "ticks": 791,
+      "profile": "aether",
+      "soft_batch_shield": {
+        "runs": 80,
+        "vips_promoted": 0,
+        "batch_demoted": 0,
+        "gateways_spared": 36,
+        "last_ms": 28.59
+      },
+      "aether_soft_shield_ticks": 80,
+      "orphan_conhosts_reaped": 0,
+      "aether_ws_trims": null,
+      "immune_gateways": {
+        "listening_count": 36,
+        "vip_peer_count": 0,
+        "total_immune": 36,
+        "scan_ms": 0.657
+      }
+    },
+    "precog": {
+      "ok": true,
+      "inflight_shadow_tests": 0,
+      "watchers": [],
+      "saves_processed": 2,
+      "ast_incremental_updates": 2,
+      "shadow_tests_started": 0,
+      "shadow_tests_completed": 0,
+      "shadow_cache_joins": 0,
+      "shadow_precomputed_hits": 0,
+      "syntax_early_catches": 0,
+      "prefetch_calls": 20,
+      "prefetched_files": 10,
+      "spec_cache_stores": 10,
+      "spec_cache_hits": 0
+    }
+  },
+  "sv_chimera_live": {
+    "pid": 4038034,
+    "rss_mb": 66.03,
+    "wk": {
+      "version": "18.0.0",
+      "capability_version": "21.0.0",
+      "runtime_source_dir": "/home/svhome/.local/share/chimera/releases/5e25fafe4a8f",
+      "zero_weight": {
+        "daemon_ram_mb": 66.08,
+        "daemon_rss_bytes": 69287936,
+        "daemon_peak_rss_bytes": 74706944,
+        "host_free_ram_gb": 7.21,
+        "host_total_ram_gb": 10.61,
+        "cpu_threads": 4,
+        "ram_budget_mb": 80.0,
+        "zero_weight_ok": true,
+        "peak_within_budget": true
+      },
+      "evidence_summary": {
+        "verified": 0,
+        "unverified": 16,
+        "violated": 0,
+        "disabled": 0
+      },
+      "apps_summary": {
+        "total": 3,
+        "online": 2,
+        "linked": 2
+      }
+    },
+    "precog": {
+      "ok": true,
+      "inflight_shadow_tests": 0,
+      "watchers": [],
+      "saves_processed": 0,
+      "ast_incremental_updates": 0,
+      "shadow_tests_started": 0,
+      "shadow_tests_completed": 0,
+      "shadow_cache_joins": 0,
+      "shadow_precomputed_hits": 0,
+      "syntax_early_catches": 0,
+      "prefetch_calls": 2,
+      "prefetched_files": 2,
+      "spec_cache_stores": 1,
+      "spec_cache_hits": 0
+    },
+    "host": {
+      "mem_available_mb": 7378.77,
+      "swap_used_mb": 1211.64,
+      "tmp_used_mb": 17.15,
+      "tmp_entries": 42,
+      "devdrive_free_gb": 15.6,
+      "janitor_timer": "active"
+    }
+  },
+  "win_tquota_live": {
+    "inSync": true,
+    "rss_mb": 289.36,
+    "heap_mb": 65.49,
+    "prefixDelta": {
+      "deltaHits": 1,
+      "deltaMisses": 1,
+      "deltaItemsSkipped": 46,
+      "toolsDeltaHits": 0,
+      "outboundToolsReuseHits": 0,
+      "workerColdSnapshots": 1,
+      "idleTrims": 0,
+      "cachedSessions": 1,
+      "cachedRawBytes": 507728,
+      "cachedToolSlices": 0
+    },
+    "wireDeltaSerializer": {
+      "spliceHits": 2,
+      "spliceMisses": 2,
+      "fallbackCount": 0,
+      "itemsReused": 83,
+      "itemsSerialized": 107,
+      "toolsReused": 0,
+      "bytesReused": 931519,
+      "idleTrims": 0,
+      "cachedSessions": 1,
+      "cachedBytes": 507708,
+      "cachedToolSchemas": 0
+    },
+    "generationKeyDelta": {
+      "incrementalHits": 1,
+      "incrementalMisses": 1,
+      "itemsSkipped": 46,
+      "canonicalToolsHits": 0,
+      "cachedPrefixStates": 1,
+      "cachedCanonicalTools": 0
+    },
+    "ingressPool": {
+      "inlineCount": 0,
+      "offloadedCount": 1,
+      "workerFallbacks": 0,
+      "gzipOffloadedCount": 0,
+      "gzipAsyncLibuvCount": 0,
+      "coldPrefixOffloadedCount": 1,
+      "activeWorkers": 1,
+      "pendingJobs": 0,
+      "offloadThresholdBytes": 65536,
+      "closed": false
+    },
+    "peerMesh": {
+      "enabled": true,
+      "allowSpillover": true,
+      "timeoutMs": 120000,
+      "peers": [
+        {
+          "url": "https://svhome.tail0e4032.ts.net:12500",
+          "inBackoff": false,
+          "backoffUntil": null
+        }
+      ],
+      "forwards": 0,
+      "hits": 0,
+      "errors": 0,
+      "lastPeerError": null
+    },
+    "credentialPrewarm": {
+      "proactiveChecks": 2,
+      "proactiveTriggered": 0,
+      "proactiveSucceeded": 0,
+      "proactiveFailed": 0,
+      "transientBackoffSkips": 0,
+      "activeBackoffs": 0
+    },
+    "memoryHygiene": {
+      "runs": 0,
+      "trimmed": 0,
+      "gcInvoked": 0,
+      "totalFreedMb": 0,
+      "lastRunAt": 0,
+      "lastBeforeMb": 0,
+      "lastAfterMb": 0,
+      "lastFreedMb": 0,
+      "lastCacheReport": null,
+      "rssThresholdMb": 320,
+      "currentRssMb": 289.36,
+      "currentHeapUsedMb": 65.49
+    },
+    "ingressDiagnostics": {
+      "sampleCount": 2,
+      "last": {
+        "at": 1795745987339,
+        "requestId": "58538246-c910-4d52-ba7c-696eafcda7f6",
+        "clientRequestId": "01a218ff-4a23-7ca1-b1fe-23e533d4ec44",
+        "attemptId": "att_1841a9d5-f85f-4aa1-ad3a-fa5764b66e6e",
+        "totalMs": 63.77,
+        "bodyReadParseMs": 2.88,
+        "payloadPrepMs": 30.51,
+        "guardKeyMs": 0.79,
+        "guardPersistMs": 9.47,
+        "accountSelectWaitMs": 1.68,
+        "dispatchPrepMs": 28.7,
+        "admissionCommitMs": 6.55,
+        "residualWallMs": 46.06,
+        "ingressCpuMs": 46.06,
+        "requestBytes": 532031
+      },
+      "worstSample": {
+        "at": 1795745967991,
+        "requestId": "2765e878-913d-474e-87e5-56e9a79f5d9d",
+        "clientRequestId": "01a218ff-4a23-7ca1-b1fe-23e533d4ec44",
+        "attemptId": "att_4057a632-1e2b-4a13-90e9-185736f246a7",
+        "totalMs": 172.88,
+        "bodyReadParseMs": 1.88,
+        "payloadPrepMs": 52.05,
+        "guardKeyMs": 4.48,
+        "guardPersistMs": 10.49,
+        "accountSelectWaitMs": 4.04,
+        "dispatchPrepMs": 114.9,
+        "admissionCommitMs": 11.99,
+        "residualWallMs": 146.36,
+        "ingressCpuMs": 146.36,
+        "requestBytes": 522863
+      },
+      "recentSamples": [
+        {
+          "at": 1795745967991,
+          "requestId": "2765e878-913d-474e-87e5-56e9a79f5d9d",
+          "clientRequestId": "01a218ff-4a23-7ca1-b1fe-23e533d4ec44",
+          "attemptId": "att_4057a632-1e2b-4a13-90e9-185736f246a7",
+          "totalMs": 172.88,
+          "bodyReadParseMs": 1.88,
+          "payloadPrepMs": 52.05,
+          "guardKeyMs": 4.48,
+          "guardPersistMs": 10.49,
+          "accountSelectWaitMs": 4.04,
+          "dispatchPrepMs": 114.9,
+          "admissionCommitMs": 11.99,
+          "residualWallMs": 146.36,
+          "ingressCpuMs": 146.36,
+          "requestBytes": 522863
+        },
+        {
+          "at": 1795745987339,
+          "requestId": "58538246-c910-4d52-ba7c-696eafcda7f6",
+          "clientRequestId": "01a218ff-4a23-7ca1-b1fe-23e533d4ec44",
+          "attemptId": "att_1841a9d5-f85f-4aa1-ad3a-fa5764b66e6e",
+          "totalMs": 63.77,
+          "bodyReadParseMs": 2.88,
+          "payloadPrepMs": 30.51,
+          "guardKeyMs": 0.79,
+          "guardPersistMs": 9.47,
+          "accountSelectWaitMs": 1.68,
+          "dispatchPrepMs": 28.7,
+          "admissionCommitMs": 6.55,
+          "residualWallMs": 46.06,
+          "ingressCpuMs": 46.06,
+          "requestBytes": 532031
+        }
+      ],
+      "p95": {
+        "totalMs": 172.88,
+        "bodyReadParseMs": 2.88,
+        "payloadPrepMs": 52.05,
+        "guardKeyMs": 4.48,
+        "guardPersistMs": 10.49,
+        "accountSelectWaitMs": 4.04,
+        "dispatchPrepMs": 114.9,
+        "admissionCommitMs": 11.99,
+        "residualWallMs": 146.36,
+        "ingressCpuMs": 146.36,
+        "requestBytes": 532031
+      }
+    }
+  },
+  "sv_tquota_live": {
+    "inSync": true,
+    "rss_mb": 392.2,
+    "heap_mb": 67.46,
+    "prefixDelta": {
+      "deltaHits": 3,
+      "deltaMisses": 2,
+      "deltaItemsSkipped": 273,
+      "toolsDeltaHits": 0,
+      "outboundToolsReuseHits": 0,
+      "workerColdSnapshots": 1,
+      "idleTrims": 0,
+      "cachedSessions": 1,
+      "cachedRawBytes": 142767,
+      "cachedToolSlices": 0
+    },
+    "wireDeltaSerializer": {
+      "spliceHits": 8,
+      "spliceMisses": 26,
+      "fallbackCount": 0,
+      "itemsReused": 607,
+      "itemsSerialized": 1115,
+      "toolsReused": 0,
+      "bytesReused": 3875657,
+      "idleTrims": 0,
+      "cachedSessions": 1,
+      "cachedBytes": 140516,
+      "cachedToolSchemas": 0
+    },
+    "generationKeyDelta": {
+      "incrementalHits": 2,
+      "incrementalMisses": 1,
+      "itemsSkipped": 17,
+      "canonicalToolsHits": 0,
+      "cachedPrefixStates": 1,
+      "cachedCanonicalTools": 0
+    },
+    "ingressPool": {
+      "inlineCount": 0,
+      "offloadedCount": 1,
+      "workerFallbacks": 0,
+      "gzipOffloadedCount": 0,
+      "gzipAsyncLibuvCount": 0,
+      "coldPrefixOffloadedCount": 1,
+      "activeWorkers": 0,
+      "pendingJobs": 0,
+      "offloadThresholdBytes": 65536,
+      "closed": false
+    },
+    "peerMesh": {
+      "enabled": true,
+      "allowSpillover": true,
+      "timeoutMs": 120000,
+      "peers": [
+        {
+          "url": "https://desktop-63643j4.tail0e4032.ts.net:12500",
+          "inBackoff": false,
+          "backoffUntil": null
+        }
+      ],
+      "forwards": 20,
+      "hits": 18,
+      "errors": 2,
+      "lastPeerError": {
+        "peer": "http://127.0.0.1:12551",
+        "error": "fetch failed",
+        "at": 1795745950205
+      }
+    },
+    "credentialPrewarm": {
+      "proactiveChecks": 5,
+      "proactiveTriggered": 0,
+      "proactiveSucceeded": 0,
+      "proactiveFailed": 0,
+      "transientBackoffSkips": 0,
+      "activeBackoffs": 0
+    },
+    "memoryHygiene": {
+      "runs": 0,
+      "trimmed": 0,
+      "gcInvoked": 0,
+      "totalFreedMb": 0,
+      "lastRunAt": 0,
+      "lastBeforeMb": 0,
+      "lastAfterMb": 0,
+      "lastFreedMb": 0,
+      "lastCacheReport": null,
+      "rssThresholdMb": 320,
+      "currentRssMb": 392.2,
+      "currentHeapUsedMb": 67.46
+    },
+    "ingressDiagnostics": {
+      "sampleCount": 8,
+      "last": {
+        "at": 1795746007052,
+        "requestId": "093d6c7f-bd72-4839-af23-39da4206b00a",
+        "clientRequestId": null,
+        "attemptId": "att_5f83859a-10f0-409d-97c2-8b688721b4d7",
+        "totalMs": 82.89,
+        "bodyReadParseMs": 0,
+        "payloadPrepMs": 53.01,
+        "guardKeyMs": 0.57,
+        "guardPersistMs": 3.92,
+        "accountSelectWaitMs": 6.75,
+        "dispatchPrepMs": 23.14,
+        "admissionCommitMs": 14.31,
+        "residualWallMs": 57.91,
+        "ingressCpuMs": 57.91,
+        "requestBytes": 13118
+      },
+      "worstSample": {
+        "at": 1795745950268,
+        "requestId": "6f3802e7-ee46-4053-9dd3-7c5d429b5bf8",
+        "clientRequestId": "01a21acc-812f-75c2-bd27-1492172b4984",
+        "attemptId": "att_f5695a48-53b2-4291-9d75-7e67321ce532",
+        "totalMs": 8101.93,
+        "bodyReadParseMs": 0.95,
+        "payloadPrepMs": 17.59,
+        "guardKeyMs": 2.61,
+        "guardPersistMs": 6.11,
+        "accountSelectWaitMs": 8035.78,
+        "dispatchPrepMs": 47.61,
+        "admissionCommitMs": 12.05,
+        "residualWallMs": 47.99,
+        "ingressCpuMs": 47.99,
+        "requestBytes": 103608
+      },
+      "recentSamples": [
+        {
+          "at": 1795741789026,
+          "requestId": "6cb11134-a3e3-40f3-bd36-8a51671fd3b8",
+          "clientRequestId": "01a218ff-4a23-7ca1-b1fe-23e533d4ec44",
+          "attemptId": "att_e577a1b7-4103-4632-b893-1643ecc03318",
+          "totalMs": 629.22,
+          "bodyReadParseMs": 13.53,
+          "payloadPrepMs": 342.02,
+          "guardKeyMs": 19.91,
+          "guardPersistMs": 9.62,
+          "accountSelectWaitMs": 3.19,
+          "dispatchPrepMs": 270.47,
+          "admissionCommitMs": 34.19,
+          "residualWallMs": 582.21,
+          "ingressCpuMs": 582.21,
+          "requestBytes": 2063398
+        },
+        {
+          "at": 1795741824643,
+          "requestId": "34a5003b-b9db-4d59-ae84-eb85b6500255",
+          "clientRequestId": "01a218ff-4a23-7ca1-b1fe-23e533d4ec44",
+          "attemptId": "att_d5f72d13-842c-4abb-a86c-8fb02488535c",
+          "totalMs": 322.3,
+          "bodyReadParseMs": 5.75,
+          "payloadPrepMs": 209.59,
+          "guardKeyMs": 17.35,
+          "guardPersistMs": 11.84,
+          "accountSelectWaitMs": 1.07,
+          "dispatchPrepMs": 105.9,
+          "admissionCommitMs": 27.4,
+          "residualWallMs": 282,
+          "ingressCpuMs": 282,
+          "requestBytes": 2091569
+        },
+        {
+          "at": 1795743468308,
+          "requestId": "4d38d349-cd85-4e3f-b835-328916452b09",
+          "clientRequestId": null,
+          "attemptId": "att_1564da43-5c9f-4924-8fa5-32db4c0bb95f",
+          "totalMs": 210.09,
+          "bodyReadParseMs": 0.01,
+          "payloadPrepMs": 98.7,
+          "guardKeyMs": 0.97,
+          "guardPersistMs": 7.42,
+          "accountSelectWaitMs": 24.31,
+          "dispatchPrepMs": 87.07,
+          "admissionCommitMs": 10.9,
+          "residualWallMs": 167.45,
+          "ingressCpuMs": 167.45,
+          "requestBytes": 9024
+        },
+        {
+          "at": 1795745950268,
+          "requestId": "6f3802e7-ee46-4053-9dd3-7c5d429b5bf8",
+          "clientRequestId": "01a21acc-812f-75c2-bd27-1492172b4984",
+          "attemptId": "att_f5695a48-53b2-4291-9d75-7e67321ce532",
+          "totalMs": 8101.93,
+          "bodyReadParseMs": 0.95,
+          "payloadPrepMs": 17.59,
+          "guardKeyMs": 2.61,
+          "guardPersistMs": 6.11,
+          "accountSelectWaitMs": 8035.78,
+          "dispatchPrepMs": 47.61,
+          "admissionCommitMs": 12.05,
+          "residualWallMs": 47.99,
+          "ingressCpuMs": 47.99,
+          "requestBytes": 103608
+        },
+        {
+          "at": 1795745962403,
+          "requestId": "1cfe5af8-7bde-49ca-abf2-507081eedb06",
+          "clientRequestId": "01a21acc-812f-75c2-bd27-1492172b4984",
+          "attemptId": "att_435d64e2-4137-4833-981c-8362e2200ff6",
+          "totalMs": 84.46,
+          "bodyReadParseMs": 1.86,
+          "payloadPrepMs": 39.77,
+          "guardKeyMs": 2.16,
+          "guardPersistMs": 13.36,
+          "accountSelectWaitMs": 1.85,
+          "dispatchPrepMs": 40.98,
+          "admissionCommitMs": 12.73,
+          "residualWallMs": 56.53,
+          "ingressCpuMs": 56.53,
+          "requestBytes": 105540
+        },
+        {
+          "at": 1795745970454,
+          "requestId": "bc4fdddd-797e-450a-9e9d-3a945627933d",
+          "clientRequestId": "01a21acc-812f-75c2-bd27-1492172b4984",
+          "attemptId": "att_09d04403-ee56-47a5-808b-1ebd11cdc833",
+          "totalMs": 75.39,
+          "bodyReadParseMs": 2.45,
+          "payloadPrepMs": 30.1,
+          "guardKeyMs": 3.19,
+          "guardPersistMs": 11.65,
+          "accountSelectWaitMs": 1.27,
+          "dispatchPrepMs": 41.57,
+          "admissionCommitMs": 9.15,
+          "residualWallMs": 53.32,
+          "ingressCpuMs": 53.32,
+          "requestBytes": 147368
+        },
+        {
+          "at": 1795745976701,
+          "requestId": "b9814be7-f716-4ddf-8a88-550c03554769",
+          "clientRequestId": null,
+          "attemptId": "att_33a40b63-bdef-42ff-bdcf-edc16a1dcf60",
+          "totalMs": 35.48,
+          "bodyReadParseMs": 0,
+          "payloadPrepMs": 10.28,
+          "guardKeyMs": 0.78,
+          "guardPersistMs": 4.52,
+          "accountSelectWaitMs": 1.4,
+          "dispatchPrepMs": 23.79,
+          "admissionCommitMs": 13.63,
+          "residualWallMs": 15.93,
+          "ingressCpuMs": 15.93,
+          "requestBytes": 15044
+        },
+        {
+          "at": 1795746007052,
+          "requestId": "093d6c7f-bd72-4839-af23-39da4206b00a",
+          "clientRequestId": null,
+          "attemptId": "att_5f83859a-10f0-409d-97c2-8b688721b4d7",
+          "totalMs": 82.89,
+          "bodyReadParseMs": 0,
+          "payloadPrepMs": 53.01,
+          "guardKeyMs": 0.57,
+          "guardPersistMs": 3.92,
+          "accountSelectWaitMs": 6.75,
+          "dispatchPrepMs": 23.14,
+          "admissionCommitMs": 14.31,
+          "residualWallMs": 57.91,
+          "ingressCpuMs": 57.91,
+          "requestBytes": 13118
+        }
+      ],
+      "p95": {
+        "totalMs": 8101.93,
+        "bodyReadParseMs": 13.53,
+        "payloadPrepMs": 342.02,
+        "guardKeyMs": 19.91,
+        "guardPersistMs": 13.36,
+        "accountSelectWaitMs": 8035.78,
+        "dispatchPrepMs": 270.47,
+        "admissionCommitMs": 34.19,
+        "residualWallMs": 582.21,
+        "ingressCpuMs": 582.21,
+        "requestBytes": 2091569
+      }
+    }
+  },
+  "diffs": {
+    "chimera_win_repo_vs_sv_repo": {
+      "total_a": 244,
+      "total_b": 167,
+      "only_in_win_repo": [
+        {
+          "file": "scripts/autocad_autosave.py",
+          "size": 10157,
+          "mtime": 1795709321
+        },
+        {
+          "file": "scripts/autocad_autosave_facts.mjs",
+          "size": 3314,
+          "mtime": 1795710588
+        },
+        {
+          "file": "scripts/autocad_autosave_verify.mjs",
+          "size": 8892,
+          "mtime": 1795710689
+        },
+        {
+          "file": "scripts/autocad_autosave_watch.py",
+          "size": 4254,
+          "mtime": 1795710769
+        },
+        {
+          "file": "scripts/cad_build_job.py",
+          "size": 4162,
+          "mtime": 1795699924
+        },
+        {
+          "file": "scripts/cad_frame_metrics.mjs",
+          "size": 7837,
+          "mtime": 1795700472
+        },
+        {
+          "file": "scripts/cad_peer_capture.mjs",
+          "size": 2286,
+          "mtime": 1795700065
+        },
+        {
+          "file": "scripts/cad_peer_metrics.mjs",
+          "size": 8542,
+          "mtime": 1795700505
+        },
+        {
+          "file": "scripts/cad_peer_observer.py",
+          "size": 4497,
+          "mtime": 1795699863
+        },
+        {
+          "file": "scripts/cad_probe_runtime.mjs",
+          "size": 5494,
+          "mtime": 1795700048
+        },
+        {
+          "file": "scripts/cad_swarm_job.py",
+          "size": 13944,
+          "mtime": 1795745928
+        },
+        {
+          "file": "scripts/cad_viewport.ps1",
+          "size": 6512,
+          "mtime": 1795695631
+        },
+        {
+          "file": "scripts/cad_workspace_capsule.mjs",
+          "size": 5005,
+          "mtime": 1795701347
+        },
+        {
+          "file": "scripts/cad_xref_console.mjs",
+          "size": 3026,
+          "mtime": 1795701621
+        },
+        {
+          "file": "scripts/check_daemon_soak.py",
+          "size": 7831,
+          "mtime": 1795740236
+        },
+        {
+          "file": "scripts/compare_daemon_working_sets.py",
+          "size": 13017,
+          "mtime": 1795738057
+        },
+        {
+          "file": "scripts/cuda_vmm_worker.py",
+          "size": 11591,
+          "mtime": 1795713439
+        },
+        {
+          "file": "scripts/display_paths.py",
+          "size": 3374,
+          "mtime": 1795693404
+        },
+        {
+          "file": "scripts/exile_fault_cases.py",
+          "size": 2440,
+          "mtime": 1795713158
+        },
+        {
+          "file": "scripts/exile_guard_fault_fixture.py",
+          "size": 14684,
+          "mtime": 1795713376
+        },
+        {
+          "file": "scripts/exile_guard_queue_check.py",
+          "size": 6479,
+          "mtime": 1795714196
+        },
+        {
+          "file": "scripts/measure_aether_features.py",
+          "size": 7469,
+          "mtime": 1795694756
+        },
+        {
+          "file": "scripts/measure_cad_build.mjs",
+          "size": 19005,
+          "mtime": 1795745987
+        },
+        {
+          "file": "scripts/measure_daemon_cli.py",
+          "size": 11730,
+          "mtime": 1795743765
+        },
+        {
+          "file": "scripts/measure_daemon_working_set.py",
+          "size": 11703,
+          "mtime": 1795718010
+        },
+        {
+          "file": "scripts/measure_guarded_build_session.py",
+          "size": 10441,
+          "mtime": 1795723355
+        },
+        {
+          "file": "scripts/measure_guest_write_budget.py",
+          "size": 7337,
+          "mtime": 1795740959
+        },
+        {
+          "file": "scripts/measure_office_idle.py",
+          "size": 11185,
+          "mtime": 1795696214
+        },
+        {
+          "file": "scripts/measure_pdf_batch.py",
+          "size": 6250,
+          "mtime": 1795696667
+        },
+        {
+          "file": "scripts/measure_peer_resources.py",
+          "size": 4971,
+          "mtime": 1795694344
+        },
+        {
+          "file": "scripts/measure_peer_service_slo.py",
+          "size": 17495,
+          "mtime": 1795745167
+        },
+        {
+          "file": "scripts/measure_peer_transport.mjs",
+          "size": 14081,
+          "mtime": 1795708856
+        },
+        {
+          "file": "scripts/measure_storage_build.py",
+          "size": 12857,
+          "mtime": 1795738064
+        },
+        {
+          "file": "scripts/measure_swarm_placement.mjs",
+          "size": 13540,
+          "mtime": 1795701660
+        },
+        {
+          "file": "scripts/measure_workstation_apps.py",
+          "size": 7482,
+          "mtime": 1795700262
+        },
+        {
+          "file": "scripts/monitor_daemon_budget.py",
+          "size": 10205,
+          "mtime": 1795745040
+        },
+        {
+          "file": "scripts/peer_service_probe.py",
+          "size": 9938,
+          "mtime": 1795700470
+        },
+        {
+          "file": "scripts/peer_transport_worker.py",
+          "size": 7384,
+          "mtime": 1795708758
+        },
+        {
+          "file": "scripts/placement_windows_cpu.py",
+          "size": 2738,
+          "mtime": 1795701614
+        },
+        {
+          "file": "scripts/setup_nvme_devdrive.ps1",
+          "size": 7831,
+          "mtime": 1795723644
+        },
+        {
+          "file": "scripts/source_recall_probe.py",
+          "size": 9900,
+          "mtime": 1795699649
+        },
+        {
+          "file": "scripts/vault_sql_cross_host.py",
+          "size": 14075,
+          "mtime": 1795711024
+        },
+        {
+          "file": "scripts/verify_build_placement.py",
+          "size": 5564,
+          "mtime": 1795702020
+        },
+        {
+          "file": "scripts/verify_build_receipt_loss.py",
+          "size": 4466,
+          "mtime": 1795697736
+        },
+        {
+          "file": "scripts/verify_cad_revisions.mjs",
+          "size": 11036,
+          "mtime": 1795697257
+        },
+        {
+          "file": "scripts/verify_cad_workspace_dependencies.mjs",
+          "size": 12840,
+          "mtime": 1795703094
+        },
+        {
+          "file": "scripts/verify_capsule_peer.py",
+          "size": 5851,
+          "mtime": 1795703070
+        },
+        {
+          "file": "scripts/verify_cuda_vmm_shadow.mjs",
+          "size": 9930,
+          "mtime": 1795713449
+        },
+        {
+          "file": "scripts/verify_evidence_traffic.mjs",
+          "size": 14144,
+          "mtime": 1795709220
+        },
+        {
+          "file": "scripts/verify_exile_api.py",
+          "size": 5571,
+          "mtime": 1795700041
+        },
+        {
+          "file": "scripts/verify_exile_guard_integration.py",
+          "size": 11382,
+          "mtime": 1795714316
+        },
+        {
+          "file": "scripts/verify_guarded_build.py",
+          "size": 15994,
+          "mtime": 1795701377
+        },
+        {
+          "file": "scripts/verify_node_source_parity.py",
+          "size": 8224,
+          "mtime": 1795719597
+        },
+        {
+          "file": "scripts/verify_running_guard.py",
+          "size": 5036,
+          "mtime": 1795696819
+        },
+        {
+          "file": "scripts/verify_source_recall.mjs",
+          "size": 9537,
+          "mtime": 1795699671
+        },
+        {
+          "file": "scripts/verify_vault_sql_cross_host.mjs",
+          "size": 9145,
+          "mtime": 1795711093
+        },
+        {
+          "file": "scripts/verify_vault_sql_live_route.py",
+          "size": 7608,
+          "mtime": 1795739323
+        },
+        {
+          "file": "scripts/verify_vault_sql_pages.py",
+          "size": 8252,
+          "mtime": 1795709256
+        },
+        {
+          "file": "tests/test_aether_media_packaging.py",
+          "size": 3079,
+          "mtime": 1795697381
+        },
+        {
+          "file": "tests/test_aether_workstation.py",
+          "size": 10755,
+          "mtime": 1795695042
+        },
+        {
+          "file": "tests/test_autocad_autosave.py",
+          "size": 2922,
+          "mtime": 1795710607
+        },
+        {
+          "file": "tests/test_build_placement.py",
+          "size": 11385,
+          "mtime": 1795743770
+        },
+        {
+          "file": "tests/test_cad_frame_metrics.mjs",
+          "size": 8033,
+          "mtime": 1795700516
+        },
+        {
+          "file": "tests/test_daily_autopilot.py",
+          "size": 9204,
+          "mtime": 1795744882
+        },
+        {
+          "file": "tests/test_evidence_traffic.py",
+          "size": 6544,
+          "mtime": 1795708934
+        },
+        {
+          "file": "tests/test_exile_guard_fault_matrix.py",
+          "size": 1807,
+          "mtime": 1795713505
+        },
+        {
+          "file": "tests/test_exile_queue.py",
+          "size": 7248,
+          "mtime": 1795714562
+        },
+        {
+          "file": "tests/test_guarded_build.py",
+          "size": 9695,
+          "mtime": 1795698208
+        },
+        {
+          "file": "tests/test_local_swarm.mjs",
+          "size": 9433,
+          "mtime": 1795701263
+        },
+        {
+          "file": "tests/test_office_document_workflows.py",
+          "size": 5573,
+          "mtime": 1795696437
+        },
+        {
+          "file": "tests/test_soak_receipt.py",
+          "size": 4358,
+          "mtime": 1795740206
+        },
+        {
+          "file": "tests/test_source_recall.py",
+          "size": 9932,
+          "mtime": 1795699772
+        },
+        {
+          "file": "tests/test_swarm_symbols.mjs",
+          "size": 10993,
+          "mtime": 1795700076
+        },
+        {
+          "file": "tests/test_vault_sql_delta.py",
+          "size": 10387,
+          "mtime": 1795709245
+        },
+        {
+          "file": "tests/test_vram_yield.py",
+          "size": 3260,
+          "mtime": 1795710978
+        },
+        {
+          "file": "tests/test_vsa_disk_budget.py",
+          "size": 4593,
+          "mtime": 1795725094
+        },
+        {
+          "file": "tests/test_workspace_capsule.py",
+          "size": 8381,
+          "mtime": 1795702032
+        }
+      ],
+      "only_in_sv_repo": [],
+      "changed": [
+        {
+          "file": "AGENTS.md",
+          "win_repo": "69e47de22150ae68",
+          "sv_repo": "a0a05f9eecde1669",
+          "newer": "win_repo",
+          "dt_sec": 4798
+        },
+        {
+          "file": "chimera_tp/autopilot.py",
+          "win_repo": "27e49e7c71aee817",
+          "sv_repo": "e33512c40210520c",
+          "newer": "win_repo",
+          "dt_sec": 26555
+        },
+        {
+          "file": "chimera_tp/cli.py",
+          "win_repo": "70fafdf74538a744",
+          "sv_repo": "2cc7c59c23d69b4e",
+          "newer": "win_repo",
+          "dt_sec": 19186
+        },
+        {
+          "file": "chimera_tp/dashboard.py",
+          "win_repo": "500094355ae6ad29",
+          "sv_repo": "b504f10e34f4ae47",
+          "newer": "win_repo",
+          "dt_sec": 26565
+        },
+        {
+          "file": "chimera_tp/merkle_sync.py",
+          "win_repo": "d344bb8560a8a7f4",
+          "sv_repo": "b1e9989deed0dca5",
+          "newer": "win_repo",
+          "dt_sec": 160881
+        },
+        {
+          "file": "chimera_tp/platform/agent_symbiont.py",
+          "win_repo": "deebb61769ad5acc",
+          "sv_repo": "559ca36752284403",
+          "newer": "win_repo",
+          "dt_sec": 1910
+        },
+        {
+          "file": "chimera_tp/platform/build_placement.py",
+          "win_repo": "8a3c42ea614b0250",
+          "sv_repo": "751a04c24ee45e99",
+          "newer": "win_repo",
+          "dt_sec": 21250
+        },
+        {
+          "file": "chimera_tp/platform/build_snapshot.py",
+          "win_repo": "6d71222df4965dbe",
+          "sv_repo": "25802a40127019d2",
+          "newer": "win_repo",
+          "dt_sec": 12096
+        },
+        {
+          "file": "chimera_tp/platform/client.py",
+          "win_repo": "53c2fa08656cab5c",
+          "sv_repo": "2f18b3cd92dc86ba",
+          "newer": "win_repo",
+          "dt_sec": 2611
+        },
+        {
+          "file": "chimera_tp/platform/guarded_build.py",
+          "win_repo": "73ca337c6ca3d256",
+          "sv_repo": "a8cb5110886ad938",
+          "newer": "win_repo",
+          "dt_sec": 8020
+        },
+        {
+          "file": "chimera_tp/platform/guarded_cas.py",
+          "win_repo": "0c5f2750cf758fa0",
+          "sv_repo": "3b6780382d401e39",
+          "newer": "win_repo",
+          "dt_sec": 24015
+        },
+        {
+          "file": "chimera_tp/platform/peer_guard.py",
+          "win_repo": "63f7180916099bf0",
+          "sv_repo": "73a007c9ae7a403c",
+          "newer": "win_repo",
+          "dt_sec": 29023
+        },
+        {
+          "file": "chimera_tp/platform/phantom_silicon.py",
+          "win_repo": "2df36b090ec8f94a",
+          "sv_repo": "a6344cdaa5022602",
+          "newer": "win_repo",
+          "dt_sec": 9425
+        },
+        {
+          "file": "chimera_tp/platform/substrate.py",
+          "win_repo": "d08d5248f31b7e7f",
+          "sv_repo": "b09f36a21aa73a02",
+          "newer": "win_repo",
+          "dt_sec": 2701
+        },
+        {
+          "file": "chimera_tp/platform/work_admission.py",
+          "win_repo": "e4edc2ce8b66bf44",
+          "sv_repo": "28f0ec460441c5c2",
+          "newer": "win_repo",
+          "dt_sec": 8061
+        },
+        {
+          "file": "chimera_tp/vsa_memory_service.py",
+          "win_repo": "c4b5bd8aeddd8bfc",
+          "sv_repo": "70ad82e8d40ca1eb",
+          "newer": "win_repo",
+          "dt_sec": 6765
+        },
+        {
+          "file": "docs/UNIFICATION_DOCTRINE.md",
+          "win_repo": "5ae969ad51a059b1",
+          "sv_repo": "41f87ca6ab03fc4f",
+          "newer": "win_repo",
+          "dt_sec": 21549
+        },
+        {
+          "file": "scripts/bench_exile_handoff.py",
+          "win_repo": "6504298798118a89",
+          "sv_repo": "450e39d63770f478",
+          "newer": "win_repo",
+          "dt_sec": 22285
+        },
+        {
+          "file": "scripts/test_remote_surface.py",
+          "win_repo": "d6cc9b1fcbd4a16f",
+          "sv_repo": "8a4b80108e1051ee",
+          "newer": "win_repo",
+          "dt_sec": 206
+        },
+        {
+          "file": "tests/test_agent_hyper_bus.py",
+          "win_repo": "f516ad6e1e9ff058",
+          "sv_repo": "9e47414d5efe6690",
+          "newer": "win_repo",
+          "dt_sec": 3223
+        },
+        {
+          "file": "tests/test_v16_platform_connect.py",
+          "win_repo": "73e743e47d23b812",
+          "sv_repo": "25ad87590787a779",
+          "newer": "win_repo",
+          "dt_sec": 25177
+        },
+        {
+          "file": "tests/test_v18_overmind_cortex.py",
+          "win_repo": "9c61abb87a23f1d3",
+          "sv_repo": "f07c773f98315098",
+          "newer": "win_repo",
+          "dt_sec": 34966
+        },
+        {
+          "file": "tests/test_v19_v21_omega_entity.py",
+          "win_repo": "f69e44c28e3c6f54",
+          "sv_repo": "636c23be8fde26e1",
+          "newer": "win_repo",
+          "dt_sec": 23481
+        },
+        {
+          "file": "tests/test_v24_exile_handoff.py",
+          "win_repo": "1f3f4678b09b341c",
+          "sv_repo": "97992ed0a052cd46",
+          "newer": "win_repo",
+          "dt_sec": 23503
+        }
+      ]
+    },
+    "chimera_win_repo_vs_win_rel": {
+      "total_a": 115,
+      "total_b": 115,
+      "only_in_win_repo": [],
+      "only_in_win_rel": [],
+      "changed": []
+    },
+    "chimera_win_rel_vs_sv_rel": {
+      "total_a": 115,
+      "total_b": 115,
+      "only_in_win_rel": [],
+      "only_in_sv_rel": [],
+      "changed": []
+    },
+    "tquota_win_vs_sv": {
+      "total_a": 676,
+      "total_b": 676,
+      "only_in_win_tq": [],
+      "only_in_sv_tq": [],
+      "changed": []
+    }
+  }
+}

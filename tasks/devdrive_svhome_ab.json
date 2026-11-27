@@ -1,0 +1,20 @@
+{
+  "ok": true,
+  "node": "svhome",
+  "mount": "/mnt/chimera-dev",
+  "image": "/var/lib/chimera/chimera-devdrive.img",
+  "image_max_gb": 16,
+  "image_actual_mb": 131.39,
+  "mount_info": "xfs rw,noatime,nodiratime,inode64,logbufs=8,logbsize=32k,noquota",
+  "before_ext4": {
+    "create_500_ms": 31.84,
+    "clone_500files_plus_64mb_ms": 130.78,
+    "delete_ms": 101.06
+  },
+  "after_xfs_cow_devdrive": {
+    "create_500_ms": 32.87,
+    "clone_500files_plus_64mb_ms": 115.06,
+    "delete_ms": 36.57
+  },
+  "clone_speedup_x": 1.14
+}

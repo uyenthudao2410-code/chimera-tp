@@ -1,0 +1,85 @@
+{
+  "schema": "chimera.workstation-acceptance/1",
+  "captured_utc": "2026-11-26T19:45:51.091099+00:00",
+  "release": "6280c704d2e4923a3089f9fdce7aceeac7700ff4",
+  "release_attestation": "tasks/workstation_rollout_6280c704d2e4.json",
+  "windows_unittest": [
+    "Ran 51 tests in 43.717s",
+    "OK (skipped=3)"
+  ],
+  "linux_unittest": {
+    "guard_tests": 9,
+    "skips": 0,
+    "receipt": ".git/chimera-rollbacks/20261126T180248Z/linux-guard-6280c704d2e4.json"
+  },
+  "peaks_mib": {
+    "windows": {
+      "max_all": 75.05078125,
+      "cli_log": 64.1171875
+    },
+    "linux": {
+      "max_all": 69.65625,
+      "cli_log": 51.37109375
+    }
+  },
+  "log_experiment": {
+    "before": ".git/chimera-rollbacks/20261126T180248Z/cli-log-before.json",
+    "after": ".git/chimera-rollbacks/20261126T180248Z/cli-log-after.json",
+    "bytes": 23789568,
+    "lines": 196608,
+    "before_peak_mib": 184.26171875,
+    "after_peak_mib": 64.38671875,
+    "blake2s": "ead48d9da9961ac3323dd858",
+    "live_historical_peak_attributed": false
+  },
+  "old_soak_failures": [
+    "tasks/live_daemon_soak_6d14499db454.json",
+    "tasks/live_daemon_soak_2ef6fcb8ca0c.json",
+    "tasks/live_daemon_soak_b75a1438f924.json"
+  ],
+  "old_live_windows_peak_bytes": 157401088,
+  "current_soak": "tasks/live_daemon_soak_6280c704d2e4.json",
+  "kernel_budget_bytes_exclusive": 83886080,
+  "headroom_mib_goal": 65,
+  "linux_io": {
+    "user_manager": "user@1000.service",
+    "control_group": "/user.slice/user-1000.slice/user@1000.service",
+    "controllers_available": [
+      "cpu",
+      "memory",
+      "pids"
+    ],
+    "controllers_delegated": [
+      "cpu",
+      "memory",
+      "pids"
+    ],
+    "parent_user_slice_subtree_control": [
+      "cpu",
+      "memory",
+      "pids"
+    ],
+    "manager_io_max_exists": false
+  },
+  "display_paths": "tasks/display_paths_20261127.json",
+  "cad": {
+    "pairs_collected": 0,
+    "target_pairs": 10,
+    "operator_decision": "defer_display_session"
+  },
+  "ricoh": {
+    "operator_decision": "keep_serving_queue",
+    "production_queue_changed": false
+  },
+  "colab": {
+    "operator_decision": "no_compute_units",
+    "runtime_allocated_by_this_rollout": false
+  },
+  "ssh": {
+    "build_route": "phantom_ssh",
+    "host_key_checking": "strict",
+    "shared_connection_between_real_jobs": "unverified"
+  },
+  "audit_previous_release": "tasks/windows_child_process_audit_b75a1438f924.json",
+  "architecture": "five-organ consolidation pending complete route audit"
+}

@@ -1,0 +1,141 @@
+{
+  "schema": 1,
+  "verified_utc": "2026-11-26T12:48:19.226Z",
+  "template": "C:\\Program Files\\Autodesk\\AutoCAD 2027\\Sample\\Database Connectivity\\Floor Plan Sample.dwg",
+  "template_sha256": "19270c23e56e407aab2ade3644e8f301c34e390638d99c3f0cc4f2d3a6516792",
+  "console": "C:\\Program Files\\Autodesk\\AutoCAD 2027\\accoreconsole.exe",
+  "input_format": "AC1021",
+  "save_as_version": "2007",
+  "geometry_units": "drawing units",
+  "revisions": [
+    {
+      "sequence": 0,
+      "operation": "baseline",
+      "sha256": "19270c23e56e407aab2ade3644e8f301c34e390638d99c3f0cc4f2d3a6516792",
+      "base_sha256": null,
+      "bytes": 231872,
+      "format_header": "AC1021",
+      "chunks": 11,
+      "added_chunk_bytes": 231872,
+      "full_archive_bytes": 234736,
+      "transferred_archive_bytes": 234736,
+      "forced_delta_bytes": null,
+      "selected_mode": "full",
+      "transferred_chunks": 11,
+      "percent_of_full_archive": 100,
+      "source_and_restored_sha256_match": true,
+      "read_only_reopen": {
+        "elapsed_ms": 3477.74,
+        "autocad_version": "26.0",
+        "count": 0,
+        "handle": null,
+        "layer": null,
+        "radius": null,
+        "center": null,
+        "layer_color": null
+      },
+      "save_elapsed_ms": null
+    },
+    {
+      "sequence": 1,
+      "operation": "add_circle",
+      "sha256": "d2a3ff3a58b9e5a7dcdb32e42715719363227d287e395cdcd01f4a839942df09",
+      "base_sha256": "19270c23e56e407aab2ade3644e8f301c34e390638d99c3f0cc4f2d3a6516792",
+      "bytes": 253984,
+      "format_header": "AC1021",
+      "chunks": 12,
+      "added_chunk_bytes": 253984,
+      "full_archive_bytes": 257091,
+      "transferred_archive_bytes": 257091,
+      "forced_delta_bytes": 257152,
+      "selected_mode": "full",
+      "transferred_chunks": 12,
+      "percent_of_full_archive": 100,
+      "source_and_restored_sha256_match": true,
+      "read_only_reopen": {
+        "elapsed_ms": 3152.9,
+        "autocad_version": "26.0",
+        "count": 1,
+        "handle": "B4B8",
+        "layer": "CHIMERA_REVISION_PROBE",
+        "radius": 17,
+        "center": [
+          901.25,
+          912.75,
+          0
+        ],
+        "layer_color": 2
+      },
+      "save_elapsed_ms": 3673.44
+    },
+    {
+      "sequence": 2,
+      "operation": "resize_circle",
+      "sha256": "f14a0df7a7b16017cc69061bbb10e721ba649718f75bf24004ebba20d71e66be",
+      "base_sha256": "d2a3ff3a58b9e5a7dcdb32e42715719363227d287e395cdcd01f4a839942df09",
+      "bytes": 253472,
+      "format_header": "AC1021",
+      "chunks": 16,
+      "added_chunk_bytes": 221338,
+      "full_archive_bytes": 257543,
+      "transferred_archive_bytes": 224858,
+      "forced_delta_bytes": 224858,
+      "selected_mode": "delta",
+      "transferred_chunks": 13,
+      "percent_of_full_archive": 87.31,
+      "source_and_restored_sha256_match": true,
+      "read_only_reopen": {
+        "elapsed_ms": 2523.48,
+        "autocad_version": "26.0",
+        "count": 1,
+        "handle": "B4B8",
+        "layer": "CHIMERA_REVISION_PROBE",
+        "radius": 29.5,
+        "center": [
+          901.25,
+          912.75,
+          0
+        ],
+        "layer_color": 2
+      },
+      "save_elapsed_ms": 2874.02
+    },
+    {
+      "sequence": 3,
+      "operation": "change_layer_color",
+      "sha256": "21784f32bf6549f5504d85c026ef50e56a8796675adfb6f4795dadd5f028c8d6",
+      "base_sha256": "f14a0df7a7b16017cc69061bbb10e721ba649718f75bf24004ebba20d71e66be",
+      "bytes": 253216,
+      "format_header": "AC1021",
+      "chunks": 14,
+      "added_chunk_bytes": 195906,
+      "full_archive_bytes": 256803,
+      "transferred_archive_bytes": 224122,
+      "forced_delta_bytes": 224122,
+      "selected_mode": "delta",
+      "transferred_chunks": 11,
+      "percent_of_full_archive": 87.27,
+      "source_and_restored_sha256_match": true,
+      "read_only_reopen": {
+        "elapsed_ms": 2898.05,
+        "autocad_version": "26.0",
+        "count": 1,
+        "handle": "B4B8",
+        "layer": "CHIMERA_REVISION_PROBE",
+        "radius": 29.5,
+        "center": [
+          901.25,
+          912.75,
+          0
+        ],
+        "layer_color": 4
+      },
+      "save_elapsed_ms": 2680.79
+    }
+  ],
+  "matched_history_entries": 4,
+  "receiver": "Independent local store receives the smaller ZIP for each revision and reopens all restored DWGs",
+  "timing_scope": "Core Console process wall time for each save or read-only open",
+  "template_unchanged": true,
+  "removed_temporary_working_files": true
+}

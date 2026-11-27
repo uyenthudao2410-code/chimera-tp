@@ -1,0 +1,974 @@
+{
+  "schema": "chimera.guest-io-reexec/1",
+  "release": "5e25fafe4a8f2de1d2b492c6fbfc992166e79cad",
+  "command": "systemctl --user daemon-reexec",
+  "exit_code": 0,
+  "before": {
+    "utc": "2026-11-27T02:34:04.191798+00:00",
+    "uid": 1000,
+    "manager_pid": "5331",
+    "kernel_delegation": {
+      "cgroup.controllers": [
+        "cpu",
+        "io",
+        "memory",
+        "pids"
+      ],
+      "cgroup.subtree_control": [
+        "cpu",
+        "memory",
+        "pids"
+      ],
+      "app.slice/cgroup.controllers": [
+        "cpu",
+        "memory",
+        "pids"
+      ],
+      "app.slice/cgroup.subtree_control": [
+        "cpu",
+        "memory",
+        "pids"
+      ]
+    },
+    "delegate": "cpu io memory pids",
+    "temporary_dropin_sha256": "9690213e48af615f42210c7d649a6f346e9cc84bed22a74468878755a6c529ea",
+    "services": {
+      "chimera-hyper-daemon.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "902ea43919624ae8833cb9b346fceb5c",
+        "MainPID": "4038034",
+        "NRestarts": "0"
+      },
+      "dbus.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "408e427501734681ac29e895c978d9cf",
+        "MainPID": "5491",
+        "NRestarts": "0"
+      },
+      "dconf.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "d4f179ac34bd4dc78dd56b35284fb9c0",
+        "MainPID": "7158",
+        "NRestarts": "0"
+      },
+      "dgnl-web.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "9bed67bf78f34505a5c4147a7f691faa",
+        "MainPID": "1896649",
+        "NRestarts": "0"
+      },
+      "gcr-ssh-agent.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "38c051d3921a46039af52354e32152da",
+        "MainPID": "5994",
+        "NRestarts": "0"
+      },
+      "gnome-remote-desktop.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "0995c1c2b53449dd929a056d350de5fa",
+        "MainPID": "2579034",
+        "NRestarts": "0"
+      },
+      "gnome-session-manager@ubuntu.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "222cb76ccd6449f7a117dc63d9090cc7",
+        "MainPID": "6048",
+        "NRestarts": "0"
+      },
+      "gnome-session-monitor.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "40b1578015914603958afa53c481c5f6",
+        "MainPID": "5997",
+        "NRestarts": "0"
+      },
+      "gvfs-daemon.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "3a4ea1d07c5e43398dfd31684326f4ef",
+        "MainPID": "6005",
+        "NRestarts": "0"
+      },
+      "gvfs-metadata.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "4bba9e5bba384cddbafed4097ba92711",
+        "MainPID": "7112",
+        "NRestarts": "0"
+      },
+      "gvfs-udisks2-volume-monitor.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "685a12f2f2ea47ddbfc1561d39888511",
+        "MainPID": "6983",
+        "NRestarts": "0"
+      },
+      "m365-hub.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "4a4673c36d494d5ab3125c9e38580749",
+        "MainPID": "1896650",
+        "NRestarts": "0"
+      },
+      "obex.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "1db00fd3ba7a43dcace7c75271b793df",
+        "MainPID": "1898161",
+        "NRestarts": "0"
+      },
+      "org.freedesktop.IBus.session.GNOME.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "6d31d762d67a44b8a8eb21076406bab5",
+        "MainPID": "6461",
+        "NRestarts": "0"
+      },
+      "org.gnome.SettingsDaemon.Datetime.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "06bdec096dda4776a96d40e3c72eb336",
+        "MainPID": "6470",
+        "NRestarts": "0"
+      },
+      "org.gnome.SettingsDaemon.Housekeeping.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "25be036ae75d41f4b8e6a1348c83f0ed",
+        "MainPID": "6472",
+        "NRestarts": "0"
+      },
+      "org.gnome.SettingsDaemon.Keyboard.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "e04f91ed38744c92a7bc650f6e92f02d",
+        "MainPID": "6475",
+        "NRestarts": "0"
+      },
+      "org.gnome.SettingsDaemon.MediaKeys.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "e17c4b0af28f4e54a0b072f2b9e649ae",
+        "MainPID": "6477",
+        "NRestarts": "0"
+      },
+      "org.gnome.SettingsDaemon.Power.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "38abe6b3e77c4ceb990b969c4e064353",
+        "MainPID": "6483",
+        "NRestarts": "0"
+      },
+      "org.gnome.SettingsDaemon.ScreensaverProxy.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "e1861f3994814c56aa53467bc291b435",
+        "MainPID": "6492",
+        "NRestarts": "0"
+      },
+      "org.gnome.SettingsDaemon.UsbProtection.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "18ef6831b49b431ba4dc7989047b6c89",
+        "MainPID": "6501",
+        "NRestarts": "0"
+      },
+      "org.gnome.SettingsDaemon.XSettings.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "2417c7d571274dad99b76fd2bf6ac262",
+        "MainPID": "960426",
+        "NRestarts": "0"
+      },
+      "org.gnome.Shell@ubuntu.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "82bf2a59a03a409dabe21327bca13a3d",
+        "MainPID": "6057",
+        "NRestarts": "0"
+      },
+      "pipewire.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "ea1b94e5e4a34557ad4c75445757b312",
+        "MainPID": "5498",
+        "NRestarts": "0"
+      },
+      "radar-dashboard.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "38c3727ac9974e4a959fd5af122e2304",
+        "MainPID": "3924427",
+        "NRestarts": "0"
+      },
+      "snap.snapd-desktop-integration.snapd-desktop-integration.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "1a846ceaaedc479da65cd1c246caba14",
+        "MainPID": "5502",
+        "NRestarts": "0"
+      },
+      "ssh-agent.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "0384aeb76f4e41afaafdd8f9489b1d80",
+        "MainPID": "5998",
+        "NRestarts": "0"
+      },
+      "thu-vien-phap-ly-reader.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "2ff08efb7f9c406e9999af193e249038",
+        "MainPID": "1920300",
+        "NRestarts": "0"
+      },
+      "tquota-tailnet-proxy.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "37e937d43c1e486d9f2c042314a943b2",
+        "MainPID": "2566588",
+        "NRestarts": "0"
+      },
+      "tquota.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "9de8c69699e44d2ab1f423e1a70486b8",
+        "MainPID": "4024795",
+        "NRestarts": "0"
+      },
+      "wireplumber.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "8abfd434c46f4efc8048791578a701bb",
+        "MainPID": "5565",
+        "NRestarts": "0"
+      },
+      "xdg-desktop-portal-gnome.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "7aa3fea8049d4c3ba4d22dd8301957f4",
+        "MainPID": "713798",
+        "NRestarts": "0"
+      },
+      "xdg-desktop-portal-gtk.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "490ab2aaa3cd4ab897bc9b48edab0865",
+        "MainPID": "7352",
+        "NRestarts": "0"
+      },
+      "xdg-desktop-portal.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "1bfb22750b204f16beaef73fec3dcdb5",
+        "MainPID": "713800",
+        "NRestarts": "0"
+      },
+      "xdg-document-portal.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "3af17f6baf014fbeaf723a0148899a57",
+        "MainPID": "5716",
+        "NRestarts": "0"
+      },
+      "xdg-permission-store.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "b21f7d11b6124f599eae33e49aff0738",
+        "MainPID": "5751",
+        "NRestarts": "0"
+      }
+    },
+    "failed": [
+      "hghub-web.service loaded failed failed HGhub web (Vite preview production) on Tailscale"
+    ],
+    "daemon": {
+      "status": 200,
+      "ok": true,
+      "pid": 4038034,
+      "started_at": "2026-11-27T08:59:28+07:00",
+      "runtime_source_dir": "/home/svhome/.local/share/chimera/releases/5e25fafe4a8f",
+      "version": "18.0.0"
+    },
+    "radar": {
+      "status": 200,
+      "ok": true,
+      "version": "1.0.0"
+    }
+  },
+  "immediately_after": {
+    "utc": "2026-11-27T02:34:27.044812+00:00",
+    "uid": 1000,
+    "manager_pid": "5331",
+    "kernel_delegation": {
+      "cgroup.controllers": [
+        "cpu",
+        "io",
+        "memory",
+        "pids"
+      ],
+      "cgroup.subtree_control": [
+        "cpu",
+        "memory",
+        "pids"
+      ],
+      "app.slice/cgroup.controllers": [
+        "cpu",
+        "memory",
+        "pids"
+      ],
+      "app.slice/cgroup.subtree_control": [
+        "cpu",
+        "memory",
+        "pids"
+      ]
+    },
+    "delegate": "cpu io memory pids",
+    "temporary_dropin_sha256": "9690213e48af615f42210c7d649a6f346e9cc84bed22a74468878755a6c529ea",
+    "services": {
+      "chimera-hyper-daemon.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "902ea43919624ae8833cb9b346fceb5c",
+        "MainPID": "4038034",
+        "NRestarts": "0"
+      },
+      "dbus.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "408e427501734681ac29e895c978d9cf",
+        "MainPID": "5491",
+        "NRestarts": "0"
+      },
+      "dconf.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "d4f179ac34bd4dc78dd56b35284fb9c0",
+        "MainPID": "7158",
+        "NRestarts": "0"
+      },
+      "dgnl-web.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "9bed67bf78f34505a5c4147a7f691faa",
+        "MainPID": "1896649",
+        "NRestarts": "0"
+      },
+      "gcr-ssh-agent.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "38c051d3921a46039af52354e32152da",
+        "MainPID": "5994",
+        "NRestarts": "0"
+      },
+      "gnome-remote-desktop.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "0995c1c2b53449dd929a056d350de5fa",
+        "MainPID": "2579034",
+        "NRestarts": "0"
+      },
+      "gnome-session-manager@ubuntu.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "222cb76ccd6449f7a117dc63d9090cc7",
+        "MainPID": "6048",
+        "NRestarts": "0"
+      },
+      "gnome-session-monitor.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "40b1578015914603958afa53c481c5f6",
+        "MainPID": "5997",
+        "NRestarts": "0"
+      },
+      "gvfs-daemon.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "3a4ea1d07c5e43398dfd31684326f4ef",
+        "MainPID": "6005",
+        "NRestarts": "0"
+      },
+      "gvfs-metadata.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "4bba9e5bba384cddbafed4097ba92711",
+        "MainPID": "7112",
+        "NRestarts": "0"
+      },
+      "gvfs-udisks2-volume-monitor.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "685a12f2f2ea47ddbfc1561d39888511",
+        "MainPID": "6983",
+        "NRestarts": "0"
+      },
+      "m365-hub.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "4a4673c36d494d5ab3125c9e38580749",
+        "MainPID": "1896650",
+        "NRestarts": "0"
+      },
+      "obex.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "1db00fd3ba7a43dcace7c75271b793df",
+        "MainPID": "1898161",
+        "NRestarts": "0"
+      },
+      "org.freedesktop.IBus.session.GNOME.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "6d31d762d67a44b8a8eb21076406bab5",
+        "MainPID": "6461",
+        "NRestarts": "0"
+      },
+      "org.gnome.SettingsDaemon.Datetime.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "06bdec096dda4776a96d40e3c72eb336",
+        "MainPID": "6470",
+        "NRestarts": "0"
+      },
+      "org.gnome.SettingsDaemon.Housekeeping.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "25be036ae75d41f4b8e6a1348c83f0ed",
+        "MainPID": "6472",
+        "NRestarts": "0"
+      },
+      "org.gnome.SettingsDaemon.Keyboard.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "e04f91ed38744c92a7bc650f6e92f02d",
+        "MainPID": "6475",
+        "NRestarts": "0"
+      },
+      "org.gnome.SettingsDaemon.MediaKeys.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "e17c4b0af28f4e54a0b072f2b9e649ae",
+        "MainPID": "6477",
+        "NRestarts": "0"
+      },
+      "org.gnome.SettingsDaemon.Power.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "38abe6b3e77c4ceb990b969c4e064353",
+        "MainPID": "6483",
+        "NRestarts": "0"
+      },
+      "org.gnome.SettingsDaemon.ScreensaverProxy.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "e1861f3994814c56aa53467bc291b435",
+        "MainPID": "6492",
+        "NRestarts": "0"
+      },
+      "org.gnome.SettingsDaemon.UsbProtection.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "18ef6831b49b431ba4dc7989047b6c89",
+        "MainPID": "6501",
+        "NRestarts": "0"
+      },
+      "org.gnome.SettingsDaemon.XSettings.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "2417c7d571274dad99b76fd2bf6ac262",
+        "MainPID": "960426",
+        "NRestarts": "0"
+      },
+      "org.gnome.Shell@ubuntu.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "82bf2a59a03a409dabe21327bca13a3d",
+        "MainPID": "6057",
+        "NRestarts": "0"
+      },
+      "pipewire.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "ea1b94e5e4a34557ad4c75445757b312",
+        "MainPID": "5498",
+        "NRestarts": "0"
+      },
+      "radar-dashboard.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "38c3727ac9974e4a959fd5af122e2304",
+        "MainPID": "3924427",
+        "NRestarts": "0"
+      },
+      "snap.snapd-desktop-integration.snapd-desktop-integration.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "1a846ceaaedc479da65cd1c246caba14",
+        "MainPID": "5502",
+        "NRestarts": "0"
+      },
+      "ssh-agent.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "0384aeb76f4e41afaafdd8f9489b1d80",
+        "MainPID": "5998",
+        "NRestarts": "0"
+      },
+      "thu-vien-phap-ly-reader.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "2ff08efb7f9c406e9999af193e249038",
+        "MainPID": "1920300",
+        "NRestarts": "0"
+      },
+      "tquota-tailnet-proxy.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "37e937d43c1e486d9f2c042314a943b2",
+        "MainPID": "2566588",
+        "NRestarts": "0"
+      },
+      "tquota.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "9de8c69699e44d2ab1f423e1a70486b8",
+        "MainPID": "4024795",
+        "NRestarts": "0"
+      },
+      "wireplumber.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "8abfd434c46f4efc8048791578a701bb",
+        "MainPID": "5565",
+        "NRestarts": "0"
+      },
+      "xdg-desktop-portal-gnome.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "7aa3fea8049d4c3ba4d22dd8301957f4",
+        "MainPID": "713798",
+        "NRestarts": "0"
+      },
+      "xdg-desktop-portal-gtk.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "490ab2aaa3cd4ab897bc9b48edab0865",
+        "MainPID": "7352",
+        "NRestarts": "0"
+      },
+      "xdg-desktop-portal.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "1bfb22750b204f16beaef73fec3dcdb5",
+        "MainPID": "713800",
+        "NRestarts": "0"
+      },
+      "xdg-document-portal.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "3af17f6baf014fbeaf723a0148899a57",
+        "MainPID": "5716",
+        "NRestarts": "0"
+      },
+      "xdg-permission-store.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "b21f7d11b6124f599eae33e49aff0738",
+        "MainPID": "5751",
+        "NRestarts": "0"
+      }
+    },
+    "failed": [
+      "hghub-web.service loaded failed failed HGhub web (Vite preview production) on Tailscale"
+    ],
+    "daemon": {
+      "status": 200,
+      "ok": true,
+      "pid": 4038034,
+      "started_at": "2026-11-27T08:59:28+07:00",
+      "runtime_source_dir": "/home/svhome/.local/share/chimera/releases/5e25fafe4a8f",
+      "version": "18.0.0"
+    },
+    "radar": {
+      "status": 200,
+      "ok": true,
+      "version": "1.0.0"
+    }
+  },
+  "after_trials": {
+    "utc": "2026-11-27T02:36:48.466218+00:00",
+    "uid": 1000,
+    "manager_pid": "5331",
+    "kernel_delegation": {
+      "cgroup.controllers": [
+        "cpu",
+        "io",
+        "memory",
+        "pids"
+      ],
+      "cgroup.subtree_control": [
+        "cpu",
+        "memory",
+        "pids"
+      ],
+      "app.slice/cgroup.controllers": [
+        "cpu",
+        "memory",
+        "pids"
+      ],
+      "app.slice/cgroup.subtree_control": [
+        "cpu",
+        "memory",
+        "pids"
+      ]
+    },
+    "delegate": "cpu io memory pids",
+    "temporary_dropin_sha256": "9690213e48af615f42210c7d649a6f346e9cc84bed22a74468878755a6c529ea",
+    "services": {
+      "chimera-hyper-daemon.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "902ea43919624ae8833cb9b346fceb5c",
+        "MainPID": "4038034",
+        "NRestarts": "0"
+      },
+      "dbus.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "408e427501734681ac29e895c978d9cf",
+        "MainPID": "5491",
+        "NRestarts": "0"
+      },
+      "dconf.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "d4f179ac34bd4dc78dd56b35284fb9c0",
+        "MainPID": "7158",
+        "NRestarts": "0"
+      },
+      "dgnl-web.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "9bed67bf78f34505a5c4147a7f691faa",
+        "MainPID": "1896649",
+        "NRestarts": "0"
+      },
+      "gcr-ssh-agent.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "38c051d3921a46039af52354e32152da",
+        "MainPID": "5994",
+        "NRestarts": "0"
+      },
+      "gnome-remote-desktop.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "0995c1c2b53449dd929a056d350de5fa",
+        "MainPID": "2579034",
+        "NRestarts": "0"
+      },
+      "gnome-session-manager@ubuntu.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "222cb76ccd6449f7a117dc63d9090cc7",
+        "MainPID": "6048",
+        "NRestarts": "0"
+      },
+      "gnome-session-monitor.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "40b1578015914603958afa53c481c5f6",
+        "MainPID": "5997",
+        "NRestarts": "0"
+      },
+      "gvfs-daemon.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "3a4ea1d07c5e43398dfd31684326f4ef",
+        "MainPID": "6005",
+        "NRestarts": "0"
+      },
+      "gvfs-metadata.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "4bba9e5bba384cddbafed4097ba92711",
+        "MainPID": "7112",
+        "NRestarts": "0"
+      },
+      "gvfs-udisks2-volume-monitor.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "685a12f2f2ea47ddbfc1561d39888511",
+        "MainPID": "6983",
+        "NRestarts": "0"
+      },
+      "m365-hub.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "4a4673c36d494d5ab3125c9e38580749",
+        "MainPID": "1896650",
+        "NRestarts": "0"
+      },
+      "obex.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "1db00fd3ba7a43dcace7c75271b793df",
+        "MainPID": "1898161",
+        "NRestarts": "0"
+      },
+      "org.freedesktop.IBus.session.GNOME.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "6d31d762d67a44b8a8eb21076406bab5",
+        "MainPID": "6461",
+        "NRestarts": "0"
+      },
+      "org.gnome.SettingsDaemon.Datetime.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "06bdec096dda4776a96d40e3c72eb336",
+        "MainPID": "6470",
+        "NRestarts": "0"
+      },
+      "org.gnome.SettingsDaemon.Housekeeping.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "25be036ae75d41f4b8e6a1348c83f0ed",
+        "MainPID": "6472",
+        "NRestarts": "0"
+      },
+      "org.gnome.SettingsDaemon.Keyboard.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "e04f91ed38744c92a7bc650f6e92f02d",
+        "MainPID": "6475",
+        "NRestarts": "0"
+      },
+      "org.gnome.SettingsDaemon.MediaKeys.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "e17c4b0af28f4e54a0b072f2b9e649ae",
+        "MainPID": "6477",
+        "NRestarts": "0"
+      },
+      "org.gnome.SettingsDaemon.Power.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "38abe6b3e77c4ceb990b969c4e064353",
+        "MainPID": "6483",
+        "NRestarts": "0"
+      },
+      "org.gnome.SettingsDaemon.ScreensaverProxy.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "e1861f3994814c56aa53467bc291b435",
+        "MainPID": "6492",
+        "NRestarts": "0"
+      },
+      "org.gnome.SettingsDaemon.UsbProtection.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "18ef6831b49b431ba4dc7989047b6c89",
+        "MainPID": "6501",
+        "NRestarts": "0"
+      },
+      "org.gnome.SettingsDaemon.XSettings.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "2417c7d571274dad99b76fd2bf6ac262",
+        "MainPID": "960426",
+        "NRestarts": "0"
+      },
+      "org.gnome.Shell@ubuntu.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "82bf2a59a03a409dabe21327bca13a3d",
+        "MainPID": "6057",
+        "NRestarts": "0"
+      },
+      "pipewire.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "ea1b94e5e4a34557ad4c75445757b312",
+        "MainPID": "5498",
+        "NRestarts": "0"
+      },
+      "radar-dashboard.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "38c3727ac9974e4a959fd5af122e2304",
+        "MainPID": "3924427",
+        "NRestarts": "0"
+      },
+      "snap.snapd-desktop-integration.snapd-desktop-integration.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "1a846ceaaedc479da65cd1c246caba14",
+        "MainPID": "5502",
+        "NRestarts": "0"
+      },
+      "ssh-agent.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "0384aeb76f4e41afaafdd8f9489b1d80",
+        "MainPID": "5998",
+        "NRestarts": "0"
+      },
+      "thu-vien-phap-ly-reader.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "2ff08efb7f9c406e9999af193e249038",
+        "MainPID": "1920300",
+        "NRestarts": "0"
+      },
+      "tquota-tailnet-proxy.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "37e937d43c1e486d9f2c042314a943b2",
+        "MainPID": "2566588",
+        "NRestarts": "0"
+      },
+      "tquota.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "9de8c69699e44d2ab1f423e1a70486b8",
+        "MainPID": "4024795",
+        "NRestarts": "0"
+      },
+      "wireplumber.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "8abfd434c46f4efc8048791578a701bb",
+        "MainPID": "5565",
+        "NRestarts": "0"
+      },
+      "xdg-desktop-portal-gnome.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "7aa3fea8049d4c3ba4d22dd8301957f4",
+        "MainPID": "713798",
+        "NRestarts": "0"
+      },
+      "xdg-desktop-portal-gtk.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "490ab2aaa3cd4ab897bc9b48edab0865",
+        "MainPID": "7352",
+        "NRestarts": "0"
+      },
+      "xdg-desktop-portal.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "1bfb22750b204f16beaef73fec3dcdb5",
+        "MainPID": "713800",
+        "NRestarts": "0"
+      },
+      "xdg-document-portal.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "3af17f6baf014fbeaf723a0148899a57",
+        "MainPID": "5716",
+        "NRestarts": "0"
+      },
+      "xdg-permission-store.service": {
+        "ActiveState": "active",
+        "SubState": "running",
+        "InvocationID": "b21f7d11b6124f599eae33e49aff0738",
+        "MainPID": "5751",
+        "NRestarts": "0"
+      }
+    },
+    "failed": [
+      "hghub-web.service loaded failed failed HGhub web (Vite preview production) on Tailscale"
+    ],
+    "daemon": {
+      "status": 200,
+      "ok": true,
+      "pid": 4038034,
+      "started_at": "2026-11-27T08:59:28+07:00",
+      "runtime_source_dir": "/home/svhome/.local/share/chimera/releases/5e25fafe4a8f",
+      "version": "18.0.0"
+    },
+    "radar": {
+      "status": 200,
+      "ok": true,
+      "version": "1.0.0"
+    }
+  },
+  "service_identity_changes": [],
+  "failed_units_unchanged": true,
+  "bulk_write_12mib": {
+    "ok": false,
+    "state": "interrupted",
+    "error": "running_guard_io_pressure",
+    "ssh_route": "ssh_alias",
+    "request_id": "e3102ea7955f4f4c96ec23c3f03ed72a",
+    "attempt_id": "ad302187a5ff475a9a866f1011ca7e54",
+    "exit_code": -9,
+    "admission": {
+      "accepted": true,
+      "reason": "capacity",
+      "limits_verified": true
+    },
+    "limits": {
+      "memory_high": 429494272,
+      "memory_max": 536870912,
+      "swap_max": 0,
+      "tasks_max": 128,
+      "cpu_quota_pct": 95,
+      "io_write_bps": 4194304,
+      "io_devices": [
+        "8:0",
+        "8:2"
+      ]
+    },
+    "utc": "2026-11-27T02:35:03.964963+00:00"
+  },
+  "standard_swarm_cli": {
+    "request_id": "b0a2274084f94ba39b557d812446755a",
+    "attempt_id": "5f591bdcb21d48df9ad29566e2f95cce",
+    "ok": true,
+    "state": "completed",
+    "error": null,
+    "exit_code": 0,
+    "target": "svhome",
+    "snapshot": "d15d75648928289b840fb61e10b0d3bc6cf171973175c900ecf6f3628e0a8337",
+    "ssh_route": "phantom_ssh",
+    "limits_verified": true,
+    "limits": {
+      "memory_high": 429494272,
+      "memory_max": 536870912,
+      "swap_max": 0,
+      "tasks_max": 128,
+      "cpu_quota_pct": 100,
+      "io_write_bps": 8388608,
+      "io_devices": [
+        "8:0",
+        "8:2"
+      ]
+    },
+    "utc": "2026-11-27T02:36:31.747942+00:00",
+    "kernel_readback": {
+      "device": "8:2",
+      "matching_devices": [
+        "8:2",
+        "8:0"
+      ],
+      "sysfs_path": "/sys/devices/pci0000:00/0000:00:1f.2/ata1/host0/target0:0:0/0:0:0:0/block/sda/sda2",
+      "cgroup": "/sys/fs/cgroup/user.slice/user-1000.slice/user@1000.service/app.slice/chimera-peer-guest.service",
+      "io_max": "8:0 rbps=max wbps=8388608 riops=max wiops=max"
+    },
+    "artifact_bytes": 156,
+    "artifact_sha256": "e2dcaa2233e97bcf0e5852faef35341032076ece8397c970cb7cd4026e214753",
+    "input_sha256": "493602d675e99ffc8f6e51f9b436b0138dbef4f6504f54a94e3e534939d4fa2a"
+  },
+  "persists_across_reboot": false
+}

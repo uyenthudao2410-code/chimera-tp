@@ -1,0 +1,44 @@
+{
+  "benchmark": "CHIMERA_TQUOTA_MUTANT_5_AB",
+  "exec_5x_pwsh_toollog_vs_chimera_exec": {
+    "before_pwsh_toollog_ms": 1735.84,
+    "before_proc_boots": 15,
+    "after_chimera_exec_ms": 748.29,
+    "after_proc_boots": 5,
+    "speedup_x": 2.32
+  },
+  "macro_dag_vs_6_serial_shells": {
+    "before_6_serial_ps_ms": 1674.44,
+    "before_llm_turns": 6,
+    "after_1_macro_dag_ms": 231.92,
+    "after_llm_turns": 1,
+    "llm_turns_collapsed": 4,
+    "os_speedup_x": 7.22
+  },
+  "worktree_hdd_vs_nvme_refs": {
+    "before_hdd_e_ms": 1122.63,
+    "after_nvme_refs_v_ms": 237.81,
+    "on_dev_drive": true,
+    "speedup_x": 4.72
+  },
+  "release_epoch_bootstrap": {
+    "published_epoch_id": "ep_5ce0bcea",
+    "visible_in_bootstrap": true,
+    "bootstrap_bytes": 1252,
+    "bootstrap_release_epoch": {
+      "id": "ep_5ce0bcea",
+      "by": "antigravity-c4",
+      "pid": 38572,
+      "n_files": 5,
+      "age_s": 6.0,
+      "summary": "19/19 Chimera + 44/44 Tquota PASS (Win+svhome), 38 MCP tools"
+    }
+  },
+  "win_live_post_deploy": {
+    "chimera_pid": 38572,
+    "chimera_ram_mb": 63.42,
+    "mcp_tools": 38,
+    "soft_shield_vips": 19,
+    "soft_shield_gateways_spared": 37
+  }
+}

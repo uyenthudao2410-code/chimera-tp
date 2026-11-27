@@ -1,0 +1,337 @@
+{
+  "schema": "chimera.ntfs-compile-ab/1",
+  "started_utc": "2026-11-26T13:03:25.212+00:00",
+  "completed_utc": "2026-11-26T13:03:48.850+00:00",
+  "workload": "Forced single-process byte compilation of all working chimera_tp Python package sources",
+  "python": "3.11.7 (tags/v3.11.7:fa7a6f2, Dec  4 2023, 19:24:49) [MSC v.1937 64 bit (AMD64)]",
+  "os": "Windows-10-10.0.29683-SP0",
+  "executable": "C:\\Program Files\\Python311\\python.exe",
+  "command_after_python": [
+    "-I",
+    "-S",
+    "-B",
+    "-m",
+    "compileall",
+    "-f",
+    "-q",
+    "-j",
+    "1",
+    "--invalidation-mode",
+    "checked-hash",
+    "-d",
+    "chimera_tp",
+    "chimera_tp"
+  ],
+  "volumes": {
+    "C": {
+      "letter": "C",
+      "filesystem": "NTFS",
+      "disk_number": 1,
+      "model": "HS-SSD-WAVE(P) 512G",
+      "bus": "NVMe",
+      "media": "SSD",
+      "free_bytes": 116801060864
+    },
+    "E": {
+      "letter": "E",
+      "filesystem": "NTFS",
+      "disk_number": 0,
+      "model": "WDC WD10EZEX-00BBHA0",
+      "bus": "SATA",
+      "media": "HDD",
+      "free_bytes": 562307792896
+    }
+  },
+  "fixture_directories_removed": true,
+  "snapshot": {
+    "captured_utc": "2026-11-26T13:03:27.725+00:00",
+    "git_head_at_capture": "5ff4a08a8447fe344aad2cd1c9c4c9748dc8d425",
+    "scope": "Working package *.py including tracked changes and nonignored untracked files",
+    "files": 102,
+    "bytes": 2337151,
+    "manifest_sha256": "99cda0260efffbf0df5d766e172569d7b0f75b2563bd09817b62e9ca285a0b4c",
+    "sha256_by_path": {
+      "chimera_tp/__init__.py": "f50d78a51403672f139ce95f305c3ec273f02bf20d382faea68aa5d60309bd6d",
+      "chimera_tp/__main__.py": "7571e076ee5e115e002c06bada71670ca1480b2901da9a30f96cab5d519ac2ca",
+      "chimera_tp/active_pipe.py": "c65c84942ec453e49c1038f2fb2003e80f845b81b97e1c858d16b194f6dd201c",
+      "chimera_tp/apex_synergy.py": "445a6943b5f905a47968cb201d38c28aea7d2bb76af9f7a357d58a4526e74ac3",
+      "chimera_tp/autopilot.py": "a2ad207da57b183d8dff91d20ac1565e705166d1a838691a9cfa295d8c5f5c2e",
+      "chimera_tp/cli.py": "c22452e8f36606c5bceaa735c84830118e67ffce54176a7e012c1d4851b44133",
+      "chimera_tp/code_search.py": "16a5c1144194ad3386acc78b3be1ba48ffdf0754d5cf715a60af5e053d112c34",
+      "chimera_tp/dashboard.py": "a14de88607d048f369299d7c3bb27b1b8461acb89cc7549b082b9d040e68c36e",
+      "chimera_tp/demo.py": "1c37ecd9156719f106d6754d2d8116aaf84f7e089f42f90e3366f6e9a902d1b5",
+      "chimera_tp/dna_vault.py": "227409af3ddb27a0fd4ea40078af5456976d4767380631a26bf8337a897aa163",
+      "chimera_tp/drop_portal.py": "4a2210065ec277de33ec2eb17910c6162f5392d8a15f5dda5e6319e8c04236bb",
+      "chimera_tp/edge_proxy.py": "962306ff179633770b0e778d3964614e568ca5c9e2e1e5ccd64493a0ed741503",
+      "chimera_tp/fabric.py": "54ae43df9823f8e7a38101cb072d23b7ecd3f9102a99bab2ca09ad23f77d82d7",
+      "chimera_tp/gf256.py": "4c959ae37cbaea38afa3f79490c3923cd36931bb26e7ef140036d101b578e0f5",
+      "chimera_tp/ghost_fs.py": "32c3e640b1b82cb1c93be158c9f074b53a91bdc3aed535f56c4119f04a6068cc",
+      "chimera_tp/ghost_pty.py": "b4dd7672be267ad3d77cc29e03324b5ee5b75442bdb3143b259c75f6ab774d70",
+      "chimera_tp/holo_backup.py": "e198b06afe0817288bb58658759da0d6c39bde3ec547ffc2b3ce7fe71a7536d2",
+      "chimera_tp/host_governor.py": "66d5e68974daab09a9499fec9fcf6320f072fdbe9ccbc1bd40fa2831f3de1b5e",
+      "chimera_tp/hyper_wire.py": "de3b9d6b7e050ee9633aaad26c2eef282226718b72e3569964ea2ed509d74608",
+      "chimera_tp/impairment.py": "de334c37425fc0054da60ff4921dcdc5bed045cab1780be8b2fead82d4c4ebcc",
+      "chimera_tp/lanes.py": "1bc3331f6307bd6f3fd325f1f332908e4799ae32c72c9db7cee314c50e07b945",
+      "chimera_tp/medic.py": "31377478867876123716b9edee5d16d178417e6e3cb40fdcb83b4715beb0f60b",
+      "chimera_tp/merkle_sync.py": "b1e9989deed0dca5fd984f92a52087216ab50743da94a9cfe7689e0a7bede72e",
+      "chimera_tp/midbrain_dopamine.py": "c6151f77c21cdf5b2b34c37bfff50ea9848a9df1bd16c664914846f37d19f625",
+      "chimera_tp/nat_buster.py": "18d7aa3a4df9f90541cf945443cfbe77185156106a8c54d7e3250bbbfd7b397c",
+      "chimera_tp/native.py": "1aac0a239fc4e92852b8ad72334d387d6b876559bbd6c9856abb82983e803d50",
+      "chimera_tp/omega_bench.py": "77cf4b7ef678cb5698064c8bab105d0b8b782c5c1f7d15bb33b7284b912bc48a",
+      "chimera_tp/omega_compute.py": "9818e9c4040ae833cfec75ec6827bbb7f9ee65ba248027d42a2ac52792b55253",
+      "chimera_tp/omega_storage.py": "c32608ad790b215312613389e6e20b8f487e03c30cbbaa1fa66fb24a2e5258c1",
+      "chimera_tp/omega_transport.py": "0196c200a5fd626c4f09141bab70cba6f636fb65ee60a6a4087392886ed6bf13",
+      "chimera_tp/overmind_cortex.py": "7423b85806a2b7d704f72e65e1a85ba78992430dd377d12a7807345d27c857f2",
+      "chimera_tp/phantom_tunnel.py": "2547ec7609b9038cfe20817214e0138f7ff3a02c3182833ffc57d1632fa7500c",
+      "chimera_tp/platform/__init__.py": "f7f397b11d93138daf1c61abda76a505076f152bc9c081daab7312b5d04e3209",
+      "chimera_tp/platform/_parcel_gcm.py": "1af80e8a5d7314bf9d071a1a0feccf116ea34881e8a8531027530160a65a9a58",
+      "chimera_tp/platform/_table_xlsx.py": "e93891da254b623712b74396fc75410bb2e6a945222502f42cd8c86b3f53a929",
+      "chimera_tp/platform/aether_cli.py": "c94a72e818691a0269935d2728f1316b6d77e12ad7cb7b89ea3d0fa63b4f029b",
+      "chimera_tp/platform/agent_workspace.py": "441d39887ec7232b9bfb88637825617f56e59d0afd021d4a8cee30228fa818c5",
+      "chimera_tp/platform/autoload.py": "db04eaa9325503a7ee26d1389a4d21df9a64c663ac97f2a1968c35d55124990b",
+      "chimera_tp/platform/browser_grid.py": "89c31c38b1b4be1c212014b99ec7ed32bd9b302d2fa98dcefe7b95b461ea266d",
+      "chimera_tp/platform/build_queue.py": "33d1d0621fb91451b55b8706f8e48685662a1ea609dd125ac0396b530092df15",
+      "chimera_tp/platform/build_registry.py": "272482b8ea92f53f1eaf0c206de416aba4490c4026dec56f936ac4f84ebb2088",
+      "chimera_tp/platform/build_snapshot.py": "5eb849c4348792fe33cb2d42aba754ee191f1291e7f2d18cdd2cd2bfc8d61ca3",
+      "chimera_tp/platform/build_worker.py": "d38196d0fddb546fa12e7037408e568f190f9e09166ad74a8d1188595f2ee389",
+      "chimera_tp/platform/client.py": "a4125c87c19438c2746619a232ebeded54fae4ac687cd640df91901b9ee05c30",
+      "chimera_tp/platform/clipboard_parcel.py": "ab8b8344bc0c5c903a85f273ae287d5dda12edb4824f6ff29aa7eedd3ec29ee7",
+      "chimera_tp/platform/colab_cli_bridge.py": "3e235d1b5a360b8fc821c3ecb9b9d4b09f36285d1c40c10ad30f1d28974fc33b",
+      "chimera_tp/platform/colab_on_peer.py": "f2dee5e94561b203777728251493b08b9567c66fd52df467d5781819fcb32f44",
+      "chimera_tp/platform/cosmos_entity.py": "6d129025be2a814793d48a8997ba7a36a7964cc96a954117558ca420fa51f799",
+      "chimera_tp/platform/discovery.py": "51dc9f75e790c284c5df48b883be554089e4b64cf0daaa000710f770766c3499",
+      "chimera_tp/platform/egress_membrane.py": "a51ac3b84d3817facc75cf69691925d18411143a862034fc814fb0b5b45e2cb9",
+      "chimera_tp/platform/evidence.py": "94c0b6e76c8e0d38d58277edde6b9e56ed77db9d342086f5a1aac1d635ee7841",
+      "chimera_tp/platform/exile_colab.py": "282a5570af61636e1f1125fe2a5a94d2070f8e3fde31c0f555b14fcb19d35be5",
+      "chimera_tp/platform/exile_handoff.py": "1209a2e94fd00b120d247ae49c59f61212c15298d29c3e3e30b56950d3d90ac4",
+      "chimera_tp/platform/file_revisions.py": "23a8045ee79f9852025c3d6e0f1e63f7c00070cfa2eb86a669c4b613d1e939b7",
+      "chimera_tp/platform/flight_recorder.py": "a2757872b56e75ec210112f0bde738f644ca75e07f445957adc099f95604f127",
+      "chimera_tp/platform/folded_cavity_rlnc.py": "1faa0b34721f7ba2045c713252a95fbc0c16aa2f51a71f8dc45963d2fdbb2fd3",
+      "chimera_tp/platform/frame_notes.py": "9923a93d7f7d9dbe5a83f67df386a429331c9045714c6efd4cc8e5bae224f3ec",
+      "chimera_tp/platform/ghost_bubble.py": "1a3ad683e2b8685c1d5d6427e76640d78ade3998dcdb951bb730795d7f3344b8",
+      "chimera_tp/platform/guarded_build.py": "4f62c6cbec990e657138442a992fe184bbcdf00b4da19b7bc64ad53aa32f8d34",
+      "chimera_tp/platform/hybrid_search.py": "df67277c64fb519f840cf9c15ffb47f8e9cc0c4d8adf69443f3a389e74ea7514",
+      "chimera_tp/platform/hyper_desk.py": "59a33e4906836544a270b6393352783c4c363fb0ee1827a9984f7be3fd701428",
+      "chimera_tp/platform/immortal_jobs.py": "84548854747a9c8542434d9bde9ec1707275aa67eb1b0ef413843ef8ccf068f3",
+      "chimera_tp/platform/mcp_server.py": "aa986a6ac2377fe0738e4b1d8a15f1328002cf8a02f9825fd6de411143eff90b",
+      "chimera_tp/platform/mmcss.py": "fcd28e8a1d15639862fd4ec4e76f83c10c6b40593e89d7fde36a5d51525644a1",
+      "chimera_tp/platform/nvcuda_ptx.py": "b447a9192e53835e685ce803526c4a816fc4c3f888782e1e23b9ec228a9b04d8",
+      "chimera_tp/platform/omega_entity.py": "22fe093c5e6cafe4e06af3843926666c399a3aa15c75df414562313dae599575",
+      "chimera_tp/platform/peer_guard.py": "3c2b27f2f7bf66d8ae13a26179bbb3f800c494503ce549469c3ad774ab87ed04",
+      "chimera_tp/platform/phantom_silicon.py": "c3eb1018a7ae0fc7b43c5dac950b815ec2ce415c810b080550a2aa73694b9c43",
+      "chimera_tp/platform/pulse_bus.py": "3a85b0f2d870ed56431ba25de005db7cbd7701f0946254eff3db88d32d3ce33f",
+      "chimera_tp/platform/recall_open.py": "f6acc4aebda1ff3e3d21c7737ce2874bb4d4cc5f71a9c3e859ae915e567c4be4",
+      "chimera_tp/platform/result_reuse.py": "37d8136856487666a1fad1fa9cbfc082d62345709849c0433d627bb4e8b8fd5f",
+      "chimera_tp/platform/source_recall.py": "8ef7cb79f08d959981be7e7a5006934c0f0111cb5355bcfa091bc6ebfc44ce59",
+      "chimera_tp/platform/substrate.py": "53ee4db7cca914d082369ee8526a2d921401fe70804e8f0876319192104a7b65",
+      "chimera_tp/platform/unify.py": "b107b98572b00a292653a7dcbe99c50a41c772c589af1fc3157d6e90bb18ef4f",
+      "chimera_tp/platform/vault_sql.py": "2f3e940349b7c03f46ee4998b69a061bb5f0ce9f19e54c7a887e2f258723fa7f",
+      "chimera_tp/platform/vgpu_gateway.py": "05ba6be1c5a17bad766c95361569d9ecea2002ebb384a40bd1627bb97b8a4226",
+      "chimera_tp/platform/work_admission.py": "d9a2dbf91e20001e4cb4258102f491e0546e26c8344411cfba51c340cdf8e9dc",
+      "chimera_tp/platform/workspace_undo.py": "aa39054f3f7650db56fb46fefcd1cc7e2beec129b75c3fc5c93d623556b3e3d6",
+      "chimera_tp/platform/zygote_canary.py": "0393ed35a4e33a0940493ede1b2684f4269d2b3357e1f37f2d858568c9d7200d",
+      "chimera_tp/probe.py": "cff48f0425a09c2aea7f6ccf7d964eebe6fdf5d95f299d9ebb9b092ba6242afc",
+      "chimera_tp/protocol.py": "48dc8a39f604fd7b0b818f32cbab2f8774c9f1c14bea6ea1198a8272981edacc",
+      "chimera_tp/sentinel.py": "86f29681aeb6576f371461769f40fae80a6eddea9feb71b4caf90d20d21871ea",
+      "chimera_tp/singularity_airgap_crypto.py": "9d47ffb1c74670a6ea8ba8b11e6ec6d2aa2fd533f3182269f2d0b9da3c34a4bb",
+      "chimera_tp/singularity_bench.py": "e5904b49bedd3d5ef47449c868c235f2d87c1b9367a0f7c354f1138a27ff0a88",
+      "chimera_tp/singularity_kolmogorov_swarm.py": "1c96da81ad43b91e4bdc5cc5f5b8d283e2c315683fb0a77f752a63f0cb9fad8c",
+      "chimera_tp/singularity_time_crdt.py": "113193f52962c89ffb89f65c2819394196dbacf4be9eae0737638a41c67474e7",
+      "chimera_tp/telepathy.py": "149843fb87793f5a208891a00e8967f8aaf5365c92bfda84557e4225f78f1670",
+      "chimera_tp/trinity_bridge.py": "dc3014250f4987946a9cecba3c0b238986fb79bf8210699d0c5656dd683297b5",
+      "chimera_tp/universe_ui.py": "a099e84eb5b0f10beaf3e140dc83a4297695028281e028a7f55056a134d8880b",
+      "chimera_tp/v10_outlaw_engines.py": "7b001e8ca8ec428555562d80c6f8bfeca50a0de2cbc0c84afc7c064284df4001",
+      "chimera_tp/v10_sovereign_crypto.py": "2d964ede78a4741298e4588df1eb7835990083c5986438fbe8e774002373a7b2",
+      "chimera_tp/v10_sovereign_runtime.py": "dc90122ef63f16ab31b5ca7959ef0d24199ade614d95119c3ab97634c76a6a1f",
+      "chimera_tp/v11_autopoietic_systems.py": "743712c11f584f670e52fca2dffdcd7b11b6c20d13ef128990746f5150193ef3",
+      "chimera_tp/v11_organism_mesh.py": "757165df07cdc75a0fbaa4e37485c155d872a72f178597ddad2fc657d657ce24",
+      "chimera_tp/v12_bench.py": "26dec63103be2dc8f761c6c855cb79fc323f3ab02da0b31bd919b33c8457494f",
+      "chimera_tp/v12_galactic_engines.py": "f560a7e0d85257e6c315ad48d9d70ce21007392be2c195436cdf7471d9674611",
+      "chimera_tp/v9_app_index.py": "eeb0bff22e09ae3ffbdd4194dcb5c99a603eea418cd2f7d57a6626b0bb9d3e5c",
+      "chimera_tp/v9_bench.py": "5fe90abfc26033a8f16fc1be87d2dcb51ddc47486121894f90efecafe121c084",
+      "chimera_tp/v9_dataplane.py": "31cddc324c590e5beaeedf52a2ae5a6dd2c1b260424bcbf0ed8570f6846a7fac",
+      "chimera_tp/v9_nvme_grid.py": "fd8dd36bf9a52891e75ba94e553a124bb184f01801958d26c6a5a241eea5bb73",
+      "chimera_tp/vsa_memory_service.py": "7ccc207d65491177f5724bad18c50a99bd03ae784bce3ca5303e35877cdc1c29",
+      "chimera_tp/warp.py": "acd4fee8fe420fba8e9e402cb5ced68dc5fe736681a44ee39b3ca7c501b7e5be"
+    }
+  },
+  "protocol": {
+    "cache": "New output paths every run. Inputs were just staged and read back. OS caches were not flushed.",
+    "order": "Alternating paired EC and CE with equal first-position counts. Both builds precede output verification.",
+    "timing": "Process startup, reading sources, compiling, and writing pycs through process exit. No forced disk flush.",
+    "verification": "Each pyc header/source hash, marshalled code vs independent compile, exact file count and tree SHA-256.",
+    "limits": "Live desktop, uncontrolled background I/O. No ReFS, Defender setting, CAD, or full wheel trial."
+  },
+  "verified_product": {
+    "manifest_sha256": "4b7f97f1dbdaed131cb4b6daa00934f28312df9a0bb5fa9bf7e8333ebf02abfc",
+    "pyc_files": 102,
+    "bytes": 3602430
+  },
+  "pairs": [
+    {
+      "pair": 1,
+      "order": [
+        "E",
+        "C"
+      ],
+      "runs": {
+        "E": {
+          "start_utc": "2026-11-26T13:03:27.846+00:00",
+          "wall_ms": 987.059,
+          "product_sha256": "4b7f97f1dbdaed131cb4b6daa00934f28312df9a0bb5fa9bf7e8333ebf02abfc"
+        },
+        "C": {
+          "start_utc": "2026-11-26T13:03:28.833+00:00",
+          "wall_ms": 812.667,
+          "product_sha256": "4b7f97f1dbdaed131cb4b6daa00934f28312df9a0bb5fa9bf7e8333ebf02abfc"
+        }
+      }
+    },
+    {
+      "pair": 2,
+      "order": [
+        "C",
+        "E"
+      ],
+      "runs": {
+        "C": {
+          "start_utc": "2026-11-26T13:03:30.876+00:00",
+          "wall_ms": 734.634,
+          "product_sha256": "4b7f97f1dbdaed131cb4b6daa00934f28312df9a0bb5fa9bf7e8333ebf02abfc"
+        },
+        "E": {
+          "start_utc": "2026-11-26T13:03:31.611+00:00",
+          "wall_ms": 671.714,
+          "product_sha256": "4b7f97f1dbdaed131cb4b6daa00934f28312df9a0bb5fa9bf7e8333ebf02abfc"
+        }
+      }
+    },
+    {
+      "pair": 3,
+      "order": [
+        "E",
+        "C"
+      ],
+      "runs": {
+        "E": {
+          "start_utc": "2026-11-26T13:03:33.346+00:00",
+          "wall_ms": 698.925,
+          "product_sha256": "4b7f97f1dbdaed131cb4b6daa00934f28312df9a0bb5fa9bf7e8333ebf02abfc"
+        },
+        "C": {
+          "start_utc": "2026-11-26T13:03:34.046+00:00",
+          "wall_ms": 758.401,
+          "product_sha256": "4b7f97f1dbdaed131cb4b6daa00934f28312df9a0bb5fa9bf7e8333ebf02abfc"
+        }
+      }
+    },
+    {
+      "pair": 4,
+      "order": [
+        "C",
+        "E"
+      ],
+      "runs": {
+        "C": {
+          "start_utc": "2026-11-26T13:03:35.888+00:00",
+          "wall_ms": 704.662,
+          "product_sha256": "4b7f97f1dbdaed131cb4b6daa00934f28312df9a0bb5fa9bf7e8333ebf02abfc"
+        },
+        "E": {
+          "start_utc": "2026-11-26T13:03:36.592+00:00",
+          "wall_ms": 591.398,
+          "product_sha256": "4b7f97f1dbdaed131cb4b6daa00934f28312df9a0bb5fa9bf7e8333ebf02abfc"
+        }
+      }
+    },
+    {
+      "pair": 5,
+      "order": [
+        "E",
+        "C"
+      ],
+      "runs": {
+        "E": {
+          "start_utc": "2026-11-26T13:03:38.135+00:00",
+          "wall_ms": 590.812,
+          "product_sha256": "4b7f97f1dbdaed131cb4b6daa00934f28312df9a0bb5fa9bf7e8333ebf02abfc"
+        },
+        "C": {
+          "start_utc": "2026-11-26T13:03:38.725+00:00",
+          "wall_ms": 723.13,
+          "product_sha256": "4b7f97f1dbdaed131cb4b6daa00934f28312df9a0bb5fa9bf7e8333ebf02abfc"
+        }
+      }
+    },
+    {
+      "pair": 6,
+      "order": [
+        "C",
+        "E"
+      ],
+      "runs": {
+        "C": {
+          "start_utc": "2026-11-26T13:03:40.523+00:00",
+          "wall_ms": 740.043,
+          "product_sha256": "4b7f97f1dbdaed131cb4b6daa00934f28312df9a0bb5fa9bf7e8333ebf02abfc"
+        },
+        "E": {
+          "start_utc": "2026-11-26T13:03:41.263+00:00",
+          "wall_ms": 694.778,
+          "product_sha256": "4b7f97f1dbdaed131cb4b6daa00934f28312df9a0bb5fa9bf7e8333ebf02abfc"
+        }
+      }
+    },
+    {
+      "pair": 7,
+      "order": [
+        "E",
+        "C"
+      ],
+      "runs": {
+        "E": {
+          "start_utc": "2026-11-26T13:03:43.112+00:00",
+          "wall_ms": 740.63,
+          "product_sha256": "4b7f97f1dbdaed131cb4b6daa00934f28312df9a0bb5fa9bf7e8333ebf02abfc"
+        },
+        "C": {
+          "start_utc": "2026-11-26T13:03:43.853+00:00",
+          "wall_ms": 745.097,
+          "product_sha256": "4b7f97f1dbdaed131cb4b6daa00934f28312df9a0bb5fa9bf7e8333ebf02abfc"
+        }
+      }
+    },
+    {
+      "pair": 8,
+      "order": [
+        "C",
+        "E"
+      ],
+      "runs": {
+        "C": {
+          "start_utc": "2026-11-26T13:03:45.829+00:00",
+          "wall_ms": 713.42,
+          "product_sha256": "4b7f97f1dbdaed131cb4b6daa00934f28312df9a0bb5fa9bf7e8333ebf02abfc"
+        },
+        "E": {
+          "start_utc": "2026-11-26T13:03:46.542+00:00",
+          "wall_ms": 965.579,
+          "product_sha256": "4b7f97f1dbdaed131cb4b6daa00934f28312df9a0bb5fa9bf7e8333ebf02abfc"
+        }
+      }
+    }
+  ],
+  "summary": {
+    "pairs": 8,
+    "hdd_median_ms": 696.851,
+    "nvme_median_ms": 737.339,
+    "median_paired_reduction_pct": -7.51,
+    "paired_reduction_range_pct": [
+      -22.4,
+      26.11
+    ],
+    "nvme_faster_pairs": 2,
+    "identical_verified_products": 16
+  },
+  "script_sha256": "00c4d6664180300ff26d518d380e9ced10a83c11a461fea194dd2eb68144ff22"
+}

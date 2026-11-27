@@ -1,0 +1,15 @@
+{
+  "build_segment_from_step": 765,
+  "llm_turns": 22,
+  "wall_seconds": 830.0,
+  "tool_counts": {
+    "update_steps": 6,
+    "call_mcp_tool": 5,
+    "read_file": 7,
+    "write_file": 3,
+    "edit_file": 28,
+    "run_command": 7
+  },
+  "spills_before_shield_deploy": 3,
+  "mcp_tool_steps": 0
+}

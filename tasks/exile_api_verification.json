@@ -1,0 +1,24 @@
+{
+  "schema": "chimera.exile-sdk-http/1",
+  "verified_utc": "2026-11-26T14:17:34.955496+00:00",
+  "listen_url": "http://127.0.0.1:11732",
+  "build_protocol": 1,
+  "peer": "svhome",
+  "server_calls": 2,
+  "deferred_before_execution": {},
+  "build": {
+    "state": "completed",
+    "delivery": "executed",
+    "snapshot": "a5fb987df4ba016858e5802e9899d7b620dc08f0764281107ce20d99199d9859",
+    "attempt_id": "794417b6fe484f9d8eff2403f864e35d",
+    "end_to_end_ms": 1938.0,
+    "artifact_sha256": "bf2605adfb1281a100facf30eaadda478279edca39d80968b828f89945088366",
+    "artifact_bytes": 60,
+    "matches_independent_bytes": true
+  },
+  "cloud_without_budget": {
+    "state": "deferred",
+    "error": "colab_budget_required_or_insufficient"
+  },
+  "temporary_tree_removed": true
+}

@@ -2,6 +2,14 @@
 
 Tài liệu này lưu trữ toàn bộ lộ trình các ý tưởng đột phá **cấp dự án (tầng giao thức, mật mã, hệ điều hành và lý thuyết thông tin)** dành riêng cho lõi `chimera-tp`. Mọi logic nghiệp vụ riêng của các ứng dụng phía trên (quản lý bounty, điều phối prompt LLM, v.v.) giữ tách biệt ở chính các dự án đó.
 
+Với nhu cầu vừa vẽ AutoCAD vừa chạy hai coding agent, kế hoạch chung ghi rõ khi nào nên gộp build trên Windows, khi nào nên giao sang Linux và phép đo nào còn cần để quyết định. [Kế hoạch nghiệm thu Windows và svhome](WORKSTATION_EXECUTION_PLAN.md) · [Chat phân tích tính khả thi](codex://threads/01a217b7-a63a-74d3-b418-7315bb443ca7)
+
+**Đối chiếu ngày 26/11/2026.** Cả `win-desktop` và `svhome` trả về beacon v21 với 15 cartridge bật. Kiểm tra 21 phần (145 mục đánh số), gồm cả Phantom-Silicon mới bổ sung, cho thấy lớp khám phá dịch vụ, nhật ký job và một số nhân tính toán đã có đường chạy thực tế. Các cam kết chuyển socket xuyên máy, SLA ứng dụng và độ mượt AutoCAD vẫn thiếu phép đo đầu cuối. Các nhãn “đã chốt” bên dưới ghi lại quyết định thiết kế. Bảng đối chiếu, các lỗi đã sửa tại workspace và tiêu chí nghiệm thu nằm trong [báo cáo kiểm định Moonshot Vault](reports/MOONSHOT_VAULT_AUDIT_2026-11-26.md).
+
+**Ctrl-Z của Omega v21.** Mã cũ có thể xóa tệp lớn hoặc tệp tạo sau snapshot. Tạm hoãn dùng Ctrl-Z trên dữ liệu dự án thật đến khi nút chạy bản sửa đã kiểm thử. [Cơ chế hoàn tác theo từng tệp](../chimera_tp/platform/workspace_undo.py)
+
+**Cập nhật Aether ngày 26/11/2026.** Hai màn đã nối GTX 1650. Hồ sơ mặc định trong mã nguồn ưu tiên phiên tương tác và để Windows quản lý CPU. Các phần XX–XXII ghi lịch sử thử nghiệm chính sách cũ. Phần XXIII–XXIV bên dưới phân biệt tính năng đã kiểm với các mục tiêu phần cứng, thời gian và chi phí còn mở. [Báo cáo trước–sau Aether](reports/CHIMERA_AETHER_2026-11-26.md)
+
 ---
 
 ## Phần I — 7 Đột Phá Tầng Giao Thức & Hệ Điều Hành (Đã Tạm Lưu)
@@ -335,3 +343,147 @@ Tài liệu này lưu trữ toàn bộ lộ trình các ý tưởng đột phá 
    - Tự học schema chuẩn trên các kênh `Pulse`/`Service Mesh`, kiểm định `< 0.05 ms`/gói và chặn đứt gãy format ở tầng biên trước khi lỗi lan dây chuyền sang dự án khác.
 7. **`CHIMERA-CARTRIDGE-STORE` — Hệ Sinh Thái Mô-Đun Cắm-Nóng (`cuDNN / cuFFT`)**
    - Giữ nhân `< 35 MB` RAM; mỗi năng lực là `1` Cartridge độc lập bật/tắt nóng (`chimera enable ...`), tự công bố vào `/.well-known/chimera.json` + `chimera-mcp` và cô lập lỗi tuyệt đối không kéo sập nhân.
+
+---
+
+## Phần XVII — 7 Đột Phá Tối Ưu Đa Tác Vụ Tầng Kernel & Phân Tán (`v19.0 CHIMERA-HYPERDESK` — Tạm Lưu)
+
+*Mục tiêu: Chuyển `HostYieldGovernor` từ trạng thái phòng thủ thụ động sang kiểm soát ngược hệ điều hành Windows + điều phối đa nút (`win-desktop` + `GTX 1650` + `svhome 6 ms` + `Colab Pro`), triệt tiêu tràn Commit/pagefile, nghẽn CPU đa nhiệm và bão tiến trình nền mà không sửa 1 dòng code app.*
+
+1. **`CHIMERA-CRYO` — "Đông Lạnh Thời Gian" Theo Tầm Mắt (`Focus-Aware Cryogenic Process Freezer`)**
+   - Hook Win32 `SetWinEventHook(EVENT_SYSTEM_FOREGROUND)` ngay trong `native/chimera_core` (Rust): cửa sổ đang Focus nhận làn VIP (`HIGH_PRIORITY_CLASS` + khóa Working Set cấm swap); nền `> 15 s` ép xuống `EcoQoS` + `PROCESS_MEMORY_PRIORITY = VERY_LOW` + `EmptyWorkingSet` (giảm `60–75%` RAM hoạt động không mất state); nền `> 90 s` gọi `NtSuspendProcess` đóng băng hoàn toàn (trừ luồng audio/mic/proxy đang hoạt động) và dự đoán đánh thức `< 8 ms` bằng Markov trước khi người dùng bấm chuyển cửa sổ.
+2. **`CHIMERA-SILICON-WALL` — Chia Đôi CPU Thành 2 Quốc Gia + Lưu Đày Compiler (`Interactive-First Core Pinning`)**
+   - Phân vùng cứng `SetProcessAffinityMask` + Win32 `JOBOBJECT_CPU_RATE_CONTROL`: giữ riêng nhóm nhân sạch (`Cores 0–3`) cho `dwm.exe`, Input, Audio và cửa sổ Focus; nhốt toàn bộ compiler (`VBCSCompiler`, `dotnet`, `cargo`, `rustc`), `language_server`, AI agent nền và `OneDrive` vào khu công nghiệp (`Cores 4–11`) bị siết trần `50%` CPU + `IoPriority = VeryLow` khi đang gõ/di chuột (`idle < 3 s`), và mở van `100%` khi rời tay `> 5 s`; hỗ trợ lưu đày hẳn LSP/build nặng sang `svhome` qua `PHANTOM-5MS`.
+3. **`CHIMERA-VRAM-SWAP` — Biến VRAM Thừa Của GPU Thành Ổ Swap/Cache `192 GB/s` (`Compressed VRAM L2 Tier`)**
+   - Tận dụng `nvcuda_ptx.py` (`cuMemAlloc`) + `chimera_lz4_compress` (`7.9 GB/s`) mượn động `1.8–2.0 GB` VRAM rảnh của `GTX 1650` làm tầng bộ nhớ nén L2 chứa tương đương `~6–8 GB` trang lạnh/cache/snapshot (tự trả sạch `< 30 ms` qua `HostYieldGovernor` khi app đồ họa/game đòi GPU), tạo tháp bộ nhớ 4 tầng: `RAM Windows → VRAM nén → RAM trống svhome qua 6 ms tunnel → SSD`.
+4. **`CHIMERA-HYDRA-COLLAPSE` — Sát Nhập Đa Nhân Chromium Thành 1 Lò Phản Ứng Dùng Chung (`CDP Tab Cryo + Remote 946 FPS Stream`)**
+   - Tầng 1 gắn CDP vào trình duyệt cục bộ chụp khung tĩnh LZ4 (`~15 KB`) + lưu DOM scroll/form rồi `Page.discard` mọi tab rảnh `> 3` phút; Tầng 2 đẩy các web-app/dashboard nặng sang `SharedBrowserGrid` chạy trên `svhome` và stream đúng phần viewport thay đổi về 1 cửa sổ Native Rust/Win32 `< 12 MB` RAM qua `v9_app_index` (`946 FPS`, `1.44 KB/frame`, `6 ms` RTT).
+5. **`CHIMERA-ZOMBIE-REAPER` & `Zero-Spawn Python Zygote` — Phá Bẫy `multiprocessing.spawn` Trên Windows**
+   - Tiêm sạch qua `chimera_autoload.pth`: bọc mọi `multiprocessing` pool vào Win32 Job Object `JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE` (cha chết là con chết trong `1 ms`, triệt tiêu zombie commit), thu gọn worker rảnh `> 45 s` về `0` tiến trình hoặc bắn tác vụ Python thuần sang Linux CoW `CHIMERA-ZYGOTE` trên `svhome` (`2.79 ms`, `< 2 MB`/worker thay vì `~384 MB` Windows `spawn`), kèm watchdog bắt tiến trình có tỉ lệ `WorkingSet / PrivateCommit < 5%`.
+6. **`CHIMERA-CORTEX-BUS` — Hợp Nhất "Rừng AI Agent" Về 1 Mạch Duy Nhất (`Unified Watcher + Warm PTY + Egress Dedup`)**
+   - Thay nhiều file-watcher, indexer và shell trùng lặp của các công cụ AI bằng `1` `USN Journal` watcher duy nhất (`< 2 MB` RAM) phát sự kiện qua `PulseBus`, tìm kiếm chung `/v1/search` (`2.16 ms`), bể shell ấm dùng chung trên `Ghost-PTY`, và định tuyến toàn bộ traffic LLM/API qua `EgressMembrane :9781` kết hợp tận dụng quota `Colab Pro`.
+7. **`CHIMERA-SYNC-DAM` — Đập Ngăn Bão I/O Đồng Bộ & Quét File Nền (`Burst-Sync Dam`)**
+   - Tự động tạm đóng băng (`NtSuspendProcess`) dịch vụ đồng bộ nền (`OneDrive.Sync.Service` và các indexer) mỗi khi phát hiện CPU/Disk burst từ build/agent; chỉ "xả đập" đồng bộ gom một lượt khi `idle_sec > 120 s`, kết hợp đưa thư mục tạm/build ra khỏi vùng đồng bộ thời gian thực.
+
+---
+
+## Phần XVIII — 9 Đột Phá Biến CHIMERA Thành Thực Thể Xử Lý Hạ Tầng Cấp Độ Vũ Trụ (`v20.0+ CHIMERA-COSMOS` — Tạm Lưu)
+
+*Tầm nhìn nhảy vọt: Vượt khỏi vai trò "cầu nối / lớp đệm" để biến CHIMERA thành **1 Thực Thể Hạ Tầng Tự Chủ Duy Nhất (`Sovereign Cosmic Infrastructure Entity`)** sở hữu trọn gói Tính toán, Bộ nhớ, Lưu trữ, Mạng, Bảo mật, Đàn AI Agent, Vật lý nhiệt-điện-tiền, Tự vận hành và Tái sinh — ứng dụng phía trên chỉ còn là logic nghiệp vụ thuần túy.*
+
+1. **`CHIMERA-SINGLE-IMAGE` — Xóa Sổ Khái Niệm "Máy Tính Riêng Lẻ" (`Planetary Single-System-Image Meta-OS`)**
+   - Hợp nhất toàn bộ phần cứng (`win-desktop` + `svhome` + `Colab Pro` + VPS biên + thiết bị phụ) thành `1` không gian PID, `1` không gian bộ nhớ, `1` hệ thống tệp và `1` bể GPU duy nhất; thực thi không vị trí (`Zero-Location Execution`) và dịch chuyển tiến trình đang chạy sống giữa các máy (`Live Process Levitation`) không đứt socket TCP nhờ giữ đầu socket tại `chimera0` Virtual NIC.
+2. **`CHIMERA-ZERO-ENV` — Xóa Sổ `Docker`, `venv`, `node_modules` & Địa Ngục Môi Trường (`Content-Addressed Universal Silicon Runtime`)**
+   - Mọi thư viện/binary/model trên toàn cụm chỉ lưu đúng `1` bản nguyên tử theo mã băm `BLAKE2s` và lắp ghép thành không gian cô lập trong `< 2 ms` qua CoW Reflink/Virtual FS; đóng gói dịch vụ thành hạt thực thi siêu nhẹ (`< 5 MB`, cold-start `< 10 ms`) chạy xuyên Windows/Linux/ARM/Cloud không phụ thuộc OS host.
+3. **`CHIMERA-OMNI-MEMORY` — Hợp Nhất `File + DB + Cache + Queue + Vector + Git + Backup` Thành 1 Vật Chất Dữ Liệu (`Unified Omni-Fabric`)**
+   - Dưới đáy chỉ có `1` dòng sự kiện nhân quả bất biến phân mảnh `GF(256)`, phía trên chiếu đồng thời `6` giao diện chuẩn (`POSIX/WinFsp`, `SQL`, `Redis RESP`, `1-Bit AVX2 Vector+BM25`, `Time-Travel AS OF`, `Cauchy Self-Healing`) với `0` nhân bản; dữ liệu tự trôi theo 4 tầng nhiệt độ vật lý (`RAM/VRAM ↔ NVMe ↔ svhome ↔ kho phân mảnh $0`).
+4. **`CHIMERA-IMMORTAL-NET` — Mạng Lưới Không IP, Không Cổng, Không Chết, Không Thể Bị Chặn (`Self-Sovereign Zero-Config Mesh`)**
+   - Định danh mật mã thay cho `IP:Port` (`app://`, `gpu://`, `db://`) với mTLS + hậu lượng tử (`X25519 + ML-KEM`) và Multi-WAN cộng gộp băng thông tự động; lớp Egress "Tắc Kè Hoa" đa nút + đa giao thức (QUIC/WebRTC mimicry, singleflight, tự xoay đường né `429`/đứt cáp, cache offline) mang lại ảo giác Internet phẳng, nhanh và `0%` lỗi mạng cho mọi app.
+5. **`CHIMERA-IMMUNE-OS` — Hệ Miễn Dịch Tầng Kernel & Phòng Tuyến Zero-Trust (`Micro-Capability Sandbox & <5 ms Anti-Ransomware`)**
+   - Cô lập quyền tối thiểu tự động cho mọi tiến trình/AI agent và chỉ cấp **Ghost-Token giả** (CHIMERA bơm secret thật tại tầng Egress proxy ⇒ bị chiếm tiến trình vẫn rò `0` byte secret); giám sát vận tốc entropy + tỷ lệ xóa/ghi theo cửa sổ `100 ms`, đóng băng tiến trình phá hoại trong `< 5 ms` và tự tua ngược dữ liệu bằng `Ghost-Block CoW` với `0` mất mát.
+6. **`CHIMERA-AUTOGEN-OPS` — Kỹ Sư Hạ Tầng Tự Sống Không Cần Con Người (`Sense → Hypothesize → Ghost-Prove → Hot-Swap`)**
+   - Vòng lặp khép kín tự phát hiện dị thường qua `BlackBox`/ETW/eBPF, tự sinh cấu hình/WASM wire-adapter/bản vá hạ tầng, bắt buộc chứng minh `0` regression trên vũ trụ song song `CHIMERA-GHOST` bằng `.cassette` lỗi thật rồi mới cắt nóng `0 ms` downtime (có hoàn tác nguyên tử `1 ms` nếu lệch SLA).
+7. **`CHIMERA-SWARM-HYPERVISOR` — Hệ Điều Hành Sinh Ra Cho Bầy Đàn AI Agent (`AI-Native Agentic OS`)**
+   - Cấp tức thì cho mỗi AI agent `1` thực tại phân nhánh CoW `< 1 ms` (`0 MB` copy repo) + `Ghost-PTY` + `BrowserContext` dùng chung + hạn mức cứng `(CPU, RAM, Token, Cost)`; tự động phân xử merge ngữ nghĩa, cắt cầu dao `Burn-Loop` trong `10 ms` và nạp bài học vào bộ nhớ tập thể VSA/KV-Fabric.
+8. **`CHIMERA-THERMODYNAMIC-GRID` — Bộ Điều Phối Vật Lý 5 Biến `Độ Trễ × Tiền × Watt × °C × Tuổi Thọ SSD` (`Resource Physics Engine`)**
+   - Điều phối tải theo cảm biến nhiệt/điện/tiếng ồn (Windows nóng/bận tự đẩy sang `svhome`; ban đêm `svhome` đánh thức Windows bằng WoL chạy batch GPU rồi ngủ lại), dựng rào chắn ghi SSD (`Zero-Wear Write Barrier` giảm `85–95%` ghi vật lý NVMe), và tự động tối ưu chi phí compute xuyên 5 tầng phần cứng (`Local AVX-512 ↔ GTX 1650 ↔ svhome ↔ Colab Pro ↔ Cloud`).
+9. **`CHIMERA-GENESIS` — Hạt Giống Tái Sinh & Tự Đồng Hóa Mọi Phần Cứng Trong 60 Giây (`Bare-Metal Metamorphosis`)**
+   - Chưng cất toàn bộ hạ tầng, bản đồ dịch vụ, khóa ngưỡng FROST và cây CAS thành `1` Hạt Giống `< 10 MB`; chạy `1` lệnh `chimera assimilate` trên bất kỳ máy Windows/Linux/Mac/VPS/Colab trắng nào để tự đo silicon, tự gia nhập lưới `PHANTOM`, tự phân vai và tái sinh nguyên trạng toàn bộ hệ sinh thái kể cả khi hỏng đồng thời nhiều máy cũ.
+
+---
+
+## Phần XIX — 9 Đột Phá Vượt Ngưỡng Thực Thể Vũ Trụ (`v21.0+ CHIMERA-OMEGA ENTITY` — Đã Chốt Triển Khai)
+
+*Phá vỡ 9 định đề cố hữu 50 năm của ngành máy tính để đưa CHIMERA vượt khỏi vai trò phần mềm/Meta-OS trở thành Thực Thể Xử Lý Hạ Tầng toàn diện.*
+
+1. **`CHIMERA-RING-MINUS-1` — Ảo Hóa Tầng Dưới Hệ Điều Hành (`Thin Hypervisor Probe + Cross-Process EPT Page Deduplication`)**
+   - Thăm dò trung thực năng lực phần cứng `VT-x/AMD-V/SLAT-EPT/WHPX/KVM` và triển khai lớp khử trùng lặp trang 4 KB + phân tầng trang lạnh trong suốt xuyên tiến trình sang VRAM/RAM từ xa.
+2. **`CHIMERA-AKASHIC-COMPUTE` — Trường Tính Toán Vĩnh Cửu (`Global Memoized DAG & Cross-Boundary Operator Fusion`)**
+   - Đánh địa chỉ mọi phép tính thuần theo `BLAKE2s(op ∥ args ∥ version)` trả kết quả `< 50 µs` (`0` chu kỳ tính lại), kết hợp biên dịch gộp chuỗi pipeline nhiều bước thành `1` vòng lặp 0-copy duy nhất.
+3. **`CHIMERA-ALCHEMY-SILICON` — Thuật Giả Kim Silicon (`AoS→SoA Layout Transmutation + PTX/AVX-512 Dispatch`)**
+   - Tự xoay bố cục bộ nhớ hàng sang cột khớp cache-line/GPU warp và biên dịch động phép toán dữ liệu sang CUDA PTX (`GTX 1650`) hoặc SIMD AVX-512/AVX2 tùy nút rảnh.
+4. **`CHIMERA-PRECOGNITION` — Hạ Tầng Tiên Tri Độ Trễ Âm (`Counterfactual Speculative Worldlines`)**
+   - Dự đoán chuỗi tác vụ/truy vấn kế tiếp bằng Markov, tính đón đầu trên bóng chỉ-đọc ở khe rảnh kèm xác thực `SHA-256` (`0` stale reads) và tự hãm chống lãng phí khi tỷ lệ trúng thấp.
+5. **`CHIMERA-VAMPIRE-CLOUD` — Siêu Máy Tính Hành Tinh `$0` Ký Sinh Phần Cứng Phù Du (`Zero-Trust Ephemeral Scavenger Mesh`)**
+   - Kết hợp chia mảnh mù `GF(256)`, xác thực vết thực thi `O(log N)` và hồi sinh checkpoint `< 50 ms` khi nút phù du (Colab/Spot/edge) đột tử để biến phần cứng không tin cậy thành bể lực co giãn `$0`.
+6. **`CHIMERA-INTENT-KERNEL` — Trình Biên Dịch Ý Định Thành Hạ Tầng (`Formal Intent-to-Reality Compiler`)**
+   - Khai báo bất biến SLA (`p99_ms`, `cost`, `data_loss`, `secret_egress`, `host_ram_mb`); bộ giải ràng buộc tự sinh tô-pô cartridge, cache, đặt nút, rào chắn bảo mật và kiểm định bất biến liên tục.
+7. **`CHIMERA-MULTIVERSE-OS` — Hệ Điều Hành Đa Vũ Trụ (`Parallel Reality Racing & Wavefunction Collapse`)**
+   - Rẽ nhánh `N` thực tại CoW song song, đua các bản vá/chiến lược trên cùng luồng sự kiện thật, tự chọn bản thắng tốt nhất để sụp đổ hàm sóng nguyên tử và hỗ trợ `Ctrl+Z` toàn cụm.
+8. **`CHIMERA-AUTOPOIETIC-DNA` — Sinh Vật Tự Tiến Hóa Từ Tín Hiệu Phần Cứng (`PMU-Driven Self-Rewriting Organism`)**
+   - Đọc tín hiệu vi mô phần cứng (CPU/RAM/Page-Fault/latency), tự đấu trường các bộ gen nén/lập lịch/bộ đệm, xác minh khớp bit `100%` rồi thay nóng cấu hình tối ưu cho đúng con chip đang chạy.
+9. **`CHIMERA-OMEGA-GRAVITY` — Trường Hấp Dẫn Ảo Hóa Phần Mềm Cũ `0-Sửa-Code` (`Zero-Rewrite Universal Interposition`)**
+   - Tự động ôm lấy ứng dụng cũ qua `chimera_autoload.pth` (Win32 JobObject chống zombie + proxy), `NODE_OPTIONS` và luật trọng lực OS ở `HyperDesk` để app cổ điển hưởng toàn bộ hạ tầng mới không sửa 1 dòng code.
+
+---
+
+## Phần XX — `v22.0 CHIMERA-ZERO-STUTTER SINGULARITY` (Diệt Đơ Giật Cấp Kernel Cho AutoCAD + Chrome + Bầy Đàn Coding Agent)
+
+*Phát hiện thực chiến từ telemetry trực tiếp: đơ giật xảy ra do bão `Processor Queue Length = 17` (`90%` CPU) + `182 MB/s` I/O nền từ `language_server`/AI agents tranh chấp trực tiếp với AutoCAD & Chrome, cộng thêm việc trim Working Set khi RAM vẫn còn trống và không bảo vệ trọn cây tiến trình con của ứng dụng đang Focus.*
+
+1. **`VIP Family Sanctuary` (`_expand_app_family` + Auto-Demote):** Truy ngược lên gốc và bảo vệ toàn bộ cây gia phả ứng dụng đang Focus (Chrome browser + tab renderer + GPU process; AutoCAD + helpers; IDE đang gõ), đồng thời hạ sạch `AboveNormal` của app cũ ngay khi chuyển cửa sổ.
+2. **`CAD_GODMODE` Tự Động:** Tự phát hiện AutoCAD (`acad`, `revit`, `blender`, v.v.), cấp `HIGH_PRIORITY_CLASS` + mở toàn bộ `0x0FF` Clean P-Cores và tự siết trần nền xuống `25%`.
+3. **`CHIMERA-HARD-SILICON-CAGE` (Win32 Nested JobObject `HARD_CAP` + `NtSetInformationProcess IoPriority=VeryLow`):** Nhốt chặt coding agent nền (`language_server`, `agy`, `Antigravity`/`T3 Code` nền, compilers, `OneDrive`) vào `2` nhân cuối (`Cores 8–11 = 0xF00`) với **trần CPU cứng `35%` (`25%` CAD)** và **`IoPriority = VeryLow`**, chừa sạch `4` nhân vật lý đầu (`8` luồng `0x0FF`) cho AutoCAD + Chrome + DWM; tự mở van `100%` khi rời tay `>= 15s`.
+4. **Kẻ Săn Bão CPU & I/O Tự Động (`GetProcessTimes` + `GetProcessIoCounters` `<10 µs`/PID):** Không lệ thuộc tên app cố định — bất kỳ tiến trình nền nào vượt `0.45` nhân hoặc `25 MB/s` I/O lập tức bị tống vào Lồng Sắt.
+5. **`CHIMERA-CHRONO-PULSE` (`NtSetTimerResolution(5000)`):** Ép xung độ phân giải đồng hồ lập lịch nhân Windows từ `15.6 ms` xuống **`0.5 ms` (`31x` mịn hơn)** khi đang thao tác, tự trả mặc định khi rảnh.
+6. **Chính Sách Chống Trim-Thrashing (`ram_pressure_free_gb = 4.5 GB`):** Chỉ nén Working Set khi RAM thật sự cạn `< 4.5 GB` — triệt tiêu hoàn toàn bão transition page-fault trên Chrome khi RAM vẫn dư `8–10 GB`.
+
+---
+
+## Phần XXI — `v23.0 CHIMERA-PHANTOM-SILICON` (Triệt Tiêu 4 Tử Huyệt Vật Lý: HDD `E:\` 125%, JobObject Error 5, Bão Fault & GPU Split)
+
+*Bắt quả tang bằng X-Ray trực tiếp trên nhân Windows: `E:\` là HDD cơ quay bão hòa `125.7%` (`32.4 ms/file`), `AssignProcessToJobObject` lỗi `ERROR_ACCESS_DENIED (5)` trên `59/62` tiến trình Electron/LSP, `42.6 GB` Commit sinh `239k` transition fault/s, và 6 nhân Chromium tranh chấp GTX 1650 + UHD 730.*
+
+1. **`CHIMERA-NVME-MIRAGE` (`NvmeMirageEngine`):** Nâng tầng nguyên tử các thư mục dự án nóng (`E:\DEV\Autocad`, `makefun_entries`, `chimera-tp`…) lên NVMe `C:\.chimera_nvme_tier\` bằng **NTFS Junction (`mklink /J`, không cần Admin)** giữ nguyên 100% đường dẫn gốc, kèm kiểm chứng `SHA-256`, bản sao lạnh `E:\DEV\.chimera_cold_backing\`, xả delta write-back lúc rảnh (`idle >= 60s`) và hoàn nguyên `demote()` không mất dữ liệu.
+2. **`CHIMERA-PWM-CRUSHER` (`native/chimera_core` Rust DLL + Deadman Watchdog):** Mạch băm xung `50 ms` (`NtSuspendProcess`/`NtResumeProcess`) chạy native ngoài Python GIL vượt hoàn toàn lỗi `Error 5` của JobObject; kẹp cứng tiến trình nền đốt CPU/I/O xuống `25%` (`15%` CAD_GODMODE), tự mở `100%` ngay khi rời tay `>= 5s` hoặc đổi focus (`< 1 ms`), kèm Deadman Heartbeat `10s` tự xả mọi PID nếu daemon dừng.
+3. **`CHIMERA-STASIS-POD` + `GPU-PHOENIX` + Rust `SetWinEventHook` (`< 0.5 ms`):** Giữ sống tiến trình chủ HWND (0 treo cửa sổ), chỉ đóng băng + trim 1 lần duy nhất các tiến trình con `--type=renderer`/`--type=utility` lạnh của Electron/WebView2 (`msedgewebview2`, `ChatGPT`, `Zalo`, `Antigravity` nền) — cắt đứt bão re-fault và rã đông `< 0.5 ms` qua `EVENT_SYSTEM_FOREGROUND` trong Rust; kèm `GPU-PHOENIX` tái sinh sạch `--type=gpu-process` rò Commit/VRAM (0 mất tab).
+4. **`CHIMERA-ZYGOTE-INTERCEPTOR` (`chimera_autoload.pth` Elastic Pool Shaper):** Tự động kẹp `multiprocessing.Pool` / `ProcessPoolExecutor` không giới hạn trên Windows khi Commit `>= 70%` để chấm dứt bẫy `6–12 × 384 MB` Commit chết mà không sửa code ứng dụng.
+5. **`CHIMERA-AGENT-EXILE` (`AgentExileEngine` + `/v1/exile/run` + `chimera-tp exile`):** Lưu đày trực tiếp lệnh test/build/scan nặng của coding agent sang `svhome` Linux SSD 24/7 (kèm tar-delta sync) hoặc `Colab High-MEM` (`51 GB` RAM), giữ CPU & đĩa Windows ở `0%`.
+6. **`CHIMERA-GPU-FENCE` (`GpuFenceManager`):** Tự động khóa `HKCU\Software\Microsoft\DirectX\UserGpuPreferences` (có backup khôi phục) ép AutoCAD vào `GTX 1650` (`GpuPreference=2`) và tách Electron/WebView2 nền sang `GpuPreference=1`.
+
+---
+
+## Phần XXII — `v24.0 CHIMERA-CRYO-SILICON` (Đóng Băng Nhiệt Silicon, Tách Die iGPU & Eco-Cortex 1–24 FPS)
+
+*Chẩn đoán thực tế từ Task Manager (`CPU 84% @ 3.19 GHz`, `Intel UHD 730 iGPU = 97%` chạm nóc trong khi `GTX 1650` rảnh `8% / 48°C`): thủ phạm kép gồm (1) tab WebGL `universe_ui.py` chạy `67–120 FPS` không hãm + `10` lớp `backdrop-filter:blur(12px)` đè trên canvas WebGL + `antialias:true` + `dpr=1.75` + `powerPreference:'low-power'` + poll `/api/pulse` mỗi `450 ms` (`135 ms/lần`), và (2) `chrome.exe` bị ép chạy trên iGPU tích hợp chung die CPU (`GpuPreference=1`), cướp `25–30W` TDP và hun nóng trực tiếp die i5-11400.*
+
+1. **`CHIMERA-ZERO-WATT ECO-CORTEX` (`universe_ui.py`):** Gỡ bỏ `backdrop-filter:blur` trên WebGL (`-75%` Skia/DirectComposition), cắt `antialias:false` + `dpr=1` + `powerPreference:'default'` + giảm 63% đỉnh vẽ (`3,920` hạt), lắp bộ điều tốc thích ứng **`24 FPS` (tương tác) → `10 FPS` (đứng yên) → `1 FPS ECO` (khi cửa sổ mất focus hoặc `CPU >= 62%`) → `0 FPS` (ẩn tab / `0-GPU`)**, cache bounding rect tránh bão reflow SVG và giãn `/api/pulse` lên `2s / 4s`.
+2. **`CHIMERA-SILICON-THERMOSTAT` (`SiliconThermostat` — `powercfg PROCTHROTTLEMAX` không cần Admin):** Cắt đỉnh đốt điện nhiệt PL2 (`80–110W → ~35–45W`, giảm `~15–20°C` tuổi thọ silicon) bằng chế độ mặc định `cool_99` (`99%` chặn PL2 spike, tự mở `100%` khi `CAD_GODMODE`, tự hạ `95% → 85%` khi `CPU >= 62% / 80%` hoặc `GPU >= 75°C`, hỗ trợ `eco_85` / `turbo_100` qua `/v1/hyperdesk/thermostat` và hoàn nguyên `100%` sạch khi tắt daemon).
+3. **`CHIMERA-GLOBAL-PWM-CEILING` (`hyper_desk.py`):** Khi tải CPU toàn máy vượt ngưỡng lá chắn `>= 62%`, tự động mở rộng mạch băm xung Rust `50 ms` áp trần (`20% / 15%`) lên **mọi tiến trình nền đốt CPU ngoài vùng Sanctuary kể cả tab renderer Chrome nền**, bảo vệ trần nhiệt phần cứng theo vòng kín.
+4. **`CHIMERA-DIE-SPLIT GPU-FENCE` (`GpuFenceManager`):** Chuyển `chrome.exe` từ `GpuPreference=1` (Intel UHD 730 trên die CPU) sang `GpuPreference=2` (`GTX 1650` rời đang rảnh `8% / 48°C`), giải phóng hoàn toàn `25–30W` TDP & băng thông RAM cho CPU i5-11400.
+5. **`CHIMERA-SUB-2MS PULSE` + Fix `host_governor` False-100% Spike:** Cache `pulse_summary()` TTL `2.0s` (`135 ms → < 2 ms`), vá lỗi `GetSystemTimes` chia khoảng `< 50 ms` báo ảo `100% CPU / 80W`, và đồng bộ `reclaimed_mb` + `autonomic_on` thật lên HUD.
+
+## Phần XXIII — CHIMERA-AETHER cho phiên làm việc đang mở
+
+1. **Zero-Copy Display.** Hai đường xuất đang hoạt động cùng thuộc GTX 1650. MSI MP275 E2 dùng HDMI 120 Hz, Acer KA272 dùng DVI 75 Hz. Đường xuất hình và bộ mã hóa video là hai khả năng riêng của hệ thống.
+2. **Render và Build Exile.** Cùng một bộ nguồn đã biên dịch trên Windows và qua SSH. Linux cũng mã hóa được H.264 và Windows giải mã được. Chạy giao diện IDE từ xa còn phụ thuộc một trình duyệt được sandbox trên peer.
+3. **Socket Phantom.** Relay Rust hai chiều đã chuyển tiếp beacon qua SSH trên cổng riêng. Dịch vụ thử của systemd chỉ nhận PID sau kết nối đầu tiên. Việc chuyển danh tính dịch vụ và ba cổng thật cần cửa sổ bảo trì.
+4. **Workspace Browser.** Hai trang web dùng chung một hồ sơ trình duyệt đã giảm bộ nhớ cấp phát riêng trong thử nghiệm đối chứng. Các ứng dụng desktop và tài khoản đang mở cần được đánh giá theo tải riêng.
+5. **MMCSS và vùng RAM tạm.** Luồng hợp tác đã đăng ký và trả quyền MMCSS. Một job Linux đã ghi và kiểm lại dữ liệu trên tmpfs 2 GiB. Hai phép thử có phạm vi hệ điều hành khác nhau.
+6. **NVMe staging.** Cả hai thư mục dự án có bản sao trên NVMe. Bản SQLite đang dùng có thêm bản sao online đã kiểm tra. Việc thay đường dẫn làm việc cần xác minh lại tại thời điểm bàn giao.
+7. **HUD tĩnh.** Giao diện mặc định đã qua phép đếm callback animation và yêu cầu WebGL. Điện năng và độ trễ thao tác AutoCAD cần phép đo riêng.
+
+## Phần XXIV — Mười đề xuất mở rộng Aether
+
+Các lệnh dưới nhóm `chimera-tp aether` hoạt động theo yêu cầu trên tệp, thư mục hoặc peer đã chọn. Bảng thử, điều kiện áp dụng và cách tái lập nằm trong [báo cáo 17 đề xuất](reports/CHIMERA_AETHER_2026-11-26.md).
+
+1. **QuickSync-Parasite.** Mã hóa một ảnh bằng Intel HEVC, OCR qua peer, tìm bằng SQLite FTS5 và phát lại. Tìm thấy số 7429 trong ảnh kiểm chuẩn. Thu liên tục 24/7 và stream ra điện thoại còn mở.
+2. **CAD-Time-Machine.** Theo dõi lần lưu qua sự kiện thư mục Windows, lưu FastCDC/SHA-256, gửi phần chênh và khôi phục ra tệp mới. Prefetch giới hạn số byte theo lịch sử các tệp đã lưu gần nhau. [Kho phiên bản](../chimera_tp/platform/file_revisions.py)
+3. **Immortal-Workspace.** Lưu và đọc lại danh sách tài liệu, URL và thư mục terminal do người dùng chọn. Khôi phục vùng nhớ của tiến trình, trạng thái CAD chưa lưu và cuộn tab cần tích hợp ứng dụng.
+4. **Git-Hypervisor.** Agent dùng lệnh lease sẽ giữ khóa theo tệp. Khi tranh khóa trên cây sạch, agent thứ hai có thể chạy ở worktree tách biệt. Việc gộp thay đổi vẫn cần giải quyết xung đột theo nội dung. [Khóa và worktree](../chimera_tp/platform/agent_workspace.py)
+5. **Semantic-LLM-Firewall.** Tái dùng kết quả theo câu hỏi và ngữ cảnh trùng khớp. FTS đưa gợi ý để người dùng đánh giá. Proxy tôn trọng tín hiệu giới hạn và cách ly biến thể HTTP. [Kho kết quả](../chimera_tp/platform/result_reuse.py)
+6. **Headless-Colab-Supercomputer.** Windows gọi CLI trên svhome qua SSH, xem được số dư và chuẩn bị đúng cấu hình T4/L4/CPU. Cấp GPU và chi phí cho workload cần một lần chạy có ngân sách.
+7. **Thermal-Spillover.** Bộ nhận job mới xét nhiệt liên tục, cảm biến khả dụng và khả năng kết nối peer. Job thử đã kiểm cú pháp 127 tệp trên svhome. [Chính sách nhận việc](../chimera_tp/platform/work_admission.py)
+8. **Nocturnal-Possession.** Job kiểm cú pháp hợp tác được dùng Windows khi trong khung 22h–6h và máy rảnh 30 phút. Job nhường lại khi có thao tác. Quét toàn ổ và cho hệ thống ngủ còn mở.
+9. **Telepathic-Clipboard.** Gửi có chủ đích qua SSH một gói mã hóa có hạn nhận, dùng khóa riêng ở hai đầu. Dữ liệu có cột chuyển được sang CSV, JSON, Markdown và XLSX. [Định dạng gói](../chimera_tp/platform/clipboard_parcel.py)
+10. **Immortal-Bonding.** Bộ gửi RLNC có thể chọn IP nguồn từng tuyến. Thử cắt một trong hai tuyến loopback giữa luồng vẫn nhận đúng SHA-256. WAN dự phòng vật lý và thời gian khôi phục của ứng dụng cần đo với hai uplink.
+
+---
+
+## Phần XXV — Học Thuyết Hợp Nhất `CHIMERA-ONE` (Grand Unification Doctrine — Đã Chốt Chuẩn Kiến Trúc)
+
+*Sau 24 thế hệ tính năng (`107` mô-đun Python, `50,821` dòng mã, `35` bộ kiểm thử), trọng tâm của CHIMERA chuyển từ "mở rộng thêm vũ trụ song song" sang **hợp nhất ngược thành 1 Thực Thể Hạ Tầng Đồng Sinh Duy Nhất** với tài liệu hiến pháp chính thức tại [UNIFICATION_DOCTRINE.md](UNIFICATION_DOCTRINE.md) và kế hoạch nghiệm thu đối chứng tại [WORKSTATION_EXECUTION_PLAN.md](WORKSTATION_EXECUTION_PLAN.md).*
+
+1. **7 Định Luật Bất Biến:** (1) *Triệt tiêu rác trước khi dịch chuyển* (`Eliminate Before Offload`); (2) *Không bao giờ bóp nhân Windows* (`Zero-Choke Kernel Law` — cấm `0xF00`, cấm tắt Turbo `99%`, cấm suspend khóa IPC); (3) *Đồng sinh & cầu chì cứng bảo vệ nút yếu `svhome`* (`peer_guard` + `cgroup v2`, `RAM >= 2.5 GiB`, `load <= 1.8`, `< 70°C`); (4) *Đơn vị công việc có chứng thực `SHA-256`* (`File-Lease` + `Singleflight` + `Memoization` + `Cluster Ctrl+Z`); (5) *Tách ngân sách CPU và thời gian chờ* (`Dual-Budget Placement`); (6) *Nghiệm thu 3 cổng `Lab → Shadow → Active` & tự hoàn tác* (`Do-No-Harm Rollback`); (7) *Hợp nhất ngược về 5 Cơ Quan & giữ trần daemon `< 80 MiB`* (`lazy-import` cho tầng nghiên cứu `v9–v12`).
+2. **5 Cơ Quan Hợp Nhất (`107` mô-đun → `5` giao diện thống nhất):** `Causal Spine` (tủy sống nhân quả & ký ức), `Hemisphere Router` (điều phối 4 bán cầu silicon), `Akashic Swarm-Kernel` (não chung bầy đàn AI Agent & ứng dụng), `Entropy Annihilator` (miễn dịch chưng cất & tự hoàn tác), và `Sovereign Skin` (bề mặt 2D Zero-WebGL & CLI thống nhất).
+3. **4 Bán Cầu Silicon Khớp Đúng Trở Kháng:** `WIN-REFLEX` (`i5-11400 4.4 GHz + NVMe`), `WIN-OPTIC` (`GTX 1650` Zero-Copy 2 màn + `UHD 730` QuickSync `< 3W`), `SVHOME-NERVE` (`2C/4T 15W` chỉ điều phối/cache siêu nhẹ có khóa cứng), và `COLAB-ARTILLERY` (`2,350 CU / 51 GiB + T4/L4` hứng đợt bùng nổ nặng có ngân sách).

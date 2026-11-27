@@ -1,0 +1,490 @@
+{
+  "schema": "chimera.guarded-compiler-ssh-pair/1",
+  "utc": "2026-11-26T20:02:56.273637+00:00",
+  "source_root": "E:\\DEV\\chimera-tp\\.git\\chimera-rollbacks\\20261126T180248Z\\release-94c21bfff98b-raw",
+  "worker_sha256": "0b0d1837fb57127df51594807dc8659dffae52420b00428ed717b2db68106f46",
+  "peer": "svhome",
+  "command": "TMPDIR=\"$PWD\" cc -std=c11 -Wall -Werror main.c -o program && ./program > answer.txt",
+  "policy": {
+    "job_memory_mib": 192,
+    "job_disk_mib": 16,
+    "runtime_seconds": 35
+  },
+  "pairs": [
+    {
+      "pair": 1,
+      "order": [
+        "fresh",
+        "shared"
+      ],
+      "fresh": {
+        "wall_ms": 2844.0000000118744,
+        "connections": 2,
+        "jobs": [
+          {
+            "attempt": "7fc8e54d40d042d7a2b054f197ac9f4b",
+            "snapshot": "8c64fd79b47dda48f8aabae92f5a969dae463fcf8c8a97c03617fc3ad581fc47",
+            "binary_sha256": "8906995a9971647674c1043a43e29c38c94ffb28d59320035f9a93afe396d7de",
+            "answer_sha256": "83c02ac2d48c863dab2ccf6870455aadfc2cec073b8db269b517c879d76aa6d9",
+            "compiler_ms": 64.811,
+            "limits": {
+              "memory_high": 161058816,
+              "memory_max": 201326592,
+              "swap_max": 0,
+              "tasks_max": 128,
+              "cpu_quota_pct": 100.0,
+              "io_write_bps": null,
+              "io_devices": [
+                "8:0",
+                "8:2"
+              ]
+            },
+            "service_p95_ms": {
+              "http://127.0.0.1:9780/.well-known/chimera.json": 4.699641838669777
+            },
+            "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/chimera-peer-guest.service"
+          },
+          {
+            "attempt": "cf1f4bc5405a4e6ea756d06e68adea1e",
+            "snapshot": "379941f8368c0a69755360640805e11f808d6e2d9c5e91c16d9f364166acac37",
+            "binary_sha256": "b76386de81a84f15ff9a9d55f6156253d970e53d81c033c6a6f3fdb91d8e197d",
+            "answer_sha256": "d6a1a767319c3bf2a337b16e3a14916f63e432872e0f8df1cb73b32a8b338ae4",
+            "compiler_ms": 64.776,
+            "limits": {
+              "memory_high": 161058816,
+              "memory_max": 201326592,
+              "swap_max": 0,
+              "tasks_max": 128,
+              "cpu_quota_pct": 100.0,
+              "io_write_bps": null,
+              "io_devices": [
+                "8:0",
+                "8:2"
+              ]
+            },
+            "service_p95_ms": {
+              "http://127.0.0.1:9780/.well-known/chimera.json": 3.569250926375389
+            },
+            "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/chimera-peer-guest.service"
+          }
+        ]
+      },
+      "shared": {
+        "wall_ms": 1358.9999999967404,
+        "connections": 1,
+        "ssh_connection_sha256": "b91cca46b85721015dde10822497128db6a1e8fc9368aae4997dec5d7714db39",
+        "receiver_pid": 3973497,
+        "jobs": [
+          {
+            "attempt": "44c8b01a6bed4f45ae14af41379e2926",
+            "snapshot": "8c64fd79b47dda48f8aabae92f5a969dae463fcf8c8a97c03617fc3ad581fc47",
+            "binary_sha256": "8906995a9971647674c1043a43e29c38c94ffb28d59320035f9a93afe396d7de",
+            "answer_sha256": "83c02ac2d48c863dab2ccf6870455aadfc2cec073b8db269b517c879d76aa6d9",
+            "compiler_ms": 64.658,
+            "limits": {
+              "memory_high": 161058816,
+              "memory_max": 201326592,
+              "swap_max": 0,
+              "tasks_max": 128,
+              "cpu_quota_pct": 100.0,
+              "io_write_bps": null,
+              "io_devices": [
+                "8:0",
+                "8:2"
+              ]
+            },
+            "service_p95_ms": {
+              "http://127.0.0.1:9780/.well-known/chimera.json": 3.60333314165473
+            },
+            "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/chimera-peer-guest.service",
+            "guest_state_after": "inactive",
+            "worker_ms": 376.30939669907093
+          },
+          {
+            "attempt": "a8afe4a0bcb64f2c955d340a2538a3f7",
+            "snapshot": "379941f8368c0a69755360640805e11f808d6e2d9c5e91c16d9f364166acac37",
+            "binary_sha256": "b76386de81a84f15ff9a9d55f6156253d970e53d81c033c6a6f3fdb91d8e197d",
+            "answer_sha256": "d6a1a767319c3bf2a337b16e3a14916f63e432872e0f8df1cb73b32a8b338ae4",
+            "compiler_ms": 64.767,
+            "limits": {
+              "memory_high": 161058816,
+              "memory_max": 201326592,
+              "swap_max": 0,
+              "tasks_max": 128,
+              "cpu_quota_pct": 100.0,
+              "io_write_bps": null,
+              "io_devices": [
+                "8:0",
+                "8:2"
+              ]
+            },
+            "service_p95_ms": {
+              "http://127.0.0.1:9780/.well-known/chimera.json": 3.5240999422967434
+            },
+            "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/chimera-peer-guest.service",
+            "guest_state_after": "inactive",
+            "worker_ms": 367.4717079848051
+          }
+        ]
+      }
+    },
+    {
+      "pair": 2,
+      "order": [
+        "shared",
+        "fresh"
+      ],
+      "shared": {
+        "wall_ms": 1296.9999999913853,
+        "connections": 1,
+        "ssh_connection_sha256": "3ba9c69a77b3553cea4590956e7eafd6fea6751d6d9121ff334c448b7a017b8a",
+        "receiver_pid": 3973582,
+        "jobs": [
+          {
+            "attempt": "dd7ca0748af14fc9815e37fd1a9ca0e4",
+            "snapshot": "c0c90fd8114473dc083e15ddae373323e14f5e44537f7098337c3329dbe94b06",
+            "binary_sha256": "3d6e419d591e3efda3c32e41d48f72fd5e86f3dd9cc6450292f6c6d448d6d313",
+            "answer_sha256": "8d2510d85c94c519a91dbab464e232a824442bc7f6ef8901d8b5534825373878",
+            "compiler_ms": 64.771,
+            "limits": {
+              "memory_high": 161058816,
+              "memory_max": 201326592,
+              "swap_max": 0,
+              "tasks_max": 128,
+              "cpu_quota_pct": 100.0,
+              "io_write_bps": null,
+              "io_devices": [
+                "8:0",
+                "8:2"
+              ]
+            },
+            "service_p95_ms": {
+              "http://127.0.0.1:9780/.well-known/chimera.json": 3.540338948369026
+            },
+            "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/chimera-peer-guest.service",
+            "guest_state_after": "inactive",
+            "worker_ms": 369.8797067627311
+          },
+          {
+            "attempt": "8141769df9654296a12ca3af9c1b645f",
+            "snapshot": "9356c54e5165d16446d6efc9f1ddf6f01030b7e909f28de739ad135263787d06",
+            "binary_sha256": "9f1838c811e94eb5279b1d6cabf45b41b9ff93f6a877aec900f34bc05da7918d",
+            "answer_sha256": "bc0dbc57b7c9fad9c1d17d12db699ca1ea7d12221113f47c0dca5a11eaeaf7ce",
+            "compiler_ms": 64.791,
+            "limits": {
+              "memory_high": 161058816,
+              "memory_max": 201326592,
+              "swap_max": 0,
+              "tasks_max": 128,
+              "cpu_quota_pct": 100.0,
+              "io_write_bps": null,
+              "io_devices": [
+                "8:0",
+                "8:2"
+              ]
+            },
+            "service_p95_ms": {
+              "http://127.0.0.1:9780/.well-known/chimera.json": 3.4681223332881927
+            },
+            "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/chimera-peer-guest.service",
+            "guest_state_after": "inactive",
+            "worker_ms": 365.4938517138362
+          }
+        ]
+      },
+      "fresh": {
+        "wall_ms": 1469.0000000118744,
+        "connections": 2,
+        "jobs": [
+          {
+            "attempt": "817f5387bf774f5d8520cbd213cd3234",
+            "snapshot": "c0c90fd8114473dc083e15ddae373323e14f5e44537f7098337c3329dbe94b06",
+            "binary_sha256": "3d6e419d591e3efda3c32e41d48f72fd5e86f3dd9cc6450292f6c6d448d6d313",
+            "answer_sha256": "8d2510d85c94c519a91dbab464e232a824442bc7f6ef8901d8b5534825373878",
+            "compiler_ms": 64.82,
+            "limits": {
+              "memory_high": 161058816,
+              "memory_max": 201326592,
+              "swap_max": 0,
+              "tasks_max": 128,
+              "cpu_quota_pct": 100.0,
+              "io_write_bps": null,
+              "io_devices": [
+                "8:0",
+                "8:2"
+              ]
+            },
+            "service_p95_ms": {
+              "http://127.0.0.1:9780/.well-known/chimera.json": 3.4262528643012047
+            },
+            "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/chimera-peer-guest.service"
+          },
+          {
+            "attempt": "699f5a75335d45d2ad16a804e85a2634",
+            "snapshot": "9356c54e5165d16446d6efc9f1ddf6f01030b7e909f28de739ad135263787d06",
+            "binary_sha256": "9f1838c811e94eb5279b1d6cabf45b41b9ff93f6a877aec900f34bc05da7918d",
+            "answer_sha256": "bc0dbc57b7c9fad9c1d17d12db699ca1ea7d12221113f47c0dca5a11eaeaf7ce",
+            "compiler_ms": 64.861,
+            "limits": {
+              "memory_high": 161058816,
+              "memory_max": 201326592,
+              "swap_max": 0,
+              "tasks_max": 128,
+              "cpu_quota_pct": 100.0,
+              "io_write_bps": null,
+              "io_devices": [
+                "8:0",
+                "8:2"
+              ]
+            },
+            "service_p95_ms": {
+              "http://127.0.0.1:9780/.well-known/chimera.json": 3.5717282444238663
+            },
+            "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/chimera-peer-guest.service"
+          }
+        ]
+      }
+    },
+    {
+      "pair": 3,
+      "order": [
+        "fresh",
+        "shared"
+      ],
+      "fresh": {
+        "wall_ms": 1468.9999999827705,
+        "connections": 2,
+        "jobs": [
+          {
+            "attempt": "51d3b037a785488394c75d25d7474ae4",
+            "snapshot": "c8f1d4750a7dac0f81e0d6afad82f0097d5c29f9e1a4bee0f8d72e52580c7f96",
+            "binary_sha256": "ad1a1ac60dc0654e362e7786e766393a75bde888b327adab6bee3fdce1f712a6",
+            "answer_sha256": "71d80754f7717e7ec0f19a83672e7196303c2f748606038e6b1c8af5ba594b07",
+            "compiler_ms": 64.894,
+            "limits": {
+              "memory_high": 161058816,
+              "memory_max": 201326592,
+              "swap_max": 0,
+              "tasks_max": 128,
+              "cpu_quota_pct": 100.0,
+              "io_write_bps": null,
+              "io_devices": [
+                "8:0",
+                "8:2"
+              ]
+            },
+            "service_p95_ms": {
+              "http://127.0.0.1:9780/.well-known/chimera.json": 3.61733790487051
+            },
+            "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/chimera-peer-guest.service"
+          },
+          {
+            "attempt": "d2637e6aae254d8ba99b65e544892857",
+            "snapshot": "d5117b0a945fcda119a72dea49680e2b3616b54e9172ed9a847580949523c3f9",
+            "binary_sha256": "15183a78c6dfd84b35351cbce44fb85c2ab93d34adc14ce51b7759ed9c847dd7",
+            "answer_sha256": "4fc7580c670d656a7e94661bbc33d5c6c55728fee63bb4d18182c1e49c768175",
+            "compiler_ms": 64.821,
+            "limits": {
+              "memory_high": 161058816,
+              "memory_max": 201326592,
+              "swap_max": 0,
+              "tasks_max": 128,
+              "cpu_quota_pct": 100.0,
+              "io_write_bps": null,
+              "io_devices": [
+                "8:0",
+                "8:2"
+              ]
+            },
+            "service_p95_ms": {
+              "http://127.0.0.1:9780/.well-known/chimera.json": 3.5535828210413456
+            },
+            "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/chimera-peer-guest.service"
+          }
+        ]
+      },
+      "shared": {
+        "wall_ms": 1312.000000005355,
+        "connections": 1,
+        "ssh_connection_sha256": "288cd61611ff53e71358859751ca1f534683adae87bebfb3c4076f7ed5b388f0",
+        "receiver_pid": 3973908,
+        "jobs": [
+          {
+            "attempt": "244678a6795d4eca9e0842980fea1f1b",
+            "snapshot": "c8f1d4750a7dac0f81e0d6afad82f0097d5c29f9e1a4bee0f8d72e52580c7f96",
+            "binary_sha256": "ad1a1ac60dc0654e362e7786e766393a75bde888b327adab6bee3fdce1f712a6",
+            "answer_sha256": "71d80754f7717e7ec0f19a83672e7196303c2f748606038e6b1c8af5ba594b07",
+            "compiler_ms": 65.956,
+            "limits": {
+              "memory_high": 161058816,
+              "memory_max": 201326592,
+              "swap_max": 0,
+              "tasks_max": 128,
+              "cpu_quota_pct": 100.0,
+              "io_write_bps": null,
+              "io_devices": [
+                "8:0",
+                "8:2"
+              ]
+            },
+            "service_p95_ms": {
+              "http://127.0.0.1:9780/.well-known/chimera.json": 4.0263100527226925
+            },
+            "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/chimera-peer-guest.service",
+            "guest_state_after": "inactive",
+            "worker_ms": 420.680214650929
+          },
+          {
+            "attempt": "2bbd11291a514b3f8b994523859ceec1",
+            "snapshot": "d5117b0a945fcda119a72dea49680e2b3616b54e9172ed9a847580949523c3f9",
+            "binary_sha256": "15183a78c6dfd84b35351cbce44fb85c2ab93d34adc14ce51b7759ed9c847dd7",
+            "answer_sha256": "4fc7580c670d656a7e94661bbc33d5c6c55728fee63bb4d18182c1e49c768175",
+            "compiler_ms": 64.741,
+            "limits": {
+              "memory_high": 161058816,
+              "memory_max": 201326592,
+              "swap_max": 0,
+              "tasks_max": 128,
+              "cpu_quota_pct": 100.0,
+              "io_write_bps": null,
+              "io_devices": [
+                "8:0",
+                "8:2"
+              ]
+            },
+            "service_p95_ms": {
+              "http://127.0.0.1:9780/.well-known/chimera.json": 3.451957833021879
+            },
+            "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/chimera-peer-guest.service",
+            "guest_state_after": "inactive",
+            "worker_ms": 378.4942040219903
+          }
+        ]
+      }
+    },
+    {
+      "pair": 4,
+      "order": [
+        "shared",
+        "fresh"
+      ],
+      "shared": {
+        "wall_ms": 1203.0000000086147,
+        "connections": 1,
+        "ssh_connection_sha256": "2855bf4cc635562a4e021a7bb39109ddb89b28b43073bb4abdadb83333d164d7",
+        "receiver_pid": 3973992,
+        "jobs": [
+          {
+            "attempt": "f3418bbe40f048298d00f83aa72228c2",
+            "snapshot": "1d1925d5a211e9b863adeb5a1a5aca349b40317e1c383efc463430ff4dd3e2e2",
+            "binary_sha256": "0278807d5d750693c54c78f795a515040c65c4ea49621ca002fa28ee99dde3b0",
+            "answer_sha256": "27e5a81ce93a4628236eb5bf4c0557d2f1afa6824ced8bc4bb9feb70a2667678",
+            "compiler_ms": 64.768,
+            "limits": {
+              "memory_high": 161058816,
+              "memory_max": 201326592,
+              "swap_max": 0,
+              "tasks_max": 128,
+              "cpu_quota_pct": 100.0,
+              "io_write_bps": null,
+              "io_devices": [
+                "8:0",
+                "8:2"
+              ]
+            },
+            "service_p95_ms": {
+              "http://127.0.0.1:9780/.well-known/chimera.json": 4.401233978569508
+            },
+            "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/chimera-peer-guest.service",
+            "guest_state_after": "inactive",
+            "worker_ms": 370.77833572402596
+          },
+          {
+            "attempt": "f901c4b9e3f5498d8b5a741a66870a01",
+            "snapshot": "c15b1aebdf035fbe1b027faf22545b7755d6f261724b3a4e8f41f24d1ebda215",
+            "binary_sha256": "685489b2dbf0cf9996e18dfda4cc19b215c09927b744568013d92580ea7a71ae",
+            "answer_sha256": "7e3b7c72086e2735a656c73b95093d5803cd16d195079a6315b5ad89102c4388",
+            "compiler_ms": 64.697,
+            "limits": {
+              "memory_high": 161058816,
+              "memory_max": 201326592,
+              "swap_max": 0,
+              "tasks_max": 128,
+              "cpu_quota_pct": 100.0,
+              "io_write_bps": null,
+              "io_devices": [
+                "8:0",
+                "8:2"
+              ]
+            },
+            "service_p95_ms": {
+              "http://127.0.0.1:9780/.well-known/chimera.json": 3.6140368320047855
+            },
+            "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/chimera-peer-guest.service",
+            "guest_state_after": "inactive",
+            "worker_ms": 364.01895014569163
+          }
+        ]
+      },
+      "fresh": {
+        "wall_ms": 1484.9999999860302,
+        "connections": 2,
+        "jobs": [
+          {
+            "attempt": "7ba8486ec8a642f09856cb255b3bfe1d",
+            "snapshot": "1d1925d5a211e9b863adeb5a1a5aca349b40317e1c383efc463430ff4dd3e2e2",
+            "binary_sha256": "0278807d5d750693c54c78f795a515040c65c4ea49621ca002fa28ee99dde3b0",
+            "answer_sha256": "27e5a81ce93a4628236eb5bf4c0557d2f1afa6824ced8bc4bb9feb70a2667678",
+            "compiler_ms": 64.782,
+            "limits": {
+              "memory_high": 161058816,
+              "memory_max": 201326592,
+              "swap_max": 0,
+              "tasks_max": 128,
+              "cpu_quota_pct": 100.0,
+              "io_write_bps": null,
+              "io_devices": [
+                "8:0",
+                "8:2"
+              ]
+            },
+            "service_p95_ms": {
+              "http://127.0.0.1:9780/.well-known/chimera.json": 4.21429006382823
+            },
+            "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/chimera-peer-guest.service"
+          },
+          {
+            "attempt": "97aac615d0134c1c8bf33ca2bb97fe2a",
+            "snapshot": "c15b1aebdf035fbe1b027faf22545b7755d6f261724b3a4e8f41f24d1ebda215",
+            "binary_sha256": "685489b2dbf0cf9996e18dfda4cc19b215c09927b744568013d92580ea7a71ae",
+            "answer_sha256": "7e3b7c72086e2735a656c73b95093d5803cd16d195079a6315b5ad89102c4388",
+            "compiler_ms": 64.794,
+            "limits": {
+              "memory_high": 161058816,
+              "memory_max": 201326592,
+              "swap_max": 0,
+              "tasks_max": 128,
+              "cpu_quota_pct": 100.0,
+              "io_write_bps": null,
+              "io_devices": [
+                "8:0",
+                "8:2"
+              ]
+            },
+            "service_p95_ms": {
+              "http://127.0.0.1:9780/.well-known/chimera.json": 3.387726843357086
+            },
+            "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/chimera-peer-guest.service"
+          }
+        ]
+      }
+    }
+  ],
+  "medians_ms": {
+    "fresh": 1476.9999999989523,
+    "shared": 1304.4999999983702
+  },
+  "unique_build_attempts": 16,
+  "temporary_source_removed": true,
+  "scope": "Shadow. Two serial C builds with empty result caches. Shared wall time includes opening and closing the SSH connection and two post-job systemd checks. No reusable service or live routing policy was installed."
+}

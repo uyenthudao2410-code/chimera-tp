@@ -1,0 +1,165 @@
+{
+  "generated_at": "2026-11-27T08:12:24",
+  "b1_tquota_wire_delta_and_tools": {
+    "payloadMb": 0.86,
+    "beforeAvgMs": 10.47,
+    "afterAvgMs": 5.33,
+    "speedupX": 1.96,
+    "wireDelta": {
+      "spliceHits": 5,
+      "spliceMisses": 1,
+      "fallbackCount": 0,
+      "itemsReused": 920,
+      "itemsSerialized": 190,
+      "toolsReused": 5,
+      "bytesReused": 4496280,
+      "idleTrims": 0,
+      "cachedSessions": 1,
+      "cachedBytes": 846664,
+      "cachedToolSchemas": 1
+    },
+    "prefixDelta": {
+      "deltaHits": 5,
+      "deltaMisses": 1,
+      "deltaItemsSkipped": 920,
+      "toolsDeltaHits": 5,
+      "outboundToolsReuseHits": 6,
+      "workerColdSnapshots": 0,
+      "idleTrims": 0,
+      "cachedSessions": 1,
+      "cachedRawBytes": 905779,
+      "cachedToolSlices": 1
+    },
+    "genKeyDelta": {
+      "incrementalHits": 5,
+      "incrementalMisses": 1,
+      "itemsSkipped": 920,
+      "canonicalToolsHits": 5,
+      "cachedPrefixStates": 1,
+      "cachedCanonicalTools": 1
+    },
+    "shellNudgeMs": 0.178,
+    "shellNudgeApplied": false,
+    "live_win_tquota_rss_mb": 342.73,
+    "live_win_tquota_heap_mb": 85.4,
+    "live_win_tquota_inSync": true
+  },
+  "b2_speculative_sse_cache": {
+    "cold_xray_ms": 9.5,
+    "prefetch_ms": 0.61,
+    "cached_count": 1,
+    "hot_xray_ms": 20.69,
+    "speculative_hit": true
+  },
+  "b3_release_promote_gate": {
+    "promote_ok": true,
+    "canary_ok": true,
+    "promote_ms": 167.0,
+    "canary_fail_auto_rolled_back": true,
+    "explicit_rollback_ok": true,
+    "explicit_rollback_ms": 2.05,
+    "restored_exact_v1": true
+  },
+  "b4_svhome_ram_liberator": {
+    "before": {
+      "tmp_used_mb": 4347.86,
+      "tmp_total_mb": 5434.82,
+      "tmp_entries": 5497,
+      "mem_available_mb": 5999.62,
+      "mem_free_mb": 1315.79,
+      "swap_used_mb": 5533.51,
+      "shmem_mb": 61.6
+    },
+    "sweep": {
+      "removed": 3985,
+      "freed_mb": 2289.41,
+      "skipped_open": 0,
+      "skipped_young": 35,
+      "skipped_protected": 38,
+      "skipped_owner": 0,
+      "errors": 964,
+      "min_age_sec": 7200,
+      "dry_run": false
+    },
+    "sweep_ms": 2062.71,
+    "after": {
+      "tmp_used_mb": 17.15,
+      "tmp_total_mb": 5434.82,
+      "tmp_entries": 38,
+      "mem_available_mb": 7532.99,
+      "mem_free_mb": 2860.13,
+      "swap_used_mb": 1216.76,
+      "shmem_mb": 47.48
+    },
+    "delta_tmp_freed_mb": 4330.71,
+    "delta_mem_available_mb": 1533.37,
+    "timer_active": "active",
+    "env_conf_exists": true
+  },
+  "b5_tool_log_shim_and_nudge": {
+    "tool_log_local_avg_ms": 224.53,
+    "tool_log_chimera_shim_avg_ms": 248.71,
+    "direct_chimera_exec_avg_ms": 158.65,
+    "direct_vs_local_speedupX": 1.42,
+    "shell_nudge_ms": 0.178,
+    "shell_nudge_applied": false
+  },
+  "b6_dual_node_cow_mirror_race": {
+    "ok": true,
+    "execution_node": "svhome",
+    "win_cpu_offloaded": true,
+    "winner_id": "cand_good_clean",
+    "elapsed_ms": 4749.77,
+    "leaderboard": [
+      {
+        "id": "cand_good_clean",
+        "ok": true,
+        "gate_rejected": false,
+        "error": null,
+        "files_patched": [
+          "chimera_tp/__init__.py"
+        ],
+        "verify_ok": true,
+        "ms": 3389.77
+      },
+      {
+        "id": "cand_bad_syntax",
+        "ok": false,
+        "gate_rejected": true,
+        "gate_errors": [
+          "invalid syntax (__init__.py, line 3)"
+        ],
+        "error": "syntax_gate_failed",
+        "ms": 212.06
+      }
+    ]
+  },
+  "b7_always_on_aether_soft_shield": {
+    "start_res": {
+      "ok": true,
+      "running": true
+    },
+    "autonomic_running": true,
+    "profile": "aether",
+    "ticks": 1,
+    "soft_batch_shield": {
+      "runs": 1,
+      "vips_promoted": 7,
+      "batch_demoted": 0,
+      "gateways_spared": 38,
+      "last_ms": 34.2
+    },
+    "aether_soft_shield_ticks": 1,
+    "orphan_conhosts_reaped": 0,
+    "conhost_before": 28,
+    "conhost_after": 28,
+    "immune_gateways": {
+      "listening_count": 35,
+      "vip_peer_count": 3,
+      "total_immune": 38,
+      "scan_ms": 1.041
+    },
+    "win_chimera_rss_mb": 46.48,
+    "win_chimera_zero_weight_ok": true
+  }
+}

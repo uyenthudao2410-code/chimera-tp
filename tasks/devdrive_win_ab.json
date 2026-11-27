@@ -1,0 +1,34 @@
+﻿{
+    "filesystem":  "ReFS",
+    "devdrv_query":  "This is a trusted developer volume. |  | Developer volumes are protected by antivirus filter. |  | Filters currently attached to this developer volume: |     WdFilter",
+    "after_nvme_refs_devdrive":  {
+                                     "delete_1000_ms":  105.27,
+                                     "create_500_ms":  109.87,
+                                     "copy_500_ms":  260.42,
+                                     "bytes_read":  1290000,
+                                     "read_500_ms":  73.68,
+                                     "total_ms":  549.24
+                                 },
+    "free_gb":  62.28,
+    "ok":  true,
+    "vhd_max_gb":  64,
+    "node":  "win-desktop",
+    "speedup_create_x":  24.8,
+    "label":  "CHIMERA_DEV",
+    "created_now":  true,
+    "vhd_actual_mb":  356,
+    "vhd_path":  "C:\\ChimeraDevDrive\\chimera-dev.vhdx",
+    "before_hdd_e":  {
+                         "delete_1000_ms":  1027.41,
+                         "create_500_ms":  2724.58,
+                         "copy_500_ms":  1495.18,
+                         "bytes_read":  1290000,
+                         "read_500_ms":  138.08,
+                         "total_ms":  5385.26
+                     },
+    "automount_task":  "ChimeraDevDriveAutoMount",
+    "speedup_total_x":  9.8,
+    "devdrv_trust":  "The operation completed successfully.",
+    "env_chimera_dev_drive":  "V:\\",
+    "drive_letter":  "V:"
+}

@@ -1,0 +1,154 @@
+{
+  "ok": true,
+  "total_trials": 100,
+  "trials_per_fault": 25,
+  "fault_counts": {
+    "pre_receive": 25,
+    "post_receive_pre_compute": 25,
+    "post_compute_pre_ack": 25,
+    "post_commit_pre_client_reply": 25
+  },
+  "oracle_digest_matches": 100,
+  "lost_accepted_jobs": 0,
+  "single_committed_receipt_per_step": 100,
+  "delayed_stale_receipts_delivered": 25,
+  "delayed_stale_receipts_rejected": 25,
+  "post_commit_idempotent_no_reexec": 25,
+  "win_cpu_yield_honored_count": 100,
+  "resume_latency_ms": {
+    "p50": 7.175,
+    "p95": 24.408,
+    "p99": 30.346,
+    "min": 0.66,
+    "max": 31.722,
+    "mean": 7.223
+  },
+  "total_trial_latency_ms": {
+    "p50": 10.824,
+    "p95": 34.428,
+    "p99": 47.289
+  },
+  "wire_bytes_total": 520192,
+  "wire_bytes_by_fault": {
+    "pre_receive": 212992,
+    "post_receive_pre_compute": 102400,
+    "post_compute_pre_ack": 102400,
+    "post_commit_pre_client_reply": 102400
+  },
+  "retransmitted_bytes": {
+    "total": 106496,
+    "by_fault": {
+      "pre_receive": 106496,
+      "post_receive_pre_compute": 0,
+      "post_compute_pre_ack": 0,
+      "post_commit_pre_client_reply": 0
+    }
+  },
+  "cas_stats": {
+    "envs": 0,
+    "logical_bytes": 1958283,
+    "stored_bytes": 835979,
+    "dedup_saved_pct": 57.3,
+    "materializations": 0
+  },
+  "jobs_stats": {
+    "total_jobs": 100,
+    "running_jobs": 0,
+    "completed_jobs": 100,
+    "completed_steps": 100,
+    "duplicate_steps_skipped": 0,
+    "durable_receipts": 100,
+    "stale_receipts_rejected": 25
+  },
+  "coordinator_status": {
+    "ok": true,
+    "node_name": "win-desktop",
+    "remote_target": "svhome",
+    "handoffs_total": 100,
+    "steps_committed": 100,
+    "steps_resumed_idempotent": 25,
+    "retries_total": 75,
+    "wire_bytes_total": 520192,
+    "retransmitted_bytes_total": 106496,
+    "win_cpu_yields": 125,
+    "jobs": {
+      "total_jobs": 100,
+      "running_jobs": 0,
+      "completed_jobs": 100,
+      "completed_steps": 100,
+      "duplicate_steps_skipped": 0,
+      "durable_receipts": 100,
+      "stale_receipts_rejected": 25
+    },
+    "cas": {
+      "envs": 0,
+      "logical_bytes": 1958283,
+      "stored_bytes": 835979,
+      "dedup_saved_pct": 57.3,
+      "materializations": 0
+    },
+    "last_handoff": {
+      "job_id": "exile-trial-099",
+      "ok": true,
+      "job_status": "completed",
+      "steps": 1,
+      "win_cpu_yielded": true,
+      "wire_bytes": 0,
+      "retransmitted_bytes": 0,
+      "elapsed_ms": 0.618
+    }
+  },
+  "evidence_snapshot": {
+    "ok": true,
+    "generated_at": "2026-11-26T11:02:36.628948+00:00",
+    "capabilities": {
+      "immortal_jobs": {
+        "enabled": true,
+        "verification_status": "verified",
+        "last_verified_at": "2026-11-26T11:02:36.624415+00:00",
+        "execution_node": "svhome",
+        "fallback_mode": null,
+        "sample_count": 100,
+        "expires_at": "2026-11-26T11:07:36.624415+00:00",
+        "stale": false,
+        "metrics": {
+          "job_id": "exile-trial-099",
+          "step_key": "compute_chunk",
+          "generation": 1,
+          "output_digest": "6173839b02577d7ecec822bcfcd0049676a653a9726e90187ea2d3921e5efa5f",
+          "durable_receipts": 100,
+          "stale_receipts_rejected": 25
+        },
+        "receipt_id": "exile-trial-099:compute_chunk:g1:6173839b0257"
+      },
+      "exile": {
+        "enabled": true,
+        "verification_status": "verified",
+        "last_verified_at": "2026-11-26T11:02:36.626442+00:00",
+        "execution_node": "svhome",
+        "fallback_mode": null,
+        "sample_count": 100,
+        "expires_at": "2026-11-26T11:07:36.626442+00:00",
+        "stale": false,
+        "metrics": {
+          "job_id": "exile-trial-099",
+          "step_key": "compute_chunk",
+          "generation": 1,
+          "wire_bytes": 4096,
+          "retransmitted_bytes": 0,
+          "win_cpu_yielded": true,
+          "elapsed_ms": 3.799
+        },
+        "receipt_id": "exile-trial-099:compute_chunk:g1:6173839b0257"
+      }
+    },
+    "counts": {
+      "verified": 2,
+      "unverified": 0,
+      "violated": 0,
+      "disabled": 0
+    },
+    "recorded_capabilities": 2
+  },
+  "elapsed_total_s": 1.557
+}

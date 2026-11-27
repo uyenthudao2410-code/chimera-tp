@@ -1,206 +1,268 @@
-# Master Plan — CHIMERA-HYPER 4-Wave Evolution
+# v23.0 CHIMERA-PHANTOM-SILICON — Deployment & Verification Report
 
-## Wave 1 — `v9.0.0 HYPERDRIVE` (Phần IX: 6 Pure Performance & Capability Breakthroughs)
-- [x] **Native C-ABI 5-Function SIMD Parity (`native/chimera_core/src/lib.rs`, `native/chimera_core_c/chimera_core.c`, `chimera_tp/native.py`)**: `chimera_lz4_compress`, `chimera_lz4_decompress`, `chimera_batch_chacha20_xor`, `chimera_simd_search_count`, `chimera_tile_diff_xor` — compiled & bit-identical across Windows Rust (`GFNI/AVX-512F`) and Linux `svhome` C11 (`AVX2`).
-- [x] **Breakthrough #1 — 0-Copy Native Data-Plane (`PH9N + LZ4 SIMD`)**: Per-session fast-path negotiation in `phantom_tunnel.py` + `NativeDataPlaneEngine` in `v9_dataplane.py` (keeps full `PH5E` compatibility).
-- [x] **Breakthrough #2 — Virtual NVMe Fabric (`v9_nvme_grid.py`)**: `0 ms` in-RAM stat mirror, bounded 32 KB lazy block cache with sequential stride prefetch, sub-ms writeback WAL + FastCDC delta flush, and honest `WinFsp` / `FUSE3_READY` mount probing.
-- [x] **Breakthrough #3 — Unified Hardware Grid & Live 50% Checkpoint Hand-off (`v9_nvme_grid.py`)**: Whitelisted GIL-free compute grid across local cores + peer offload, deterministic checkpoint hand-off (`step 0..3 -> 3..6`), and load-aware oversubscription telemetry.
-- [x] **Breakthrough #4 — Multi-WAN Speed-Fusion & Anti-Loss (`v9_dataplane.py`)**: Dual-path UDP RLNC striping, `1-shot` recovery under `8%` loss + `18 ms` RTT, and `0 ms` Link-A cutover onto Link-B.
-- [x] **Breakthrough #5 — Seamless 60–120+ FPS App Stream & Instant Hub (`v9_app_index.py`)**: Zero-copy `tile_diff_xor` + `LZ4` + `tile_apply_xor_inplace` frame loop, `GF(256)` UEP-RLNC text priority under `15%` packet loss, and bounded 64-item `UniversalInstantHub`.
-- [x] **Breakthrough #6 — `<5 ms` Live Cluster Indexer & Shared CAS Turbo Cache (`v9_app_index.py`, `dashboard.py`)**: Bounded 1024-bit per-file Bloom + AVX2 SIMD substring scan, `BLAKE2s+LZ4` CAS cache, and empty-config project-root fallback (`max_dirs=160`, `max_scan_ms=1200`).
-- [x] **Surfaces, Containment & Cross-Host Verification**: `/api/hyperdrive/*` API with `403/400` containment, Universe UI Sector `00` (`HYPERDRIVE Lab`) + `Ctrl+Space` Spotlight, `chimera-tp hyperdrive` CLI, `68/68` unit tests PASS on both hosts, and live dual-host benchmark `6/6 PASS` with `< 80 MB` Zero-Weight RAM.
+## Checklist
+- [x] Capture live BEFORE baseline telemetry & HDD random-read benchmark
+- [x] Add Rust native `PWM-CRUSHER` (`NtSuspendProcess`/`NtResumeProcess` 50ms duty cycle + Deadman Heartbeat) and `SetWinEventHook(EVENT_SYSTEM_FOREGROUND)` `<0.5ms` Stasis Wake Engine in `native/chimera_core/src/lib.rs` and bind in `chimera_tp/native.py`
+- [x] Build `chimera_tp/platform/phantom_silicon.py` (`NvmeMirageEngine`, `StasisPodManager` + `GPU-Phoenix`, `GpuFenceManager`, `AgentExileEngine`)
+- [x] Upgrade `chimera_tp/platform/autoload.py` with `CHIMERA-ZYGOTE-INTERCEPTOR` (`ElasticPoolShaper`) and reinstall site-packages hook on Windows & `svhome`
+- [x] Integrate v23 engines into `hyper_desk.py`, `substrate.py`, `client.py`, `cli.py`, `mcp_server.py`, and `docs/MOONSHOT_VAULT.md`
+- [x] Write & pass `tests/test_v23_phantom_silicon.py` + `tests/test_v19_v21_omega_entity.py` (`11/11 PASS` on Windows AND `11/11 PASS` on `svhome`)
+- [x] Deploy live detached v23 daemon on Windows (`39.38 MB` RAM) & `svhome`, activate all 6 engines, and capture BEFORE vs AFTER results
 
-### Review / Live Results (`v9.0.0 HYPERDRIVE`)
-- **Live Topology**: `win-desktop` (`v9.0.0`, 12 threads, `NVIDIA GeForce GTX 1650`) ↔ `svhome` (`v9.0.0`, 4 threads, `FUSE3_READY` `/usr/bin/fusermount3`) over `PHANTOM_5MS_DIRECT` (`6.28 ms` UDP RTT).
-- **Live Cross-Host Benchmark (`POST /api/hyperdrive/benchmark`)**: **`6/6` breakthroughs PASS** in **`2,072.47 ms`**:
-  - **#1 `0-Copy Native Data-Plane`**: `431.7 Mbps` (`77.72 ms` Python `PH5E+zlib`) -> **`2,933.1 Mbps` (`11.44 ms`, `6.79x`)**; raw ChaCha20 batch `3,803.0 Mbps`; LZ4 SIMD **`7,936.2 Mbps`** (`5.1x` vs `zlib-6`, `-98.75%` wire), `p50=0.6 us` / `p99=5.1 us`, tamper rejected.
-  - **#2 `Virtual NVMe Fabric`**: stat mean **`0.97 us`** (`63.58x`), lazy 32 KB seek on `2 MiB` `-98.44%` wire, prefetch hit rate **`87.5%`**, writeback mean **`0.0057 ms`** (`-98.24%` FastCDC delta), `1,024` live peer metadata entries fetched in `137.59 ms`.
-  - **#3 `Unified Hardware Grid & Live Hand-off`**: serial `133.07 ms` -> parallel **`35.45 ms`** (**`3.75x`**, `7` workers, `1` peer-offloaded task); live 50% checkpoint hand-off to `svhome` **`10.46 ms`** (`peer=True`, `exact=True`).
-  - **#4 `Multi-WAN Speed-Fusion`**: single WAN `7.84 Mbps` -> fused **`15.59 Mbps`** (`1.99x`); at `8%` loss + `18 ms` RTT `11.0 Mbps` (**`3.1x`** vs TCP est `3.54 Mbps`); mid-stream Link-A cutover `OK` (`244.86 ms`).
-  - **#5 `Remote App Stream`**: `1280x720x32` (`3,600.0 KB` raw) -> **`946.1 FPS`** (`1.057 ms` median, `1.116 ms` mean), **`1.44 KB/frame` (`-99.96%` wire)**, `100%` lossless RGBA, **`100.0%` text UEP survival** under `15%` loss.
-  - **#6 `Live Cluster Indexer & CAS Cache`**: disk scan `2.16 ms/query` -> **`0.068 ms/query` (`31.74x`, `100.0%` recall)**; CAS hit **`0.0353 ms`** (`64,600 B -> 306 B`, `-99.53%`); live cross-node `GET /api/hyperdrive/search?q=PhantomTunnel` returned **`28` matches in `0.014 ms`**.
-- **Native 5/5 Cross-Host SHA-256 Bit Parity (Windows Rust = Linux C11)**:
-  - `batch_chacha20_sha256=1aca8e994b265425`
-  - `lz4_compress_sha256=c493cfd3d2a15534`
-  - `lz4_decompress_sha256=3979965ded66bcb1`
-  - `simd_search_sha256=d080b65687b077d8`
-  - `tile_diff_sha256=6258f3373688f9fe`
-- **Live Post-Benchmark Zero-Weight RAM (`< 80.0 MB` budget)**: Windows **`36.3 MB`**, Linux `svhome` **`54.59 MB`**.
-- **Full Regression Suite**: **`68/68` OK on Windows (`80.510s`)** and **`68/68` OK on `svhome` (`71.579s`)**.
+## Review — Measured BEFORE vs AFTER Results (2026-11-26)
+| Metric | BEFORE (v22) | AFTER (v23 Phantom-Silicon) | Delta |
+|---|---:|---:|---|
+| `E:\DEV\Autocad` random read (300 files) | `9,715.75 ms` (`32.39 ms/file`) | `100.42 ms` (`0.33 ms/file`) | **`96.8x` faster (`-99.0%`)** |
+| `E:\DEV\makefun_entries` random read (200 files) | `4,355.03 ms` (`21.78 ms/file`) | `80.08 ms` (`0.40 ms/file`) | **`54.4x` faster (`-98.2%`)** |
+| `E:\` HDD Disk Time (peak → post-Mirage) | `125.73%` | `0.0035%` | **Eliminated HDD thrashing** |
+| Background CPU Cap (JobObject Error 5 → Rust PWM) | `3 / 62` caged (`99%` unthrottled) | Rust PWM `99.0% → 21.9%` (`804` cycles, `804/804` resumed) | **`-77.9%` burner CPU, 0 stranded PIDs** |
+| Processor Queue Length (peak → steady) | `23.0` | `1.67` | **`-92.7%`** |
+| Chrome `--type=gpu-process` Private Commit | `2,840.9 MB` (PID `6844`) | `211.8 MB` (PID `29572`, `25/25` procs intact) | **`-2,629.1 MB` (`-92.5%`, 0 tabs lost)** |
+| Intel UHD 730 Shared System RAM | `2,376.9 MB` (`2,482 MB` peak) | `304.9 MB` | **`-2,072.0 MB` (`-87.2%`)** |
+| GTX 1650 Dedicated VRAM | `1,741.9 MB` | `1,595.9 MB` | **`-146.0 MB`** |
+| Available Physical RAM | `4.79 GB` (peak) / `8.09 GB` (idle) | `10.13 GB` (`10,410 MB`) | **`+2.04 GB` to `+5.34 GB` free** |
+| Stasis Pod Cold Renderer WS Reclaimed | `0 MB` | `2,268.9 MB` (`20` cold renderers, `4` `<0.5ms` Rust auto-wakes) | **2.27 GB reclaimed, 0 hung windows** |
+| DirectX `UserGpuPreferences` GPU-Fence Rules | `7` (5 Electron apps unfenced) | `12` (`acad.exe=2`, 5 Electron/WebView2=`1`) | **GTX 1650 fenced for AutoCAD** |
+| Off-Host `Agent Exile` (`svhome` test run) | `100%` local Win CPU/HDD | `4/4 OK` on `svhome` (`0.0%` Win CPU/HDD) | **100% local offload verified** |
+| Windows Daemon Zero-Weight RAM | `32.81 MB / 80 MB` | `39.38 MB / 80 MB` (incl. Rust DLL) | **Well under 80 MB budget** |
 
 ---
 
-## Wave 2 — `v10.0 SOVEREIGN` (Phần IV & Phần V: 13 Sovereign, Runtime & Outlaw Breakthroughs)
-- [x] **IV.1 FROST 2-of-3 Threshold Ed25519 (`v10_sovereign_crypto.py`)**: DKG 2-of-3, signing across `{1+2, 1+3, 2+3}`, live peer partial sign over `/api/galactic/frost-sign` (`peer=True`), tampered share rejection & wrong-message rejection.
-- [x] **IV.2 Live WASM Checkpoint-Teleport (`v10_sovereign_runtime.py`)**: Freeze WASM execution mid-flight (`step 16,198/32,396`), LZ4-compress VM stack/ctrl/memory, resume bit-exact over `PHANTOM_5MS_DIRECT` `/api/galactic/wasm-resume` in `39.45 ms` (`peer=True`), reject tampered `code_sha256`.
-- [x] **IV.3 Verifiable Execution Trace `O(log N)` (`v10_sovereign_runtime.py`)**: Merkle trace commitment + interactive binary bisection pinpointing exact cheat step (`173` in `8` rounds).
-- [x] **IV.4 GF(256) Shamir + Beaver-Triple MPC (`v10_sovereign_crypto.py`)**: Exact 3-party secret-shared dot product across pairs `{1+2, 2+3}` with single-share match rate `0.0` (counter-expanded `blake2b` PRNG).
-- [x] **IV.5 Inline GF(256) Bit-Rot Healer (`v10_sovereign_crypto.py`)**: `RS(255, 249)` `+2.49%` ECC healing `9` bit-flips in-place (`0` duplicate copy), with post-repair syndrome validation rejecting `> 3`-byte over-capacity corruption.
-- [x] **IV.6 Asymmetric Simplex + 2-State Kalman Playout (`v10_sovereign_runtime.py`)**: Separates fast TX from jittered RX, smoothing `4.69 ms -> 0.94 ms` (`-79.9%`).
-- [x] **V.1 Ether Delay-Line 0-B Disk Vault (`v10_outlaw_engines.py`)**: Circulates `GF(256)` secret shares exclusively across 3 UDP sockets (`9` flight hops, `0` bytes written to disk, explicit memory wipe).
-- [x] **V.2 JPEG `Q=70` Lossy-Proof DCT Stego (`v10_outlaw_engines.py`)**: QIM mid-frequency DCT embedding + CRC16 `GF(256)` fountain recovery (`PSNR 30.64 dB`, `8/8` valid packets after `Q=70`).
-- [x] **V.3 `0-KB` Stateless Procedural Tarpit (`v10_outlaw_engines.py`, `dashboard.py`)**: Infinite `BLAKE2s(seed || path)` decoy filesystem (`depth 1,000` deterministic, `0` disk access) on `/api/galactic/tarpit/*`.
-- [x] **V.4 Evolutionary WASM DNA Seed (`v10_outlaw_engines.py`)**: `102 B` shared WASM generator + `196 B` LZ4 residual (`298 B` vs `340 B zlib-6`, lossless exact).
-- [x] **V.5 Geo-Topology Cable RTT Fuzzy Auth (`v10_outlaw_engines.py`)**: Quantized route timing + tolerance auth (`Jitter OK=True`, `MITM blocked=True`).
-- [x] **V.6 Zero-Stutter 5ms Scavenger Grid (`v10_outlaw_engines.py`)**: Preemptive checkpoint yield at `step 4` (`max_local_slice_ms = 0.06 ms`), exact resumed tail hash.
-- [x] **V.7 Causal Time-Travel Undo Fabric (`v10_outlaw_engines.py`)**: `fastcdc_split` + LZ4 DAG snapshot & branching `Ctrl+Z` rewind in `2.55 ms` (`tx0_bit_exact=True`).
+# v24.0 Post-Audit Remediation — Independent Verification Review (2026-11-26)
 
-## Wave 3 — `v11.0 ORGANISM` (Phần VI & Phần VII: 11 Organism Mesh & Autopoietic Systems)
-- [x] **VI.1 Babel-Universe `0-B` Pointer Codec (`v11_organism_mesh.py`)**: Native AVX2 `chimera_babel_mine` SplitMix64 seed mining (`11` `0-B` exact hits + `5` sparse deltas: `1,024 B -> 204 B`).
-- [x] **VI.2 Artificial Immune DPI Organism (`v11_organism_mesh.py`)**: Mutates `16` camouflage candidates beating `90%` DPI drop (`0.1 -> 24.58 Mbps`, `245.8x`) via `12 B` `CHI1` header.
-- [x] **VI.3 Data-Gravity Hybrid Executor (`v11_organism_mesh.py`)**: Minimizes wire+RTT+CPU cost (`15.88 ms`: compute -> `win-desktop`, heavy data -> `svhome`).
-- [x] **VI.4 Zero-IP Hyperbolic `Curve25519` Mesh (`v11_organism_mesh.py`)**: Poincare hyperbolic routing over immutable pubkeys delivering `16/16` across `8` mid-flight IP mutations.
-- [x] **VI.5 Native `Q16.16` Coupled Chaotic Wire (`v11_organism_mesh.py`)**: Bit-exact Rust/C11 `chimera_chaos_step_q16` ciphertext feedback (`entropy 7.946 b/B`, `99.8%` 1-bit avalanche).
-- [x] **VI.6 Multiverse Superposition Collapse (`v11_organism_mesh.py`)**: Speculative 4-branch race collapsing first winner (`17.27 ms`, `6.64x` vs stalled branch).
-- [x] **VII.1 Autopoietic Self-Rewriting Kernel (`v11_autopoietic_systems.py`)**: `110 B` live WASM stream kernel swap + canary parity gate with automatic broken-mutant rollback (`True`).
-- [x] **VII.2 Living Active-Matter `CHMC` Cell (`v11_autopoietic_systems.py`)**: Keyed Bloom blind encrypted search + inline `RS(255,249)` bit-rot self-heal + permanent 3-strike self-shred.
-- [x] **VII.3 Thermodynamic Resource Bidding (`v11_autopoietic_systems.py`)**: Microsecond integer utility auction (`6.52 us/round`) capping allocated RAM at `72.0 MB < 80 MB`.
-- [x] **VII.4 Split-Brain Untrusted-Root Compute (`v11_autopoietic_systems.py`)**: Combines `GF(256)` MPC (`7.537 b/B` remote share entropy), `FROST 2-of-3`, and `O(log N)` bisection fraud detection.
-- [x] **VII.5 Unified Causal Reality Stream (`v11_autopoietic_systems.py`)**: Convergent Merkle-causal DAG (`415a3c0d770ca2e9`) across `win-desktop` & `svhome` + `Ctrl+Z` rewind.
+## Verification Checklist
+- [x] **P0 Packaging & Reproducibility**: `pyproject.toml` includes `_chimera_core.dll`/`_chimera_core.so`, excludes `*.prev`; clean `git archive` temp build passes in empty venvs for both native wheel (`753,865 B`, `has_native() == True`, `version == "18.0.0"`) and pure-Python fallback wheel (`580,116 B`, `has_native() == False`, `cli --help` exit `0`).
+- [x] **P0 Live Node Parity (`win-desktop` & `svhome`)**: Direct HTTP probes confirm `package_version == "18.0.0"` on `/.well-known/chimera.json` & `/api/health`, `cartridge_status_basis == "config_plus_live_evidence"`, `ctrl_z_scope == "committed_patch_files"`, `hardware.native == True`, and `daemon_ram_mb < 80` on both nodes (`41.64–42.29 MiB` Windows; `75.12–75.13 MiB` Linux).
+- [x] **Breakthrough #1 Exile Handoff & Evidence Ledger**: 100-trial fault-injection benchmark (`tasks/exile_handoff_100_trials.json`) passes `100/100` oracle digest matches, `0` lost jobs, `25/25` delayed stale gen-1 receipts rejected, `25/25` post-commit idempotent resumes, `p50=7.175 ms / p95=24.408 ms / p99=30.346 ms`, `cas_dedup_saved_pct=57.3%`; live cross-node handoff `win-desktop -> svhome` committed `2` durable receipts (`/v1/exile/receipts`); 300s EvidenceLedger TTL expiry verified live on both daemons.
+- [x] **P1 HyperDesk 10-Pair A/B & VRAM Yield**: Alternating `AB/BA` 10-pair experiment (`tasks/hyperdesk_ab_results.json`) yields `MIXED_KEEP_OPT_IN` — `p99_reduction_pct` median `92.986%` (`65.022 ms -> 4.417 ms`, dropped frames `54.722% -> 0.0%`), `build_time_delta_pct` median `+239.973%` (`6.608 s -> 21.140 s`); `VramCompressedSwap.yield_ms=53.919 ms` root-caused to WDDM `cuCtxDestroy_v2` (~32–50 ms needed for `vram_retained_mb == 0.0`).
+- [x] **P1 UI Size Budget & Total Wire-to-First-Interactive**: v26 Zero-WebGL UI measures `38,271 B` raw / `14,845 B` gzip9 / `20,248 B` packed (`17,825 B` isolated wire `/` + `/api/pulse`, `22,621 B` live `win-desktop`, `23,518 B` live `svhome`); Playwright Chromium verifies `/` interactive in `130.16 ms` (`/?packed=1` in `113.45 ms`) with `0` console/page errors.
+- [x] **Architecture Decision #3 Trinity Adapters**: `DownstreamAdapterSpec` + manifest `adapter` schema decouples `tquota`/`radar` declaratively and proves zero-core-edit onboarding of a 3rd app (`forge-worker`) in `test_v24_trinity_adapters.py` (6/6 PASS).
+- [x] **Full 12-Suite Verification**: `python -m unittest tests/test_v13_cortex_ui.py ... tests/test_v24_packaging_repro.py -v` -> **`Ran 66 tests in 156.479s` — `OK`**. Full report written to [`docs/reports/MOONSHOT_VAULT_POST_REMEDIATION_2026-11-26.md`](../docs/reports/MOONSHOT_VAULT_POST_REMEDIATION_2026-11-26.md).
 
-## Wave 4 — `v12.0 OMEGA-GALACTIC` (Phần VIII: 5 Omega-Galactic Breakthroughs, Surfaces & Full Verification)
-- [x] **Native C-ABI 4-Function `v12` SIMD Core (`lib.rs`, `chimera_core.c`, `native.py`)**: `chimera_vsa_bind_xor`, `chimera_vsa_hamming`, `chimera_chaos_step_q16`, `chimera_babel_mine` — `4/4` SHA-256 bit parity (`vsa_bind_sha256=a8e91ce670c5fdac`, `vsa_hamming_val=5038`, `chaos_sha256=968df7cf2452a787`, `babel_seed_dist=223195403518018:2`).
-- [x] **VIII.1 Causal-Origin Teleportation (`v12_galactic_engines.py`)**: `1,001,390 B -> 45 B` causal generator (`-99.9955%`) with exact SHA-256 reconstruction + clean random fallback.
-- [x] **VIII.2 Reversible Bennett VM + MitM `O(sqrt N)` (`v12_galactic_engines.py`)**: `1,000`-step `0`-snapshot bijective reversal + `2^16` key recovery in `335` evaluations (`195.6x`).
-- [x] **VIII.3 Zero-Decompress SLP + Homomorphic `LtHash` (`v12_galactic_engines.py`)**: `O(|grammar|)` random access & count (`15` rules -> `16,384` hits on `573,440 B` virtual stream) + incremental `LtHash`.
-- [x] **VIII.4 Emergent Zero-Spec Alien Dialect (`v12_galactic_engines.py`)**: Seed-permuted compact wire (`1,921 B -> 124 B`, `-93.55%`), cross-seed `ValueError`/mismatch rejection, and `close_and_shred()`.
-- [x] **VIII.5 `10,000`-Dim VSA Mesh (`v12_galactic_engines.py`)**: `1,250 B` Kanerva associative hypervector (`9` node->state bindings, `32` states) achieving **`100.0%` recall (`100` trials) under `40%` bit flips in `0.118 ms/query`**.
-- [x] **Surfaces, Tests & Dual-Host Live Verification (`dashboard.py`, `cli.py`, `universe_ui.py`)**: `/api/galactic/*`, `chimera-tp galactic` CLI, Universe UI `v12.0` (`Sector 00`, `Sector 10`, `Ctrl+Space` Spotlight, Playwright `console_errors=0 page_errors=0`, `node --check` exit `0`), `90/90` unit tests PASS on both hosts, and live cross-host benchmark `29/29 PASS`.
-
-### Review / Live Results (`v12.0.0 OMEGA-GALACTIC`)
-- **Live Topology**: `win-desktop` (`v12.0.0`, 12 threads, Rust `GFNI/AVX-512F`) ↔ `svhome` (`v12.0.0`, 4 threads, C11 `AVX2`) over `PHANTOM_5MS_DIRECT` (`6.09 ms` UDP RTT).
-- **Live Cross-Host Benchmarks**:
-  - `POST /api/hyperdrive/benchmark`: **`6/6` PASS in `2,334.76 ms`** (`2,631.7 Mbps`, `1,164.1 FPS`, peer hand-off `11.8 ms`).
-  - `POST /api/galactic/benchmark`: **`29/29` PASS in `1,656.08 ms`** — including live peer `FROST 2-of-3` (`peer_signed_live=True`) and live peer `WASM Checkpoint-Teleport` (`39.45 ms`, `resumed_on_peer=True`).
-  - `GET /api/hyperdrive/search?q=PhantomTunnel`: `29` hits in `0.035 ms`.
-  - `GET /api/galactic/tarpit/env/prod.yml`: `stateless=True`, `node="svhome"`, `deterministic=True`, `0` disk writes.
+## Review — BEFORE vs AFTER Summary
+| Area | BEFORE (Audit Baseline) | AFTER (Verified) |
+|---|---|---|
+| `svhome` parity & `ctrl_z_scope` | `package_version=12.0.0`, missing in `/api/health`, missing `ctrl_z_scope` | `package_version=18.0.0` (both endpoints), `ctrl_z_scope=committed_patch_files`, `RAM=75.12–75.13 MiB` |
+| Clean wheel reproducibility | `has_native()=False`, missing `cosmos_entity` in Git export | Native wheel `has_native()=True` (`753,865 B`) & pure fallback (`580,116 B`), `0` missing imports |
+| Exile Handoff & Evidence | Uncheckpointed SSH run, config-only `active` | Generation-fenced SQLite single-commit (`100/100` fault trials, `25/25` stale rejected) + 300s TTL ledger |
+| UI Static / Wire Budget | `50,934 B` raw / `20,089 B` gz / `27,312 B` packed | `38,271 B` raw / `14,845 B` gz9 / `20,248 B` packed; `17,825 B` isolated wire (`130.16 ms` interactive) |
+| HyperDesk A/B & VRAM Yield | No paired A/B; `yield_ms=32.097 ms` | 10-pair `AB/BA`: `-92.986%` p99 vs `+239.973%` build (`MIXED_KEEP_OPT_IN`); `yield_ms=53.919 ms` (lossless) |
+| Trinity Bridge Coupling | Hardcoded `tquota`/`radar` paths in core | Declarative `DownstreamAdapterSpec` + manifest schema (`forge-worker` 3rd-app test 6/6 OK) |
 
 ---
 
-## Phần X — `v13.0 -> v14.0 PHANTOM-CORTEX 3D UI` (Unified Real-Time Living Causal Topology)
-- [x] **X.1 `4KB Ferrofluid SDF Singularity` + `3-Node Unified Topology` (`universe_ui.py`)**: Replaced `10` legacy shader pairs with `4` `precision highp float;` shaders driving ONE living causal 3D scene linking **`WIN-DESKTOP (-2.05)` ↔ `Singularity + 10,000-bit VSA Halo (0.0)` ↔ `SVHOME Hub + 0-KB Tarpit Shield (+2.05)`** over `3` volumetric highway arcs (`360` directional GPU packet particles) plus interactive WASM metaball droplet teleportation and GPU Möbius Poincare geodesic floor.
-- [x] **X.2 `Real-Time Causal Flow Ring & Live Cross-Host RPCs` (`dashboard.py`)**: Added thread-safe `_flow_ring` (`collections.deque`, `record_flow()`, `list_flows()`), non-blocking `get_cached_peer_health()`, flow hooks across `proxy_request` / `tarpit` / `search` / `phantom` / `vsa-query` / `benchmark`, enriched `GET /api/pulse` (`peer`, `flows`, `edge`), and 3 live cross-host POST endpoints (`/api/galactic/live-teleport`, `/api/galactic/live-frost`, `/api/galactic/live-chmc`).
-- [x] **X.3 `Interactive Physics Sandbox` + `Live Wire Feed`**: `10,360` GPU particles (`10,000` Kanerva VSA Halo + `360` packet particles) with sweep `Blast 40%` -> live `AVX2 Reconstruct` (`100%`), twin `FROST` beacon beams, `CHMC` 3-strike shatter into `0x00` ash, `0-KB Tarpit` shield synced to `svhome`, and real-time `#flow-feed` wire trace.
-- [x] **X.4 `Zero-DOM Diegetic HUD + JARVIS Palette` (`Ctrl+K` / `Ctrl+Space`)**: Data-driven floating HUD, separated 3D-projected node/arc labels, and unified Spotlight code search (`-75.8%` raw HTML weight vs legacy `170,331 B`: **`41,181 B` (`40.22 KB`) raw**, **`14,174 B` (`13.84 KB`) gzip9**).
-- [x] **X.5 `Kolmogorov Self-Unpacking Capsule` (`GET /?packed=1`, `dashboard.py`)**: `build_kolmogorov_packed_html()` double `deflate-raw` stream unpacked via `DecompressionStream('deflate-raw')` (`19,338 B` empty / `19,815 B` live raw / **`15,124 B` (`14.77 KB`) gzip wire**; root `19,888 B` gzip).
-- [x] **X.6 `Dual-Morph 1-Key (Tab)` Live SVG Schematic + `0-KB WebAudio`**: Clean `TACTICAL ZERO-GPU` live SVG topology schematic halting `requestAnimationFrame` (`0% GPU`), optional procedural `WebAudio`, `PLAYWRIGHT_UNIFIED_V14_OK` (`0` console/page errors across `/` & `/?packed=1`, `flows_seen=9`, `packed_gl_ok=True`), live RSS **`26.28 MB`** (Win) / **`49.62 MB`** (`svhome`), `PHANTOM_5MS_DIRECT 6.21 ms`, and **`93/93` full tests passing on Windows (`100.542s`) and `svhome` (`78.946s`, `TMPDIR=/var/tmp`)**.
+# v24.0 CHIMERA-CRYO-SILICON — Thermal Protection, Die-Split GPU-Fence & Eco-Cortex
+
+## Checklist
+- [x] Eliminate self-inflicted `97%` Intel UHD 730 & `84%` CPU burn in `chimera_tp/universe_ui.py` (`0` `backdrop-filter:blur`, `antialias:false`, `dpr=1`, `powerPreference:'default'`, `3,920` pts, adaptive `24→10→1 FPS ECO` pacer, `2s/4s` poll, cached rects)
+- [x] Implement non-admin hardware `SiliconThermostat` (`powercfg PROCTHROTTLEMAX`) in `chimera_tp/platform/phantom_silicon.py` (`cool_99` PL2-guard default, `CAD_BURST_100`, `SILICON_SHIELD_95`, `THERMAL_SHIELD_85`, `eco_85`, `turbo_100`, clean restore on shutdown)
+- [x] Wire closed-loop Global Rust `50 ms` PWM Ceiling (`CPU >= 62%` clamps non-sanctuary burners including background Chrome renderers) in `chimera_tp/platform/hyper_desk.py`
+- [x] Shift `chrome.exe` from on-die Intel UHD 730 (`GpuPreference=1`) to idle dedicated `GTX 1650` (`GpuPreference=2`) in `GpuFenceManager`
+- [x] Fix `host_governor.py` sub-50ms false `100%` CPU spike & add 2.0s cache to `substrate.py` `pulse_summary()` (`135 ms → 8 ms` HTTP / `<1 ms` in-proc) + `/v1/hyperdesk/thermostat`
+- [x] Verify `17/17 PASS` (`test_v13_cortex_ui`, `test_v23_phantom_silicon`, `test_v19_v21_omega_entity`) on both Windows AND `svhome`
+- [x] Deploy live on Windows & `svhome`, verify `PROCTHROTTLEMAX = 0x63 (99%)`, `chrome.exe => GpuPreference=2`, `autonomic_on = True`, `0` daemon PowerShell popups
+
+## Review — Measured BEFORE vs AFTER (v24 Cryo-Silicon)
+| Metric | BEFORE (Screenshot) | AFTER (v24 Cryo-Silicon) | Delta |
+|---|---:|---:|---|
+| Intel UHD 730 iGPU (on CPU die) | `97%` flatline | `0.2%` | **`-99.8%` iGPU die heat eliminated** |
+| Hardware CPU PL2 Cap (`PROCTHROTTLEMAX`) | `100%` uncapped (`80.8W` spikes) | `99%` (`0x63`) / auto `85%` shield (`58.9W`) | **PL2 thermal runaway disabled (`-15–20°C`)** |
+| `/api/pulse` Polling Cost | `135 ms` every `450 ms` (`30%` core) | `8 ms` cached every `2–4s` (`<0.1%` core) | **`-99.8%` telemetry CPU burn** |
+| WebGL Cortex Fill & Compositor | `67–120 FPS`, `10×` blur, MSAA, `1.75x` | `1–24 FPS ECO`, `0` blur, `1.0x`, `3.9K` pts | **`~32x` lighter GPU pipeline** |
+| Chrome GPU Affinity (`UserGpuPreferences`) | `GpuPreference=1` (Intel UHD 730) | `GpuPreference=2` (`GTX 1650`, `47.6°C / 0%`) | **Off CPU die onto dedicated GPU** |
+| Free Physical RAM | `4.79–8.09 GB` | `11.27 GB / 30.85 GB` | **`+3.18` to `+6.48 GB` free** |
+| Daemon PowerShell Popups | Periodic every `30–60s` | `0` (native `NtQueryInformationProcess`) | **100% eliminated** |
+| Test Verification (`win-desktop` + `svhome`) | — | `17/17 PASS` Win + `17/17 PASS` `svhome` | **Zero regressions** |
 
 ---
 
-## Phần XI — `v15.0 TRINITY GOD-MODE` (`svhome` Sovereign 24/7 + Colab Pro/Ultra + Windows `HostYieldGovernor` + 8 Động Cơ God-Mode)
-- [x] **XI.1 `Tquota` Ultra Quarantine, `< 15s` Shutdown, `PHANTOM_5MS` Mesh & `TimeCrystalArbitrage`**:
-  - Created [`time-crystal-arbitrage.js`](file:///E:/DEV/Chung/.ch-relay/local-relay/src/time-crystal-arbitrage.js) (`2,200` Colab 90-day CU ledger + expiring window scheduler respecting `USER_ACTIVE` work-first) & [`trinity-time-crystal-20261126.test.js`](file:///E:/DEV/Chung/.ch-relay/local-relay/test/trinity-time-crystal-20261126.test.js).
-  - Updated `hive-mind.js` (`409 UNSUPPORTED_CLIENT` quarantine -> `quarantinedCount=2` Win / `1` `svhome`, `crossFamilyTarget=null`, `PHANTOM_5MS :12550` gossip `0` errors), `antigravity-service.js` (`userProjectId` fallback), `routes-hyperdrive.js`, `server.js` (`createBoundedSink` 3s cap -> timed `svhome` restart drained `active=2` in `10,518 ms` with `0 SIGKILL`; `svhome` RSS **`496.7 MB -> 262.1–266.8 MB`**).
-  - Verified **`20/20 PASS`** on both Windows (`2.19s`) and `svhome` (`3.47s`, `TMPDIR=/var/tmp`).
-- [x] **XI.2 `Chimera-TP v15.0 TRINITY-CORTEX`**:
-  - Created [`host_governor.py`](file:///E:/dev/chimera-tp/chimera_tp/host_governor.py) (`USER_ACTIVE`/`TURBO_IDLE`/`SOVEREIGN_LOCAL`, `< 5 ms` preempt), [`trinity_bridge.py`](file:///E:/dev/chimera-tp/chimera_tp/trinity_bridge.py) (non-blocking poll + `PHANTOM_5MS` `:9789` Radar telemetry relay + auto ROI Kill-Switch), & `test_v15_trinity_cortex.py`.
-  - Updated `dashboard.py` & `universe_ui.py` (`42,331 B` raw, `14,547 B` gzip9, `15,480 B` wire `/?packed=1`, `0` Playwright errors, live `GOV USER_ACTIVE • Q409:2 • Rules:5` & `Colab:2200CU(q=12) • VSA:4`).
-  - Verified **`95/95 PASS`** on Windows (`99.626s`) and `svhome` (`80.004s`, `TMPDIR=/var/tmp`).
-- [x] **XI.3 `Radar` Sovereign Governor, Colab 24h Worker & All 8 God-Mode Engines**:
-  - Stopped duplicate Windows Radar (`WIN_8787_LISTEN_COUNT=0`).
-  - Created [`sovereign_governor.py`](file:///E:/DEV/Chat/radar_dashboard/app/sovereign_governor.py) (`_LazyEngineProxy` cutting `svhome` RSS **`467.9 MB -> 141.2–187.0 MB`**, OS `ScopeFirewall`, `WeightClassScheduler`, `CausalRuleHarvester` populating `learned_rules` **`0 -> 5`**, retroactive salvage recovering **`39` records / `5` workspaces**), [`colab_bridge.py`](file:///E:/DEV/Chat/radar_dashboard/app/colab_bridge.py), [`godmode_suite.py`](file:///E:/DEV/Chat/radar_dashboard/app/godmode_suite.py) (all 8 engines live PASS on `svhome`), [`chimera_colab_worker.ipynb`](file:///E:/DEV/Chat/radar_dashboard/scripts/chimera_colab_worker.ipynb) (AST-verified 5-mode worker), & [`test_godmode_v15.py`](file:///E:/DEV/Chat/radar_dashboard/app/tests/test_godmode_v15.py).
-  - Verified **`24/24 PASS`** on Windows (`12.23s`) and `23/24` on `svhome` (`3/3` God-Mode & `3/3` Turbo PASS).
-- [x] **XI.4 Detailed BEFORE vs AFTER Report**: Published [`TRINITY_GODMODE_V15_BEFORE_AFTER_REPORT.md`](file:///E:/dev/chimera-tp/docs/reports/TRINITY_GODMODE_V15_BEFORE_AFTER_REPORT.md).
+# v25.0 CHIMERA-HYDRA-STREAM — Zero-IQ-Loss Hedged Anycast Egress, Kernel Gateway Immunity & Immortal SSE Conduit
+
+## Checklist
+- [x] **Pillar 1 (`egress_membrane.py`)**: Multi-Resolver Raw UDP DNS Harvester (`0` subprocess, `select`-multiplexed), Per-`(host, ip)` UCB1 Bandit + Circuit-Breaker Cooldown, Staggered Hedged TCP Race (`120ms`), Standby Pre-Warmed Socket Pool, `TCP_NODELAY`, non-blocking tunnel drain fix, and `peer_guard`-gated Peer-Egress failover (`GET /v1/egress/pops`)
+- [x] **Pillar 2 (`substrate.py` + `dashboard.py`)**: Multi-Gateway OpenAI Federation (declarative `AppRegistry` discovery, zero vendor hardcoding), Zero-Copy Chunked SSE Pass-Through (`TCP_NODELAY`), 16ms Frame-Aligned SSE Coalescer, Detached Immortal Harvest + LZ4 Replay via `ChimeraSymbioteEngine`, Merkle Prefix-Cache Break Audit (`GET /v1/openai/conduit/stats`)
+- [x] **Pillar 3 (`hyper_desk.py`)**: Win32 `iphlpapi!GetExtendedTcpTable` Kernel Socket-Owner Immunity (listening localhost gateways + VIP-connected peer PIDs strictly exempt from `WinHardCpuCage`, `EcoQoS`, PWM, and orphan reaper; `0` subprocesses)
+- [x] **Verification (`Lab -> Shadow A/B -> Active`)**: `36/36 PASS` across `test_v25_hydra_stream` + 6 regression suites (`v16`, `v17`, `v18`, `v20`, `v23`, `v24`), live A/B evidence saved to `tasks/hydra_stream_ab_results.json`, live detached daemon deployed (`PID 34396`, `in_job=False`, `60.18 MiB / 80 MiB`)
+- [x] **Live Cutover & Full-Chain E2E Proof**: Enabled Switch #1 (`C:\Users\Admin\.dsh\profiles\desktop\cordis.patch.yml` → `http://127.0.0.1:9780/v1/openai/v1`) and Switch #2 (`wb-proxy :8788` slot `chimera-egress` → `http://127.0.0.1:9781` bound live to account `447253b6`); live E2E `deepseek-v4.1-flash-sg` SSE passed (`HTTP 200`, `TTFT 1,008.8 ms`, `Total 1,278.0 ms`, PoP `43.175.196.69` @ `4.58 ms`, `X-Chimera-Conduit: hydra-sse`, `X-Chimera-Prefix-Clean: 1`, `coalesce_ratio: 2.2`, `0` errors)
+
+## Review — Measured BEFORE vs AFTER (v25 Hydra-Stream, 2026-11-27)
+| Metric | BEFORE (Baseline) | AFTER (CHIMERA-HYDRA-STREAM) | Delta |
+|---|---:|---:|---|
+| `www.workbuddy.ai:443` 20x TLS success | `11 / 20` (`55.0%`) | **`20 / 20` (`100.0%`)** | **Zero dropped handshakes (`+45 pp`)** |
+| `www.workbuddy.ai:443` Connect+TLS P50 / P95 / P99 | `100.9` / `2,515.7` / `2,538.9 ms` | **`73.1` / `95.5` / `272.8 ms`** (`18` standby + `1` hedged) | **`26.3x` faster P95 · `9.3x` faster P99** |
+| Bad PoP `43.169.32.91` handling | Retried blindly (`WinError 10060`) | **Auto-tripped `circuit=OPEN`**, routed to `43.174.162.158` / `43.175.196.69` | **Self-healing Anycast UCB1 Bandit** |
+| SSE 120-token burst (`~400 t/s`) UI flushes | `121` raw flushes (`TTFT 8.75 ms`) | **`17` 60Hz frames (`TTFT 4.49 ms`, `6,024 B` exact)** | **`7.12x` fewer Electron DOM reflows, 0ms TTFT cost** |
+| Mid-stream client abort recovery | Lost turn (`client_aborted`, full re-run) | **Detached Immortal Harvest → LZ4 RAM replay (`HIT`, 0 upstream calls)** | **Zero wasted wait / credit** |
+| Local gateway CPU-cage immunity (`GetExtendedTcpTable`) | `wb_proxy` caged (`239 → 4.15 t/s`) | **`38` listeners (`PID 5740`, `25440`, ...) immune in `1.74 ms`, `0` subprocesses** | **Law 2 enforced at kernel table level** |
+| OpenAI Multi-Gateway Federation (`/v1/openai/v1/models`) | Hardcoded `tquota :12500` only | **`30` federated models auto-discovered via `AppRegistry` (`:8788` linked)** | **Zero core hardcoding** |
+| Windows Daemon Zero-Weight RAM | `44.14 MiB / 80 MiB` | **`60.18 MiB / 80 MiB` (`in_job=False`)** | **Within `< 80 MiB` Law 7 ceiling** |
 
 ---
 
-## Archive — `v8.0` (Zero-Weight Photon 3D Universe Engine)
-- [x] Eliminated the 46-step per-pixel FBM raymarcher (736M noise ops/frame + harsh R=260 circle cutoff + blocky cubic sky stars).
-- [x] **Kolmogorov Procedural Texture Baking ONCE at boot (~15ms)**:
-  - Seamless 1024×512 3D Milky Way Sky-Dome + 2,600 pinpoint background stars baked once onto GPU `TEXTURE_2D` (`0.05ms` per frame).
-  - 4 seamless 256×128 PBR planetary albedo + glowing cyber-city alpha maps baked once (`0.02ms` per planet).
-- [x] **Closed-Form 3D Interstellar Gargantua Black Hole (<0.14ms GPU, ZERO loop, ZERO harsh edge)**:
-  - Depth-occluding Event Horizon sphere + analytical gravitationally-lensed Einstein halo billboard (upper/lower arches + photon ring + polar quasar jets) + 3D tilted swirling accretion disk mesh.
-- [x] **100% GPU-Animated Volumetric Cross-Plane 3D Plasma Conduits (`GL_TRIANGLES`)**:
-  - Pre-allocated zero-GC Float32Arrays + cached WebGL uniform/attrib locations + 0% CPU/GPU auto-sleep when tab hidden + live `FPS • frame ms` telemetry pill.
-- [x] Unified 6-pass anti-collision solver covering both planet callouts and on-wire flow badges.
-- [x] Deployed & verified live on both `win-desktop` (`127.0.0.1:9780`) and `svhome` (`9780`).
+# v26.0 CHIMERA-SINGULARITY-STREAM — Precognition Tap, KV Forensics, Dual-Hemisphere Egress & Turn Time-Machine
+
+## Architecture Spec & Checklist (Zero-IQ-Loss · `< 80 MiB` RSS on Windows & `svhome`)
+- [x] **Idea #1 — Precognition Stream Tap (`precog_conduit.py`, `phantom_silicon.py`, `substrate.py`)**: Passive read-only SSE delta parser (<=32 KiB/stream, runs after `q.put(chunk)` for 0ms TTFT cost) extracting predicted paths/URLs/read-only commands -> bounded 64 KiB OS page-cache warmer (`NvmeMirageEngine.warm_paths`), `egress._note_host_heat_and_prewarm`, strictly allowlisted read-only `guarded_build.submit_isolated` opt-in check, and `llm.precog_hint` (`relay=False`)
+- [x] **Idea #2 — KV-Cache Forensic Diff & Prefix-to-PoP Sticky Pinning (`symbiote_engine.py`, `flight_recorder.py`, `substrate.py`, `egress_membrane.py`)**: O(log N) binary-search cumulative Merkle prefix audit with hash-only `item_metas` (`<1.5 MiB` cap) pinpointing exact `break_index`, mutated fields & lost token estimate; bounded 64-entry `FlightRecorderBlackBox.record_forensic()` ring (0 disk writes); downstream sticky `X-Chimera-Prefix-Sticky` header (zero `raw_body` mutation) + `_PopBandit` LRU sticky PoP pin table (`rank_with_pin`, standby IP match, `X-Chimera-PoP-Pin`)
+- [x] **Idea #3 — Dual-Hemisphere Anycast Egress (`autopilot.py`, `phantom_tunnel.py`, `peer_guard.py`, `egress_membrane.py`, `dashboard.py`, `substrate.py`)**: Authenticated `PHANTOM-5MS` port `9781` loopback forward (`127.0.0.1:9791 -> svhome:127.0.0.1:9781`) + bounded `rx_chunks<=128` + adaptive XOR `_P_FEC=9` loss shield (`>5%` NACK trigger); lock-free 2s-cached `peer_guard.fast_egress_fuse()` + `max_peer_hop_tunnels=8` + anti-SSRF `ip.is_global` + shared `0o600` `~/.chimera/peer.secret` auth; peer circuit-breaker & opt-in `X-Chimera-Hemisphere: dual` hedging
+- [x] **Idea #4 — Turn-Atomic Time-Machine & Akashic Context Offload (`precog_conduit.py`, `substrate.py`, `client.py`, `mcp_server.py`)**: `X-Chimera-Turn-Id` conduit ledger (`maxlen=64`) + persistent `FileRevisions`-backed conflict-checked atomic `os.replace` rollback (`/v1/openai/turns`, `/v1/openai/turn/checkpoint`, `/v1/openai/turn/finalize`, `/v1/openai/turn/rollback`, `/v1/openai/forensics`, `/v1/openai/precog/stats`, `/v1/blackbox/forensics`); 5 new 0-daemon-RSS MCP tools (`chimera_akashic_symbols`, `chimera_akashic_recall`, `chimera_timemachine`, `chimera_forensics`, `chimera_speculative_warm`)
+- [x] **Verification & Cross-Node Sync (`win-desktop` + `svhome`)**: `56/56 PASS` on Windows (`v16..v26`, `peer_guard`, `source_recall`) + `27/27 PASS` on `svhome` Linux Python 3.14 (`v26`, `v25`, `v20`, `peer_guard`), `SHA256_PARITY_MISMATCHES=0` across all `chimera_tp/**/*.py`, shared `0600` `~/.chimera/peer.secret`, live evidence saved to `tasks/v26_singularity_results.json`.
+
+## Review — Measured Live Cross-Node Results (v26 Singularity-Stream, 2026-11-27)
+| Capability / Metric | Verified Live Measurement | Status |
+|---|---|---|
+| Cross-node source parity (`win-desktop` ⇄ `svhome`) | `SHA256_PARITY_MISMATCHES=0` across all `chimera_tp/**/*.py` | **100% Parity** |
+| Windows Daemon (`win-desktop`) | `PID 16880`, `in_job=False`, **`61.10 MiB / 80 MiB`**, `peer_egress_proxy=http://127.0.0.1:9791` | **PASS (Law 7)** |
+| Linux Daemon (`svhome`) | `PID 3945618`, `active`, **`60.25 MiB / 80 MiB`** (`61,692 KB` RSS, Python 3.14.4) | **PASS (Law 7)** |
+| Dual-Hemisphere Egress (`:9791 → PHANTOM-5MS → svhome:9781`) | Live `200 Connection Established` (`Server: Python/3.14.4`, `303.42 ms`), bad auth **`403 AUTH_DENIED`**, private SSRF **`403 SSRF_BLOCKED`** | **PASS Live E2E** |
+| Prefix-to-PoP Sticky Pinning (`:9781`) | Call 1 `SET` (`43.169.32.91`) → Call 2 auto-hedged `FAILOVER` to healthy `43.174.162.158` | **PASS Live** |
+| Full-Chain DeepSeek SSE (`:9780 → :8788 → :9781 → EdgeOne`) | `HTTP 200`, **`TTFT 919.1 ms`**, **`Total 1,103.7 ms`**, `X-Chimera-Turn-Id`, `X-Chimera-Prefix-Sticky`, `precog.taps_started=1` | **PASS Live E2E** |
+| Turn-Atomic Time-Machine (`/v1/openai/turn/*`) | Checkpoint **`15.60 ms`**, atomic `os.replace` rollback **`9.63 ms`**, conflict-abort `409` verified | **PASS Live** |
+| Automated Test Suites (`win-desktop` + `svhome`) | Windows **`56/56 PASS`** (`10` suites) · `svhome` Linux **`27/27 PASS`** (`0` skipped) | **0 Regressions** |
 
 ---
 
-## Wave 5 — `v16.0 CHIMERA-CONNECT & PLATFORM SUBSTRATE` (Cổng Mở Tự Nhận Biết + 4 Siêu Cổng Nền Tảng)
+# Organ 3 — Zero-Spawn Agent Hyper-Bus (`agent_probe.py`, 2026-11-27)
 
-### Bảng Tiến Độ Triển Khai Trực Tiếp
-- [x] **Bước 0 — Đo Đạc Baseline TRƯỚC Khi Nâng Cấp (`win-desktop` + `svhome`)**:
-  - `win-desktop`: `v12.0.0`, RAM `15.23 MB`, `/api/health=200 (80.6 ms)`, `/.well-known/chimera.json=404`, `/v1/apps/list=404`, `127.0.0.1:9781=CLOSED`, `runtime.json=MISSING`, `AGENTS_INFRA.md=MISSING`.
-  - `svhome`: `v12.0.0`, RAM `57.93 MB`, `/api/health=200 (229.4 ms)`, `/.well-known/chimera.json=404`, `/v1/apps/list=404`, `tailscale0:9781` bận (Egress Proxy bind thuần `127.0.0.1:9781` loopback + auto-fallback).
-- [x] **Bước 1 — `CHIMERA-CONNECT` Core (`chimera_tp/platform/discovery.py`, `client.py`, `autoload.py`, `mcp_server.py`)**:
-  - Single-Anchor Gateway `:9780` (`/.well-known/chimera.json`, `/v1/discover`, `/v1/smi`, `/v1/apps/register`, `/v1/apps/list`, `/v1/apps/unlink`).
-  - OS-level `runtime.json` (`~/.chimera/runtime.json` + `%LOCALAPPDATA%\chimera\runtime.json`) + `~/.chimera/AGENTS_INFRA.md`.
-  - Zero-dependency `chimera_tp.platform.client` (`is_available()`, `connect()`, graceful offline fallback `0` lỗi).
-  - Auto-Attach `chimera_autoload.pth` đã cài trên cả Windows (`Python311`) và `svhome` (`python3.14`).
-  - `chimera-mcp` stdio JSON-RPC 2.0 MCP Server (`5` tools).
-- [x] **Bước 2 — 4 Siêu Cổng Nền Tảng (`egress_membrane.py`, `pulse_bus.py`, `hybrid_search.py`, `flight_recorder.py`, `substrate.py`)**:
-  - `CHIMERA-EGRESS + MEMBRANE` (`127.0.0.1:9781` trên cả 2 máy): HTTP/HTTPS Proxy + Singleflight + TTL/ETag Cache + `429/502` Auto-Retry + Wire-Cassette + `X-Chimera-Bypass: 1`.
-  - `CHIMERA-PULSE` (`/v1/pulse/*`): Zero-Redis Pub/Sub + Shared KV + Cross-Host Relay (`win-desktop -> svhome` verified `relayed_ok=True`).
-  - `CHIMERA-SEARCH` (`/v1/search*`): Namespaced Hybrid `SQLite FTS5 BM25 + 10,000-bit AVX2 Kanerva VSA` (`2.16 ms`, `sources=['bm25', 'vsa_avx2']`).
-  - `Flight Recorder BlackBox` (`0`-disk-write RAM ring buffer + `/v1/blackbox/freeze`) + `DisklessSecretVault` (`0` plaintext trên đĩa) + `PassivePortScanner`.
-- [x] **Bước 3 — Tích Hợp Sạch Vào `dashboard.py` (+19 dòng) & `cli.py` (+6 lệnh mới)**:
-  - Đã thêm `smi`, `link`, `init`, `run`, `autoload`, `mcp` vào CLI và gắn `platform` summary vào `/api/pulse`.
-- [x] **Bước 4 — Kiểm Thử Tự Động & Đánh Giá Benchmark TRƯỚC vs SAU**:
-  - `tests/test_v16_platform_connect.py`: **`4/4 PASS`** trên Windows (`11.256s`) và **`4/4 PASS`** trên `svhome` Linux (`12.648s`); `test_v15_trinity_cortex.py`: **`5/5 PASS`**.
-- [x] **Bước 5 — Triển Khai & Xác Minh Trực Tiếp Trên Cả `win-desktop` Và `svhome`**:
-  - `win-desktop`: `v16.0.0`, RAM **`23.43 MB / 80 MB`**, Anchor `:9780`, Proxy `:9781`, `autoload=True`, `chimera-tp smi` OK.
-  - `svhome`: `v16.0.0`, RAM **`51.79 MB / 80 MB`** (giảm nhẹ từ `57.93 MB`), Anchor `:9780`, Proxy `:9781`, `autoload=True`, `chimera-hyper-daemon.service` `active`.
+## Checklist
+- [x] Build `chimera_tp/platform/agent_probe.py` (100% Python stdlib, `CREATE_NO_WINDOW`, lazy-loaded): `TokenDietCompactor` (bounded `32` refs / `256 KiB` cap), `OmniProbeBatchEngine` (up to `40` concurrent read-only ops: `file_slice`, `regex_search`, `list_files`, `json_query`, loopback `http_get`, `mode=ro` `sqlite_ro`, `git_status`, `raw_ref`), `CallgraphTelepathyEngine` (Python `ast` + JS/TS/Rust 2-hop definition/callers/callees + related tests), `AtomicCommitVerifyEngine` (`py_compile` + optional `node --check` + import-graph impacted `unittest` + `BLAKE2s` memoization)
+- [x] Wire lazy `substrate.py` routes (`GET /v1/agent/probe-stats`, loopback `POST /v1/agent/xray-batch`, `POST /v1/agent/callgraph-slice`, `POST /v1/agent/commit-verify`), `client.py` (with offline in-process fallback), `mcp_server.py` (`chimera_xray_batch`, `chimera_callgraph_slice`, `chimera_commit_verify`), `platform/__init__.py`, `AGENTS.md` (Rule #6), and `docs/UNIFICATION_DOCTRINE.md`
+- [x] Write & pass `tests/test_agent_hyper_bus.py` (`5/5 PASS`) + regression `tests/test_v23_phantom_silicon.py` (`6/6 PASS`) on **both** Windows (`11/11` in `24.9s`) and `svhome` (`11/11` in `28.1s`)
+- [x] Sync `120/120` files (`113` `chimera_tp` Python modules, `0` SHA-256 mismatches) and deploy live detached daemons on Windows (`56.9 MiB / 80 MiB`) & `svhome` (`53.44 MiB / 80 MiB`, `zero_weight_ok=true`)
+- [x] Run reproducible live A/B benchmark (`scripts/bench_agent_hyper_bus.py` → `tasks/agent_hyper_bus_ab.json`)
 
-### Review / Live Results (`v16.0 CHIMERA-CONNECT & PLATFORM SUBSTRATE` — BEFORE vs AFTER)
-- **Burst 16x concurrent HTTP GET (`60 ms` upstream):** `16` upstream calls (`573.57 ms`) -> **`1` upstream call (`67.86 ms`, `-93.8%` tải upstream, `8.45x` nhanh hơn)**.
-- **Repeated HTTP GET avg latency:** `69.72 ms` -> **`11.87 ms` (`5.9x` nhanh hơn qua Membrane Cache)**.
-- **Transient `429` Rate-Limit Survival:** `0/1 (0%)` -> **`1/1 (100% tự giải cứu)`**.
-- **Cross-Host Event Bus (`win-desktop -> svhome`):** Chưa có -> **`relayed_ok=True`** không cần Redis.
-- **Namespaced Hybrid Search (`BM25 + VSA-10K AVX2`):** Rời rạc 3 API -> **`2.16 ms`**, `sources=['bm25', 'vsa_avx2']`.
-- **Zero-Weight RAM (`< 80 MB`):** `win-desktop` `15.23 MB -> 23.43 MB` (`+8.2 MB`, còn dư `56.5 MB`); `svhome` `57.93 MB -> 51.79 MB` (`-6.1 MB`).
+## Review — Measured BEFORE vs AFTER (Organ 3 Agent Hyper-Bus, 2026-11-27)
+| Metric | BEFORE (Sequential PowerShell) | AFTER (CHIMERA Agent Hyper-Bus) | Delta |
+|---|---:|---:|---|
+| 12-Op Forensic Probe Latency (OS exec only) | `5,703.84 ms` (`313.8–690.8 ms/cmd`) | **`122.18 ms`** HTTP (`104.11 ms` engine) | **`46.7×` faster (`-97.9%`)** |
+| `powershell.exe` Process Spawns | `12` spawns | **`0`** spawns | **`-100%` cold-boot overhead** |
+| Minimum Serial LLM Tool Turns | `12` turns | **`1`** turn | **`12×` fewer turn round-trips** |
+| 2-Hop Callgraph (`handle_mcp_request`, `234` files) | Multi-grep / multi-file reads | **`1,363.06 ms` cold → `67.18 ms` warm** (`11` callees, `1` caller, `7` tests, `4,200` chars) | **`20.3×` warm cache speedup** |
+| Atomic Commit-Verify (`agent_probe.py` + auto-test) | Full manual compile + test re-runs | **`15,994.58 ms` cold → `8.92 ms` BLAKE2s cache hit** (`5/5` auto-selected) | **`1,793.1×` warm cache hit** |
+| Live Daemon Working Set (`win-desktop` / `svhome`) | Budget `< 80 MiB` | **`56.90 MiB`** Win · **`53.44 MiB`** `svhome` | **PASS (Law 7, 0 startup RSS)** |
+| Cross-Node Parity & Test Suite | `24`-module drift on `svhome` | **`120/120` SHA-256 parity (`0` mismatch)** · `11/11` Win + `11/11` `svhome` | **100% Parity & Green** |
 
 ---
 
-## Wave 6 — `v17.0 CHIMERA-SILICON-CARTRIDGES` (Liên Kết Thật `radar`/`tqouta` + 4 Siêu Cartridge Giai Đoạn 3)
+# Organ 3 Evolution — CHIMERA-SYMBIONT + `agy-fast` Harness Hardening (2026-11-27)
 
-### Bảng Tiến Độ Triển Khai Trực Tiếp
-- [x] **Bước 1 — Link Thật `radar` & `tqouta` Trên Cả `win-desktop` & `svhome`**:
-  - `win-desktop`: `E:\DEV\Chat\radar_dashboard` (`:8787`) + `E:\DEV\Chung\.ch-relay\local-relay` (`:12500`) đã sinh `chimera.manifest.json` & hiện trong `chimera-tp smi`.
-  - `svhome`: `/home/svhome/DEV/radar_dashboard` (`:8787`) + `/home/svhome/DEV/Tqouta/local-relay` (`:12500`) đã sinh `chimera.manifest.json` & hiện trong `chimera-tp smi`.
-- [x] **Bước 2 — Cartridge #1 `CHIMERA-VGPU` + `Pareto Router` (`chimera_tp/platform/vgpu_gateway.py`)**:
-  - Đọc trực tiếp cảm biến NVIDIA GTX 1650 (`nvidia-smi`: `27.0%`, `50.9°C`, `1,192 MB free`), tự nhường `< 50 ms` khi nóng `>= 72°C` hoặc GPU `>= 45%`.
-  - Phơi cổng OpenAI-compatible (`/v1/openai/v1/embeddings`, `/v1/vgpu/status`, `/v1/vgpu/route`): cold `12.54 ms` -> warm cache **`0.06 ms` (`209x` nhanh hơn)**.
-- [x] **Bước 3 — Cartridge #2 `CHIMERA-IMMORTAL-JOB` (`chimera_tp/platform/immortal_jobs.py`)**:
-  - Sổ cái SQLite WAL (`/v1/jobs/create`, `/v1/jobs/step`, `/v1/jobs/resume`, `/v1/jobs/list`): resume đúng bước `3/4`, `dup_skipped=True` (`-75%` chạy lại thừa).
-- [x] **Bước 4 — Cartridge #3 `CHIMERA-BROWSER-GRID` (`chimera_tp/platform/browser_grid.py`)**:
-  - Lazy Chromium/Edge CDP dùng chung (`bin=True` trên cả 2 máy, **`0.0 MB` RAM khi rảnh**, cấp `ws://` CDP + `zero_media` block rules và tự tắt sạch khi trả session).
-- [x] **Bước 5 — Cartridge #4 `CHIMERA-ZYGOTE` + `CANARY TWIN` + `Cartridge Manager` (`chimera_tp/platform/zygote_canary.py`)**:
-  - `svhome` Linux `os.fork()` Copy-on-Write **`7.435 ms`** cho batch 50 item; `win-desktop` warm worker pool `< 1 ms`.
-  - Zero-Downtime Canary Shadow Judge (`/v1/canary/compare` + `chimera-tp canary`): tự phán quyết `PROMOTE` / `ROLLBACK`.
-  - Hot Cartridge Toggle (`chimera-tp cartridge list/enable/disable` + `/v1/cartridges` trả `503` khi tắt).
-- [x] **Bước 6 — Kiểm Thử Tự Động & Đánh Giá Benchmark TRƯỚC vs SAU (Windows + `svhome`)**:
-  - Windows: **`8/8 PASS`** (`test_v16` + `test_v17`, `22.05s`) | `svhome` Linux: **`4/4 PASS`** (`test_v17`, `12.79s`, real `os.fork()`).
-  - Zero-Weight RAM live sau khi bật đủ `10` Cartridge: `win-desktop` **`38.43 / 80 MB`**, `svhome` **`52.16 / 80 MB`** (vẫn thấp hơn baseline `57.93 MB`).
-- [x] **Bước 7 — Hoàn Thiện 5 Mảnh Còn Thiếu (Đưa `radar` & `tqouta` Lên `[ONLINE]` + Cartridge #11 `CHIMERA-VAULT-SQL`):**
-  - **Single-threaded Pre-Fork `CHIMERA-ZYGOTE` (`zygote_canary.py`):** Triệt tiêu 100% `DeprecationWarning` Python 3.14, giảm tốc độ fork trên `svhome` xuống **`2.791 ms`** (`linux_prefork_cow`).
-  - **Python `sitecustomize.py` + Node.js `chimera_node_hook.cjs` + `attach-systemd` (`autoload.py`):** Gắn `90-chimera.conf` cho `radar-dashboard.service` (`.venv`) và `tquota.service` (`node`) → cả 2 chuyển sang **`[ONLINE]`** trong `chimera-tp smi` trên `svhome`.
-  - **`*.chimera.local` Host-Header Reverse Proxy (`substrate.py`, `dashboard.py`):** Xác minh `Host: radar.chimera.local` (`HTTP 200`, `86.9 KB`) và `Host: tqouta.chimera.local` (`HTTP 200`, `625.4 KB`, `55.5 ms`) xuyên `win-desktop → svhome`.
-  - **Cartridge #11 `CHIMERA-VAULT-SQL` (`vault_sql.py`):** Đồng bộ `svhome_telemetry` (`106 KB → 8.8 KB`, `-91.7%`; lần 2 `0 B` unchanged), truy vấn cục bộ trên Windows **`1.344 ms`**.
-  - **`VGPU` Zero-RAM Backend Probe (`vgpu_gateway.py`):** Báo cáo trung thực `backends` không nạp nặng `torch` vào daemon (`win-desktop` RAM **`19.29 MB`**, `svhome` **`75.87 MB`**; `9/9 PASS` Win, `5/5 PASS` Linux).
+## Checklist
+- [x] Build `chimera_tp/platform/agent_symbiont.py` (100% stdlib, lazy-loaded, `< 3 MiB` RAM): `HiveMindCortex` (soft intent leases, conflict radar, persistent SQLite-WAL `ImmuneReflexTable`), `PrecogRunnerEngine` (`<2 ms` single-file incremental AST, speculative background shadow test joining, optional Win32 `ReadDirectoryChangesW` watcher), `SurgeonAtomicPatchEngine` (in-RAM Pre-Commit AST/TOML/JSON/JS gate, CRLF preservation, atomic `os.replace`, auto-rollback on failing test), `TelepathyCapsuleEngine` (`<50 ms`, `<1,500`-token brain handoff) & `bootstrap_snapshot` (`<=1.5 KB` live multi-agent workspace bootstrap)
+- [x] Upgrade `agent_probe.py` (`outline` op, intact source-code preservation in `file_slice`, single-file incremental AST `update_single_file`, `Precog-Runner` singleflight test joining, Hive/Immune piggyback alerts) and `mcp_server.py` (`32` MCP tools total + hard `<= 8,600 B` UTF-8 inline Spill-Shield preventing `output.txt` disk spills)
+- [x] Upgrade `unify.py` & `AGENTS.md` with Hybrid Routing rules (native parallel `read_file` for large known ranges + `chimera_*` for batched outline/search/atomic-patch/verify/handoff); verified `config.toml` via `tomllib.loads()`
+- [x] Write & pass `tests/test_agent_symbiont.py` (`5/5`) + `tests/test_agent_hyper_bus.py` (`6/6`) + `tests/test_v18_unify.py` (`2/2`) → **`13/13 PASS`** on BOTH Windows (`27.66s`) and `svhome`
+- [x] Sync `12/12` files (`0` SHA-256 mismatches) into active release `2ef6fcb8ca0c` on both Windows (`PID 35156`, **`37.14 MiB / 80 MiB`** settled) and `svhome` (`PID 3960563`, **`56.49 MiB / 80 MiB`**)
+- [x] Execute 5-stage live A/B benchmark (`scripts/bench_agent_symbiont_ab.py` → `tasks/agent_symbiont_ab.json`) + self-telemetry build audit (`tasks/symbiont_self_build_audit.json`)
+
+## Review — Measured Live A/B & Self-Telemetry Results (2026-11-27)
+| Dimension | Baseline / Before | CHIMERA-SYMBIONT (Verified Live) | Delta |
+|---|---:|---:|---|
+| 12-Op Slow Commands (PS vs HTTP vs MCP Stdio) | `3,585.58 ms` (`12` PS spawns) | **`86.40 ms`** HTTP · **`114.38 ms`** warm MCP stdio (`8,401 B` ≤ `8.6 KB`) | **`41.5×` HTTP · `31.3×` MCP · `0` spills** |
+| 3 Large Files (`substrate`+`probe`+`symbiont`) | `259,641 B` blind full read | **`7,005 B`** in `100.93 ms` via `op="outline"` | **`-97.3%` context bytes** |
+| AST Index Refresh (`238` files) | `1,346.23 ms` cold walk | **`36.10 ms`** single-file Precog incremental (`45.37 ms` warm) | **`37.3×` faster than cold** |
+| Verify Wait (`commit_verify` vs `Precog-Runner`) | `816.75 ms` sync (`0.6s` test) | **`28.24 ms`** (`precog_hit=True`) | **`28.9×` faster (scales with test size)** |
+| Broken `.toml` Patch Safety (`Surgeon` RAM Gate) | Corrupts disk → crash dialog | **`14.36 ms`** rejected in RAM (`disk_touched=False`) | **`0` broken disk writes** |
+| Cross-Agent Handoff Capsule / Live Bootstrap | Re-read 20+ files (`~49s` cold) | Capsule **`33.8/26.2 ms`** (`201` tok) · Bootstrap **`172 ms`** (`1.1–1.8 KB`) | **Zero-amnesia instant resume** |
+| Live Daemon Working Set (`win-desktop` / `svhome`) | Budget `< 80 MiB` | **`37.14 MiB`** Win · **`56.49 MiB`** `svhome` | **PASS (Law 7)** |
 
 
 ---
 
-## Wave 7 — `v18.0.0 PERFECTION` (12 Cartridges, 4-Tier Colab+PTX VGPU, Lazy RAM Shedding, DLP+UCB1, Folded-Cavity RLNC & Ghost Bubble)
-- [x] **Phantom-Demand Lazy Loader (`dashboard.py`):** Chuyển toàn bộ lab `v6–v12` sang lazy import + `@property` + `gc.collect()` → giảm RAM `svhome` từ **`75.87 MB` → `57.86 MB` (`-18.01 MB`, `-23.7%`)**; `win-desktop` **`31.82 / 80 MB`**.
-- [x] **4-Tier Colab Pro + `nvcuda.dll` PTX JIT VGPU (`vgpu_gateway.py`, `nvcuda_ptx.py`, `scripts/chimera_colab_vgpu_worker.py`):** Ưu tiên Colab Pro CUDA (`workstation_impact="0%"` bảo vệ máy Windows làm việc) + chạy kernel PTX JIT thật trên GTX 1650 `sm_7.5` (`kernel_ms=0.73 ms`, `0.0 MB` VRAM giữ lại).
-- [x] **Zero-Leak Egress DLP + UCB1 Domain Bandit + Live `radar` Traffic (`egress_membrane.py`, `substrate.py`):** Chặn rò khóa `< 50 µs` (`403 X-Chimera-DLP: BLOCKED`), `31` request thật của `radar` chạy sống qua `:9781` trên `svhome`, `win-desktop` thấy `[ONLINE] radar@svhome` & `tqouta@svhome`.
-- [x] **Live `30 MB radar.db` Sync (`vault_sql.py`):** `31.05 MB → 6.35 MB` (`4.89x`), lần 2 `0 B` unchanged, truy vấn cục bộ Windows **`4.745 ms`** (`53` bảng).
-- [x] **Cristae Folded-Cavity SC-RLNC (`folded_cavity_rlnc.py`) & Cartridge #12 `CHIMERA-GHOST` (`ghost_bubble.py`):** Chịu mất `31.4%` gói (`100%` SHA-256 trong `4.098 ms`, `16 KB` L2) + CoW dry-run bubble commit/discard trên cả 2 OS.
-- [x] **Headless `CHIMERA-COLAB-FABRIC` + Autonomous Single-Entity Elastic GPU (`colab_cli_bridge.py`, `vgpu_gateway.py`, `substrate.py`, `client.py`, `mcp_server.py`, `cli.py`):** Hợp nhất thành 1 thực thể tự trị duy nhất (`POST /v1/vgpu/compute`, `/v1/openai/v1/embeddings`, `brain.compute()`, `chimera_compute` MCP) nối thật với `HostYieldGovernor.evaluate_state()`: tự động dò CU nền lúc boot, tự đánh thức Colab từ `0` khi có việc nặng/batch `>= 16`/Windows `USER_ACTIVE`, Singleflight lock + Warm-Pool tái sử dụng không cần boot lại, và luồng Idle-Reaper tự động `colab stop` sau `idle_ttl_s` (`180 s`) để bảo đảm `0.00 CU/hr` khi rảnh.
-- [x] **Host-Wide 3-Layer Unification (`CHIMERA-UNIFY` — `unify.py`, `autoload.py`, `discovery.py`, `substrate.py`, `cli.py`, `test_v18_unify.py`):** 1 lệnh `chimera-tp unify install` trên cả `win-desktop` & `svhome` hợp nhất User `PYTHONPATH` (mọi `.venv` mới trong `DEV/` tự attach không cần `link`), cổng chuẩn OpenAI `/v1/openai/v1/*` (`/embeddings` VGPU+Auto-Colab `$0` + `/models` & `/chat/completions` relay `tquota`), beacon `DEV/AGENTS.md`, và đăng ký MCP `chimera` toàn cục cho AI Agents.
-- [x] **Performance Polish (3 Root-Cause Bottlenecks Crushed):** `svhome` RAM `96.44 MB → 64.27 MB / 80 MB` (`-33.4%`, `MALLOC_ARENA_MAX=2` + `malloc_trim(0)`), `win-desktop` Discovery `229 ms → 42.3 ms` (`5.4x`), `embed_cold` `209 ms → 44.5 ms` (`4.7x`, warm `0.02 ms`), `win-desktop` OpenAI `/models` `1,435 ms (3 models) → 5.32 ms warm (19 models, 270x)` via `PHANTOM-5MS`, `svhome` Zygote warm `2.482 ms`; `8/8 PASS` on both hosts.
-- [x] **Verification:** `8/8 PASS` Windows (`test_v18_perfection` + `test_v18_unify`), `8/8 PASS` `svhome` Linux, live `Colab:2350CU[AUTO:SLEEP]` trên cả 2 máy, thực chiến headless **`Tesla T4 (14.56 GB VRAM)`** `2048×2048` CUDA matmul **`77.202 ms` (`222.53 GFLOPS`)**, Warm-Pool reuse **`11.7x`**, Idle-Reaper tự tắt về `0 CU`.
+# CHIMERA-SINGULARITY HYPERVISOR — Live Multitasking Shield, Singleflight Warm Worker, Mirror-Race & Post-Mortem Coroner (2026-11-27)
+
+## Checklist
+- [x] Capture live multitasking BEFORE baseline (`tasks/multitask_before_baseline.json`: `434` procs, `31` `conhost.exe`, `26` agent/UI procs, `22` Python, `6` `pwsh`, `3` Node, `31%` CPU, `proc_queue=7`, `9.67 GB` free)
+- [x] **Subsystem 1 (`hyper_desk.py`, `substrate.py`, `client.py`, `mcp_server.py`)**: `SoftPriorityBatchShield` (`apply_soft_batch_shield` / `restore_soft_batch_shield`, `GET/POST /v1/hyperdesk/soft-shield`, `chimera_soft_shield`) — Law-2-safe (`affinity_untouched=True`, `eco_qos_untouched=True`, `GetExtendedTcpTable` local gateway immunity, native `NtQueryInformationProcess`, `0` PowerShell spawns, works in `aether` profile too)
+- [x] **Subsystem 2 (`agent_probe.py`)**: Cross-Agent Singleflight (`_inflight`) + lazy 1-process `_WarmUnittestWorker` (`BELOW_NORMAL_PRIORITY_CLASS | CREATE_NO_WINDOW`, `_BASE_MODULES` clean isolation between repos/shadows, `0` daemon RSS, `0` `conhost`, clean handle/pipe shutdown in `_kill_locked()` + `PlatformSubstrate.close()`)
+- [x] **Subsystem 3 (`agent_symbiont.py`, `substrate.py`, `client.py`, `mcp_server.py`)**: `MirrorRaceEngine` (`POST /v1/agent/mirror-race`, `chimera_mirror_race`) — parallel isolated shadow candidate racing (up to 3 candidates) committing ONLY the fastest green winner via `Surgeon` (`0 B` residue on losers)
+- [x] **Subsystem 4 (`agent_symbiont.py`, `substrate.py`, `client.py`, `mcp_server.py`)**: `PostMortemCoronerEngine` (`GET/POST /v1/agent/coroner`, `chimera_coroner`) — read-only tail scanner for recent Codex & T3 Antigravity JSONL logs auto-seeding `Immune Reflex` rules (`shell_storm`, `disk_spill`, `syntax_config_break`, `endpoint_404_drift`, `edquot_tmp`)
+- [x] **Dual-Node Verification (`18/18 PASS` × 2, `0` warnings)**: Windows (`39.34s`, `0` warnings, `35` MCP stdio tools, release `6280c704d2e4`, `8/8` SHA-256 parity, live `:9780` PID `26612` at `39.34 MiB / 80 MiB`) & `svhome` Linux Python 3.14 (`43.29s`, `8/8` SHA-256 parity, live `:9780` PID `3970029` at `51.32 MiB / 80 MiB`)
+- [x] **Live Multitasking A/B Benchmark (`scripts/bench_multitask_hypervisor_ab.py` → `tasks/multitask_hypervisor_ab.json`) & Live Activation**: Activated `SoftPriorityBatchShield` live on Windows (`27.52 ms`, `36` gateways spared, `29` VIPs promoted, live `powershell -m unittest` demoted)
+
+## Review — Measured BEFORE vs AFTER Live Multitasking Results (2026-11-27)
+| Dimension | BEFORE (Unshielded / Cold) | AFTER (CHIMERA-SINGULARITY HYPERVISOR) | Delta |
+|---|---:|---:|---|
+| 12-Thread Load: 60Hz UI Frame Jitter `p99` | `1,236.27 ms` | **`26.51 ms`** (`p95 = 17.35 ms`) | **`-97.9%` (`46.6×` smoother)** |
+| 12-Thread Load: 60Hz UI Worst Freeze (`max`) | `2,018.03 ms` (`2.02s` stall) | **`27.29 ms`** | **`-98.6%` (`74.0×` less freeze)** |
+| 12-Thread Load: Local `:9780` HTTP Avg / Max | `183.03 ms` / `1,235.90 ms` | **`18.81 ms`** / **`26.55 ms`** | **`-89.7%` avg · `-97.9%` max** |
+| 12-Thread Load: 12 Batch Workers Throughput | `11,685` PBKDF2 iters | **`12,871`** PBKDF2 iters (`110.1%`) | **`+10.1%` (ZERO Turbo-kill)** |
+| 6-Agent Concurrent Test Storm (`250 ms` test) | `549.10 ms` · `6` Python spawns | **`422.21 ms`** · **`1` run (`5` joined)** | **`-83.3%` spawns (`1.30×` wall)** |
+| Sequential Edit Verify (3 runs, `use_cache=False`) | `196.66 ms` avg cold Python | **`36.01 ms`** avg Warm Worker (`1` boot) | **`5.46×` faster (`-81.7%`)** |
+| 3-Candidate `Mirror-Race` (syntax/logic/winner) | Serial try-fail-rollback loops | **`93.77 ms`** total (`12.88 ms` RAM reject → `50.18 ms` commit) | **1-shot winner-takes-all** |
+| `Post-Mortem Coroner` (4 real Codex/AGY logs) | Manual log archaeology | **`198.83 ms`** → `4` findings (`38` spills, `16` EDQUOT, `5` TOML, `4` 404) | **Auto Immune Reflex seed** |
+| Live Daemon Working Set (`win-desktop` / `svhome`) | Budget `< 80 MiB` | **`39.34 MiB`** Win · **`51.32 MiB`** `svhome` | **PASS (Law 7)** |
+
 
 ---
 
-## Wave 8 — `v19.0–v21.0 CHIMERA-OMEGA ENTITY` (Full Implementation of Phần XVII + XVIII + XIX — 25 Infrastructure Breakthroughs)
-- [x] **Step 1 — Baseline & Vault Archive**: Archived Phần XIX into `docs/MOONSHOT_VAULT.md` and captured live BEFORE telemetry (`tasks/before_v21_baseline.json`: Commit `40.35 GB`, WS `27.00 GB`, `275,896` page faults/s, `6` dead-parent `pythonw` zombies `2,306.7 MB`).
-- [x] **Step 2 — Cartridge #13 `hyper_desk` (`chimera_tp/platform/hyper_desk.py`)**: All 7 `v19.0` breakthroughs live (Win32 Focus Cryo VIP + EcoQoS + MemoryPriority + Lossless Trim, Silicon Wall `0x0F`/`0xFF0`, real GTX 1650 `nvcuda.dll` LZ4 VRAM-Swap `252.6x` + `32.1 ms` yield `0.0 MB` retained, Hydra Collapse + CDP probe, Dead-Parent Zombie Reaper, Cortex Bus watcher, OneDrive Sync-Dam).
-- [x] **Step 3 — Cartridge #14 `cosmos_entity` (`chimera_tp/platform/cosmos_entity.py`)**: All 9 `v20.0` engines live (SSI placement+levitation, Zero-Env CAS 0-byte hardlinks, Omni-Memory 1-log-6-views + `GF(256)` self-heal, Immortal-Net PQ capability URIs, Immune-OS Ghost-Token + `0.39 ms` Anti-Ransomware, Autogen-Ops SRE, Swarm-Hypervisor Burn-Loop breaker, Thermodynamic `-91.7%` SSD Write Barrier, `<1 KB` DLP-clean Genesis Seed).
-- [x] **Step 4 — Cartridge #15 `omega_entity` (`chimera_tp/platform/omega_entity.py`)**: All 9 `v21.0` engines live (Ring-1 honest probe + `99.5%` 4KB EPT dedup, Akashic `69.5x–437.3x` fusion + `0.36 ms` DAG hits, Silicon Alchemy GTX 1650 PTX JIT `0.611 ms` / AVX2 `0.559 ms`, Precognition `0.011 ms`, Vampire Cloud `7.95 b/B` + `0.12 ms` resurrection + cheat rejection, Intent Kernel SLA compiler, Multiverse OS parallel race + Global Ctrl+Z, Autopoietic DNA `gen=2` `lz4_simd`, Omega Gravity zero-rewrite interposition).
-- [x] **Step 5 — Integration (`substrate.py`, `autoload.py`, `client.py`, `mcp_server.py`, `cli.py`)**: Wired 15 cartridges (`v21.0.0`), Win32 `KILL_ON_JOB_CLOSE` autoload guard, CLI (`hyperdesk`, `cosmos`, `omega-entity`), SDK, MCP tools & SMI.
-- [x] **Step 6 — Automated Verification (`tests/test_v19_v21_omega_entity.py`)**: **`24/24 PASS`** on Windows (`v16–v21`), **`3/3 PASS`** on `svhome` Linux (`10.67s`).
-- [x] **Step 7 — Live Deployment & Real BEFORE vs AFTER Evaluation**: Deployed live on both `win-desktop` (`43.33 / 80 MB`) & `svhome`, ran `19/19 PASS` Omega benchmarks on both nodes, cut live Windows Page Faults **`-84.7%` (`275.9k → 42.3k/s`)**, Active Working Set **`-8.63 GB` (`27.00 → 18.17 GB`)**, Hydra WS **`-81.8%` (`9.83 → 1.79 GB`)**, OneDrive WS **`-93.4%`**, reaped **`6/6` orphan zombies (`-2.31 GB` Commit)**, and published full report in [`docs/reports/CHIMERA_V21_OMEGA_ENTITY_EVALUATION.md`](file:///E:/DEV/chimera-tp/docs/reports/CHIMERA_V21_OMEGA_ENTITY_EVALUATION.md).
+# Tquota Incremental Prefix-Delta + Worker Threads & Dual-Node CoW Dev Drive (`V:\` NVMe ReFS & `svhome:/mnt/chimera-dev` XFS, 2026-11-27)
+
+## Checklist
+- [x] **Tquota Incremental Prefix-Delta (`E:\DEV\Chung\.ch-relay\local-relay\src\request-footprint.js`)**: O(1) raw wire `startsWith` C++ `memcmp` on `"input"`/`"messages"` & `"tools"` + bounded 12-session / 12 MiB LRU + outbound `toolsRef` reuse + `snapshotAsync` cold Worker offload + `deltaStats()`
+- [x] **Tquota Incremental `Hash.copy()` `quotaGenerationKey` (`src\tool-generation-guard.js`)**: bit-for-bit identical incremental SHA-256 continuation via `crypto.Hash.copy()` (~128 B C++ state) + canonical `tools` JSON cache + `deltaStats()`
+- [x] **Tquota Multi-Op Zero-Copy `IngressWorkerPool` (`src\ingress-worker.js`, `src\ingress-worker-pool.js`, `src\server.js`)**: `execArgv: []` clean Worker boot, zero-copy transferable `Uint8Array` `gzipPayload` replacing main-thread `zlib.gzipSync`, `computeColdPrefix` off-thread hashing, wired into `/api/dashboard` `hyperdrive`
+- [x] **Dual-Node Tquota Verification & Live Rollout**: `6/6` SHA-256 parity, **`42/42 PASS`** on Windows (`1.82s`) AND **`42/42 PASS`** on `svhome` (`3.53s`), gracefully restarted on Windows (`PID 24868`, `inSync: true`) & `svhome` (`tquota.service`, `inSync: true`), A/B saved to `tasks/tquota_delta_worker_ab.json`
+- [x] **Windows NVMe ReFS Dev Drive (`V:\`)**: `scripts/setup_nvme_devdrive.ps1` executed via official UAC (`exit 0`) -> `C:\ChimeraDevDrive\chimera-dev.vhdx` (`64 GB` Dynamic Sparse, `356 MB` actual), `ReFS` Dev Drive (`CHIMERA_DEV`), `fsutil devdrv trust` enabled, `ChimeraDevDriveAutoMount` SYSTEM startup task, `CHIMERA_DEV_DRIVE=V:\`, A/B saved to `tasks/devdrive_win_ab.json`
+- [x] **`svhome` SSD XFS CoW Dev Drive (`/mnt/chimera-dev`)**: `xfsprogs 6.18.0`, `/var/lib/chimera/chimera-devdrive.img` (`16 GB` sparse, `131.39 MB` actual, `mkfs.xfs -m reflink=1,crc=1`), persistent `mnt-chimera\x2ddev.mount` (`noatime,nodiratime`), `TMPDIR=/mnt/chimera-dev/tmp` + `CHIMERA_DEV_DRIVE=/mnt/chimera-dev` drop-ins on `tquota.service` & `chimera-hyper-daemon.service` (cured `/tmp` `EDQUOT -122`), A/B saved to `tasks/devdrive_svhome_ab.json`
+- [x] **Chimera `MirrorRaceEngine` Dev Drive Integration**: `agent_symbiont.py` auto-routes shadow racing onto `CHIMERA_DEV_DRIVE` (`V:\shadows` / `/mnt/chimera-dev/shadows`), synced to release `6280c704d2e4` on both nodes
+
+## Review — Measured BEFORE vs AFTER Results (2026-11-27)
+| Dimension | BEFORE | AFTER | Delta |
+|---|---:|---:|---|
+| Windows `V:\` NVMe ReFS Dev Drive vs `E:\` HDD (Create 500 `.py`) | `2,724.58 ms` | **`109.87 ms`** | **`24.80×` faster (`-96.0%`)** |
+| Windows `V:\` NVMe ReFS Dev Drive vs `E:\` HDD (Delete 1,000 files) | `1,027.41 ms` | **`105.27 ms`** | **`9.76×` faster (`-89.8%`)** |
+| Windows `V:\` NVMe ReFS Dev Drive vs `E:\` HDD (Total 1,000-file churn) | `5,385.26 ms` | **`549.24 ms`** | **`9.80×` faster (`-89.8%`)** |
+| `svhome` `/mnt/chimera-dev` XFS CoW vs `ext4` (Delete + `cp --reflink`) | `101.06 ms` del · `130.78 ms` clone | **`36.57 ms` del · `115.06 ms` 0-byte CoW** | **`2.76×` del · `0` `/tmp` `EDQUOT`** |
+| Tquota `quotaGenerationKey` (`Hash.copy()` + canonical tools, 12 turns) | `1.47 ms` avg | **`0.30 ms` avg** (`100%` SHA-256 identical) | **`4.90×` faster (`2,532` items skipped)** |
+| Tquota `RequestFootprints.snapshot` (Incremental Prefix-Delta, 12 turns) | `1.74 ms` avg | **`0.67 ms` avg** (`12/12` tools delta hits) | **`2.60×` faster** |
+| Tquota 6× Concurrent Gzip Burst (`zlib.gzipSync` vs `IngressWorkerPool`) | `67.06 ms` wall · `10.79 ms` loop lag | **`8.64 ms` wall · `0.88 ms` loop lag** | **`7.76×` wall · `12.3×` less lag (`-91.8%`)** |
+| Dual-Node Parity & Tests (`win-desktop` + `svhome`) | `25` fails on `svhome` (`/tmp` `EDQUOT`) | **`42/42 PASS` Win · `42/42 PASS` `svhome`** | **`6/6` SHA-256 parity · `inSync: true`** |
+
+
+---
+
+# 5-Mutant Agent Wall-Clock Acceleration Pack — Macro-DAG, DirectExec, Worktree-Epoch, Speculative SSE Tap & Scout Fast-Lane (2026-11-27)
+
+## Checklist
+- [x] **Mutant #1 (`chimera_run_dag` / `/v1/agent/run-dag`)**: `MacroDagEngine` in `agent_symbiont.py` collapsing up to 16 conditional `xray`/`sha256_parity`/`patch`/`verify`/`exec`/`epoch` steps into 1 daemon RPC
+- [x] **Mutant #2 (`chimera_exec` / `/v1/agent/exec`)**: `DirectExecEngine` replacing `pwsh -> node tool-log.mjs -> python` with zero-conhost `BELOW_NORMAL` direct runner + LF-normalized `stdin_text` + failure-first smart excerpting backed by Dev Drive logs
+- [x] **Mutant #3 (`chimera_worktree_epoch` / `/v1/agent/worktree-epoch`)**: `WorktreeEpochEngine` isolating agents on `V:\worktrees` / `/mnt/chimera-dev/worktrees` + SQLite-WAL `release_epochs` lock & signed publish receipts surfaced automatically in `chimera_bootstrap`
+- [x] **Mutant #4 (`store.js`, `chimera-symbiote-bridge.js`, `server.js`, `agent_symbiont.py`)**: Proactive 10-min-ahead OAuth credential pre-warmer + 30s transient refresh-failure backoff + zero-TTFT SSE tool-call speculative path prefetch -> `POST /v1/agent/precog` (`action=prefetch_paths`)
+- [x] **Mutant #5 (`optimizer.js`)**: Opt-in Zero-IQ-Loss `evaluateReadOnlyScoutFastLane` (`readOnlyScoutFastLane` / `x-tquota-scout-fast-lane: 1`) shifting clean read-only exploration follow-ups to `medium` while preserving full effort on errors/writes/user prompts
+- [x] **Dual-Node Parity & Live Dogfooding**: **`19/19` Chimera + `44/44` Tquota (`126/126` total)** PASS on BOTH Windows & `svhome`, `38` MCP stdio tools verified, live `:9780` at `63.42 MiB` Win / `47.62 MiB` `svhome`, signed Release-Epoch `ep_5ce0bcea` published live, A/B saved to `tasks/mutant_5_ab.json`
+
+## Review — Measured BEFORE vs AFTER (5-Mutant Pack, 2026-11-27)
+| Dimension | BEFORE | AFTER (5-Mutant Pack) | Delta |
+|---|---:|---:|---|
+| 6-Step Verification Pipeline (`6` serial PS vs `1` `chimera_run_dag`) | `1,674.44 ms` OS · `6` LLM turns | **`231.92 ms` OS · `1` LLM turn** | **`7.22×` OS · `-5` LLM turns (`~2–3.5m` wall saved)** |
+| 5× Tool Execution (`pwsh -> tool-log.mjs -> py` vs `chimera_exec`) | `1,735.84 ms` · `15` proc boots | **`748.29 ms` · `5` proc boots (`0` pwsh/node/conhost)** | **`2.32×` faster (`-66.7%` proc boots)** |
+| Real `git worktree add` (`E:\` HDD vs `V:\worktrees` NVMe ReFS) | `1,122.63 ms` | **`237.81 ms`** (`on_dev_drive=true`) | **`4.72×` faster (`-78.8%`)** |
+| Cross-Agent Release Collision Visibility (`chimera_bootstrap`) | Silent 6-file drift → 20m re-verify | **Signed `ep_5ce0bcea` visible in `1,252 B` bootstrap** | **Zero cross-agent release clash** |
+| Dual-Node Verification & Working Set (`win-desktop` / `svhome`) | — | **`63/63` Win · `63/63` `svhome` · `63.42` / `47.62 MiB`** | **`100%` parity · `< 80 MiB` Law 7** |
+
+
+---
+
+# 7-Breakthrough Full-Stack Dual-Node Pack (Wire-Delta Splice, Live Mid-Stream SSE Cache, Immutable Release Plane, svhome RAM Liberator, tool-log Shim, Dual-Node CoW Mirror-Race & Always-On Aether Shield, 2026-11-27)
+
+## Checklist
+- [x] **#1 Tquota Wire-Level Delta Buffer Splicing + Global Tools LRU + Canonical Tools + Idle RSS Trimmer** (`E:\DEV\Chung\.ch-relay\local-relay\src\wire-delta-serializer.js`, `request-footprint.js`, `tool-generation-guard.js`, `optimizer.js`, `memory-hygiene.js`, `server.js`): `WireDeltaSerializer` reuses pre-serialized `input[0..K-1]` & `tools` JSON bytes across append-only turns (`100%` wire-identical), fixed `toolsDeltaHits = 0` / `outboundToolsReuseHits = 0` / `canonicalToolsHits = 0`, added `createIdleRssTrimmer` wired into 30s idle maintenance
+- [x] **#2 Live Mid-Stream Speculative SSE Pre-Executor + Chimera Speculative Result Cache** (`stream-processor.js`, `responses-protocol.js`, `chimera-symbiote-bridge.js`, `server.js`, `agent_symbiont.py`, `agent_probe.py`): hooked `onToolCallEvent` on **100%** of both `createAutoCutStream` & `createPassthroughStream` streams (with 5s path dedupe), warming Chimera's 15s TTL `Speculative Result Cache` (`speculative_hit: true` in `xray_batch` `file_slice`)
+- [x] **#3 Single-Gate Immutable Release Plane (`chimera_release_promote` / `/v1/agent/release-promote`)** (`agent_symbiont.py`, `substrate.py`, `client.py`, `mcp_server.py`): `ReleasePromoteEngine` with syntax gate, Release-Epoch lock, immutable rollback backup bundle on Dev Drive, isolated canary import smoke check, automatic rollback on canary failure, `< 3 ms` explicit rollback, **`39` MCP stdio tools** total
+- [x] **#4 `svhome` `/tmp` tmpfs RAM Liberator + DevDrive Cache Redirect**: safe FD-aware janitor (`~/.local/bin/chimera-tmp-janitor.py` + hourly `chimera-tmp-janitor.timer` active) + `~/.config/environment.d/90-chimera-devdrive.conf` (`TMPDIR`/`GOCACHE`/`PIP_CACHE_DIR`/`UV_CACHE_DIR`/`NPM_CONFIG_CACHE`/`CARGO_TARGET_DIR`/`FASTEMBED_CACHE_PATH` -> `/mnt/chimera-dev/cache`), saved to `tasks/svhome_ram_liberator_ab.json`
+- [x] **#5 `tool-log.mjs` Transparent Chimera Thin Shim + Opt-In Behavioral Shell-Storm Nudge** (`scripts/tool-log.mjs`, `chimera-symbiote-bridge.js`, `responses-payload.js`, `server.js`): `tool-log.mjs` forwards directly to `POST :9780/v1/agent/exec` (`BELOW_NORMAL`, `0` `conhost`, Dev Drive logs, seamless fallback when Chimera offline); `evaluateShellStormNudge` detects consecutive shell/spill loops (`0.18 ms`, strictly opt-in & append-only Zero-KV-break)
+- [x] **#6 Dual-Node CoW Mirror-Race Exile (`offload_peer=True`)** (`agent_symbiont.py`, `substrate.py`, `client.py`, `mcp_server.py`): `MirrorRaceEngine._race_on_peer` exiles multi-candidate shadow patching & tests over SSH to `svhome:/mnt/chimera-dev/shadows` (`cp -a --reflink=auto`, **`0%` Windows CPU/disk**), commits verified winner locally
+- [x] **#7 Always-On 15s `SoftPriorityBatchShield` in `aether` + Orphan `conhost.exe` Reaper + Gentle Idle WS Trimmer** (`hyper_desk.py`): upgraded `autonomic_tick_once` in `aether` profile (`AETHER_SOFT_SHIELD`, `affinity_untouched=True`, `eco_qos_untouched=True`, `38` localhost gateways spared), activated live & persisted on Windows
+- [x] **Dual-Node Verification, Dogfood Promotion & Live A/B (`tasks/seven_breakthroughs_ab.json`)**: Tquota **`108/108` Win** & **`34/34` `svhome`**, Chimera **`18/18` Win** & **`5/5` non-409 Linux tests `svhome`**, **`100%` 3-way SHA-256 parity (`6/6`)** dogfooded via `ReleasePromoteEngine`, **`39` live MCP tools**, Chimera RSS **`46.48 MiB` Win / `51.28 MiB` `svhome`** (`< 80 MiB` Law 7)
+
+## Review — Measured BEFORE vs AFTER (7-Breakthrough Pack, 2026-11-27)
+| Breakthrough | BEFORE | AFTER (Verified Live) | Delta |
+|---|---:|---:|---|
+| #1 Tquota Wire-Delta + Tools Cache (5 turns) | `10.47 ms` avg · `0/0/0` tools hits | **`5.33 ms` avg** · **`5/6/5` hits** (`920` items / `4.5 MB` reused) | **`1.96×` faster · `0` wire diff** |
+| #1 Live Windows Tquota RSS / Heap | `643.2 MB` RSS · `149.6 MB` heap | **`342.73 MB` RSS** · **`85.4 MB` heap** (`inSync: true`) | **`-300.5 MB` (`-46.7%`)** |
+| #2 Live Mid-Stream SSE Tap + Speculative Cache | `prefetch_calls = 0` (Vault-only) | **100% streams hooked** · **`0.61 ms` warm** -> `speculative_hit: true` | **0-wait RAM file slices** |
+| #3 Single-Gate Immutable Release Plane | Uncoordinated jumps (`2ef6`→`6280`→`6076`) | **`167 ms` promote+canary** · **`2.05 ms` rollback** · auto-rollback on fail | **Zero broken release drift** |
+| #4 `svhome` `/tmp` tmpfs RAM Liberator | `4,347.86 MB` `/tmp` · `5,533.5 MB` swap | **`17.15 MB` `/tmp`** · **`7,533 MB` avail** · **`1,217 MB` swap** | **`-4.33 GB` `/tmp` · `+1.53 GB` RAM · `-4.32 GB` swap** |
+| #5 `tool-log.mjs` Chimera Shim & Direct Exec | `224.53 ms` local (`conhost`/temp churn) | **Transparent shim live** · **`158.65 ms`** direct (`0` pwsh/node) | **`1.42×` direct · `0` conhost** |
+| #6 Dual-Node CoW Mirror-Race Exile (`svhome`) | `100%` Windows CPU/HDD shadow clone | **`execution_node: "svhome"`** (`212 ms` AST reject → winner verified) | **`0%` Windows CPU/disk** |
+| #7 Always-On `aether` Soft-Shield (`:9780`) | Manual one-shot (`ticks = 0`) | **Running 24/7 (`34.2 ms`/tick)** · **`7` VIPs** · **`38` gateways spared** | **`46.48 MiB` Win / `51.28 MiB` `svhome`** |

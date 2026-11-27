@@ -1,0 +1,102 @@
+{
+  "schema": "chimera.cad.autosave-verification/1",
+  "verified_utc": "2026-11-26T16:32:30.268Z",
+  "fixture_origin": "An independently edited and saved test DWG copied verbatim to .sv$; no timed GUI autosave.",
+  "initial_drawing": {
+    "circles": 0,
+    "radius": null,
+    "handle": null,
+    "valve_resolved": true,
+    "open_ms": 3006.35
+  },
+  "independent_candidate_observation": {
+    "circles": 1,
+    "radius": 17.25,
+    "handle": "B585",
+    "valve_resolved": true,
+    "open_ms": 3110.98
+  },
+  "recovered_drawing": {
+    "circles": 1,
+    "radius": 17.25,
+    "handle": "B585",
+    "valve_resolved": true,
+    "open_ms": 3607.52
+  },
+  "selected_autosave_unchanged_sha256": "0c97642d339e86ebc22a3017522c3dcf4842f7017ee7af024692229e75f590e3",
+  "accepted": {
+    "ok": true,
+    "schema": "chimera.cad.autosave-recovery/1",
+    "autosave_sha256": "0c97642d339e86ebc22a3017522c3dcf4842f7017ee7af024692229e75f590e3",
+    "autosave_bytes": 252704,
+    "entry": "Host.dwg",
+    "capsule_id": "4bf48bddffb46af29714d5807d5f8c616b4a8731cd0ca463a1e51005c6197bf5",
+    "base_capsule_id": "5d5c606da56d562610324cf487b2e5a722acb83701a1c2ee592b5616878bf85e",
+    "dependency_provenance": "caller_selected_snapshot",
+    "dependency_count": 1,
+    "verified_files": 2,
+    "native": {
+      "fingerprint_guid": "{89B16CC8-3E9B-11D2-9DA5-080009F8E409}",
+      "version_guid": "{3F94D731-7CAF-7646-8464-9AC75D612DAC}",
+      "xrefs": [
+        {
+          "block": "Valve",
+          "flags": 36,
+          "saved_path": ".\\refs\\Valve.dwg"
+        }
+      ],
+      "native_open_ms": 4233.87
+    },
+    "content_source": "selected_off_disk_sv$"
+  },
+  "selected_xref_verified_sha256": "19270c23e56e407aab2ade3644e8f301c34e390638d99c3f0cc4f2d3a6516792",
+  "no_baseline": "pinned_xref_capsule_required: [\".\\\\refs\\\\Valve.dwg\"]",
+  "writer_open": "autosave_in_use",
+  "ac_dollar": "select_an_sv_dollar_autosave",
+  "wrong_capsule": "workspace_capsule_identity_mismatch",
+  "duplicate_preserved": true,
+  "original_drawing_location_unavailable": true,
+  "template_hash_unchanged": "19270c23e56e407aab2ade3644e8f301c34e390638d99c3f0cc4f2d3a6516792",
+  "temporary_fixtures_removed": true,
+  "scope": "Saved drawing bytes and selected DWG XREFs only. No in-memory edits, physical crash, fonts, images or underlays tested.",
+  "documentation": "https://www.autodesk.com/support/technical/article/caas/sfdcarticles/sfdcarticles/Understanding-AutoCAD-backup-and-autosave-files.html",
+  "source_sha256": {
+    "scripts/autocad_autosave.py": "507030deb0fa09980b22cb781593c3b2b1d1cb05e62b9319e76ac8e0d53843f6",
+    "scripts/autocad_autosave_facts.mjs": "5b1fa3dc82ce3273c86601fecad4f2af6cc2b8f77e9ae6802d2ae23ff561d243",
+    "scripts/autocad_autosave_verify.mjs": "90d09b4a87863756bc267294349b5d43d3fda748fb7cecb7d376df0036cb0e6c",
+    "tests/test_autocad_autosave.py": "bec5ebedb9c77181de7000027f08d9cbd85394ed25fd00d2c9ada7f827efaa44",
+    "chimera_tp/platform/workspace_capsule.py": "ade68a5bf01b92e0e66be2273e104cb9b1e67229289b616aadfc55f4e5b4c918",
+    "chimera_tp/platform/file_revisions.py": "b14e7068ad2fcb153d1b3b99a15d4ca3a763e2c75d9cffe50dd678f4dfef2f53",
+    "scripts/autocad_autosave_watch.py": "9c2d1da590d076ccf510408b1dd1d0c004491aacd8ef20c7a9e349943f5bbf67"
+  },
+  "native_timer_probe": {
+    "isolation": "accoreconsole.exe /isolate with a disposable profile and fixture DWG, no GUI attached",
+    "application": "AutoCAD Core Console 2027",
+    "original_profile_savetime_minutes": 10,
+    "isolated_savetime_minutes": 1,
+    "saved_path_belonged_to_isolated_profile": true,
+    "delay_ms_each": 1000,
+    "completed_delay_commands": 91,
+    "nonempty_SAVEFILE_observations": 0,
+    "sv_files_captured": 0,
+    "log_sha256": "6e2503e6e86d7cc19646eaefb0b4811c8e56f86ad71e6b68f7b49398bddda63e"
+  },
+  "bounded_watch_verification": {
+    "verified_utc": "2026-11-26T16:34:19.350391+00:00",
+    "fixture": "two different non-user DWGs copied sequentially to the same .sv$ path to exercise replacement, digest selection and persistence",
+    "seconds": 10,
+    "source_unavailable_before_history_and_restore": true,
+    "recorded_revisions": [
+      "9ec783cbcc526c18527be0173759e493a2d24520f0c7d29f598e15aadf780914",
+      "19270c23e56e407aab2ade3644e8f301c34e390638d99c3f0cc4f2d3a6516792"
+    ],
+    "captured": 2,
+    "source_bytes_match": true,
+    "selected_revision": "19270c23e56e407aab2ade3644e8f301c34e390638d99c3f0cc4f2d3a6516792",
+    "verified_fingerprint": "{89B16CC8-3E9B-11D2-9DA5-080009F8E409}",
+    "background_watch_terminated": true,
+    "unrelated_pinned_drawing_refused": "drawing_creation_guid_does_not_match_baseline",
+    "stale_output_published": false,
+    "temporary_fixtures_removed": true
+  }
+}

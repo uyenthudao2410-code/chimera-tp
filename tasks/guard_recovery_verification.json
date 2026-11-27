@@ -1,0 +1,11 @@
+{
+  "ok": true,
+  "fixture": "private Linux loopback HTTP service, isolated job files",
+  "first_state": "deferred",
+  "first_error": "running_guard_service_unhealthy",
+  "first_artifact_created": false,
+  "first_503_to_return_ms": 1.58,
+  "retry_succeeded": true,
+  "retry_health_samples": 4,
+  "peer": "svhome"
+}

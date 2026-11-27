@@ -1,0 +1,538 @@
+{
+  "schema": "chimera.cuda-vmm-shadow/1",
+  "measured_utc": "2026-11-26T17:17:37.126Z",
+  "requested_trials": 12,
+  "mode": "standalone diagnostic process",
+  "trials": [
+    {
+      "run": 1,
+      "sha256_before": "cec5eea9903059cf6b28dd991b2e2eadb3a9700790ccf3393936a1ab08817230",
+      "sha256_migrated": "cec5eea9903059cf6b28dd991b2e2eadb3a9700790ccf3393936a1ab08817230",
+      "sha256_restored": "cec5eea9903059cf6b28dd991b2e2eadb3a9700790ccf3393936a1ab08817230",
+      "rejected_staging_sha256": null,
+      "phase_ms": {
+        "allocate_map_set_access": 0.2737,
+        "upload_and_sync": 0.6623,
+        "unmap": 0.2523,
+        "release": 0.1057,
+        "unmap_plus_release": 0.358,
+        "copy_to_host": 0.3551,
+        "verify_sha256": 1.577,
+        "copy_verify_unmap_release": 2.2975,
+        "post_release_synchronize": 0.011,
+        "address_free": 0.0131,
+        "restore_round_trip_verify": 2.7144
+      }
+    },
+    {
+      "run": 2,
+      "sha256_before": "4974b0a1506447a87771a548415b32f37e42bdc79e9b32fd7527d334034d6da5",
+      "sha256_migrated": "4974b0a1506447a87771a548415b32f37e42bdc79e9b32fd7527d334034d6da5",
+      "sha256_restored": "4974b0a1506447a87771a548415b32f37e42bdc79e9b32fd7527d334034d6da5",
+      "rejected_staging_sha256": null,
+      "phase_ms": {
+        "allocate_map_set_access": 0.2947,
+        "upload_and_sync": 0.8003,
+        "unmap": 0.2355,
+        "release": 0.098,
+        "unmap_plus_release": 0.3335,
+        "copy_to_host": 0.5293,
+        "verify_sha256": 1.423,
+        "copy_verify_unmap_release": 2.295,
+        "post_release_synchronize": 0.0096,
+        "address_free": 0.0132,
+        "restore_round_trip_verify": 2.5402
+      }
+    },
+    {
+      "run": 3,
+      "sha256_before": "e556413c9e9e12005f82cbba464cc34ca07d345859f4fbaae6c12777c55859ce",
+      "sha256_migrated": "e556413c9e9e12005f82cbba464cc34ca07d345859f4fbaae6c12777c55859ce",
+      "sha256_restored": "e556413c9e9e12005f82cbba464cc34ca07d345859f4fbaae6c12777c55859ce",
+      "rejected_staging_sha256": null,
+      "phase_ms": {
+        "allocate_map_set_access": 0.2724,
+        "upload_and_sync": 0.6912,
+        "unmap": 0.3581,
+        "release": 0.1453,
+        "unmap_plus_release": 0.5034,
+        "copy_to_host": 0.3297,
+        "verify_sha256": 1.4495,
+        "copy_verify_unmap_release": 2.2918,
+        "post_release_synchronize": 0.0132,
+        "address_free": 0.0174,
+        "restore_round_trip_verify": 2.8876
+      }
+    },
+    {
+      "run": 4,
+      "sha256_before": "44c47efba725c7065ff4708f368ff14d4c48be34d8c3522cb756747905af91b9",
+      "sha256_migrated": "44c47efba725c7065ff4708f368ff14d4c48be34d8c3522cb756747905af91b9",
+      "sha256_restored": "44c47efba725c7065ff4708f368ff14d4c48be34d8c3522cb756747905af91b9",
+      "rejected_staging_sha256": null,
+      "phase_ms": {
+        "allocate_map_set_access": 0.3313,
+        "upload_and_sync": 0.7146,
+        "unmap": 0.2784,
+        "release": 0.1309,
+        "unmap_plus_release": 0.4093,
+        "copy_to_host": 0.4338,
+        "verify_sha256": 1.5359,
+        "copy_verify_unmap_release": 2.3888,
+        "post_release_synchronize": 0.014,
+        "address_free": 0.0155,
+        "restore_round_trip_verify": 2.8154
+      }
+    },
+    {
+      "run": 5,
+      "sha256_before": "81d21c148a133f3d7a162a22bcde9c829dc8e05b3670fadca5c8eb7af2ef8203",
+      "sha256_migrated": "81d21c148a133f3d7a162a22bcde9c829dc8e05b3670fadca5c8eb7af2ef8203",
+      "sha256_restored": "81d21c148a133f3d7a162a22bcde9c829dc8e05b3670fadca5c8eb7af2ef8203",
+      "rejected_staging_sha256": null,
+      "phase_ms": {
+        "allocate_map_set_access": 0.3519,
+        "upload_and_sync": 0.8661,
+        "unmap": 0.3143,
+        "release": 0.1382,
+        "unmap_plus_release": 0.4525,
+        "copy_to_host": 0.5233,
+        "verify_sha256": 1.5599,
+        "copy_verify_unmap_release": 2.5447,
+        "post_release_synchronize": 0.0123,
+        "address_free": 0.0161,
+        "restore_round_trip_verify": 3.0364
+      }
+    },
+    {
+      "run": 6,
+      "sha256_before": "1a4806e85a92caa693e2d853f41a4dab37708667b328e0ce5dfd7963b74476d8",
+      "sha256_migrated": "1a4806e85a92caa693e2d853f41a4dab37708667b328e0ce5dfd7963b74476d8",
+      "sha256_restored": "1a4806e85a92caa693e2d853f41a4dab37708667b328e0ce5dfd7963b74476d8",
+      "rejected_staging_sha256": null,
+      "phase_ms": {
+        "allocate_map_set_access": 0.2829,
+        "upload_and_sync": 0.8722,
+        "unmap": 0.3665,
+        "release": 0.1345,
+        "unmap_plus_release": 0.501,
+        "copy_to_host": 0.3842,
+        "verify_sha256": 1.5549,
+        "copy_verify_unmap_release": 2.4508,
+        "post_release_synchronize": 0.0114,
+        "address_free": 0.0164,
+        "restore_round_trip_verify": 3.0712
+      }
+    },
+    {
+      "run": 7,
+      "sha256_before": "cb2df84a4ecd69ae230e5989a114dfa9510c39ee7ddebbc0c3bb47f50f99b37b",
+      "sha256_migrated": "cb2df84a4ecd69ae230e5989a114dfa9510c39ee7ddebbc0c3bb47f50f99b37b",
+      "sha256_restored": "cb2df84a4ecd69ae230e5989a114dfa9510c39ee7ddebbc0c3bb47f50f99b37b",
+      "rejected_staging_sha256": null,
+      "phase_ms": {
+        "allocate_map_set_access": 0.3141,
+        "upload_and_sync": 0.7613,
+        "unmap": 0.227,
+        "release": 0.1102,
+        "unmap_plus_release": 0.3372,
+        "copy_to_host": 0.39,
+        "verify_sha256": 2.2182,
+        "copy_verify_unmap_release": 2.9538,
+        "post_release_synchronize": 0.0114,
+        "address_free": 0.0134,
+        "restore_round_trip_verify": 3.0278
+      }
+    },
+    {
+      "run": 8,
+      "sha256_before": "6091cc9f4819b8d9a4902d4104e25da4fd49838eefe432409ad2442371a4b713",
+      "sha256_migrated": "6091cc9f4819b8d9a4902d4104e25da4fd49838eefe432409ad2442371a4b713",
+      "sha256_restored": "6091cc9f4819b8d9a4902d4104e25da4fd49838eefe432409ad2442371a4b713",
+      "rejected_staging_sha256": null,
+      "phase_ms": {
+        "allocate_map_set_access": 0.3276,
+        "upload_and_sync": 0.8051,
+        "unmap": 0.2295,
+        "release": 0.1033,
+        "unmap_plus_release": 0.3328,
+        "copy_to_host": 0.4331,
+        "verify_sha256": 1.6418,
+        "copy_verify_unmap_release": 2.4131,
+        "post_release_synchronize": 0.0103,
+        "address_free": 0.0116,
+        "restore_round_trip_verify": 2.7916
+      }
+    },
+    {
+      "run": 9,
+      "sha256_before": "b0d3c422b419ec7db7ae5b92bb851e440284a32da779efea33d877ddb9ab12ba",
+      "sha256_migrated": "b0d3c422b419ec7db7ae5b92bb851e440284a32da779efea33d877ddb9ab12ba",
+      "sha256_restored": "b0d3c422b419ec7db7ae5b92bb851e440284a32da779efea33d877ddb9ab12ba",
+      "rejected_staging_sha256": null,
+      "phase_ms": {
+        "allocate_map_set_access": 0.2441,
+        "upload_and_sync": 0.6785,
+        "unmap": 0.3133,
+        "release": 0.1274,
+        "unmap_plus_release": 0.4407,
+        "copy_to_host": 0.3512,
+        "verify_sha256": 1.3255,
+        "copy_verify_unmap_release": 2.1249,
+        "post_release_synchronize": 0.0129,
+        "address_free": 0.0165,
+        "restore_round_trip_verify": 2.9967
+      }
+    },
+    {
+      "run": 10,
+      "sha256_before": "98fb01e0f13b8830aa4307baaf011ca52e0ab3e34eaa26b8a41b0c6115711d69",
+      "sha256_migrated": "98fb01e0f13b8830aa4307baaf011ca52e0ab3e34eaa26b8a41b0c6115711d69",
+      "sha256_restored": "98fb01e0f13b8830aa4307baaf011ca52e0ab3e34eaa26b8a41b0c6115711d69",
+      "rejected_staging_sha256": null,
+      "phase_ms": {
+        "allocate_map_set_access": 0.2824,
+        "upload_and_sync": 0.9622,
+        "unmap": 0.28,
+        "release": 0.1995,
+        "unmap_plus_release": 0.4795,
+        "copy_to_host": 0.6736,
+        "verify_sha256": 1.4787,
+        "copy_verify_unmap_release": 2.6387,
+        "post_release_synchronize": 0.0136,
+        "address_free": 0.0204,
+        "restore_round_trip_verify": 3.9911
+      }
+    },
+    {
+      "run": 11,
+      "sha256_before": "1dce2849412d4e9bf5e4c6df5d7839264be25be852b8b6f80d23439ef687f0a1",
+      "sha256_migrated": "1dce2849412d4e9bf5e4c6df5d7839264be25be852b8b6f80d23439ef687f0a1",
+      "sha256_restored": "1dce2849412d4e9bf5e4c6df5d7839264be25be852b8b6f80d23439ef687f0a1",
+      "rejected_staging_sha256": null,
+      "phase_ms": {
+        "allocate_map_set_access": 0.2997,
+        "upload_and_sync": 0.7411,
+        "unmap": 0.1862,
+        "release": 0.0893,
+        "unmap_plus_release": 0.2755,
+        "copy_to_host": 0.4298,
+        "verify_sha256": 1.5632,
+        "copy_verify_unmap_release": 2.2734,
+        "post_release_synchronize": 0.0096,
+        "address_free": 0.0106,
+        "restore_round_trip_verify": 2.895
+      }
+    },
+    {
+      "run": 12,
+      "sha256_before": "5fd1d5679fbeae169aa3efdfd2019942488e226d78a1ddd284c6b23d72511c36",
+      "sha256_migrated": "5fd1d5679fbeae169aa3efdfd2019942488e226d78a1ddd284c6b23d72511c36",
+      "sha256_restored": "5fd1d5679fbeae169aa3efdfd2019942488e226d78a1ddd284c6b23d72511c36",
+      "rejected_staging_sha256": null,
+      "phase_ms": {
+        "allocate_map_set_access": 0.3141,
+        "upload_and_sync": 0.6876,
+        "unmap": 0.234,
+        "release": 0.1329,
+        "unmap_plus_release": 0.3669,
+        "copy_to_host": 0.3608,
+        "verify_sha256": 1.5347,
+        "copy_verify_unmap_release": 2.2698,
+        "post_release_synchronize": 0.0151,
+        "address_free": 0.0196,
+        "restore_round_trip_verify": 3.0774
+      }
+    }
+  ],
+  "memory_observations": {
+    "driver_initialized": {
+      "collected_utc": "2026-11-26T17:17:39.357Z",
+      "process": {
+        "status": "observed",
+        "dedicated_bytes": 24576,
+        "matches": [
+          {
+            "name": "pid_25936_luid_0x00000000_0x0000aad1_phys_0",
+            "bytes": 24576,
+            "status": 0
+          }
+        ]
+      },
+      "device": {
+        "name": "NVIDIA GeForce GTX 1650",
+        "pci.bus_id": "00000000:01:00.0",
+        "driver_version": "621.01",
+        "driver_model.current": "WDDM",
+        "total_mib": 4096,
+        "used_mib": 1679,
+        "free_mib": 2257,
+        "temperature_c": 52,
+        "utilization_pct": 3
+      }
+    },
+    "empty_context": {
+      "collected_utc": "2026-11-26T17:17:41.481Z",
+      "process": {
+        "status": "observed",
+        "dedicated_bytes": 50987008,
+        "matches": [
+          {
+            "name": "pid_25936_luid_0x00000000_0x0000aad1_phys_0",
+            "bytes": 50987008,
+            "status": 0
+          }
+        ]
+      },
+      "device": {
+        "name": "NVIDIA GeForce GTX 1650",
+        "pci.bus_id": "00000000:01:00.0",
+        "driver_version": "621.01",
+        "driver_model.current": "WDDM",
+        "total_mib": 4096,
+        "used_mib": 1727,
+        "free_mib": 2209,
+        "temperature_c": 52.3,
+        "utilization_pct": 2
+      },
+      "cuda_memory": {
+        "free_bytes": 3456892928,
+        "total_bytes": 4294639616
+      }
+    },
+    "resident_page": {
+      "collected_utc": "2026-11-26T17:17:43.733Z",
+      "process": {
+        "status": "observed",
+        "dedicated_bytes": 53084160,
+        "matches": [
+          {
+            "name": "pid_25936_luid_0x00000000_0x0000aad1_phys_0",
+            "bytes": 53084160,
+            "status": 0
+          }
+        ]
+      },
+      "device": {
+        "name": "NVIDIA GeForce GTX 1650",
+        "pci.bus_id": "00000000:01:00.0",
+        "driver_version": "621.01",
+        "driver_model.current": "WDDM",
+        "total_mib": 4096,
+        "used_mib": 1787,
+        "free_mib": 2149,
+        "temperature_c": 52.6,
+        "utilization_pct": 7
+      },
+      "cuda_memory": {
+        "free_bytes": 3454795776,
+        "total_bytes": 4294639616
+      }
+    },
+    "released_page_keep_context": {
+      "collected_utc": "2026-11-26T17:17:45.805Z",
+      "process": {
+        "status": "observed",
+        "dedicated_bytes": 50987008,
+        "matches": [
+          {
+            "name": "pid_25936_luid_0x00000000_0x0000aad1_phys_0",
+            "bytes": 50987008,
+            "status": 0
+          }
+        ]
+      },
+      "device": {
+        "name": "NVIDIA GeForce GTX 1650",
+        "pci.bus_id": "00000000:01:00.0",
+        "driver_version": "621.01",
+        "driver_model.current": "WDDM",
+        "total_mib": 4096,
+        "used_mib": 1800,
+        "free_mib": 2136,
+        "temperature_c": 52.4,
+        "utilization_pct": 10
+      },
+      "cuda_memory": {
+        "free_bytes": 3456892928,
+        "total_bytes": 4294639616
+      }
+    },
+    "context_destroyed": {
+      "collected_utc": "2026-11-26T17:17:48.091Z",
+      "process": {
+        "status": "observed",
+        "dedicated_bytes": 24576,
+        "matches": [
+          {
+            "name": "pid_25936_luid_0x00000000_0x0000aad1_phys_0",
+            "bytes": 24576,
+            "status": 0
+          }
+        ]
+      },
+      "device": {
+        "name": "NVIDIA GeForce GTX 1650",
+        "pci.bus_id": "00000000:01:00.0",
+        "driver_version": "621.01",
+        "driver_model.current": "WDDM",
+        "total_mib": 4096,
+        "used_mib": 1703,
+        "free_mib": 2233,
+        "temperature_c": 51.7,
+        "utilization_pct": 3
+      }
+    },
+    "process_exited": {
+      "collected_utc": "2026-11-26T17:17:50.114Z",
+      "process": {
+        "status": "no_pid_instance",
+        "dedicated_bytes": null,
+        "enumerated": 64
+      },
+      "device": {
+        "name": "NVIDIA GeForce GTX 1650",
+        "pci.bus_id": "00000000:01:00.0",
+        "driver_version": "621.01",
+        "driver_model.current": "WDDM",
+        "total_mib": 4096,
+        "used_mib": 1676,
+        "free_mib": 2260,
+        "temperature_c": 51.2,
+        "utilization_pct": 8
+      }
+    }
+  },
+  "timing_scope": "Uncompressed 2 MiB deterministic synthetic bytes; twelve by default, one preceding observed round excluded. No CAD timing or production allocator change.",
+  "telemetry_scope": "WDDM Dedicated Usage matches the worker PID and CUDA adapter LUID. nvidia-smi is adapter-wide. Observations run outside timed trials.",
+  "p95_method": "nearest rank",
+  "api_reference": "https://docs.nvidia.com/cuda/cuda-driver-api/group__CUDA__VA.html",
+  "device": {
+    "name": "NVIDIA GeForce GTX 1650",
+    "pci_bus": "0000:01:00.0",
+    "cuda_driver_version": 13050,
+    "luid": "luid_0x00000000_0x0000aad1",
+    "luid_node_mask": 1,
+    "vmm_supported": true
+  },
+  "worker_pid": 25936,
+  "allocation": {
+    "payload_bytes": 2097152,
+    "allocation_bytes": 2097152,
+    "min_granularity_bytes": 2097152
+  },
+  "observed": {
+    "run": "observed",
+    "sha256_before": "2ee82f6aea2ff640104a615dcf27f7fe4f52301f3d2aff385aa18d4d297c033e",
+    "sha256_migrated": "2ee82f6aea2ff640104a615dcf27f7fe4f52301f3d2aff385aa18d4d297c033e",
+    "sha256_restored": "2ee82f6aea2ff640104a615dcf27f7fe4f52301f3d2aff385aa18d4d297c033e",
+    "rejected_staging_sha256": "8143b5263575055a620bce6410f642a392383188c87d6b5be71196c517355622",
+    "phase_ms": {
+      "allocate_map_set_access": 0.3172,
+      "upload_and_sync": 0.8777,
+      "unmap": 0.3341,
+      "release": 0.1335,
+      "unmap_plus_release": 0.4676,
+      "copy_to_host": 0.4306,
+      "verify_sha256": 1.4131,
+      "copy_verify_unmap_release": 2.3241,
+      "post_release_synchronize": 0.0164,
+      "address_free": 0.0436,
+      "restore_round_trip_verify": 2.6927
+    }
+  },
+  "context": {
+    "create_context_ms": 85.3839,
+    "destroy_context_ms": 46.5098
+  },
+  "worker_exit": {
+    "code": 0,
+    "signal": null
+  },
+  "summary": {
+    "allocate_map_set_access": {
+      "median_ms": 0.2972,
+      "p95_ms": 0.3519,
+      "max_ms": 0.3519
+    },
+    "upload_and_sync": {
+      "median_ms": 0.7512,
+      "p95_ms": 0.9622,
+      "max_ms": 0.9622
+    },
+    "unmap": {
+      "median_ms": 0.26535,
+      "p95_ms": 0.3665,
+      "max_ms": 0.3665
+    },
+    "release": {
+      "median_ms": 0.12915,
+      "p95_ms": 0.1995,
+      "max_ms": 0.1995
+    },
+    "unmap_plus_release": {
+      "median_ms": 0.3881,
+      "p95_ms": 0.5034,
+      "max_ms": 0.5034
+    },
+    "copy_to_host": {
+      "median_ms": 0.40990000000000004,
+      "p95_ms": 0.6736,
+      "max_ms": 0.6736
+    },
+    "verify_sha256": {
+      "median_ms": 1.5453999999999999,
+      "p95_ms": 2.2182,
+      "max_ms": 2.2182
+    },
+    "copy_verify_unmap_release": {
+      "median_ms": 2.3431499999999996,
+      "p95_ms": 2.9538,
+      "max_ms": 2.9538
+    },
+    "post_release_synchronize": {
+      "median_ms": 0.01185,
+      "p95_ms": 0.0151,
+      "max_ms": 0.0151
+    },
+    "address_free": {
+      "median_ms": 0.0158,
+      "p95_ms": 0.0204,
+      "max_ms": 0.0204
+    },
+    "restore_round_trip_verify": {
+      "median_ms": 2.94585,
+      "p95_ms": 3.9911,
+      "max_ms": 3.9911
+    }
+  },
+  "target": {
+    "max_exclusive_ms": 1.5,
+    "metric": "unmap_plus_release",
+    "definition": "Synchronous host clock around consecutive cuMemUnmap and final cuMemRelease on this allocation. The context stays alive.",
+    "allocator_release": {
+      "under_target": 12,
+      "measured": 12,
+      "all_under_target": true
+    },
+    "verified_migration": {
+      "under_target": 0,
+      "measured": 12,
+      "all_under_target": false
+    }
+  },
+  "corrupt_copy_control": {
+    "observed_run": "observed",
+    "outcome": "rejected",
+    "retained_original_mapping_and_handle": true,
+    "retried_from_original_and_restored": true
+  },
+  "pid_memory": {
+    "difference_resident_minus_released_bytes": 2097152,
+    "with_released_page_and_live_context_bytes": 50987008,
+    "after_context_destruction_bytes": 24576,
+    "after_process_exit_bytes": null,
+    "missing_instance_means": "No numeric PID attribution at this sample; it is not a measured zero."
+  },
+  "status": "measured"
+}
