@@ -21,7 +21,7 @@ import time
 import zlib
 from typing import Any
 
-from .native import (
+from ..native import (
     batch_chacha20_xor,
     gf256_decode_matrix,
     gf256_encode_block,
@@ -29,7 +29,7 @@ from .native import (
     lz4_decompress,
     v9_native_caps,
 )
-from .phantom_tunnel import open_packet, seal_packet
+from ..phantom_tunnel import open_packet, seal_packet
 
 _BATCH_MAGIC = b"PH9B"
 _BATCH_HDR = struct.Struct("!4sI8sII")  # magic(4), sid(4), base_nonce8(8), pkt_len(4), count(4)

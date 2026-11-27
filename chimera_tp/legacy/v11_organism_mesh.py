@@ -12,8 +12,8 @@ import time
 from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
-from .native import babel_mine, chaos_step_q16, lz4_compress, lz4_decompress, splitmix64_bytes
-from .omega_transport import x25519_keypair
+from ..native import babel_mine, chaos_step_q16, lz4_compress, lz4_decompress, splitmix64_bytes
+from ..omega_transport import x25519_keypair
 from .v9_nvme_grid import execute_whitelisted_kernel
 
 # ==============================================================================

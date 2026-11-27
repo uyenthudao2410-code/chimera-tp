@@ -11,9 +11,9 @@ import urllib.request
 from pathlib import Path
 from typing import Any
 
-from .gf256 import INV, MUL_BYTES
-from .native import gf256_decode_matrix, slepian_syndrome
-from .omega_storage import _GF_EXP, _berlekamp_massey_gf256, _chien_search_indices
+from ..gf256 import INV, MUL_BYTES
+from ..native import gf256_decode_matrix, slepian_syndrome
+from ..omega_storage import _GF_EXP, _berlekamp_massey_gf256, _chien_search_indices
 
 # ==============================================================================
 # IV.1 — FROST 2-of-3 Threshold Ed25519 Signing (RFC 8032 Edwards25519)

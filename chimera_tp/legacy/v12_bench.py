@@ -7,7 +7,7 @@ import json
 import time
 from typing import Any
 
-from .native import v12_native_caps
+from ..native import v12_native_caps
 from .v10_outlaw_engines import (
     CausalTimeTravelFabric,
     DctStegoDrive,

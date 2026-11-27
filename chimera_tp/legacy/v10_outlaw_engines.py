@@ -16,9 +16,9 @@ import time
 from pathlib import Path
 from typing import Any
 
-from .native import fastcdc_split, gf256_decode_matrix, gf256_encode_block, lz4_compress, lz4_decompress, slepian_syndrome
-from .omega_compute import WasmActivePipe, _wasm_section, _u32_leb, _s32_leb
-from .omega_storage import _GF_EXP, _berlekamp_massey_gf256, _chien_search_indices
+from ..native import fastcdc_split, gf256_decode_matrix, gf256_encode_block, lz4_compress, lz4_decompress, slepian_syndrome
+from ..omega_compute import WasmActivePipe, _wasm_section, _u32_leb, _s32_leb
+from ..omega_storage import _GF_EXP, _berlekamp_massey_gf256, _chien_search_indices
 from .v9_nvme_grid import execute_whitelisted_kernel
 
 # ==============================================================================

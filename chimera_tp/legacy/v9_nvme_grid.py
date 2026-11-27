@@ -25,7 +25,7 @@ from collections import OrderedDict
 from pathlib import Path
 from typing import Any, Callable
 
-from .native import (
+from ..native import (
     batch_chacha20_xor,
     cpu_caps,
     delta_decode,

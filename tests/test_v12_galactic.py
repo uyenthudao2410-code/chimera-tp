@@ -12,6 +12,7 @@ import urllib.request
 from pathlib import Path
 
 from chimera_tp.autopilot import OpsConfig
+from chimera_tp import __version__
 from chimera_tp.dashboard import ChimeraDaemon
 from chimera_tp.native import v12_native_caps
 from chimera_tp.v10_sovereign_crypto import FrostThreshold2of3
@@ -100,7 +101,8 @@ class TestV12Galactic(unittest.TestCase):
             base = f"http://127.0.0.1:{daemon.http_addr[1]}"
             try:
                 h = json.loads(urllib.request.urlopen(f"{base}/api/health", timeout=4.0).read().decode())
-                self.assertEqual(h["version"], "12.0.0")
+                self.assertEqual(h["version"], __version__)
+                self.assertEqual(h["api_version"], "12.0.0")
                 self.assertTrue(all(h["native_v12"].values()))
 
                 gs = json.loads(urllib.request.urlopen(f"{base}/api/galactic/status", timeout=4.0).read().decode())

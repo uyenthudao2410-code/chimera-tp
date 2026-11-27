@@ -11,7 +11,7 @@ import struct
 import time
 from typing import Any
 
-from .native import lz4_compress, lz4_decompress, splitmix64_bytes, vsa_bind_xor, vsa_hamming
+from ..native import lz4_compress, lz4_decompress, splitmix64_bytes, vsa_bind_xor, vsa_hamming
 
 # ==============================================================================
 # VIII.1 — Causal-Origin Teleportation (Deterministic Generator + Tiny Entropy Tape)

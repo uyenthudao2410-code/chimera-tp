@@ -6,7 +6,7 @@ import json
 import time
 from typing import Any
 
-from .native import v9_native_caps
+from ..native import v9_native_caps
 from .v9_app_index import LiveClusterIndexer, RemoteAppStreamEngine, SharedCasTurboCache
 from .v9_dataplane import MultiWanSpeedFusionEngine, NativeDataPlaneEngine
 from .v9_nvme_grid import UnifiedHardwareGrid, VirtualNvmeFabric

@@ -12,8 +12,8 @@ import time
 from pathlib import Path
 from typing import Any
 
-from .native import batch_chacha20_xor, lz4_compress, lz4_decompress, slepian_syndrome
-from .omega_compute import WasmActivePipe, build_wasm_byte_counter_module
+from ..native import batch_chacha20_xor, lz4_compress, lz4_decompress, slepian_syndrome
+from ..omega_compute import WasmActivePipe, build_wasm_byte_counter_module
 from .v10_sovereign_crypto import FrostThreshold2of3, Gf256MpcEngine, InlineBitRotHealer
 from .v10_sovereign_runtime import VerifiableTraceProver
 from .v10_outlaw_engines import CausalTimeTravelFabric

@@ -1,5 +1,10 @@
 """CHIMERA transport, storage, and personal infrastructure primitives."""
 
+from .legacy import _install_previous_names
+
+_install_previous_names(__path__)
+del _install_previous_names
+
 __version__ = "18.0.0"
 
 # Map the existing public names to their owning modules without importing the engines.

@@ -16,6 +16,7 @@ import urllib.parse
 import urllib.request
 
 from chimera_tp.autopilot import OpsConfig
+from chimera_tp import __version__
 from chimera_tp.dashboard import ChimeraDaemon
 from chimera_tp.native import (
     batch_chacha20_xor,
@@ -225,11 +226,12 @@ class TestHyperdriveV9Protocol(unittest.TestCase):
             base = f"http://127.0.0.1:{daemon.http_addr[1]}"
             try:
                 h = json.loads(urllib.request.urlopen(f"{base}/api/health", timeout=4.0).read().decode())
-                self.assertIn(h["version"], ("9.0.0", "10.0.0", "11.0.0", "12.0.0"))
+                self.assertEqual(h["version"], __version__)
+                self.assertEqual(h["api_version"], "12.0.0")
 
                 st = json.loads(urllib.request.urlopen(f"{base}/api/hyperdrive/status", timeout=4.0).read().decode())
                 self.assertTrue(st["ok"])
-                self.assertIn(st["version"], ("9.0.0", "10.0.0", "11.0.0", "12.0.0"))
+                self.assertEqual(st["version"], h["api_version"])
 
                 srch = json.loads(urllib.request.urlopen(f"{base}/api/hyperdrive/search?q=hyperdrive_marker_fn", timeout=4.0).read().decode())
                 self.assertTrue(srch["ok"])

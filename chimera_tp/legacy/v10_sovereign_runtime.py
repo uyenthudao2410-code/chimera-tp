@@ -14,8 +14,8 @@ import time
 import urllib.request
 from typing import Any
 
-from .native import lz4_compress, lz4_decompress
-from .omega_compute import WasmActivePipe, _WasmReader, _to_s32, build_wasm_byte_counter_module
+from ..native import lz4_compress, lz4_decompress
+from ..omega_compute import WasmActivePipe, _WasmReader, _to_s32, build_wasm_byte_counter_module
 
 # ==============================================================================
 # IV.2 — Live WASM Checkpoint-Teleport (Freeze mid-execution -> resume on peer)

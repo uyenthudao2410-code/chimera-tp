@@ -28,7 +28,7 @@ from collections import OrderedDict, deque
 from pathlib import Path
 from typing import Any
 
-from .native import (
+from ..native import (
     gf256_decode_matrix,
     gf256_encode_block,
     lz4_compress,
@@ -480,7 +480,7 @@ class LiveClusterIndexer:
     def run_benchmark(root_dir: str | Path | None = None, peer_http_base: str = "") -> dict[str, Any]:
         """Measure brute-force disk scan vs < 5 ms trigram+AVX2 LiveClusterIndexer with 100% recall."""
         queries = ["PhantomTunnel", "gf256_decode", "CHIMERA", "zero_weight", "singularity"]
-        target = Path(root_dir).resolve() if root_dir else Path(__file__).resolve().parents[1]
+        target = Path(root_dir).resolve() if root_dir else Path(__file__).resolve().parents[2]
         probe_idx = LiveClusterIndexer([target])
         if probe_idx.build_index(max_files=30)["indexed_files"] >= 15:
             return LiveClusterIndexer._benchmark_on_dir(target, queries, peer_http_base=peer_http_base)
